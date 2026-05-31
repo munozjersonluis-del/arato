@@ -115,14 +115,14 @@ module.exports = async function handler(req, res) {
     camiones.filter(c=>c.numero_viaje>0).forEach(c=>{camXDia[c.fecha]=(camXDia[c.fecha]||0)+1;});
 
     const dashRows = [
-      ['🌿  ARATO MISSION PRODUCE  —  REPORTE OPERACIONAL',...Array(9).fill('')],
-      ['Control de Bins de Campo  •  Arato Mission Produce',...Array(9).fill('')],
-      Array(10).fill(''),
+      ['🌿  ARATO MISSION PRODUCE  —  REPORTE OPERACIONAL','','','','','','','','',''],
+      ['Control de Bins de Campo  •  Arato Mission Produce','','','','','','','','',''],
+      ['','','','','','','','','',''],
       ['DÍAS TRABAJADOS','','VIAJES CAMPO','','BINS ENVIADOS','','BINS RETORNADOS','','EFICIENCIA',''],
       [dias.length,'', tv,'', te,'', tr,'', efic,''],
-      Array(10).fill(''),
-      Array(10).fill(''),
-      ['PRODUCCIÓN POR DÍA',...Array(9).fill('')],
+      ['','','','','','','','','',''],
+      ['','','','','','','','','',''],
+      ['PRODUCCIÓN POR DÍA','','','','','','','','',''],
       ['FECHA','VIAJES','BINS ENV.','BINS RET.','FALTANTES','TONELADAS','EFIC. %','CAMIONES','DÍAS',''],
     ];
 
@@ -133,14 +133,24 @@ module.exports = async function handler(req, res) {
     });
     const totRow = ['TOTALES',tv,te,tr,te-tr,+ttn.toFixed(3),efic,camV,dias.length,''];
 
-    // Aplicar merges PRIMERO
+    // Aplicar merges PRIMERO antes de escribir datos
     await sheets.spreadsheets.batchUpdate({ spreadsheetId:SHEET_ID, resource:{ requests:[
-      merge(s1,0,1,0,10),
-      merge(s1,1,2,0,10),
-      merge(s1,7,8,0,10),
+      merge(s1,0,1,0,10),   // Título
+      merge(s1,1,2,0,10),   // Subtítulo
+      merge(s1,3,4,0,2),    // KPI1 label
+      merge(s1,3,4,2,4),    // KPI2 label
+      merge(s1,3,4,4,6),    // KPI3 label
+      merge(s1,3,4,6,8),    // KPI4 label
+      merge(s1,3,4,8,10),   // KPI5 label
+      merge(s1,4,5,0,2),    // KPI1 valor
+      merge(s1,4,5,2,4),    // KPI2 valor
+      merge(s1,4,5,4,6),    // KPI3 valor
+      merge(s1,4,5,6,8),    // KPI4 valor
+      merge(s1,4,5,8,10),   // KPI5 valor
+      merge(s1,7,8,0,10),   // Título sección
     ]}});
 
-    // Luego escribir datos
+    // Escribir datos DESPUÉS de los merges
     await sheets.spreadsheets.values.clear({ spreadsheetId:SHEET_ID, range:'Hoja 1!A:Z' });
     await sheets.spreadsheets.values.update({
       spreadsheetId:SHEET_ID, range:'Hoja 1!A1', valueInputOption:'RAW',
@@ -155,29 +165,19 @@ module.exports = async function handler(req, res) {
       rep(s1,1,2,0,10, fmt(C.VERDE2,C.VERDE_FNT,false,9,true,false)),
       rowH(s1,1,18),
       rowH(s1,2,10),
-      // KPI headers - solo columnas A,C,E,G,I coloreadas
-      rep(s1,3,4,0,1, fmt(C.AZUL,C.BLANCO,true,9,false,true)),
-      rep(s1,3,4,1,2, fmt(C.BLANCO,C.BLANCO,false,9,false,false)),
-      rep(s1,3,4,2,3, fmt(C.VERDE,C.BLANCO,true,9,false,true)),
-      rep(s1,3,4,3,4, fmt(C.BLANCO,C.BLANCO,false,9,false,false)),
-      rep(s1,3,4,4,5, fmt(C.MORADO,C.BLANCO,true,9,false,true)),
-      rep(s1,3,4,5,6, fmt(C.BLANCO,C.BLANCO,false,9,false,false)),
-      rep(s1,3,4,6,7, fmt(C.TEAL,C.BLANCO,true,9,false,true)),
-      rep(s1,3,4,7,8, fmt(C.BLANCO,C.BLANCO,false,9,false,false)),
-      rep(s1,3,4,8,9, fmt(C.AMARILLO,C.BLANCO,true,9,false,true)),
-      rep(s1,3,4,9,10, fmt(C.BLANCO,C.BLANCO,false,9,false,false)),
+      // KPI headers - 2 columnas por KPI
+      rep(s1,3,4,0,2, fmt(C.AZUL,C.BLANCO,true,9,false,true)),
+      rep(s1,3,4,2,4, fmt(C.VERDE,C.BLANCO,true,9,false,true)),
+      rep(s1,3,4,4,6, fmt(C.MORADO,C.BLANCO,true,9,false,true)),
+      rep(s1,3,4,6,8, fmt(C.TEAL,C.BLANCO,true,9,false,true)),
+      rep(s1,3,4,8,10, fmt(C.AMARILLO,C.BLANCO,true,9,false,true)),
       rowH(s1,3,22),
-      // KPI values - solo columnas A,C,E,G,I coloreadas
-      rep(s1,4,5,0,1, fmt(C.AZUL_C,C.AZUL,true,24,false,false)),
-      rep(s1,4,5,1,2, fmt(C.BLANCO,C.BLANCO,false,9,false,false)),
-      rep(s1,4,5,2,3, fmt(C.VERDE_C,C.VERDE,true,24,false,false)),
-      rep(s1,4,5,3,4, fmt(C.BLANCO,C.BLANCO,false,9,false,false)),
-      rep(s1,4,5,4,5, fmt(C.MORADO_C,C.MORADO,true,24,false,false)),
-      rep(s1,4,5,5,6, fmt(C.BLANCO,C.BLANCO,false,9,false,false)),
-      rep(s1,4,5,6,7, fmt(C.TEAL_C,C.TEAL,true,24,false,false)),
-      rep(s1,4,5,7,8, fmt(C.BLANCO,C.BLANCO,false,9,false,false)),
-      rep(s1,4,5,8,9, fmt(C.AMARILLO_C,C.AMARILLO,true,24,false,false)),
-      rep(s1,4,5,9,10, fmt(C.BLANCO,C.BLANCO,false,9,false,false)),
+      // KPI values - 2 columnas por KPI
+      rep(s1,4,5,0,2, fmt(C.AZUL_C,C.AZUL,true,20,false,false)),
+      rep(s1,4,5,2,4, fmt(C.VERDE_C,C.VERDE,true,20,false,false)),
+      rep(s1,4,5,4,6, fmt(C.MORADO_C,C.MORADO,true,20,false,false)),
+      rep(s1,4,5,6,8, fmt(C.TEAL_C,C.TEAL,true,20,false,false)),
+      rep(s1,4,5,8,10, fmt(C.AMARILLO_C,C.AMARILLO,true,20,false,false)),
       rowH(s1,4,44),
       rowH(s1,5,10), rowH(s1,6,10),
       // Título sección producción
