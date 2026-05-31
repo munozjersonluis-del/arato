@@ -118,10 +118,8 @@ module.exports = async function handler(req, res) {
       ['🌿  ARATO MISSION PRODUCE  —  REPORTE OPERACIONAL',...Array(9).fill('')],
       ['Control de Bins de Campo  •  Arato Mission Produce',...Array(9).fill('')],
       Array(10).fill(''),
-      // KPI labels — valor en ambas celdas del merge
-      ['DÍAS TRABAJADOS','DÍAS TRABAJADOS','VIAJES CAMPO','VIAJES CAMPO','BINS ENVIADOS','BINS ENVIADOS','BINS RETORNADOS','BINS RETORNADOS','EFICIENCIA','EFICIENCIA'],
-      // KPI values — valor en ambas celdas del merge
-      [dias.length,dias.length, tv,tv, te,te, tr,tr, efic,efic],
+      ['DÍAS TRABAJADOS','','VIAJES CAMPO','','BINS ENVIADOS','','BINS RETORNADOS','','EFICIENCIA',''],
+      [dias.length,'', tv,'', te,'', tr,'', efic,''],
       Array(10).fill(''),
       Array(10).fill(''),
       ['PRODUCCIÓN POR DÍA',...Array(9).fill('')],
@@ -133,9 +131,16 @@ module.exports = async function handler(req, res) {
       const d=dd[f]; const ef=d.e>0?(d.r/d.e*100).toFixed(1)+'%':'0%';
       return [f,d.v,d.e,d.r,d.e-d.r,+d.tn.toFixed(3),ef,camXDia[f]||0,1,''];
     });
-    // Totales row
     const totRow = ['TOTALES',tv,te,tr,te-tr,+ttn.toFixed(3),efic,camV,dias.length,''];
 
+    // Aplicar merges PRIMERO
+    await sheets.spreadsheets.batchUpdate({ spreadsheetId:SHEET_ID, resource:{ requests:[
+      merge(s1,0,1,0,10),
+      merge(s1,1,2,0,10),
+      merge(s1,7,8,0,10),
+    ]}});
+
+    // Luego escribir datos
     await sheets.spreadsheets.values.clear({ spreadsheetId:SHEET_ID, range:'Hoja 1!A:Z' });
     await sheets.spreadsheets.values.update({
       spreadsheetId:SHEET_ID, range:'Hoja 1!A1', valueInputOption:'RAW',
@@ -143,15 +148,12 @@ module.exports = async function handler(req, res) {
     });
 
     const reqs1 = [
-      // Título
-      merge(s1,0,1,0,10),
+      // Título formato
       rep(s1,0,1,0,10, fmt(C.VERDE,C.BLANCO,true,15,false,true)),
       rowH(s1,0,40),
-      // Subtítulo
-      merge(s1,1,2,0,10),
+      // Subtítulo formato
       rep(s1,1,2,0,10, fmt(C.VERDE2,C.VERDE_FNT,false,9,true,false)),
       rowH(s1,1,18),
-      // Fila vacía
       rowH(s1,2,10),
       // KPI headers - colores distintos por KPI
       rep(s1,3,4,0,2, fmt(C.AZUL,C.BLANCO,true,9,false,true)),
@@ -168,8 +170,7 @@ module.exports = async function handler(req, res) {
       rep(s1,4,5,8,10, fmt(C.AMARILLO_C,C.AMARILLO,true,24,false,false)),
       rowH(s1,4,44),
       rowH(s1,5,10), rowH(s1,6,10),
-      // Título sección
-      merge(s1,7,8,0,10),
+      // Título sección producción
       rep(s1,7,8,0,10, fmt(C.VERDE,C.BLANCO,true,11,false,false)),
       rowH(s1,7,24),
       // Encabezados tabla
