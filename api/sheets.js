@@ -118,16 +118,13 @@ module.exports = async function handler(req, res) {
       ['🌿  ARATO MISSION PRODUCE  —  REPORTE OPERACIONAL',...Array(9).fill('')],
       ['Control de Bins de Campo  •  Arato Mission Produce',...Array(9).fill('')],
       Array(10).fill(''),
-      // KPI labels
-      ['DÍAS\nTRABAJADOS','',  'VIAJES\nCAMPO','',  'BINS\nENVIADOS','',  'BINS\nRETORNADOS','',  'EFICIENCIA',''],
-      // KPI values
-      [dias.length,'', tv,'', te,'', tr,'', efic,''],
-      // KPI units
+      // KPI labels — valor en ambas celdas del merge
+      ['DÍAS TRABAJADOS','DÍAS TRABAJADOS','VIAJES CAMPO','VIAJES CAMPO','BINS ENVIADOS','BINS ENVIADOS','BINS RETORNADOS','BINS RETORNADOS','EFICIENCIA','EFICIENCIA'],
+      // KPI values — valor en ambas celdas del merge
+      [dias.length,dias.length, tv,tv, te,te, tr,tr, efic,efic],
       Array(10).fill(''),
       Array(10).fill(''),
-      // Producción por día title
       ['PRODUCCIÓN POR DÍA',...Array(9).fill('')],
-      // Headers tabla
       ['FECHA','VIAJES','BINS ENV.','BINS RET.','FALTANTES','TONELADAS','EFIC. %','CAMIONES','DÍAS',''],
     ];
 
