@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Arato — Gestión de Usuarios</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{--bg:#F0F4F8;--bg2:#FFFFFF;--bg3:#F8FAFC;--verde:#16A34A;--verde-c:#DCFCE7;--rojo:#DC2626;--rojo-c:#FEE2E2;--azul:#2563EB;--azul-c:#DBEAFE;--amarillo:#D97706;--amarillo-c:#FEF3C7;--morado:#7C3AED;--morado-c:#F3E8FF;--texto:#1E293B;--texto2:#475569;--texto3:#94A3B8;--border:#E2E8F0;--border2:#CBD5E1;--shadow:0 2px 8px rgba(0,0,0,0.08);}
+body{font-family:Inter,sans-serif;background:var(--bg);color:var(--texto);min-height:100vh;font-size:15px;}
+.hdr{background:#DC2626;padding:14px 16px 10px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(220,38,38,0.3);}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;}
+.hdr-title{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#fff;letter-spacing:2px;}
+.hdr-sub{font-size:0.6rem;color:rgba(255,255,255,0.8);letter-spacing:1px;text-transform:uppercase;}
+.btn-back{background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:8px;padding:7px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;}
+.wrap{max-width:860px;margin:0 auto;padding:14px;}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:var(--shadow);}
+.ctitle{font-size:0.62rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--texto3);margin-bottom:12px;}
+.frow{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:10px;}
+.field{display:flex;flex-direction:column;gap:4px;}
+.field label{font-size:0.57rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--texto3);}
+.field input,.field select{background:var(--bg3);border:1.5px solid var(--border2);border-radius:8px;padding:10px 12px;font-size:0.85rem;color:var(--texto);font-family:Inter,sans-serif;}
+.btn{border:none;border-radius:10px;padding:11px 16px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;}
+.btn-r{background:var(--rojo);color:#fff;}
+.btn-g{background:var(--verde);color:#fff;}
+.btn-ghost{background:none;border:1.5px solid var(--border2);color:var(--texto2);}
+.btn-sm{padding:7px 12px;font-size:0.72rem;border-radius:8px;}
+.u-card{background:var(--bg3);border:1.5px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px;}
+.u-card.inactivo{opacity:0.5;border-style:dashed;}
+.u-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.u-name{font-weight:800;font-size:1rem;}
+.u-rol{font-size:0.65rem;font-weight:700;padding:3px 10px;border-radius:20px;text-transform:uppercase;display:inline-block;margin-top:3px;}
+.u-rol.admin{background:rgba(220,38,38,0.15);color:var(--rojo);}
+.u-rol.supervisor{background:rgba(217,119,6,0.15);color:var(--amarillo);}
+.u-rol.despachador{background:rgba(22,163,74,0.15);color:var(--verde);}
+.u-rol.recepcion{background:rgba(37,99,235,0.15);color:var(--azul);}
+.u-rol.operador{background:rgba(124,58,237,0.15);color:var(--morado);}
+.u-tabs{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;}
+.u-tab{font-size:0.6rem;font-weight:700;padding:3px 8px;border-radius:6px;background:var(--bg2);border:1px solid var(--border);color:var(--texto3);}
+.u-tab.on{background:var(--verde-c);border-color:var(--verde);color:var(--verde);}
+.u-actions{display:flex;gap:6px;flex-wrap:wrap;}
+.badge-on{background:var(--verde-c);color:var(--verde);font-size:0.6rem;font-weight:700;padding:2px 8px;border-radius:10px;}
+.badge-off{background:var(--rojo-c);color:var(--rojo);font-size:0.6rem;font-weight:700;padding:2px 8px;border-radius:10px;}
+.flash{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:#1E293B;color:#fff;padding:10px 20px;border-radius:10px;font-size:0.8rem;font-weight:600;z-index:999;display:none;box-shadow:0 4px 12px rgba(0,0,0,0.2);}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;}
+.modal-bg.open{display:flex;}
+.modal{background:#fff;border-radius:16px;padding:20px;width:90%;max-width:420px;max-height:90vh;overflow-y:auto;}
+.modal-title{font-size:1rem;font-weight:800;margin-bottom:16px;}
+.perms-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;}
+.perm-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg3);border-radius:8px;cursor:pointer;border:1.5px solid var(--border);}
+.perm-item.on{background:var(--verde-c);border-color:var(--verde);}
+.perm-label{font-size:0.75rem;font-weight:600;}
+</style>
+</head>
+<body>
+<div class="hdr">
+<div class="hdr-top">
+<div><div class="hdr-title">👑 GESTIÓN DE USUARIOS</div><div class="hdr-sub">Arato Mission Produce</div></div>
+<button class="btn-back" onclick="window.location.href='/'">← Volver</button>
+</div>
+</div>
+<div class="flash" id="flash"></div>
+<div class="modal-bg" id="modalPerms">
+<div class="modal">
+<div class="modal-title" id="modalTitle">Editar permisos</div>
+<div class="perms-grid" id="permsGrid"></div>
+<div class="frow" style="margin-bottom:12px;">
+<div class="field"><label>Cambiar rol</label><select id="modalRol"><option value="despachador">📦 Despachador</option><option value="recepcion">📋 Recepción</option><option value="supervisor">👷 Supervisor</option><option value="admin">👑 Admin</option><option value="operador">🧑 Operador</option></select></div>
+<div class="field"><label>Nuevo PIN</label><input type="number" id="modalPin" placeholder="4 dígitos"></div>
+</div>
+<div style="display:flex;gap:8px;">
+<button class="btn btn-g" style="flex:1;" onclick="guardarPermisos()">💾 Guardar</button>
+<button class="btn btn-ghost" style="flex:1;" onclick="cerrarModal()">Cancelar</button>
+</div>
+</div>
+</div>
+<div class="wrap">
+<div class="card">
+<div class="ctitle">➕ Nuevo usuario</div>
+<div class="frow">
+<div class="field"><label>Nombre</label><input type="text" id="nuNombre" placeholder="Ej: Juan Pérez"></div>
+<div class="field"><label>PIN (4 dígitos)</label><input type="number" id="nuPin" placeholder="1234"></div>
+<div class="field"><label>Rol</label><select id="nuRol"><option value="despachador">📦 Despachador</option><option value="recepcion">📋 Recepción</option><option value="supervisor">👷 Supervisor</option><option value="admin">👑 Admin</option><option value="operador">🧑 Operador</option></select></div>
+</div>
+<button class="btn btn-r" style="width:100%;" onclick="crearUsuario()">➕ Crear usuario</button>
+</div>
+<div class="card">
+<div class="ctitle">👥 Usuarios <span id="contUsuarios" style="color:var(--azul);"></span></div>
+<div id="listaUsuarios"><div style="text-align:center;padding:20px;color:var(--texto3);">Cargando...</div></div>
+</div>
+</div>
+<script>
+const SUPA_URL='https://xtqrpfkudbdygkmrjmzw.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0cXJwZmt1ZGJkeWdrbXJqbXp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU3MjE5NzMsImV4cCI6MjA2MTI5Nzk3M30.B_qf0FOhbCi-yLJRSLpkBi4QHPHSaQaeTKSwOlLfGZI';
+const db=supabase.createClient(SUPA_URL,SUPA_KEY);
+const TABS=[{id:'dashboard',label:'Dashboard'},{id:'despacho',label:'Despacho'},{id:'campo',label:'En Campo'},{id:'stock',label:'Stock'},{id:'personal',label:'Personal'},{id:'historial',label:'Historial'},{id:'camiones',label:'Camiones'},{id:'rendimiento',label:'Rendimiento'},{id:'resumen',label:'Resumen'}];
+const TABS_DEFAULT={admin:['dashboard','despacho','campo','stock','personal','historial','camiones','rendimiento','resumen'],supervisor:['dashboard','despacho','campo','stock','personal','historial','camiones','rendimiento','resumen'],despachador:['dashboard','despacho','campo','camiones','stock','historial'],recepcion:['dashboard','campo','camiones','stock','historial'],operador:['dashboard','despacho','campo','historial']};
+let editingUser=null,usuarios=[];
+function flash(msg,tipo){const f=document.getElementById('flash');f.textContent=msg;f.style.background=tipo==='verde'?'#16A34A':tipo==='rojo'?'#DC2626':tipo==='amarillo'?'#D97706':'#1E293B';f.style.display='block';setTimeout(()=>f.style.display='none',3000);}
+function getTabs(u){return(u.tabs_permitidos&&u.tabs_permitidos.length)?u.tabs_permitidos:TABS_DEFAULT[u.rol]||TABS_DEFAULT.operador;}
+async function cargarUsuarios(){const res=await db.from('usuarios').select('*').order('nombre');if(res.error){flash('Error: '+res.error.message,'rojo');return;}usuarios=res.data||[];renderUsuarios();}
+function renderUsuarios(){
+const lista=document.getElementById('listaUsuarios');
+document.getElementById('contUsuarios').textContent='('+usuarios.length+')';
+if(!usuarios.length){lista.innerHTML='<div style="text-align:center;padding:20px;color:var(--texto3);">Sin usuarios.</div>';return;}
+lista.innerHTML=usuarios.map(u=>{
+const tabs=getTabs(u);
+const tabsHtml=TABS.map(t=>`<span class="u-tab ${tabs.includes(t.id)?'on':''}">${t.label}</span>`).join('');
+return`<div class="u-card ${u.activo===false?'inactivo':''}">
+<div class="u-top"><div><div class="u-name">${u.nombre}</div><span class="u-rol ${u.rol}">${u.rol}</span></div>
+<div style="text-align:right;">${u.activo!==false?'<span class="badge-on">✅ Activo</span>':'<span class="badge-off">🚫 Inactivo</span>'}<div style="font-size:0.6rem;color:var(--texto3);margin-top:3px;">PIN: ${u.pin}</div></div></div>
+<div style="font-size:0.67rem;color:var(--texto3);margin-bottom:6px;">Módulos con acceso:</div>
+<div class="u-tabs">${tabsHtml}</div>
+<div class="u-actions">
+<button class="btn btn-ghost btn-sm" onclick="abrirModal('${u.id}')">✏️ Editar</button>
+<button class="btn btn-sm" style="background:${u.activo!==false?'var(--rojo-c)':'var(--verde-c)'};color:${u.activo!==false?'var(--rojo)':'var(--verde)'};" onclick="toggleActivo('${u.id}',${u.activo!==false})">${u.activo!==false?'🚫 Desactivar':'✅ Activar'}</button>
+<button class="btn btn-ghost btn-sm" style="color:var(--rojo);" onclick="eliminarUsuario('${u.id}','${u.nombre}')">🗑️ Eliminar</button>
+</div></div>`;
+}).join('');}
+function abrirModal(id){editingUser=usuarios.find(u=>u.id===id);if(!editingUser)return;document.getElementById('modalTitle').textContent='Editar: '+editingUser.nombre;document.getElementById('modalRol').value=editingUser.rol;document.getElementById('modalPin').value='';const tabs=getTabs(editingUser);document.getElementById('permsGrid').innerHTML=TABS.map(t=>`<div class="perm-item ${tabs.includes(t.id)?'on':''}" onclick="this.classList.toggle('on');this.querySelector('input').checked=!this.querySelector('input').checked"><input type="checkbox" ${tabs.includes(t.id)?'checked':''}><span class="perm-label">${t.label}</span></div>`).join('');document.getElementById('modalPerms').classList.add('open');}
+function cerrarModal(){document.getElementById('modalPerms').classList.remove('open');editingUser=null;}
+async function guardarPermisos(){if(!editingUser)return;const nuevoRol=document.getElementById('modalRol').value;const nuevoPin=document.getElementById('modalPin').value;const tabsSel=Array.from(document.querySelectorAll('.perm-item.on')).map(el=>{const label=el.querySelector('.perm-label').textContent;return TABS.find(t=>t.label===label)?.id;}).filter(Boolean);const updates={rol:nuevoRol,tabs_permitidos:tabsSel};if(nuevoPin&&nuevoPin.length>=4)updates.pin=nuevoPin;const res=await db.from('usuarios').update(updates).eq('id',editingUser.id);if(res.error){flash('Error: '+res.error.message,'rojo');return;}flash('✅ '+editingUser.nombre+' actualizado','verde');cerrarModal();await cargarUsuarios();}
+async function toggleActivo(id,estaActivo){const res=await db.from('usuarios').update({activo:!estaActivo}).eq('id',id);if(res.error){flash('Error: '+res.error.message,'rojo');return;}flash(estaActivo?'🚫 Desactivado':'✅ Activado',estaActivo?'amarillo':'verde');await cargarUsuarios();}
+async function eliminarUsuario(id,nombre){if(!confirm('¿Eliminar a '+nombre+'?'))return;const res=await db.from('usuarios').delete().eq('id',id);if(res.error){flash('Error: '+res.error.message,'rojo');return;}flash('🗑️ '+nombre+' eliminado','amarillo');await cargarUsuarios();}
+async function crearUsuario(){const nombre=document.getElementById('nuNombre').value.trim();const pin=document.getElementById('nuPin').value.trim();const rol=document.getElementById('nuRol').value;if(!nombre){flash('Ingresa un nombre','rojo');return;}if(!pin||pin.length<4){flash('PIN debe tener 4 dígitos','rojo');return;}const tabs=TABS_DEFAULT[rol]||TABS_DEFAULT.operador;const res=await db.from('usuarios').insert({nombre,pin,rol,activo:true,tabs_permitidos:tabs});if(res.error){flash('Error: '+res.error.message,'rojo');return;}flash('✅ '+nombre+' creado','verde');document.getElementById('nuNombre').value='';document.getElementById('nuPin').value='';await cargarUsuarios();}
+document.getElementById('modalPerms').addEventListener('click',function(e){if(e.target===this)cerrarModal();});
+async function verificarAdmin(){const pin=prompt('PIN de administrador para acceder:');if(!pin){window.location.href='/';return;}const res=await db.from('usuarios').select('*').eq('pin',pin).eq('rol','admin').maybeSingle();if(res.error||!res.data){alert('Acceso denegado — Solo administradores');window.location.href='/';return;}cargarUsuarios();}
+verificarAdmin();
+</script>
+</body>
+</html>
