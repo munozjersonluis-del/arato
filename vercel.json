@@ -1,5 +1,6 @@
 {
   "rewrites": [
-    { "source": "/((?!api/|usuarios).*)", "destination": "/index.html" }
+    { "source": "/usuarios", "destination": "/usuarios.html" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
