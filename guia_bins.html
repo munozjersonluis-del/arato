@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Guía de Control de Bins — Arato</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --verde:#16A34A;--verde-c:#DCFCE7;
+  --rojo:#DC2626;--rojo-c:#FEE2E2;
+  --azul:#2563EB;--azul-c:#DBEAFE;
+  --amarillo:#D97706;--amarillo-c:#FEF3C7;
+  --bg:#F0F4F8;--bg2:#FFFFFF;--bg3:#F8FAFC;
+  --texto:#1E293B;--texto2:#475569;--texto3:#94A3B8;
+  --border:#E2E8F0;--shadow:0 2px 8px rgba(0,0,0,0.08);
+}
+body{font-family:Inter,sans-serif;background:var(--bg);color:var(--texto);min-height:100vh;}
+
+/* HEADER */
+.hdr{background:#1A5C38;padding:14px 16px 10px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.2);}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;}
+.hdr-title{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#fff;letter-spacing:2px;}
+.hdr-sub{font-size:0.6rem;color:rgba(255,255,255,0.75);letter-spacing:1px;text-transform:uppercase;}
+.hdr-btns{display:flex;gap:6px;}
+.hdr-btn{background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:8px;padding:7px 11px;font-size:0.72rem;font-weight:700;cursor:pointer;}
+.hdr-btn:active{background:rgba(255,255,255,0.35);}
+
+.wrap{max-width:860px;margin:0 auto;padding:14px;}
+
+/* CARD */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:var(--shadow);}
+.ctitle{font-size:0.6rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--texto3);margin-bottom:10px;}
+
+/* GRUPOS SELECTOR */
+.grupos-grid{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px;}
+.grupo-btn{padding:8px 14px;border-radius:10px;border:2px solid var(--border);background:var(--bg3);color:var(--texto2);font-size:0.8rem;font-weight:700;cursor:pointer;transition:all 0.15s;}
+.grupo-btn.activo{background:#1A5C38;border-color:#1A5C38;color:#fff;}
+.grupo-btn.tiene-datos{border-color:var(--verde);color:var(--verde);}
+
+/* SUBGRUPOS */
+.subgrupos-wrap{margin-bottom:14px;}
+.subgrupo-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.subgrupo-titulo{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:#1A5C38;letter-spacing:1px;}
+.subgrupo-stats{font-size:0.65rem;color:var(--texto3);font-weight:600;}
+.sg-tabs{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;}
+.sg-tab{padding:6px 12px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg3);color:var(--texto2);font-size:0.75rem;font-weight:700;cursor:pointer;}
+.sg-tab.activo{background:var(--azul);border-color:var(--azul);color:#fff;}
+.sg-tab .sg-check{font-size:0.6rem;margin-left:3px;}
+.btn-add-sg{padding:6px 12px;border-radius:8px;border:1.5px dashed var(--verde);background:none;color:var(--verde);font-size:0.75rem;font-weight:700;cursor:pointer;}
+
+/* BINS GRID */
+.bins-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:6px;margin-bottom:12px;}
+.bin-item{
+  aspect-ratio:1;
+  border-radius:8px;
+  border:2px solid var(--border);
+  background:var(--bg3);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;
+  font-weight:800;
+  font-size:0.85rem;
+  color:var(--texto2);
+  transition:all 0.15s;
+  position:relative;
+  user-select:none;
+}
+.bin-item:active{transform:scale(0.92);}
+.bin-item.llegado{background:var(--verde-c);border-color:var(--verde);color:var(--verde);}
+.bin-item.llegado::after{content:'✓';position:absolute;top:2px;right:4px;font-size:0.6rem;color:var(--verde);}
+.bin-item.faltante{background:var(--rojo-c);border-color:var(--rojo);color:var(--rojo);}
+.bin-item .bin-num{font-size:0.9rem;font-weight:800;line-height:1;}
+.bin-item .bin-hora{font-size:0.45rem;color:var(--texto3);margin-top:1px;}
+
+/* PROGRESO */
+.prog-wrap{margin-bottom:10px;}
+.prog-bar-bg{background:var(--bg3);border-radius:20px;height:10px;overflow:hidden;margin-bottom:5px;}
+.prog-bar-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,#16A34A,#22C55E);transition:width 0.3s;}
+.prog-info{display:flex;justify-content:space-between;font-size:0.62rem;color:var(--texto3);font-weight:600;}
+
+/* RESUMEN */
+.resumen-row{display:flex;gap:6px;margin-bottom:10px;}
+.res-kpi{flex:1;background:var(--bg3);border-radius:10px;padding:10px;text-align:center;border:1px solid var(--border);}
+.res-kpi-val{font-size:1.4rem;font-weight:800;}
+.res-kpi-lbl{font-size:0.55rem;color:var(--texto3);font-weight:700;text-transform:uppercase;letter-spacing:1px;}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;}
+.modal-bg.open{display:flex;}
+.modal{background:#fff;border-radius:16px;padding:20px;width:88%;max-width:360px;}
+.modal-title{font-size:1rem;font-weight:800;margin-bottom:14px;}
+.modal-input{width:100%;background:var(--bg3);border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;font-size:0.9rem;font-family:Inter,sans-serif;margin-bottom:10px;}
+.modal-btns{display:flex;gap:8px;}
+.modal-btn{flex:1;border:none;border-radius:9px;padding:11px;font-weight:700;cursor:pointer;font-size:0.85rem;font-family:Inter,sans-serif;}
+.modal-btn-ok{background:var(--verde);color:#fff;}
+.modal-btn-cancel{background:var(--bg3);color:var(--texto2);}
+
+/* FLASH */
+.flash{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:#1E293B;color:#fff;padding:9px 18px;border-radius:10px;font-size:0.78rem;font-weight:600;z-index:999;display:none;white-space:nowrap;}
+
+/* BOTONES */
+.btn{border:none;border-radius:10px;padding:10px 16px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;}
+.btn-g{background:var(--verde);color:#fff;}
+.btn-r{background:var(--rojo);color:#fff;}
+.btn-ghost{background:none;border:1.5px solid var(--border);color:var(--texto2);}
+.btn-sm{padding:6px 12px;font-size:0.7rem;border-radius:8px;}
+
+/* PRINT */
+@media print {
+  .hdr,.hdr-btns,.no-print,#gruposGrid button:not(.activo){display:none!important;}
+  body{background:white;}
+  .wrap{padding:0;}
+  .card{box-shadow:none;border:1px solid #ccc;break-inside:avoid;margin-bottom:8px;}
+  .bins-grid{grid-template-columns:repeat(10,1fr)!important;gap:4px!important;}
+  .bin-item{font-size:0.65rem;aspect-ratio:1;}
+  .bin-item.llegado{background:#DCFCE7!important;border-color:#16A34A!important;color:#16A34A!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .bin-item.faltante{background:#FEE2E2!important;border-color:#DC2626!important;color:#DC2626!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .prog-bar-fill{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-top">
+    <div>
+      <div class="hdr-title">🌿 GUÍA DE CONTROL DE BINS</div>
+      <div class="hdr-sub">Arato Mission Produce · <span id="fechaHdr"></span></div>
+    </div>
+    <div class="hdr-btns">
+      <button class="hdr-btn no-print" onclick="verHistorial()">📅 Historial</button>
+      <button class="hdr-btn no-print" onclick="window.print()">🖨️ Imprimir</button>
+      <button class="hdr-btn no-print" onclick="resetearHoy()">🗑️ Resetear</button>
+    </div>
+  </div>
+</div>
+
+<div class="flash" id="flash"></div>
+
+<!-- Modal agregar subgrupo -->
+<div class="modal-bg" id="modalSG">
+  <div class="modal">
+    <div class="modal-title">➕ Agregar subgrupo</div>
+    <div style="font-size:0.72rem;color:var(--texto3);margin-bottom:10px;">Grupo seleccionado: <strong id="modalGrupoLabel"></strong></div>
+    <div style="font-size:0.72rem;color:var(--texto2);margin-bottom:6px;font-weight:600;">Subgrupo (ej: A1, A2):</div>
+    <input class="modal-input" id="sgNombre" placeholder="Ej: A1" style="text-transform:uppercase;" maxlength="5">
+    <div style="font-size:0.72rem;color:var(--texto2);margin-bottom:6px;font-weight:600;">Cantidad de bins:</div>
+    <input class="modal-input" type="number" id="sgCantidad" placeholder="Ej: 60" min="1" max="70" value="60">
+    <div class="modal-btns">
+      <button class="modal-btn modal-btn-ok" onclick="confirmarAgregarSG()">✅ Agregar</button>
+      <button class="modal-btn modal-btn-cancel" onclick="cerrarModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal info bin -->
+<div class="modal-bg" id="modalBin">
+  <div class="modal">
+    <div class="modal-title" id="modalBinTitle">Bin #</div>
+    <div style="font-size:0.75rem;color:var(--texto3);margin-bottom:12px;" id="modalBinSub"></div>
+    <div class="modal-btns" style="flex-direction:column;gap:8px;">
+      <button class="modal-btn modal-btn-ok" onclick="marcarBinLlegado()">✅ Marcar como LLEGADO</button>
+      <button class="modal-btn" style="background:var(--rojo-c);color:var(--rojo);" onclick="marcarBinFaltante()">⚠️ Marcar como FALTANTE</button>
+      <button class="modal-btn" style="background:var(--bg3);color:var(--texto2);" onclick="quitarMarcaBin()">↩️ Quitar marca</button>
+      <button class="modal-btn modal-btn-cancel" onclick="cerrarModalBin()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal confirmar eliminar -->
+<div class="modal-bg" id="modalEliminar">
+  <div class="modal">
+    <div class="modal-title">⚠️ Confirmar eliminación</div>
+    <div style="font-size:0.82rem;color:var(--texto2);margin-bottom:16px;" id="modalEliminarMsg"></div>
+    <div class="modal-btns">
+      <button class="modal-btn modal-btn-ok" style="background:var(--rojo);" onclick="ejecutarEliminar()">🗑️ Eliminar</button>
+      <button class="modal-btn modal-btn-cancel" onclick="cerrarModalEliminar()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- Selector de grupo -->
+  <div class="card">
+    <div class="ctitle">Selecciona un grupo</div>
+    <div class="grupos-grid" id="gruposGrid"></div>
+  </div>
+
+  <!-- Panel del grupo seleccionado -->
+  <div id="panelGrupo" style="display:none;">
+
+    <!-- KPIs resumen -->
+    <div class="card">
+      <div class="ctitle" id="resumenTitulo">Resumen del grupo</div>
+      <div class="resumen-row">
+        <div class="res-kpi"><div class="res-kpi-val" style="color:var(--texto);" id="kpiTotal">0</div><div class="res-kpi-lbl">Total bins</div></div>
+        <div class="res-kpi"><div class="res-kpi-val" style="color:var(--verde);" id="kpiLlegados">0</div><div class="res-kpi-lbl">Llegaron ✅</div></div>
+        <div class="res-kpi"><div class="res-kpi-val" style="color:var(--texto3);" id="kpiFaltantes">0</div><div class="res-kpi-lbl">Pendientes ⬜</div></div>
+        <div class="res-kpi"><div class="res-kpi-val" style="color:var(--rojo);" id="kpiMarcados">0</div><div class="res-kpi-lbl">Faltantes ⚠️</div></div>
+      </div>
+      <div class="prog-wrap">
+        <div class="prog-bar-bg"><div class="prog-bar-fill" id="progBarra" style="width:0%"></div></div>
+        <div class="prog-info"><span id="progPct">0%</span><span id="progTxt">0 / 0 bins</span></div>
+      </div>
+      <!-- Botones de reporte -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;" class="no-print">
+        <button onclick="enviarReporteWsp()" style="background:#25D366;color:#fff;border:none;border-radius:10px;padding:12px 8px;font-size:0.8rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+          <span style="font-size:1.1rem;">📲</span> Enviar WhatsApp
+        </button>
+        <button onclick="sincronizarSheets()" style="background:#0F9D58;color:#fff;border:none;border-radius:10px;padding:12px 8px;font-size:0.8rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+          <span style="font-size:1.1rem;">📋</span> Sync Sheets
+        </button>
+      </div>
+    </div>
+
+    <!-- Subgrupos -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div class="ctitle" style="margin-bottom:0;">Subgrupos</div>
+        <button class="btn btn-g btn-sm no-print" onclick="abrirModalSG()">➕ Agregar subgrupo</button>
+      </div>
+      <div class="sg-tabs" id="sgTabs"></div>
+      <div id="sgPanel"></div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+// ── Estado ──
+const GRUPOS = ['A','B','C','D','E','F','G','H','I','J'];
+let data = JSON.parse(localStorage.getItem('arato_guia') || '{}');
+let grupoActivo = null;
+let sgActivo = null;
+let binSeleccionado = null;
+
+// Fecha actual
+function fechaHoy() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+// Auto-reset si es un día nuevo
+function checkFecha() {
+  const hoy = fechaHoy();
+  const guardada = localStorage.getItem('arato_guia_fecha');
+  if (guardada && guardada !== hoy) {
+    // Guardar copia del día anterior
+    localStorage.setItem('arato_guia_' + guardada, JSON.stringify(data));
+    data = {};
+    flash('📅 Nuevo día — guía reseteada automáticamente', 'azul');
+  }
+  localStorage.setItem('arato_guia_fecha', hoy);
+}
+
+// Inicializar estructura de datos
+function initData() {
+  GRUPOS.forEach(g => {
+    if (!data[g]) data[g] = { subgrupos: {} };
+  });
+}
+
+function guardar() {
+  localStorage.setItem('arato_guia', JSON.stringify(data));
+}
+
+function flash(msg, tipo) {
+  const f = document.getElementById('flash');
+  f.textContent = msg;
+  f.style.background = tipo==='verde'?'#16A34A':tipo==='rojo'?'#DC2626':tipo==='azul'?'#2563EB':'#1E293B';
+  f.style.display = 'block';
+  setTimeout(() => f.style.display='none', 2000);
+}
+
+// ── FECHA ──
+function formatFecha() {
+  const d = new Date();
+  return d.toLocaleDateString('es-PE', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+}
+document.getElementById('fechaHdr').textContent = formatFecha();
+
+// ── GRUPOS ──
+function renderGrupos() {
+  const grid = document.getElementById('gruposGrid');
+  grid.innerHTML = '';
+  GRUPOS.forEach(g => {
+    const tiene = data[g] && Object.keys(data[g].subgrupos).length > 0;
+    const activo = g === grupoActivo;
+
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;align-items:center;gap:4px;';
+
+    const btn = document.createElement('button');
+    btn.className = 'grupo-btn' + (activo?' activo':tiene?' tiene-datos':'');
+    btn.textContent = 'Grupo ' + g + (tiene?' ✓':'');
+    btn.addEventListener('click', function(e) { e.stopPropagation(); seleccionarGrupo(g); });
+    wrap.appendChild(btn);
+
+    if (tiene) {
+      const del = document.createElement('button');
+      del.textContent = '🗑️';
+      del.title = 'Eliminar grupo ' + g;
+      del.style.cssText = 'background:none;border:1px solid var(--rojo);color:var(--rojo);border-radius:6px;padding:4px 7px;font-size:0.65rem;cursor:pointer;';
+      del.addEventListener('click', function(e) { e.stopPropagation(); eliminarGrupo(g); });
+      wrap.appendChild(del);
+    }
+
+    grid.appendChild(wrap);
+  });
+}
+
+function seleccionarGrupo(g) {
+  grupoActivo = g;
+  sgActivo = null;
+  renderGrupos();
+  renderPanel();
+  document.getElementById('panelGrupo').style.display = 'block';
+}
+
+// ── PANEL ──
+function renderPanel() {
+  if (!grupoActivo) return;
+  const gData = data[grupoActivo];
+  const sgs = Object.keys(gData.subgrupos);
+  document.getElementById('resumenTitulo').textContent = 'Resumen · Grupo ' + grupoActivo;
+
+  // Auto-seleccionar primer subgrupo
+  if (!sgActivo && sgs.length > 0) sgActivo = sgs[0];
+
+  // Tabs
+  const tabs = document.getElementById('sgTabs');
+  tabs.innerHTML = sgs.map(sg => {
+    const bins = gData.subgrupos[sg].bins;
+    const llegados = bins.filter(b => b.estado==='llegado').length;
+    const total = bins.length;
+    return `<button class="sg-tab ${sg===sgActivo?'activo':''}" onclick="seleccionarSG('${sg}')">
+      ${sg} <span class="sg-check">${llegados}/${total} bins</span>
+    </button>`;
+  }).join('') + `<button class="btn-add-sg no-print" onclick="abrirModalSG()">+ Subgrupo</button>`;
+
+  // Panel bins
+  renderBins();
+  actualizarKPIs();
+}
+
+function seleccionarSG(sg) {
+  sgActivo = sg;
+  renderPanel();
+}
+
+function renderBins() {
+  const panel = document.getElementById('sgPanel');
+  if (!sgActivo || !data[grupoActivo]?.subgrupos[sgActivo]) {
+    panel.innerHTML = '<div style="text-align:center;padding:20px;color:var(--texto3);">Selecciona o agrega un subgrupo.</div>';
+    return;
+  }
+  const bins = data[grupoActivo].subgrupos[sgActivo].bins;
+  const llegados = bins.filter(b=>b.estado==='llegado').length;
+  const total = bins.length;
+
+  panel.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div style="font-size:0.72rem;font-weight:700;color:var(--texto2);">
+        Subgrupo <strong style="color:#1A5C38;font-size:0.9rem;">${sgActivo}</strong> — ${total} bins
+      </div>
+      <div style="display:flex;gap:5px;">
+        <button class="btn btn-ghost btn-sm no-print" onclick="marcarTodos('llegado')">✅ Todos llegaron</button>
+        <button class="btn btn-ghost btn-sm no-print" style="color:var(--rojo);" onclick="confirmarEliminarSG()">🗑️</button>
+      </div>
+    </div>
+    <div class="bins-grid">
+      ${bins.map((b,i) => `
+        <div class="bin-item ${b.estado||''}" onclick="seleccionarBin(${i})">
+          <div class="bin-num">${b.num}</div>
+          ${b.hora ? `<div class="bin-hora">${b.hora}</div>` : ''}
+        </div>
+      `).join('')}
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
+      <div style="display:flex;align-items:center;gap:5px;font-size:0.62rem;color:var(--texto3);">
+        <div style="width:14px;height:14px;border-radius:3px;background:var(--verde-c);border:1.5px solid var(--verde);"></div> Llegó
+      </div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:0.62rem;color:var(--texto3);">
+        <div style="width:14px;height:14px;border-radius:3px;background:var(--rojo-c);border:1.5px solid var(--rojo);"></div> Faltante
+      </div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:0.62rem;color:var(--texto3);">
+        <div style="width:14px;height:14px;border-radius:3px;background:var(--bg3);border:1.5px solid var(--border);"></div> Pendiente
+      </div>
+    </div>
+  `;
+}
+
+function actualizarKPIs() {
+  if (!grupoActivo) return;
+  let total=0, llegados=0, faltantes=0, marcados=0;
+  Object.values(data[grupoActivo].subgrupos).forEach(sg => {
+    sg.bins.forEach(b => {
+      total++;
+      if (b.estado==='llegado') llegados++;
+      else if (b.estado==='faltante') { faltantes++; marcados++; }
+      else faltantes++;
+    });
+  });
+  document.getElementById('kpiTotal').textContent = total;
+  document.getElementById('kpiLlegados').textContent = llegados;
+  document.getElementById('kpiFaltantes').textContent = total - llegados - marcados;
+  document.getElementById('kpiMarcados').textContent = marcados;
+  const pct = total > 0 ? Math.round(llegados/total*100) : 0;
+  document.getElementById('progBarra').style.width = pct + '%';
+  document.getElementById('progPct').textContent = pct + '%';
+  document.getElementById('progTxt').textContent = llegados + ' / ' + total + ' bins llegaron';
+}
+
+// ── BINS ──
+function seleccionarBin(idx) {
+  const bins = data[grupoActivo].subgrupos[sgActivo].bins;
+  binSeleccionado = idx;
+  const b = bins[idx];
+  document.getElementById('modalBinTitle').textContent = 'Bin #' + b.num + ' — ' + sgActivo;
+  document.getElementById('modalBinSub').textContent = b.estado === 'llegado' ? '✅ Ya llegó · ' + (b.hora||'') : b.estado === 'faltante' ? '⚠️ Marcado como faltante' : '⬜ Pendiente';
+  document.getElementById('modalBin').classList.add('open');
+}
+
+function marcarBinLlegado() {
+  if (binSeleccionado === null) return;
+  const bins = data[grupoActivo].subgrupos[sgActivo].bins;
+  const ahora = new Date();
+  const hora = ahora.getHours().toString().padStart(2,'0') + ':' + ahora.getMinutes().toString().padStart(2,'0');
+  bins[binSeleccionado].estado = 'llegado';
+  bins[binSeleccionado].hora = hora;
+  guardar(); cerrarModalBin(); renderBins(); actualizarKPIs(); renderPanel();
+  flash('✅ Bin marcado como llegado', 'verde');
+}
+
+function marcarBinFaltante() {
+  if (binSeleccionado === null) return;
+  const bins = data[grupoActivo].subgrupos[sgActivo].bins;
+  bins[binSeleccionado].estado = 'faltante';
+  delete bins[binSeleccionado].hora;
+  guardar(); cerrarModalBin(); renderBins(); actualizarKPIs(); renderPanel();
+  flash('⚠️ Bin marcado como faltante', 'rojo');
+}
+
+function quitarMarcaBin() {
+  if (binSeleccionado === null) return;
+  const bins = data[grupoActivo].subgrupos[sgActivo].bins;
+  bins[binSeleccionado].estado = '';
+  delete bins[binSeleccionado].hora;
+  guardar(); cerrarModalBin(); renderBins(); actualizarKPIs(); renderPanel();
+  flash('↩️ Marca quitada', 'azul');
+}
+
+function marcarTodos(estado) {
+  if (!confirm('¿Marcar todos los bins del subgrupo ' + sgActivo + ' como llegados?')) return;
+  const bins = data[grupoActivo].subgrupos[sgActivo].bins;
+  const hora = new Date().getHours().toString().padStart(2,'0') + ':' + new Date().getMinutes().toString().padStart(2,'0');
+  bins.forEach(b => { b.estado = estado; if(estado==='llegado') b.hora = hora; });
+  guardar(); renderBins(); actualizarKPIs(); renderPanel();
+  flash('✅ Todos marcados', 'verde');
+}
+
+// ── SUBGRUPOS ──
+function abrirModalSG() {
+  if (!grupoActivo) { flash('Selecciona un grupo primero', 'rojo'); return; }
+  document.getElementById('modalGrupoLabel').textContent = 'Grupo ' + grupoActivo;
+  document.getElementById('sgNombre').value = '';
+  document.getElementById('sgCantidad').value = '60';
+  document.getElementById('modalSG').classList.add('open');
+  setTimeout(() => document.getElementById('sgNombre').focus(), 100);
+}
+
+function confirmarAgregarSG() {
+  const nombre = document.getElementById('sgNombre').value.trim().toUpperCase();
+  const cantidad = parseInt(document.getElementById('sgCantidad').value) || 60;
+  if (!nombre) { flash('Ingresa el nombre del subgrupo', 'rojo'); return; }
+  if (data[grupoActivo].subgrupos[nombre]) { flash('El subgrupo ' + nombre + ' ya existe', 'amarillo'); return; }
+  // Crear bins numerados
+  data[grupoActivo].subgrupos[nombre] = {
+    bins: Array.from({length: cantidad}, (_, i) => ({ num: i+1, estado: '', hora: '' }))
+  };
+  sgActivo = nombre;
+  guardar(); cerrarModal(); renderGrupos(); renderPanel();
+  flash('✅ Subgrupo ' + nombre + ' creado con ' + cantidad + ' bins', 'verde');
+}
+
+let _eliminarTipo = null;
+let _eliminarParam = null;
+
+function abrirModalEliminar(msg, tipo, param) {
+  _eliminarTipo = tipo;
+  _eliminarParam = param;
+  document.getElementById('modalEliminarMsg').textContent = msg;
+  document.getElementById('modalEliminar').classList.add('open');
+}
+
+function cerrarModalEliminar() {
+  document.getElementById('modalEliminar').classList.remove('open');
+  _eliminarTipo = null;
+  _eliminarParam = null;
+}
+
+function ejecutarEliminar() {
+  document.getElementById('modalEliminar').classList.remove('open');
+  if (_eliminarTipo === 'grupo') {
+    var g = _eliminarParam;
+    data[g] = { subgrupos: {} };
+    if (grupoActivo === g) {
+      grupoActivo = null;
+      sgActivo = null;
+      document.getElementById('panelGrupo').style.display = 'none';
+    }
+    guardar();
+    renderGrupos();
+    flash('🗑️ Grupo ' + g + ' eliminado', 'rojo');
+  } else if (_eliminarTipo === 'subgrupo') {
+    var sg = _eliminarParam;
+    delete data[grupoActivo].subgrupos[sg];
+    var keys = Object.keys(data[grupoActivo].subgrupos);
+    sgActivo = keys.length > 0 ? keys[0] : null;
+    guardar();
+    renderGrupos();
+    renderPanel();
+    flash('🗑️ Subgrupo ' + sg + ' eliminado', 'rojo');
+  } else if (_eliminarTipo === 'resetHoy') {
+    localStorage.setItem('arato_guia_' + fechaHoy(), JSON.stringify(data));
+    data = {};
+    initData();
+    guardar();
+    grupoActivo = null; sgActivo = null;
+    document.getElementById('panelGrupo').style.display = 'none';
+    renderGrupos();
+    flash('✅ Guía reseteada', 'azul');
+  }
+  _eliminarTipo = null;
+  _eliminarParam = null;
+}
+
+function eliminarGrupo(g) {
+  abrirModalEliminar('¿Eliminar el Grupo ' + g + ' y todos sus subgrupos?', 'grupo', g);
+}
+
+function confirmarEliminarSG() {
+  abrirModalEliminar('¿Eliminar el subgrupo ' + sgActivo + '?', 'subgrupo', sgActivo);
+}
+
+// ── MODALES ──
+function cerrarModal() { document.getElementById('modalSG').classList.remove('open'); }
+function cerrarModalBin() { document.getElementById('modalBin').classList.remove('open'); binSeleccionado = null; }
+
+document.getElementById('modalSG').addEventListener('click', e => { if(e.target===document.getElementById('modalSG')) cerrarModal(); });
+document.getElementById('modalBin').addEventListener('click', e => { if(e.target===document.getElementById('modalBin')) cerrarModalBin(); });
+document.getElementById('modalEliminar').addEventListener('click', e => { if(e.target===document.getElementById('modalEliminar')) cerrarModalEliminar(); });
+
+// Enter en modal
+document.getElementById('sgCantidad').addEventListener('keydown', e => { if(e.key==='Enter') confirmarAgregarSG(); });
+document.getElementById('sgNombre').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('sgCantidad').focus(); });
+
+function resetearHoy() {
+  abrirModalEliminar('¿Resetear la guía de HOY? Se perderán todos los datos del día.', 'resetHoy', null);
+}
+
+function enviarReporteWsp() {
+  if (!grupoActivo) { flash('Selecciona un grupo primero', 'rojo'); return; }
+  const gData = data[grupoActivo];
+  const sgs = Object.keys(gData.subgrupos);
+  if (!sgs.length) { flash('No hay subgrupos', 'rojo'); return; }
+
+  const fecha = new Date().toLocaleDateString('es-PE', {day:'2-digit', month:'2-digit', year:'numeric'});
+  var lineas = [];
+  lineas.push('📋 *REPORTE BINS — Grupo ' + grupoActivo + '*');
+  lineas.push('📅 ' + fecha);
+  lineas.push('');
+
+  var totalLlegados = 0;
+  sgs.forEach(function(sg) {
+    var bins = gData.subgrupos[sg].bins;
+    var llegados = bins.filter(function(b){ return b.estado === 'llegado'; }).length;
+    totalLlegados += llegados;
+    if (llegados > 0) {
+      lineas.push('✅ ' + sg + ': *' + llegados + '* bins recepcionados');
+    }
+  });
+
+  lineas.push('');
+  lineas.push('📦 *TOTAL: ' + totalLlegados + ' bins recepcionados*');
+  lineas.push('');
+  lineas.push('_Arato Mission Produce_');
+
+  var msg = lineas.join('\n');
+  var url = 'https://wa.me/?text=' + encodeURIComponent(msg);
+  window.open(url, '_blank');
+}
+
+async function sincronizarSheets() {
+  if (!grupoActivo) { flash('Selecciona un grupo primero', 'rojo'); return; }
+  flash('Sincronizando con Google Sheets...', 'azul');
+
+  try {
+    const gData = data[grupoActivo];
+    const sgs = Object.keys(gData.subgrupos);
+    const fecha = fechaHoy();
+    const rows = [];
+
+    // Encabezados
+    rows.push(['FECHA', 'GRUPO', 'SUBGRUPO', 'BIN #', 'ESTADO', 'HORA LLEGADA']);
+
+    sgs.forEach(function(sg) {
+      gData.subgrupos[sg].bins.forEach(function(b) {
+        rows.push([
+          fecha,
+          grupoActivo,
+          sg,
+          b.num,
+          b.estado === 'llegado' ? 'Recepcionado' : b.estado === 'faltante' ? 'Faltante' : 'Pendiente',
+          b.hora || ''
+        ]);
+      });
+    });
+
+    // Enviar a Vercel API de sheets
+    var response = await fetch('/api/sheets-guia', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rows: rows, grupo: grupoActivo, fecha: fecha })
+    });
+
+    if (response.ok) {
+      flash('✅ Sincronizado con Google Sheets', 'verde');
+    } else {
+      flash('Error al sincronizar', 'rojo');
+    }
+  } catch(e) {
+    flash('Error: ' + e.message, 'rojo');
+  }
+}
+
+function verHistorial() {
+  var keys = [];
+  for (var i = 0; i < localStorage.length; i++) {
+    var k = localStorage.key(i);
+    if (k && k.startsWith('arato_guia_2')) keys.push(k);
+  }
+  if (!keys.length) { flash('Sin historial guardado', 'azul'); return; }
+  keys.sort().reverse();
+  var msg = 'Días guardados:\n' + keys.map(k => k.replace('arato_guia_','')).join('\n');
+  flash('📅 ' + keys.length + ' días en historial', 'azul');
+}
+
+// ── INIT ──
+checkFecha();
+initData();
+renderGrupos();
+</script>
+</body>
+</html>
