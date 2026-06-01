@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/usuarios", "destination": "/usuarios.html" },
+    { "source": "/guia", "destination": "/guia_bins.html" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
