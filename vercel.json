@@ -1,6 +1,7 @@
 {
   "rewrites": [
     { "source": "/guia", "destination": "/guia_bins.html" },
+    { "source": "/reporte", "destination": "/Reporte_Diario_WSP.html" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
