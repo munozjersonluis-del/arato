@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>Stock Bins — Arato</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+--ink:#0A0F0D;
+--paper:#F5F2EC;
+--field:#E8E4DB;
+--cream:#EDE9E0;
+--g:#1A7A4A;
+--g-light:#2ECC77;
+--g-dim:rgba(26,122,74,0.12);
+--r:#C0392B;
+--r-dim:rgba(192,57,43,0.1);
+--gold:#B8962E;
+--gold-dim:rgba(184,150,46,0.12);
+--b:#1A4A7A;
+--b-dim:rgba(26,74,122,0.1);
+--shadow:0 4px 24px rgba(10,15,13,0.08);
+--radius:16px;
+}
+html,body{height:100%;background:var(--paper);}
+body{font-family:'DM Sans',sans-serif;color:var(--ink);overflow-x:hidden;}
+
+/* ── NOISE TEXTURE ── */
+body::before{
+content:'';position:fixed;inset:0;
+background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+pointer-events:none;z-index:0;
+}
+
+/* ── HEADER ── */
+.hdr{
+position:sticky;top:0;z-index:100;
+background:var(--ink);
+padding:0 20px;
+display:flex;align-items:stretch;justify-content:space-between;
+min-height:72px;
+}
+.hdr-brand{display:flex;flex-direction:column;justify-content:center;padding:12px 0;}
+.hdr-eyebrow{font-family:'DM Mono',monospace;font-size:0.52rem;color:rgba(255,255,255,0.4);letter-spacing:3px;text-transform:uppercase;margin-bottom:3px;}
+.hdr-name{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;color:#fff;letter-spacing:-0.5px;}
+
+.hdr-stock-pill{
+display:flex;align-items:center;gap:10px;
+background:var(--g);
+margin:10px 0;
+border-radius:12px;
+padding:8px 16px;
+animation:pulse-glow 3s ease-in-out infinite;
+}
+@keyframes pulse-glow{
+0%,100%{box-shadow:0 0 0 0 rgba(46,204,119,0);}
+50%{box-shadow:0 0 16px 2px rgba(46,204,119,0.35);}
+}
+.hdr-stock-num{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:#fff;line-height:1;}
+.hdr-stock-lbl{font-size:0.55rem;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:1.5px;line-height:1.3;}
+
+/* ── MAIN ── */
+.main{position:relative;z-index:1;max-width:600px;margin:0 auto;padding:20px 16px 40px;}
+
+/* ── KPI ROW ── */
+.kpi-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:20px;}
+.kpi{
+background:var(--ink);
+border-radius:14px;
+padding:14px 12px;
+position:relative;overflow:hidden;
+animation:fade-up 0.4s ease both;
+}
+.kpi:nth-child(2){animation-delay:0.08s;}
+.kpi:nth-child(3){animation-delay:0.16s;}
+@keyframes fade-up{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+.kpi::after{
+content:'';position:absolute;bottom:-20px;right:-20px;
+width:60px;height:60px;border-radius:50%;
+opacity:0.15;
+}
+.kpi.g::after{background:var(--g-light);}
+.kpi.r::after{background:var(--r);}
+.kpi.b::after{background:#5B9BD5;}
+.kpi-val{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:#fff;line-height:1;margin-bottom:4px;}
+.kpi-lbl{font-size:0.5rem;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.45);}
+.kpi-bar{height:3px;background:rgba(255,255,255,0.08);border-radius:2px;margin-top:8px;}
+.kpi-bar-fill{height:100%;border-radius:2px;transition:width 0.6s ease;}
+.kpi.g .kpi-bar-fill{background:var(--g-light);}
+.kpi.r .kpi-bar-fill{background:#E74C3C;}
+.kpi.b .kpi-bar-fill{background:#5B9BD5;}
+
+/* ── FORM CARD ── */
+.form-card{
+background:#fff;
+border-radius:var(--radius);
+border:1.5px solid var(--field);
+box-shadow:var(--shadow);
+overflow:hidden;
+margin-bottom:16px;
+animation:fade-up 0.4s ease 0.2s both;
+}
+.form-header{
+background:var(--cream);
+padding:14px 18px;
+display:flex;align-items:center;gap:8px;
+border-bottom:1px solid var(--field);
+}
+.form-header-dot{width:8px;height:8px;border-radius:50%;background:var(--g);}
+.form-header-title{font-family:'Syne',sans-serif;font-size:0.78rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ink);}
+.form-body{padding:18px;}
+
+/* ── TIPO BUTTONS ── */
+.tipo-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+.tipo-opt{
+border:2px solid var(--field);
+border-radius:12px;background:var(--paper);
+padding:14px 10px;cursor:pointer;
+transition:all 0.2s;
+display:flex;flex-direction:column;align-items:center;gap:5px;
+}
+.tipo-opt:active{transform:scale(0.97);}
+.tipo-opt.active-g{border-color:var(--g);background:var(--g-dim);}
+.tipo-opt.active-r{border-color:var(--r);background:var(--r-dim);}
+.tipo-opt-icon{font-size:1.4rem;}
+.tipo-opt-lbl{font-family:'Syne',sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:.5px;}
+.tipo-opt-sub{font-size:0.55rem;color:#888;text-align:center;}
+
+/* ── INPUTS ── */
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.field-grp{margin-bottom:10px;}
+.field-grp label{display:block;font-size:0.62rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:5px;}
+.field-grp input,.field-grp select,.field-grp textarea{
+width:100%;padding:10px 14px;
+border:1.5px solid var(--field);
+border-radius:10px;
+font-size:0.88rem;
+font-family:'DM Sans',sans-serif;
+color:var(--ink);background:var(--paper);
+outline:none;transition:border-color 0.2s;
+}
+.field-grp input:focus,.field-grp select:focus{border-color:var(--g);}
+
+/* ── BTN ── */
+.btn-reg{
+width:100%;padding:14px;
+border:none;border-radius:12px;
+font-family:'Syne',sans-serif;font-size:0.88rem;font-weight:700;letter-spacing:.5px;
+cursor:pointer;transition:all 0.2s;
+position:relative;overflow:hidden;
+}
+.btn-reg::after{
+content:'';position:absolute;inset:0;
+background:rgba(255,255,255,0.1);
+opacity:0;transition:opacity 0.2s;
+}
+.btn-reg:active::after{opacity:1;}
+.btn-g-fill{background:var(--g);color:#fff;box-shadow:0 4px 14px rgba(26,122,74,0.3);}
+.btn-r-fill{background:var(--r);color:#fff;box-shadow:0 4px 14px rgba(192,57,43,0.3);}
+
+/* ── HISTORIAL ── */
+.hist-card{
+background:#fff;
+border-radius:var(--radius);
+border:1.5px solid var(--field);
+box-shadow:var(--shadow);
+overflow:hidden;
+animation:fade-up 0.4s ease 0.3s both;
+}
+.hist-header{
+background:var(--ink);
+padding:14px 18px;
+display:flex;justify-content:space-between;align-items:center;
+}
+.hist-title{font-family:'Syne',sans-serif;font-size:0.75rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#fff;}
+.hist-actions{display:flex;gap:6px;}
+.btn-outline{
+background:rgba(255,255,255,0.08);
+border:1px solid rgba(255,255,255,0.2);
+border-radius:8px;
+padding:6px 10px;
+font-size:0.62rem;font-weight:600;
+color:rgba(255,255,255,0.85);
+cursor:pointer;font-family:'DM Sans',sans-serif;
+transition:all 0.15s;
+}
+.btn-outline:active{background:rgba(255,255,255,0.18);}
+
+/* ── MOVIMIENTO ROWS ── */
+.mov-list{padding:10px;}
+.mov-row{
+display:flex;align-items:center;gap:10px;
+padding:10px 8px;
+border-radius:10px;
+margin-bottom:4px;
+transition:background 0.15s;
+border:1px solid transparent;
+}
+.mov-row:active{background:var(--cream);}
+.mov-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.mov-dot.g{background:var(--g);}
+.mov-dot.r{background:var(--r);}
+.mov-info{flex:1;min-width:0;}
+.mov-fecha{font-size:0.6rem;font-family:'DM Mono',monospace;color:#888;}
+.mov-tipo{font-size:0.72rem;font-weight:600;color:var(--ink);}
+.mov-obs{font-size:0.62rem;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;}
+.mov-right{text-align:right;flex-shrink:0;}
+.mov-bins{font-family:'Syne',sans-serif;font-size:0.85rem;font-weight:700;}
+.mov-bins.g{color:var(--g);}
+.mov-bins.r{color:var(--r);}
+.mov-stock{font-size:0.58rem;font-family:'DM Mono',monospace;color:#888;}
+.mov-del{background:none;border:none;cursor:pointer;color:#ccc;font-size:0.75rem;padding:4px;border-radius:6px;transition:color 0.15s;}
+.mov-del:active{color:var(--r);}
+.mov-divider{height:1px;background:var(--field);margin:4px 8px;}
+.empty-state{
+text-align:center;padding:40px 20px;
+}
+.empty-icon{font-size:2.5rem;margin-bottom:8px;}
+.empty-txt{font-size:0.78rem;color:#999;}
+
+/* ── TOAST ── */
+.toast{
+position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+background:var(--ink);color:#fff;
+padding:10px 20px;border-radius:40px;
+font-size:0.75rem;font-weight:500;
+z-index:999;display:none;
+box-shadow:0 8px 24px rgba(0,0,0,0.2);
+white-space:nowrap;
+animation:toast-in 0.3s ease;
+}
+@keyframes toast-in{from{opacity:0;transform:translateX(-50%) translateY(8px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+.toast.ok{background:var(--g);}
+.toast.err{background:var(--r);}
+
+/* ── MÓDULOS SECTION ── */
+.mod-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:14px;}
+.mod-card{
+background:var(--paper);
+border:1.5px solid var(--field);
+border-radius:12px;
+padding:12px;
+}
+.mod-name{font-family:'Syne',sans-serif;font-size:0.72rem;font-weight:700;color:var(--ink);margin-bottom:8px;}
+.mod-stats{display:flex;justify-content:space-between;margin-bottom:6px;}
+.mod-stat-val{font-size:0.88rem;font-weight:700;}
+.mod-stat-lbl{font-size:0.5rem;letter-spacing:1px;text-transform:uppercase;color:#999;}
+.mod-progress{height:4px;background:var(--field);border-radius:2px;}
+.mod-progress-fill{height:100%;border-radius:2px;background:var(--g);transition:width 0.5s ease;}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:0;margin-bottom:16px;background:var(--field);border-radius:12px;padding:3px;}
+.tab-btn{flex:1;padding:9px;border:none;background:none;border-radius:10px;font-family:'Syne',sans-serif;font-size:0.68rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#999;cursor:pointer;transition:all 0.2s;}
+.tab-btn.on{background:#fff;color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,0.08);}
+.tab-content{display:none;}
+.tab-content.on{display:block;}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-brand">
+    <div class="hdr-eyebrow">Arato Mission Produce</div>
+    <div class="hdr-name">BIN STOCK</div>
+  </div>
+  <div class="hdr-stock-pill">
+    <div>
+      <div class="hdr-stock-num" id="hdr-stock">—</div>
+      <div class="hdr-stock-lbl">bins<br>vacíos</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="main">
+
+  <!-- KPIs -->
+  <div class="kpi-row">
+    <div class="kpi g">
+      <div class="kpi-val" id="kpi-ing">0</div>
+      <div class="kpi-lbl">Ingresado</div>
+      <div class="kpi-bar"><div class="kpi-bar-fill" id="bar-ing" style="width:100%"></div></div>
+    </div>
+    <div class="kpi r">
+      <div class="kpi-val" id="kpi-sal">0</div>
+      <div class="kpi-lbl">Salida</div>
+      <div class="kpi-bar"><div class="kpi-bar-fill" id="bar-sal" style="width:0%"></div></div>
+    </div>
+    <div class="kpi b">
+      <div class="kpi-val" id="kpi-stock">0</div>
+      <div class="kpi-lbl">Stock</div>
+      <div class="kpi-bar"><div class="kpi-bar-fill" id="bar-stk" style="width:50%"></div></div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab-btn on" onclick="goTab('mov',this)">Movimientos</button>
+    <button class="tab-btn" onclick="goTab('mod',this);cargarModulos()">Por Módulo</button>
+  </div>
+
+  <!-- TAB MOVIMIENTOS -->
+  <div class="tab-content on" id="tab-mov">
+
+    <!-- Formulario -->
+    <div class="form-card">
+      <div class="form-header">
+        <div class="form-header-dot"></div>
+        <div class="form-header-title">Nuevo Movimiento</div>
+      </div>
+      <div class="form-body">
+        <div class="tipo-row">
+          <div class="tipo-opt active-g" id="opt-ing" onclick="setTipo('ingreso')">
+            <div class="tipo-opt-icon">📥</div>
+            <div class="tipo-opt-lbl" style="color:var(--g);">INGRESO</div>
+            <div class="tipo-opt-sub">Camión llega<br>con bins</div>
+          </div>
+          <div class="tipo-opt" id="opt-sal" onclick="setTipo('salida')">
+            <div class="tipo-opt-icon">🚛</div>
+            <div class="tipo-opt-lbl" style="color:var(--r);">SALIDA</div>
+            <div class="tipo-opt-sub">Sale a planta<br>avocado</div>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field-grp">
+            <label>Fecha</label>
+            <input type="date" id="f-fecha">
+          </div>
+          <div class="field-grp">
+            <label>Bins</label>
+            <input type="number" id="f-cantidad" min="1" placeholder="0">
+          </div>
+        </div>
+        <div class="field-grp">
+          <label>Observación</label>
+          <input type="text" id="f-obs" placeholder="Placa, módulo, prestado a Arato 2...">
+        </div>
+        <button class="btn-reg btn-g-fill" id="btn-reg" onclick="guardar()">Registrar Ingreso</button>
+      </div>
+    </div>
+
+    <!-- Historial -->
+    <div class="hist-card">
+      <div class="hist-header">
+        <div class="hist-title">Historial</div>
+        <div class="hist-actions">
+          <button class="btn-outline" onclick="enviarWsp()">📲 WSP</button>
+          <button class="btn-outline" onclick="descargarExcel()">📊 Excel</button>
+        </div>
+      </div>
+      <div class="mov-list" id="mov-list">
+        <div class="empty-state"><div class="empty-icon">📦</div><div class="empty-txt">Sin movimientos</div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TAB MÓDULOS -->
+  <div class="tab-content" id="tab-mod">
+
+    <!-- Formulario módulo -->
+    <div class="form-card" style="margin-bottom:14px;">
+      <div class="form-header">
+        <div class="form-header-dot" style="background:var(--gold);"></div>
+        <div class="form-header-title">Asignar Bins a Módulo</div>
+      </div>
+      <div class="form-body">
+        <div class="row2">
+          <div class="field-grp">
+            <label>Módulo</label>
+            <select id="m-modulo">
+              <option value="">— Seleccionar —</option>
+              <option>Módulo 1</option><option>Módulo 2</option><option>Módulo 3</option>
+              <option>Módulo 4</option><option>Módulo 5</option><option>Módulo 6</option>
+              <option>Módulo 7</option><option>Módulo 8</option><option>Módulo 9</option>
+              <option>Módulo 10</option><option>Módulo 11</option><option>Módulo 12</option>
+              <option>Módulo 13</option><option>Módulo 14</option><option>Módulo 15</option>
+              <option>Módulo 16</option><option>Módulo 17</option><option>Módulo 18</option>
+              <option>Módulo 19</option><option>Módulo 20</option><option>Módulo 21</option>
+              <option>Módulo 22</option><option>Módulo 23</option><option>Módulo 24</option>
+            </select>
+          </div>
+          <div class="field-grp">
+            <label>Bins</label>
+            <input type="number" id="m-cantidad" min="1" placeholder="0">
+          </div>
+        </div>
+        <div class="field-grp">
+          <label>Observación</label>
+          <input type="text" id="m-obs" placeholder="Ej: prestado de Arato 2...">
+        </div>
+        <button class="btn-reg btn-g-fill" onclick="guardarModulo()" style="background:var(--gold);box-shadow:0 4px 14px rgba(184,150,46,0.3);">📍 Registrar en Módulo</button>
+      </div>
+    </div>
+
+    <!-- Resumen módulos -->
+    <div class="hist-card">
+      <div class="hist-header">
+        <div class="hist-title">Distribución por Módulo</div>
+        <div class="hist-actions">
+          <button class="btn-outline" onclick="cargarModulos()">🔄</button>
+          <button class="btn-outline" onclick="wspModulos()">📲</button>
+        </div>
+      </div>
+      <!-- Total -->
+      <div style="padding:12px 14px;border-bottom:1px solid var(--field);display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-family:'DM Mono',monospace;font-size:0.7rem;color:#888;">TOTAL DISTRIBUIDO</span>
+        <span style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:var(--gold);" id="mod-total">0</span>
+      </div>
+      <div id="mod-content">
+        <div class="empty-state"><div class="empty-icon">🗺️</div><div class="empty-txt">Toca 🔄 para cargar</div></div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+const SURL='https://rqvcvffyynpnighzwxju.supabase.co';
+const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdmN2ZmZ5eW5wbmlnaHp3eGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MjgyNDcsImV4cCI6MjA5MzMwNDI0N30.fFufNEdRvAzl6O6BqtTbx83O3Eg8Wd7gACNJDGQKga4';
+const db=supabase.createClient(SURL,SKEY,{auth:{persistSession:false}});
+
+let movs=[], tipo='ingreso';
+
+const hoy=()=>{const d=new Date(),o=d.getTimezoneOffset();return new Date(d.getTime()-o*60000).toISOString().slice(0,10);};
+document.getElementById('f-fecha').value=hoy();
+
+function toast(msg,t){
+const el=document.getElementById('toast');
+el.textContent=msg;el.className='toast '+(t||'');
+el.style.display='block';
+setTimeout(()=>el.style.display='none',2500);
+}
+
+function goTab(name,btn){
+document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('on'));
+document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('on'));
+document.getElementById('tab-'+name).classList.add('on');
+btn.classList.add('on');
+}
+
+function setTipo(t){
+tipo=t;
+document.getElementById('opt-ing').className='tipo-opt'+(t==='ingreso'?' active-g':'');
+document.getElementById('opt-sal').className='tipo-opt'+(t==='salida'?' active-r':'');
+const btn=document.getElementById('btn-reg');
+btn.className='btn-reg '+(t==='ingreso'?'btn-g-fill':'btn-r-fill');
+btn.textContent=t==='ingreso'?'Registrar Ingreso':'Registrar Salida';
+}
+
+async function cargar(){
+try{
+const r=await db.from('stock_movimientos').select('*').order('created_at',{ascending:true});
+movs=r.error?JSON.parse(localStorage.getItem('arato_stk')||'[]'):r.data||[];
+}catch(e){movs=JSON.parse(localStorage.getItem('arato_stk')||'[]');}
+render();updKPIs();
+}
+
+async function guardar(){
+const qty=parseInt(document.getElementById('f-cantidad').value)||0;
+const fecha=document.getElementById('f-fecha').value;
+const obs=document.getElementById('f-obs').value.trim();
+if(!qty||qty<=0){toast('Ingresa la cantidad','err');return;}
+const mov={tipo,cantidad:qty,fecha,obs,created_at:new Date().toISOString()};
+try{
+const r=await db.from('stock_movimientos').insert(mov).select();
+if(r.error)throw r.error;
+movs.push(r.data[0]);
+}catch(e){
+mov.id=Date.now();movs.push(mov);
+localStorage.setItem('arato_stk',JSON.stringify(movs));
+}
+document.getElementById('f-cantidad').value='';
+document.getElementById('f-obs').value='';
+toast('✅ Registrado','ok');
+render();updKPIs();
+}
+
+function calcStock(){
+return movs.reduce((s,m)=>m.tipo==='ingreso'?s+(m.cantidad||0):s-(m.cantidad||0),0);
+}
+
+function updKPIs(){
+let ing=0,sal=0;
+movs.forEach(m=>m.tipo==='ingreso'?ing+=m.cantidad||0:sal+=m.cantidad||0);
+const stk=ing-sal;
+document.getElementById('kpi-ing').textContent=ing;
+document.getElementById('kpi-sal').textContent=sal;
+document.getElementById('kpi-stock').textContent=stk;
+document.getElementById('hdr-stock').textContent=stk;
+const max=Math.max(ing,1);
+document.getElementById('bar-ing').style.width='100%';
+document.getElementById('bar-sal').style.width=Math.round(sal/max*100)+'%';
+document.getElementById('bar-stk').style.width=Math.round(stk/max*100)+'%';
+}
+
+function render(){
+const el=document.getElementById('mov-list');
+if(!movs.length){
+el.innerHTML='<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-txt">Sin movimientos registrados</div></div>';
+return;
+}
+let stk=0;
+const rows=movs.map((m,i)=>{
+stk+=m.tipo==='ingreso'?(m.cantidad||0):-(m.cantidad||0);
+return{m,stk,i:i+1};
+});
+el.innerHTML=rows.slice().reverse().map(({m,stk,i})=>`
+<div class="mov-row">
+<div class="mov-dot ${m.tipo==='ingreso'?'g':'r'}"></div>
+<div class="mov-info">
+<div class="mov-fecha">${m.fecha||''} · #${i}</div>
+<div class="mov-tipo">${m.tipo==='ingreso'?'Ingreso Acopio':'Salida Avocado'}</div>
+${m.obs?`<div class="mov-obs">${m.obs}</div>`:''}
+</div>
+<div class="mov-right">
+<div class="mov-bins ${m.tipo==='ingreso'?'g':'r'}">${m.tipo==='ingreso'?'+':'−'}${m.cantidad}</div>
+<div class="mov-stock">stk: ${stk}</div>
+</div>
+<button class="mov-del" onclick="eliminar('${m.id}')">✕</button>
+</div>
+${i>1?'':''}
+`).join('');
+}
+
+async function eliminar(id){
+if(!confirm('¿Eliminar?'))return;
+try{await db.from('stock_movimientos').delete().eq('id',id);}catch(e){}
+movs=movs.filter(m=>String(m.id)!==String(id));
+localStorage.setItem('arato_stk',JSON.stringify(movs));
+render();updKPIs();toast('Eliminado','err');
+}
+
+async function cargarModulos(){
+const cont=document.getElementById('mod-content');
+cont.innerHTML='<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-txt">Cargando...</div></div>';
+try{
+const res=await db.from('viajes').select('modulo,bins,retornos').eq('fecha',hoy());
+if(res.error||!res.data?.length){
+cont.innerHTML='<div class="empty-state"><div class="empty-icon">🗺️</div><div class="empty-txt">Sin viajes hoy</div></div>';
+return;
+}
+const map={};
+res.data.forEach(v=>{
+const mod='M'+String(v.modulo||'—').padStart(2,'0');
+if(!map[mod])map[mod]={env:0,ret:0};
+try{
+const bins=JSON.parse(v.bins||'[]');
+const rets=JSON.parse(v.retornos||'[]').filter(r=>r.tipo!=='vacio').flatMap(r=>r.bins||[]);
+map[mod].env+=bins.length;
+map[mod].ret+=rets.length;
+}catch(e){}
+});
+const mods=Object.keys(map).sort();
+const maxEnv=Math.max(...mods.map(m=>map[m].env),1);
+cont.innerHTML='<div class="mod-grid">'+mods.map(m=>{
+const d=map[m];
+const campo=Math.max(0,d.env-d.ret);
+const pct=d.env>0?Math.round(d.ret/d.env*100):0;
+return`<div class="mod-card">
+<div class="mod-name">📍 ${m}</div>
+<div class="mod-stats">
+<div><div class="mod-stat-val" style="color:var(--g);">${d.ret}</div><div class="mod-stat-lbl">Ret.</div></div>
+<div><div class="mod-stat-val" style="color:var(--gold);">${campo}</div><div class="mod-stat-lbl">Campo</div></div>
+<div><div class="mod-stat-val" style="color:var(--b);">${pct}%</div><div class="mod-stat-lbl">Retorno</div></div>
+</div>
+<div class="mod-progress"><div class="mod-progress-fill" style="width:${pct}%"></div></div>
+</div>`;
+}).join('')+'</div>';
+}catch(e){cont.innerHTML='<div class="empty-state"><div class="empty-txt">Error: '+e.message+'</div></div>';}
+}
+
+async function descargarExcel(){
+if(typeof XLSX==='undefined'){toast('Cargando...');setTimeout(descargarExcel,800);return;}
+if(!movs.length){toast('Sin datos','err');return;}
+const wb=XLSX.utils.book_new();
+
+// ── Hoja 1: Control Stock ──
+let stk=0;
+const d1=[
+['ARATO MISSION PRODUCE'],
+['CONTROL DE STOCK — BINS VACÍOS'],
+['Stock = Ingreso Acopio − Salida Avocado'],
+[],
+['#','FECHA','TIPO','CANTIDAD','STOCK','OBSERVACIÓN']
+];
+movs.forEach((m,i)=>{
+stk+=m.tipo==='ingreso'?(m.cantidad||0):-(m.cantidad||0);
+d1.push([i+1,m.fecha||'',m.tipo==='ingreso'?'INGRESO (+)':'SALIDA AVOCADO (−)',m.tipo==='ingreso'?m.cantidad:-m.cantidad,stk,m.obs||'']);
+});
+d1.push([]);d1.push(['','','','STOCK ACTUAL →',stk,'']);
+const ws1=XLSX.utils.aoa_to_sheet(d1);
+ws1['!cols']=[{wch:4},{wch:12},{wch:22},{wch:10},{wch:10},{wch:35}];
+ws1['!merges']=[{s:{r:0,c:0},e:{r:0,c:5}},{s:{r:1,c:0},e:{r:1,c:5}},{s:{r:2,c:0},e:{r:2,c:5}}];
+const hS={font:{bold:true,color:{rgb:'FFFFFF'},sz:14},fill:{fgColor:{rgb:'0A0F0D'}},alignment:{horizontal:'center',vertical:'center'}};
+const hS2={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'1A7A4A'}},alignment:{horizontal:'center'}};
+const hS3={font:{italic:true,color:{rgb:'FFFFFF'},sz:9},fill:{fgColor:{rgb:'2D6A4F'}},alignment:{horizontal:'center'}};
+const colH={font:{bold:true,color:{rgb:'FFFFFF'},sz:10},fill:{fgColor:{rgb:'1A7A4A'}},alignment:{horizontal:'center'}};
+if(ws1['A1'])ws1['A1'].s=hS;if(ws1['A2'])ws1['A2'].s=hS2;if(ws1['A3'])ws1['A3'].s=hS3;
+['A5','B5','C5','D5','E5','F5'].forEach(c=>{if(ws1[c])ws1[c].s=colH;});
+for(let r=5;r<5+movs.length;r++){
+const row=r+1,m=movs[r-5],isIng=m&&m.tipo==='ingreso';
+const bg=r%2===0?'F5F2EC':'FFFFFF';
+['A','B','F'].forEach(c=>{if(ws1[`${c}${row}`])ws1[`${c}${row}`].s={fill:{fgColor:{rgb:bg}},font:{sz:10},alignment:{horizontal:'center'}};});
+if(ws1[`C${row}`])ws1[`C${row}`].s={font:{bold:true,color:{rgb:isIng?'1A7A4A':'C0392B'},sz:10},fill:{fgColor:{rgb:isIng?'DCFCE7':'FEE2E2'}},alignment:{horizontal:'center'}};
+if(ws1[`D${row}`])ws1[`D${row}`].s={font:{bold:true,color:{rgb:isIng?'1A7A4A':'C0392B'},sz:11},fill:{fgColor:{rgb:isIng?'DCFCE7':'FEE2E2'}},alignment:{horizontal:'center'}};
+if(ws1[`E${row}`])ws1[`E${row}`].s={font:{bold:true,color:{rgb:'1A4A7A'},sz:11},fill:{fgColor:{rgb:'DBEAFE'}},alignment:{horizontal:'center'}};
+}
+const totRow=5+movs.length+2;
+if(ws1[`D${totRow}`])ws1[`D${totRow}`].s={font:{bold:true,color:{rgb:'1A7A4A'},sz:10},alignment:{horizontal:'right'}};
+if(ws1[`E${totRow}`])ws1[`E${totRow}`].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:14},fill:{fgColor:{rgb:'1A7A4A'}},alignment:{horizontal:'center'}};
+XLSX.utils.book_append_sheet(wb,ws1,'📦 Stock Bins');
+
+// ── Hoja 2: Por módulo ──
+try{
+const res=await db.from('viajes').select('modulo,bins,retornos,fecha').order('fecha',{ascending:false});
+if(!res.error&&res.data){
+const modMap={};
+res.data.forEach(v=>{
+const mod='Módulo '+(v.modulo||'—');
+const fecha=v.fecha||'—';
+const key=mod+'|'+fecha;
+if(!modMap[key])modMap[key]={mod,fecha,env:0,ret:0};
+try{
+const bins=JSON.parse(v.bins||'[]');
+const rets=JSON.parse(v.retornos||'[]').filter(r=>r.tipo!=='vacio').flatMap(r=>r.bins||[]);
+modMap[key].env+=bins.length;
+modMap[key].ret+=rets.length;
+}catch(e){}
+});
+const d2=[
+['ARATO MISSION PRODUCE'],
+['DISTRIBUCIÓN DE BINS POR MÓDULO'],
+[],
+['MÓDULO','FECHA','ENVIADOS','RETORNADOS','EN CAMPO','% RETORNO']
+];
+let tE=0,tR=0;
+Object.values(modMap).sort((a,b)=>b.fecha.localeCompare(a.fecha)||a.mod.localeCompare(b.mod)).forEach(m=>{
+const campo=Math.max(0,m.env-m.ret);
+const pct=m.env>0?Math.round(m.ret/m.env*100):0;
+d2.push([m.mod,m.fecha,m.env,m.ret,campo,pct+'%']);
+tE+=m.env;tR+=m.ret;
+});
+d2.push([]);d2.push(['TOTAL','',tE,tR,Math.max(0,tE-tR),tE>0?Math.round(tR/tE*100)+'%':'—']);
+const ws2=XLSX.utils.aoa_to_sheet(d2);
+ws2['!cols']=[{wch:14},{wch:13},{wch:11},{wch:13},{wch:11},{wch:11}];
+ws2['!merges']=[{s:{r:0,c:0},e:{r:0,c:5}},{s:{r:1,c:0},e:{r:1,c:5}}];
+const h1={font:{bold:true,color:{rgb:'FFFFFF'},sz:13},fill:{fgColor:{rgb:'0A0F0D'}},alignment:{horizontal:'center',vertical:'center'}};
+const h2={font:{bold:true,color:{rgb:'FFFFFF'},sz:10},fill:{fgColor:{rgb:'1A7A4A'}},alignment:{horizontal:'center'}};
+const hC={font:{bold:true,color:{rgb:'FFFFFF'},sz:9},fill:{fgColor:{rgb:'0F4C2A'}},alignment:{horizontal:'center'}};
+if(ws2['A1'])ws2['A1'].s=h1;if(ws2['A2'])ws2['A2'].s=h2;
+['A4','B4','C4','D4','E4','F4'].forEach(c=>{if(ws2[c])ws2[c].s=hC;});
+const entries=Object.values(modMap).length;
+for(let r=0;r<entries;r++){
+const row=r+5;
+const bg=r%2===0?'F5F2EC':'FFFFFF';
+if(ws2[`A${row}`])ws2[`A${row}`].s={font:{bold:true,sz:10},fill:{fgColor:{rgb:bg}},alignment:{horizontal:'left',indent:1}};
+if(ws2[`B${row}`])ws2[`B${row}`].s={font:{sz:9,color:{rgb:'666666'}},fill:{fgColor:{rgb:bg}},alignment:{horizontal:'center'}};
+if(ws2[`C${row}`])ws2[`C${row}`].s={font:{sz:10},fill:{fgColor:{rgb:bg}},alignment:{horizontal:'center'}};
+if(ws2[`D${row}`])ws2[`D${row}`].s={font:{bold:true,color:{rgb:'1A7A4A'},sz:10},fill:{fgColor:{rgb:'DCFCE7'}},alignment:{horizontal:'center'}};
+if(ws2[`E${row}`])ws2[`E${row}`].s={font:{bold:true,color:{rgb:'D97706'},sz:10},fill:{fgColor:{rgb:'FEF3C7'}},alignment:{horizontal:'center'}};
+if(ws2[`F${row}`])ws2[`F${row}`].s={font:{bold:true,color:{rgb:'1A4A7A'},sz:10},fill:{fgColor:{rgb:'DBEAFE'}},alignment:{horizontal:'center'}};
+}
+const tRow=entries+6;
+['A','B','C','D','E','F'].forEach(c=>{if(ws2[`${c}${tRow}`])ws2[`${c}${tRow}`].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'0A0F0D'}},alignment:{horizontal:'center'}};});
+XLSX.utils.book_append_sheet(wb,ws2,'📊 Por Módulo');
+}
+}catch(e){}
+
+XLSX.writeFile(wb,'StockBins_Arato_'+hoy()+'.xlsx');
+toast('✅ Excel descargado','ok');
+}
+
+function enviarWsp(){
+if(!movs.length){toast('Sin datos','err');return;}
+const stock=calcStock();
+let ing=0,sal=0;
+movs.filter(m=>m.fecha===hoy()).forEach(m=>{
+if(m.tipo==='ingreso')ing+=m.cantidad||0;else sal+=m.cantidad||0;
+});
+let msg='📦 *STOCK DE BINS — ARATO*\n';
+msg+='📅 '+new Date().toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'numeric'})+'\n';
+msg+='────────────────\n';
+msg+='📥 Ingreso hoy: *'+ing+' bins*\n';
+msg+='🚛 Salida hoy: *'+sal+' bins*\n';
+msg+='────────────────\n';
+msg+='📦 *STOCK ACTUAL: '+stock+' bins vacíos*\n';
+msg+='\n_Arato Mission Produce_';
+window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+
+async function guardarModulo(){
+const mod=document.getElementById('m-modulo').value;
+const qty=parseInt(document.getElementById('m-cantidad').value)||0;
+const obs=document.getElementById('m-obs').value.trim();
+if(!mod){toast('Selecciona un módulo','err');return;}
+if(!qty||qty<=0){toast('Ingresa la cantidad','err');return;}
+const row={modulo:mod,cantidad:qty,fecha:hoy(),obs,created_at:new Date().toISOString()};
+try{
+const r=await db.from('stock_modulos').insert(row).select();
+if(r.error)throw r.error;
+toast('✅ Módulo registrado','ok');
+}catch(e){toast('Error: '+e.message,'err');return;}
+document.getElementById('m-cantidad').value='';
+document.getElementById('m-obs').value='';
+cargarModulos();
+}
+
+async function cargarModulos(){
+const cont=document.getElementById('mod-content');
+const totEl=document.getElementById('mod-total');
+cont.innerHTML='<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-txt">Cargando...</div></div>';
+try{
+const res=await db.from('stock_modulos').select('*').order('created_at',{ascending:false});
+if(res.error)throw res.error;
+const rows=res.data||[];
+if(!rows.length){
+cont.innerHTML='<div class="empty-state"><div class="empty-icon">🗺️</div><div class="empty-txt">Sin módulos registrados</div></div>';
+if(totEl)totEl.textContent='0';
+return;
+}
+// Agrupar por módulo (sumar todos los registros)
+const map={};
+rows.forEach(r=>{
+if(!map[r.modulo])map[r.modulo]={total:0,registros:[]};
+map[r.modulo].total+=r.cantidad||0;
+map[r.modulo].registros.push(r);
+});
+const total=Object.values(map).reduce((s,m)=>s+m.total,0);
+if(totEl)totEl.textContent=total;
+const mods=Object.keys(map).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+const maxVal=Math.max(...mods.map(m=>map[m].total),1);
+cont.innerHTML='<div style="padding:10px;">'+mods.map(m=>{
+const d=map[m];
+const pct=Math.round(d.total/maxVal*100);
+const lastObs=d.registros[0]?.obs||'';
+return`<div style="padding:10px 8px;border-radius:10px;margin-bottom:6px;border:1px solid var(--field);">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+<div>
+<div style="font-family:'Syne',sans-serif;font-size:0.78rem;font-weight:700;">📍 ${m}</div>
+${lastObs?`<div style="font-size:0.58rem;color:#999;">${lastObs}</div>`:''}
+</div>
+<div style="display:flex;align-items:center;gap:8px;">
+<span style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;color:var(--gold);">${d.total}</span>
+<button onclick="eliminarModulo(${d.registros.map(r=>r.id).join(',')},event)" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:0.7rem;padding:3px 6px;border-radius:6px;">✕</button>
+</div>
+</div>
+<div class="mod-progress"><div class="mod-progress-fill" style="width:${pct}%;background:var(--gold);"></div></div>
+</div>`;
+}).join('')+'</div>';
+}catch(e){
+cont.innerHTML='<div class="empty-state"><div class="empty-txt">Error: '+e.message+'</div></div>';
+}
+}
+
+async function eliminarModulo(...args){
+// El último arg es el evento
+const event=args[args.length-1];
+if(event&&event.stopPropagation)event.stopPropagation();
+const ids=args.slice(0,-1);
+if(!confirm('¿Eliminar todos los registros de este módulo?'))return;
+try{
+for(const id of ids){
+await db.from('stock_modulos').delete().eq('id',id);
+}
+toast('Eliminado','err');
+cargarModulos();
+}catch(e){toast('Error: '+e.message,'err');}
+}
+
+function wspModulos(){
+// Generar reporte WhatsApp de módulos
+db.from('stock_modulos').select('*').order('created_at',{ascending:false}).then(res=>{
+if(res.error||!res.data?.length){toast('Sin datos','err');return;}
+const map={};
+res.data.forEach(r=>{
+if(!map[r.modulo])map[r.modulo]=0;
+map[r.modulo]+=r.cantidad||0;
+});
+const total=Object.values(map).reduce((s,v)=>s+v,0);
+let msg='📍 *DISTRIBUCIÓN DE BINS — ARATO*
+';
+msg+='📅 '+new Date().toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'numeric'})+'
+';
+msg+='────────────────
+';
+Object.keys(map).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})).forEach(m=>{
+msg+=`📦 ${m}: *${map[m]} bins*
+`;
+});
+msg+='────────────────
+';
+msg+=`*TOTAL: ${total} bins*
+`;
+msg+='
+_Arato Mission Produce_';
+window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+});
+}
+
+cargar();
+</script>
+</body>
+</html>
