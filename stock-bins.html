@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>Control de Stock — Arato</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+--g:#16A34A;--g2:#15803D;--gc:#DCFCE7;
+--r:#DC2626;--rc:#FEE2E2;
+--b:#2563EB;--bc:#DBEAFE;
+--y:#D97706;--yc:#FEF3C7;
+--bg:#F0F4F8;--bg2:#fff;--bg3:#F8FAFC;
+--txt:#1E293B;--txt2:#475569;--txt3:#94A3B8;
+--bdr:#E2E8F0;--shadow:0 2px 8px rgba(0,0,0,0.07);
+}
+body{font-family:Inter,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;}
+.hdr{background:linear-gradient(135deg,#1A5C38,#16A34A);padding:16px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(22,163,74,0.3);}
+.hdr-top{display:flex;justify-content:space-between;align-items:center;}
+.hdr-title{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#fff;letter-spacing:2px;}
+.hdr-sub{font-size:0.58rem;color:rgba(255,255,255,0.75);letter-spacing:1px;}
+.hdr-stock{background:rgba(255,255,255,0.2);border-radius:12px;padding:8px 16px;text-align:center;}
+.hdr-stock-val{font-size:1.8rem;font-weight:800;color:#fff;line-height:1;}
+.hdr-stock-lbl{font-size:0.55rem;color:rgba(255,255,255,0.8);text-transform:uppercase;letter-spacing:1px;}
+.wrap{max-width:640px;margin:0 auto;padding:14px;}
+.card{background:var(--bg2);border:1px solid var(--bdr);border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:var(--shadow);}
+.ctitle{font-size:0.6rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt3);margin-bottom:12px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.field{margin-bottom:10px;}
+.field label{font-size:0.65rem;font-weight:700;color:var(--txt2);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;}
+.field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:0.88rem;color:var(--txt);font-family:Inter,sans-serif;outline:none;background:#fff;}
+.field input:focus,.field select:focus{border-color:var(--g);}
+.btn{border:none;border-radius:10px;padding:12px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;width:100%;}
+.btn-g{background:var(--g);color:#fff;box-shadow:0 2px 8px rgba(22,163,74,0.25);}
+.btn-r{background:var(--r);color:#fff;}
+.btn-ghost{background:none;border:1.5px solid var(--bdr);color:var(--txt3);}
+.btn-sm{padding:6px 12px;font-size:0.7rem;border-radius:8px;width:auto;}
+
+/* TIPO SELECTOR */
+.tipo-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.tipo-btn{padding:16px 10px;border-radius:12px;border:2px solid var(--bdr);background:var(--bg3);cursor:pointer;text-align:center;transition:all 0.15s;}
+.tipo-btn:active{transform:scale(0.97);}
+.tipo-btn.sel-ing{border-color:var(--g);background:var(--gc);}
+.tipo-btn.sel-sal{border-color:var(--r);background:var(--rc);}
+.tipo-btn-icon{font-size:1.6rem;margin-bottom:4px;}
+.tipo-btn-lbl{font-size:0.78rem;font-weight:800;}
+.tipo-btn-sub{font-size:0.58rem;color:var(--txt3);}
+
+/* HISTORIAL TABLE */
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:0.75rem;}
+th{background:var(--g);color:#fff;padding:8px 10px;font-weight:700;text-align:center;font-size:0.62rem;text-transform:uppercase;letter-spacing:.5px;}
+td{padding:8px 10px;border-bottom:1px solid var(--bdr);text-align:center;}
+tr:nth-child(even) td{background:var(--bg3);}
+.badge-ing{background:var(--gc);color:var(--g);font-weight:700;padding:2px 8px;border-radius:6px;}
+.badge-sal{background:var(--rc);color:var(--r);font-weight:700;padding:2px 8px;border-radius:6px;}
+.stock-cell{font-weight:800;color:var(--b);font-size:0.88rem;}
+.empty{text-align:center;padding:30px;color:var(--txt3);font-size:0.82rem;}
+
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+.kpi{background:#fff;border:1px solid var(--bdr);border-radius:10px;padding:12px;text-align:center;}
+.kpi-val{font-size:1.4rem;font-weight:800;}
+.kpi-lbl{font-size:0.55rem;color:var(--txt3);text-transform:uppercase;letter-spacing:1px;}
+
+.toast{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:#1E293B;color:#fff;padding:10px 18px;border-radius:10px;font-size:0.78rem;font-weight:600;z-index:999;display:none;}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-top">
+    <div>
+      <div class="hdr-title">📦 CONTROL DE STOCK</div>
+      <div class="hdr-sub">Arato Mission Produce — Bins Vacíos</div>
+    </div>
+    <div class="hdr-stock">
+      <div class="hdr-stock-val" id="hdr-stock">—</div>
+      <div class="hdr-stock-lbl">Stock actual</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="wrap">
+
+  <!-- KPIs -->
+  <div class="kpis">
+    <div class="kpi"><div class="kpi-val" style="color:var(--g);" id="kpi-ing">0</div><div class="kpi-lbl">Total ingresado</div></div>
+    <div class="kpi"><div class="kpi-val" style="color:var(--r);" id="kpi-sal">0</div><div class="kpi-lbl">Total salida</div></div>
+    <div class="kpi"><div class="kpi-val" style="color:var(--b);" id="kpi-stock">0</div><div class="kpi-lbl">Stock bins</div></div>
+  </div>
+
+  <!-- Nuevo movimiento -->
+  <div class="card">
+    <div class="ctitle">Registrar movimiento</div>
+    <div class="tipo-grid">
+      <div class="tipo-btn" id="btn-ing" onclick="setTipo('ingreso')">
+        <div class="tipo-btn-icon">✅</div>
+        <div class="tipo-btn-lbl" style="color:var(--g);">INGRESO</div>
+        <div class="tipo-btn-sub">Camión llega con bins</div>
+      </div>
+      <div class="tipo-btn" id="btn-sal" onclick="setTipo('salida')">
+        <div class="tipo-btn-icon">🚛</div>
+        <div class="tipo-btn-lbl" style="color:var(--r);">SALIDA AVOCADO</div>
+        <div class="tipo-btn-sub">Camión lleva a planta</div>
+      </div>
+    </div>
+    <div class="g2">
+      <div class="field">
+        <label>📅 Fecha</label>
+        <input type="date" id="f-fecha">
+      </div>
+      <div class="field">
+        <label>📦 Cantidad de bins</label>
+        <input type="number" id="f-cantidad" min="1" placeholder="Ej: 48">
+      </div>
+    </div>
+    <div class="field">
+      <label>📝 Observación</label>
+      <input type="text" id="f-obs" placeholder="Ej: Placa F2P-916, módulo 5...">
+    </div>
+    <button class="btn btn-g" id="btn-guardar" onclick="guardar()">✅ Registrar</button>
+  </div>
+
+  <!-- Historial -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div class="ctitle" style="margin-bottom:0;">Historial de movimientos</div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-ghost btn-sm" onclick="descargarExcel()">📊 Excel</button>
+        <button class="btn btn-ghost btn-sm" onclick="enviarWsp()">📲 WhatsApp</button>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table id="tbl-historial">
+        <thead>
+          <tr><th>#</th><th>Fecha</th><th>Tipo</th><th>Bins</th><th>Stock</th><th>Observación</th><th></th></tr>
+        </thead>
+        <tbody id="tbl-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const SUPA_URL = 'https://rqvcvffyynpnighzwxju.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdmN2ZmZ5eW5wbmlnaHp3eGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MjgyNDcsImV4cCI6MjA5MzMwNDI0N30.fFufNEdRvAzl6O6BqtTbx83O3Eg8Wd7gACNJDGQKga4';
+const db = supabase.createClient(SUPA_URL, SUPA_KEY, {auth:{persistSession:false}});
+
+let movimientos = [];
+let tipo = 'ingreso';
+
+// Init fecha de hoy
+const hoy = () => {
+  const d = new Date(), off = d.getTimezoneOffset();
+  return new Date(d.getTime()-off*60000).toISOString().slice(0,10);
+};
+document.getElementById('f-fecha').value = hoy();
+
+function toast(msg, color) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = color==='verde'?'#16A34A':color==='rojo'?'#DC2626':'#1E293B';
+  t.style.display = 'block';
+  setTimeout(()=>t.style.display='none', 2500);
+}
+
+function setTipo(t) {
+  tipo = t;
+  const bi = document.getElementById('btn-ing');
+  const bs = document.getElementById('btn-sal');
+  bi.className = 'tipo-btn' + (t==='ingreso'?' sel-ing':'');
+  bs.className = 'tipo-btn' + (t==='salida'?' sel-sal':'');
+  document.getElementById('btn-guardar').style.background = t==='ingreso'?'#16A34A':'#DC2626';
+  document.getElementById('btn-guardar').textContent = t==='ingreso'?'✅ Registrar Ingreso':'🚛 Registrar Salida';
+}
+setTipo('ingreso');
+
+async function cargar() {
+  try {
+    const res = await db.from('stock_movimientos').select('*').order('created_at', {ascending:true});
+    if (res.error) {
+      // Tabla no existe — usar localStorage como fallback
+      movimientos = JSON.parse(localStorage.getItem('arato_stock_movs')||'[]');
+    } else {
+      movimientos = res.data || [];
+    }
+  } catch(e) {
+    movimientos = JSON.parse(localStorage.getItem('arato_stock_movs')||'[]');
+  }
+  renderHistorial();
+  updKPIs();
+}
+
+async function guardar() {
+  const cantidad = parseInt(document.getElementById('f-cantidad').value)||0;
+  const fecha = document.getElementById('f-fecha').value;
+  const obs = document.getElementById('f-obs').value.trim();
+  if (!cantidad || cantidad <= 0) { toast('Ingresa la cantidad de bins', 'rojo'); return; }
+  if (!fecha) { toast('Selecciona la fecha', 'rojo'); return; }
+
+  const mov = {
+    tipo: tipo,
+    cantidad: cantidad,
+    fecha: fecha,
+    obs: obs,
+    created_at: new Date().toISOString()
+  };
+
+  try {
+    const res = await db.from('stock_movimientos').insert(mov).select();
+    if (res.error) throw res.error;
+    movimientos.push(res.data[0]);
+  } catch(e) {
+    // Guardar en localStorage si Supabase falla
+    mov.id = Date.now();
+    movimientos.push(mov);
+    localStorage.setItem('arato_stock_movs', JSON.stringify(movimientos));
+  }
+
+  document.getElementById('f-cantidad').value = '';
+  document.getElementById('f-obs').value = '';
+  toast('✅ Movimiento registrado', 'verde');
+  renderHistorial();
+  updKPIs();
+}
+
+function calcStock() {
+  let stock = 0;
+  movimientos.forEach(m => {
+    if (m.tipo === 'ingreso') stock += m.cantidad||0;
+    else if (m.tipo === 'salida') stock -= m.cantidad||0;
+  });
+  return stock;
+}
+
+function updKPIs() {
+  let ing = 0, sal = 0;
+  movimientos.forEach(m => {
+    if (m.tipo === 'ingreso') ing += m.cantidad||0;
+    else sal += m.cantidad||0;
+  });
+  const stock = ing - sal;
+  document.getElementById('kpi-ing').textContent = ing;
+  document.getElementById('kpi-sal').textContent = sal;
+  document.getElementById('kpi-stock').textContent = stock;
+  document.getElementById('hdr-stock').textContent = stock;
+}
+
+function renderHistorial() {
+  const tbody = document.getElementById('tbl-body');
+  if (!movimientos.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">Sin movimientos registrados.</td></tr>';
+    return;
+  }
+
+  // Calcular stock acumulado
+  let stock = 0;
+  const rows = movimientos.map((m, i) => {
+    stock += m.tipo === 'ingreso' ? (m.cantidad||0) : -(m.cantidad||0);
+    return {m, stock, i: i+1};
+  });
+
+  tbody.innerHTML = rows.slice().reverse().map(({m, stock, i}) => `
+    <tr>
+      <td style="color:var(--txt3);">${i}</td>
+      <td>${m.fecha||''}</td>
+      <td><span class="${m.tipo==='ingreso'?'badge-ing':'badge-sal'}">${m.tipo==='ingreso'?'✅ Ingreso':'🚛 Salida'}</span></td>
+      <td style="font-weight:700;color:${m.tipo==='ingreso'?'var(--g)':'var(--r)'};">${m.tipo==='ingreso'?'+':'−'}${m.cantidad}</td>
+      <td class="stock-cell">${stock}</td>
+      <td style="text-align:left;font-size:0.68rem;color:var(--txt3);">${m.obs||''}</td>
+      <td><button onclick="eliminar('${m.id}')" style="background:none;border:none;color:var(--r);cursor:pointer;font-size:0.75rem;">🗑️</button></td>
+    </tr>`).join('');
+}
+
+async function eliminar(id) {
+  if (!confirm('¿Eliminar este movimiento?')) return;
+  try {
+    await db.from('stock_movimientos').delete().eq('id', id);
+  } catch(e) {}
+  movimientos = movimientos.filter(m => String(m.id) !== String(id));
+  localStorage.setItem('arato_stock_movs', JSON.stringify(movimientos));
+  renderHistorial();
+  updKPIs();
+  toast('Eliminado', 'rojo');
+}
+
+function descargarExcel() {
+  if (typeof XLSX === 'undefined') { toast('Cargando Excel...'); setTimeout(descargarExcel, 800); return; }
+  if (!movimientos.length) { toast('Sin datos para exportar', 'rojo'); return; }
+
+  let stock = 0;
+  const rows = movimientos.map((m, i) => {
+    stock += m.tipo === 'ingreso' ? (m.cantidad||0) : -(m.cantidad||0);
+    return {
+      '#': i+1,
+      'Fecha': m.fecha||'',
+      'Tipo': m.tipo === 'ingreso' ? 'Ingreso Acopio (+)' : 'Salida Avocado (−)',
+      'Bins': m.tipo === 'ingreso' ? m.cantidad : -m.cantidad,
+      'Stock': stock,
+      'Observación': m.obs||''
+    };
+  });
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = [{wch:4},{wch:12},{wch:20},{wch:8},{wch:8},{wch:30}];
+
+  // Color encabezados
+  const green = {font:{bold:true,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:'1A5C38'}},alignment:{horizontal:'center'}};
+  ['A1','B1','C1','D1','E1','F1'].forEach(c => { if(ws[c]) ws[c].s = green; });
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Control de Stock');
+  XLSX.writeFile(wb, 'Stock_Bins_Arato_'+hoy()+'.xlsx');
+  toast('✅ Excel descargado', 'verde');
+}
+
+function enviarWsp() {
+  if (!movimientos.length) { toast('Sin datos', 'rojo'); return; }
+  const fecha = new Date().toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const stock = calcStock();
+  let ing = 0, sal = 0;
+  movimientos.filter(m=>m.fecha===hoy()).forEach(m=>{
+    if(m.tipo==='ingreso') ing+=m.cantidad||0;
+    else sal+=m.cantidad||0;
+  });
+  let msg = '📦 *STOCK DE BINS — ARATO*\n';
+  msg += '📅 '+fecha+'\n';
+  msg += '─────────────────\n';
+  msg += '✅ Ingreso hoy: *'+ing+' bins*\n';
+  msg += '🚛 Salida hoy: *'+sal+' bins*\n';
+  msg += '─────────────────\n';
+  msg += '📦 *STOCK ACTUAL: '+stock+' bins vacíos*\n';
+  msg += '\n_Arato Mission Produce_';
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+
+// Init
+cargar();
+</script>
+</body>
+</html>
