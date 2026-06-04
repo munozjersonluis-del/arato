@@ -265,6 +265,98 @@ module.exports = async function handler(req, res) {
       await sheets.spreadsheets.batchUpdate({ spreadsheetId:SHEET_ID, resource:{requests:reqs2} });
     }
 
+    // ── HOJA 3: STOCK DE BINS (stock_movimientos) ──
+    const SUPA_URL = 'https://rqvcvffyynpnighzwxju.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdmN2ZmZ5eW5wbmlnaHp3eGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MjgyNDcsImV4cCI6MjA5MzMwNDI0N30.fFufNEdRvAzl6O6BqtTbx83O3Eg8Wd7gACNJDGQKga4';
+    const https = require('https');
+
+    async function fetchSupa(path) {
+      return new Promise((resolve, reject) => {
+        const options = {
+          hostname: 'rqvcvffyynpnighzwxju.supabase.co',
+          path: '/rest/v1/' + path,
+          headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
+        };
+        https.get(options, (r) => {
+          let d = '';
+          r.on('data', c => d += c);
+          r.on('end', () => resolve(JSON.parse(d)));
+        }).on('error', reject);
+      });
+    }
+
+    try {
+      const movs = await fetchSupa('stock_movimientos?select=tipo,cantidad,fecha,obs&order=created_at.asc');
+      const modulos = await fetchSupa('stock_modulos?select=modulo,cantidad,fecha,obs,tipo&order=created_at.asc');
+
+      // Calcular stock acumulado
+      let stk = 0;
+      const rowsMovs = movs.map((m, i) => {
+        stk += m.tipo === 'ingreso' ? (m.cantidad||0) : -(m.cantidad||0);
+        return [i+1, m.fecha||'', m.tipo==='ingreso'?'INGRESO (+)':'SALIDA AVOCADO (−)', m.cantidad, stk, m.obs||''];
+      });
+
+      // Stock por módulo
+      const modMap = {};
+      modulos.forEach(r => {
+        if (!modMap[r.modulo]) modMap[r.modulo] = 0;
+        modMap[r.modulo] += r.cantidad||0;
+      });
+      const totalMod = Object.values(modMap).reduce((s,v) => s+Math.max(0,v), 0);
+
+      // Hoja Stock
+      let s3 = existingSheets.find(s => s.properties.title === 'Stock Bins');
+      if (!s3) {
+        const addRes = await sheets.spreadsheets.batchUpdate({
+          spreadsheetId: SHEET_ID,
+          resource: { requests: [{ addSheet: { properties: { title: 'Stock Bins' } } }] }
+        });
+        s3 = addRes.data.replies[0].addSheet;
+      }
+      const s3id = s3.properties ? s3.properties.sheetId : s3.addSheet?.properties.sheetId;
+
+      const hdrsMovs = ['#','FECHA','TIPO','CANTIDAD','STOCK','OBSERVACION'];
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: SHEET_ID,
+        range: 'Stock Bins!A1',
+        valueInputOption: 'RAW',
+        resource: { values: [
+          ['ARATO MISSION PRODUCE — CONTROL DE STOCK DE BINS VACÍOS'],
+          ['Stock = Ingreso Acopio − Salida Avocado'],
+          ['Actualizado:', new Date().toLocaleString('es-PE')],
+          [],
+          hdrsMovs,
+          ...rowsMovs,
+          [],
+          ['','','','STOCK ACTUAL →', stk, ''],
+          [],
+          ['STOCK POR MODULO'],
+          ['MODULO','STOCK ACTUAL','','','',''],
+          ...Object.keys(modMap).filter(m=>modMap[m]>0).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})).map(m=>[m, modMap[m],'','','','']),
+          ['TOTAL MODULOS', totalMod,'','','',''],
+          ['DIFERENCIA (Gral - Modulos)', stk - totalMod,'','','',''],
+        ]}
+      });
+
+      const GOLD = rgb('B8962E');
+      const reqs3 = [
+        merge(s3id,0,1,0,6), rep(s3id,0,1,0,6, fmt(C.VERDE,C.BLANCO,true,13)), rowH(s3id,0,30),
+        merge(s3id,1,2,0,6), rep(s3id,1,2,0,6, fmt(C.VERDE2,C.BLANCO,false,9,true)), rowH(s3id,1,16),
+        rep(s3id,4,5,0,6, fmt(C.VERDE,C.BLANCO,true,10)), rowH(s3id,4,22),
+      ];
+      rowsMovs.forEach((row,i) => {
+        const r=5+i; const bg=i%2===0?C.GRIS:C.BLANCO; const isIng=row[2].includes('INGRESO');
+        reqs3.push(rep(s3id,r,r+1,0,6, fmt(bg,C.NEGRO,false,9)));
+        reqs3.push(rep(s3id,r,r+1,2,3, fmt(isIng?C.VERDE_C:C.ROJO_C, isIng?C.VERDE:C.ROJO, true, 9)));
+        reqs3.push(rep(s3id,r,r+1,4,5, fmt(C.AZUL_C,C.AZUL,true,10)));
+        reqs3.push(rowH(s3id,r,18));
+      });
+      [30,100,160,80,80,200].forEach((w,i)=>reqs3.push(colW(s3id,i,w)));
+      await sheets.spreadsheets.batchUpdate({ spreadsheetId:SHEET_ID, resource:{requests:reqs3} });
+    } catch(e3) {
+      console.error('Stock sheet error:', e3.message);
+    }
+
     res.status(200).json({ ok:true, viajes:tv, bins:rowsBins ? rowsBins.length : 0, dias:dias.length });
 
   } catch(e) {
