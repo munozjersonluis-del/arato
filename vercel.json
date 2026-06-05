@@ -6,6 +6,7 @@
     { "source": "/acopio", "destination": "/acopio-palta.html" },
     { "source": "/cosecha", "destination": "/cosecha-track.html" },
     { "source": "/stock", "destination": "/stock-bins.html" },
+    { "source": "/despacho", "destination": "/cosecha-despacho.html" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }

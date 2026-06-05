@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>Cosecha & Despacho — Arato</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500;600&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+--g:#16A34A;--g2:#15803D;--gc:#DCFCE7;
+--r:#DC2626;--rc:#FEE2E2;
+--b:#2563EB;--bc:#DBEAFE;
+--gold:#D97706;--goldc:#FEF3C7;
+--bg:#F3F4F6;--bg2:#fff;--bg3:#F8FAFC;
+--txt:#111827;--txt2:#374151;--txt3:#6B7280;
+--bdr:#E5E7EB;--shadow:0 2px 8px rgba(0,0,0,0.07);
+--ink:#0D1B0F;
+}
+body{font-family:Inter,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;}
+.hdr{background:linear-gradient(135deg,#1A5C38,#16A34A);padding:14px 16px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(22,163,74,0.3);}
+.hdr-row{display:flex;justify-content:space-between;align-items:center;}
+.hdr-title{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:#fff;letter-spacing:2px;}
+.hdr-sub{font-size:0.55rem;color:rgba(255,255,255,0.75);letter-spacing:1px;}
+.hdr-kpis{display:flex;gap:12px;}
+.hdr-kpi{text-align:right;}
+.hdr-kpi-val{font-size:1rem;font-weight:800;color:#fff;}
+.hdr-kpi-lbl{font-size:0.48rem;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:1px;}
+.tabs{display:flex;background:#fff;border-bottom:2px solid var(--bdr);position:sticky;top:60px;z-index:99;}
+.tb{flex:1;padding:11px 4px;border:none;background:none;font-family:Inter,sans-serif;font-size:0.62rem;font-weight:700;color:var(--txt3);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;}
+.tb.on{color:var(--g);border-bottom-color:var(--g);}
+.tab-c{display:none;}.tab-c.on{display:block;}
+.wrap{max-width:640px;margin:0 auto;padding:12px;}
+.card{background:#fff;border:1px solid var(--bdr);border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:var(--shadow);}
+.ctitle{font-size:0.6rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt3);margin-bottom:10px;}
+.f{margin-bottom:10px;}
+.f label{font-size:0.65rem;font-weight:700;color:var(--txt2);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;}
+.f input,.f select,.f textarea{width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:0.88rem;color:var(--txt);font-family:Inter,sans-serif;outline:none;}
+.f input:focus,.f select:focus{border-color:var(--g);}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.btn{border:none;border-radius:10px;padding:11px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;width:100%;}
+.btn-g{background:var(--g);color:#fff;}
+.btn-b{background:var(--b);color:#fff;}
+.btn-gold{background:var(--gold);color:#fff;}
+.btn-ghost{background:none;border:1.5px solid var(--bdr);color:var(--txt3);}
+.btn-sm{padding:5px 10px;font-size:0.68rem;border-radius:7px;width:auto;border:none;cursor:pointer;font-weight:700;font-family:Inter,sans-serif;}
+
+/* DISPONIBLE CARDS */
+.disp-card{background:#fff;border:1.5px solid var(--bdr);border-radius:12px;margin-bottom:8px;overflow:hidden;}
+.disp-hdr{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--bg3);border-bottom:1px solid var(--bdr);}
+.disp-mod{font-family:'JetBrains Mono',monospace;font-size:0.9rem;font-weight:700;color:var(--g);}
+.disp-body{padding:10px 12px;}
+.var-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f3f4f6;}
+.var-row:last-child{border-bottom:none;}
+.var-info{flex:1;}
+.var-name{font-size:0.78rem;font-weight:700;}
+.var-det{font-size:0.6rem;color:var(--txt3);}
+.var-nums{text-align:right;}
+.var-pend{font-family:'JetBrains Mono',monospace;font-size:1rem;font-weight:800;color:var(--gold);}
+.var-jabas{font-size:0.58rem;color:var(--txt3);}
+.btn-desp{background:var(--bc);border:1px solid var(--b);color:var(--b);border-radius:7px;padding:5px 10px;font-size:0.65rem;font-weight:700;cursor:pointer;margin-top:6px;width:100%;font-family:Inter,sans-serif;}
+
+/* HISTORIAL */
+.his-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--bdr);}
+.his-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.his-info{flex:1;}
+.his-mod{font-size:0.68rem;font-weight:700;color:var(--g);font-family:'JetBrains Mono',monospace;}
+.his-det{font-size:0.6rem;color:var(--txt3);}
+.his-right{text-align:right;}
+.his-bins{font-size:0.82rem;font-weight:800;}
+.his-fecha{font-size:0.58rem;color:var(--txt3);}
+
+/* DESPACHO FORM */
+.desp-lineas{margin-bottom:10px;}
+.desp-linea{background:var(--bg3);border:1px solid var(--bdr);border-radius:10px;padding:10px;margin-bottom:8px;position:relative;}
+.desp-linea-num{position:absolute;top:-7px;left:10px;background:var(--b);color:#fff;font-size:0.52rem;font-weight:700;padding:2px 6px;border-radius:4px;}
+.desp-linea-del{position:absolute;top:8px;right:8px;background:none;border:none;cursor:pointer;color:#ccc;font-size:0.75rem;}
+
+/* GUIA */
+.guia-wrap{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 8px 32px rgba(13,27,15,0.15);margin-bottom:12px;}
+.guia-hdr{background:var(--ink);padding:16px 18px;}
+.guia-empresa{font-family:'Playfair Display',serif;font-size:1rem;font-weight:900;color:#fff;}
+.guia-ruc{font-size:0.55rem;color:rgba(255,255,255,0.5);letter-spacing:1px;}
+.guia-num-badge{background:var(--gold);color:var(--ink);border-radius:6px;padding:5px 10px;text-align:right;float:right;}
+.guia-bar{background:var(--g);padding:6px 18px;display:flex;justify-content:space-between;}
+.guia-bar-title{font-family:'Playfair Display',serif;font-size:0.88rem;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:1px;}
+.guia-body{padding:14px 18px;}
+.guia-meta{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--bg3);border-radius:8px;padding:10px;margin-bottom:12px;}
+.guia-meta-item{display:flex;flex-direction:column;}
+.guia-meta-lbl{font-size:0.48rem;color:#888;text-transform:uppercase;letter-spacing:1px;font-weight:600;}
+.guia-meta-val{font-size:0.75rem;font-weight:700;color:var(--ink);}
+.guia-table{width:100%;border-collapse:collapse;font-size:0.62rem;}
+.guia-table th{background:var(--g);color:#fff;padding:6px 5px;font-weight:700;text-align:center;font-size:0.52rem;text-transform:uppercase;letter-spacing:.3px;}
+.guia-table td{padding:6px 5px;border-bottom:1px solid var(--bdr);text-align:center;}
+.guia-table tr:nth-child(even) td{background:var(--bg3);}
+.guia-total-row td{background:var(--gc)!important;font-weight:800;color:var(--g);}
+.guia-footer{background:var(--bg3);padding:12px 18px;display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.guia-firma{border-top:1.5px solid var(--txt3);padding-top:6px;margin-top:18px;}
+.guia-firma-lbl{font-size:0.52rem;color:#888;text-transform:uppercase;letter-spacing:.5px;}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:none;align-items:flex-end;}
+.modal-bg.on{display:flex;}
+.modal{background:#fff;border-radius:16px 16px 0 0;padding:18px;width:100%;max-height:80vh;overflow-y:auto;}
+.modal-title{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:1px;margin-bottom:12px;}
+
+.empty{text-align:center;padding:30px 20px;color:var(--txt3);font-size:0.82rem;}
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);padding:9px 18px;border-radius:10px;font-size:0.75rem;font-weight:700;z-index:999;display:none;white-space:nowrap;}
+.toast.ok{background:var(--g);color:#fff;}.toast.err{background:var(--r);color:#fff;}
+
+/* DESPACHO STEPS */
+.step-view{display:none;}.step-view.on{display:block;}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-row">
+    <div>
+      <div class="hdr-title">🌿 COSECHA & DESPACHO</div>
+      <div class="hdr-sub">Arato Mission Produce</div>
+    </div>
+    <div class="hdr-kpis">
+      <div class="hdr-kpi"><div class="hdr-kpi-val" id="hdr-cosech">0</div><div class="hdr-kpi-lbl">Cosechados</div></div>
+      <div class="hdr-kpi"><div class="hdr-kpi-val" id="hdr-pend">0</div><div class="hdr-kpi-lbl">Pendientes</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tb on" onclick="goTab('cosecha',this)">🌿 Cosecha</button>
+  <button class="tb" onclick="goTab('disponible',this);renderDisponible()">📦 Disponible</button>
+  <button class="tb" onclick="goTab('despacho',this)">🚛 Despacho</button>
+  <button class="tb" onclick="goTab('historial',this);renderHistorial()">📋 Historial</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- MODAL QUICK DESPACHO -->
+<div class="modal-bg" id="modal-desp">
+  <div class="modal">
+    <div class="modal-title">Despacho rápido</div>
+    <div id="modal-desp-info" style="background:var(--bg3);border-radius:8px;padding:10px;margin-bottom:10px;font-size:0.75rem;"></div>
+    <input type="hidden" id="md-id">
+    <div class="g2" style="margin-bottom:10px;">
+      <div class="f"><label>Bins a despachar</label><input type="number" id="md-bins" min="1" placeholder="0" oninput="mdCalcJabas()"></div>
+      <div class="f"><label>Jabas equiv.</label><input type="number" id="md-jabas" min="1" placeholder="0" oninput="mdCalcBins()" style="color:var(--b);font-weight:700;"></div>
+    </div>
+    <div class="f" style="margin-bottom:8px;"><label>Cliente</label><input type="text" id="md-cliente" placeholder="Nombre del cliente" style="text-transform:uppercase;"></div>
+    <div class="f" style="margin-bottom:12px;"><label>Observación</label><input type="text" id="md-obs" placeholder="Notas..."></div>
+    <div class="g2">
+      <button class="btn btn-ghost" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-g" onclick="guardarDespachoRapido()">✅ Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- TAB COSECHA -->
+  <div class="tab-c on" id="tab-cosecha">
+    <div class="card">
+      <div class="ctitle">Registrar cosecha</div>
+      <div class="g2">
+        <div class="f"><label>Fecha cosecha</label><input type="date" id="r-fecha"></div>
+        <div class="f"><label>Módulo</label>
+          <select id="r-modulo">
+            <option value="">— Módulo —</option>
+            <option>Módulo 1</option><option>Módulo 2</option><option>Módulo 3</option>
+            <option>Módulo 4</option><option>Módulo 5</option><option>Módulo 6</option>
+            <option>Módulo 7</option><option>Módulo 8</option><option>Módulo 9</option>
+            <option>Módulo 10</option><option>Módulo 11</option><option>Módulo 12</option>
+            <option>Módulo 13</option><option>Módulo 14</option><option>Módulo 15</option>
+            <option>Módulo 16</option><option>Módulo 17</option><option>Módulo 18</option>
+            <option>Módulo 19</option><option>Módulo 20</option><option>Módulo 21</option>
+            <option>Módulo 22</option><option>Módulo 23</option><option>Módulo 24</option>
+          </select>
+        </div>
+      </div>
+      <div class="g2">
+        <div class="f"><label>Variedad</label>
+          <select id="r-var">
+            <option value="Fuerte">Fuerte</option>
+            <option value="Zutano">Zutano</option>
+            <option value="Hass">Hass</option>
+            <option value="Otra">Otra</option>
+          </select>
+        </div>
+        <div class="f"><label>Peso/bin (kg)</label><input type="number" id="r-peso" value="435" style="font-family:'JetBrains Mono',monospace;font-weight:700;"></div>
+      </div>
+      <div class="f"><label>Bins cosechados</label><input type="number" id="r-bins" min="1" placeholder="Ej: 20" style="font-size:1.1rem;font-family:'JetBrains Mono',monospace;font-weight:800;"></div>
+      <div class="f"><label>Observación</label><input type="text" id="r-obs" placeholder="Notas..."></div>
+      <button class="btn btn-g" onclick="registrarCosecha()">✅ Registrar Cosecha</button>
+    </div>
+  </div>
+
+  <!-- TAB DISPONIBLE -->
+  <div class="tab-c" id="tab-disponible">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div style="font-size:0.65rem;font-weight:800;color:var(--txt3);letter-spacing:1px;text-transform:uppercase;">Listo para vender</div>
+      <button onclick="wspDisponible()" style="background:#25D366;border:none;border-radius:8px;padding:6px 12px;color:#fff;font-size:0.68rem;font-weight:700;cursor:pointer;">📲 WSP</button>
+    </div>
+    <div id="lista-disponible"><div class="empty">Cargando...</div></div>
+  </div>
+
+  <!-- TAB DESPACHO -->
+  <div class="tab-c" id="tab-despacho">
+    <!-- Step 1: Cabecera -->
+    <div class="step-view on" id="ds-1">
+      <div class="card">
+        <div class="ctitle">Datos del despacho</div>
+        <div class="g2">
+          <div class="f"><label>Fecha despacho</label><input type="date" id="d-fecha"></div>
+          <div class="f"><label>Fundo</label>
+            <select id="d-fundo"><option value="ARATO 1">Arato 1</option><option value="ARATO 2">Arato 2</option></select>
+          </div>
+        </div>
+        <div class="f"><label>Cliente</label><input type="text" id="d-cliente" placeholder="Ej: LIBERATO HARVEST S.A.C" style="text-transform:uppercase;"></div>
+        <div class="g2">
+          <div class="f"><label>Placa</label><input type="text" id="d-placa" placeholder="C2N-889" style="text-transform:uppercase;font-family:'JetBrains Mono',monospace;font-weight:600;"></div>
+          <div class="f"><label>Licencia</label><input type="text" id="d-licencia" placeholder="D-72475771" style="font-family:'JetBrains Mono',monospace;"></div>
+        </div>
+        <button class="btn btn-g" onclick="dsGoStep(2)">Continuar → Líneas</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Líneas -->
+    <div class="step-view" id="ds-2">
+      <div id="ds-lineas-cont"></div>
+      <button onclick="dsAddLinea()" style="background:var(--gc);border:1.5px dashed var(--g);color:var(--g);border-radius:10px;padding:10px;width:100%;font-size:0.78rem;font-weight:700;cursor:pointer;margin-bottom:10px;font-family:Inter,sans-serif;">+ Agregar línea</button>
+      <div class="g2">
+        <button class="btn btn-ghost" onclick="dsGoStep(1)">← Volver</button>
+        <button class="btn btn-g" onclick="dsGoStep(3)">Ver guía →</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Guía -->
+    <div class="step-view" id="ds-3">
+      <div class="guia-wrap" id="guia-doc">
+        <div class="guia-hdr">
+          <div style="float:right;background:var(--gold);color:var(--ink);border-radius:6px;padding:5px 10px;text-align:right;">
+            <div style="font-size:0.48rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Parte N°</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:0.9rem;font-weight:700;" id="g-num">001</div>
+          </div>
+          <div style="padding-top:4px;">
+            <div class="guia-empresa">Arato Mission Produce</div>
+            <div class="guia-ruc">FUNDO ARATO — PERÚ</div>
+          </div>
+        </div>
+        <div class="guia-bar">
+          <div class="guia-bar-title">Parte de Cosecha</div>
+          <div style="font-size:0.65rem;color:rgba(255,255,255,0.8);" id="g-fecha-bar">—</div>
+        </div>
+        <div class="guia-body">
+          <div class="guia-meta" id="g-meta"></div>
+          <div style="overflow-x:auto;">
+            <table class="guia-table">
+              <thead><tr><th>F.Cosecha</th><th>Viaje</th><th>Variedad</th><th>Módulo</th><th>Calidad</th><th>Envase</th><th>Cant.</th><th>Peso kg</th></tr></thead>
+              <tbody id="g-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="guia-footer">
+          <div><div class="guia-firma-lbl">Entregado por</div><div class="guia-firma"></div><div class="guia-firma-lbl" style="margin-top:4px;">Arato Mission Produce</div></div>
+          <div><div class="guia-firma-lbl">Recibido por</div><div class="guia-firma"></div><div class="guia-firma-lbl" style="margin-top:4px;" id="g-cliente-firma"></div></div>
+        </div>
+      </div>
+      <div class="g2" style="margin-bottom:8px;">
+        <button class="btn btn-ghost" onclick="dsGoStep(2)">← Editar</button>
+        <button class="btn btn-gold" onclick="descargarImagen()">🖼️ Imagen</button>
+      </div>
+      <div class="g2" style="margin-bottom:8px;">
+        <button class="btn btn-g" onclick="compartirWsp()" style="background:#25D366;">📲 WhatsApp</button>
+        <button class="btn btn-g" onclick="descargarExcel()">📊 Excel</button>
+      </div>
+      <button class="btn btn-ghost" onclick="confirmarDespacho()" style="border-color:var(--g);color:var(--g);font-weight:800;">✅ Confirmar y descontar stock</button>
+      <div style="margin-top:8px;"><button class="btn btn-ghost" onclick="dsNuevo()">🔄 Nuevo despacho</button></div>
+    </div>
+  </div>
+
+  <!-- TAB HISTORIAL -->
+  <div class="tab-c" id="tab-historial">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div style="font-size:0.65rem;font-weight:800;color:var(--txt3);letter-spacing:1px;text-transform:uppercase;">Historial de cosecha</div>
+      <button onclick="exportarExcel()" style="background:var(--g);border:none;border-radius:8px;padding:6px 12px;color:#fff;font-size:0.68rem;font-weight:700;cursor:pointer;">📊 Excel</button>
+    </div>
+    <div id="lista-historial"><div class="empty">Cargando...</div></div>
+  </div>
+
+</div>
+
+<script>
+const SURL='https://rqvcvffyynpnighzwxju.supabase.co';
+const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdmN2ZmZ5eW5wbmlnaHp3eGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MjgyNDcsImV4cCI6MjA5MzMwNDI0N30.fFufNEdRvAzl6O6BqtTbx83O3Eg8Wd7gACNJDGQKga4';
+const JABAS_BIN=20;
+let registros=[], dsLineas=[], dsLinId=0;
+
+const hoy=()=>{const d=new Date(),o=d.getTimezoneOffset();return new Date(d.getTime()-o*60000).toISOString().slice(0,10);};
+
+// Init fechas
+document.getElementById('r-fecha').value=hoy();
+document.getElementById('d-fecha').value=hoy();
+
+function toast(t,cl){const el=document.getElementById('toast');el.textContent=t;el.className='toast '+(cl||'');el.style.display='block';setTimeout(()=>el.style.display='none',2500);}
+
+function goTab(name,btn){
+document.querySelectorAll('.tab-c').forEach(t=>t.classList.remove('on'));
+document.querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
+document.getElementById('tab-'+name).classList.add('on');
+btn.classList.add('on');
+}
+
+async function apiFetch(path,method,body){
+const opts={method:method||'GET',headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json'}};
+if(body)opts.body=JSON.stringify(body);
+if(method==='POST')opts.headers['Prefer']='return=representation';
+if(method==='PATCH')opts.headers['Prefer']='return=representation';
+const r=await fetch(SURL+'/rest/v1/'+path,opts);
+if(!r.ok)throw new Error('Error '+r.status);
+return(method==='DELETE')?null:r.json();
+}
+
+async function cargarRegistros(){
+try{
+registros=await apiFetch('cosecha_modulos?select=*&order=fecha_cosecha.desc,created_at.desc');
+updHeader();
+}catch(e){toast('Error: '+e.message,'err');}
+}
+
+function updHeader(){
+const total=registros.reduce((s,r)=>s+(r.bins_cosechados||0),0);
+const vend=registros.reduce((s,r)=>s+(r.bins_vendidos||0),0);
+document.getElementById('hdr-cosech').textContent=total;
+document.getElementById('hdr-pend').textContent=total-vend;
+}
+
+async function registrarCosecha(){
+const fecha=document.getElementById('r-fecha').value;
+const modulo=document.getElementById('r-modulo').value;
+const variedad=document.getElementById('r-var').value;
+const bins=parseInt(document.getElementById('r-bins').value)||0;
+const peso=parseInt(document.getElementById('r-peso').value)||435;
+const obs=document.getElementById('r-obs').value.trim();
+if(!fecha||!modulo||!bins){toast('Completa los campos obligatorios','err');return;}
+try{
+const data=await apiFetch('cosecha_modulos','POST',{fecha_cosecha:fecha,modulo,variedad,bins_cosechados:bins,bins_vendidos:0,jabas_vendidas:0,peso_bin:peso,obs});
+const nuevo=Array.isArray(data)?data[0]:data;
+registros.unshift(nuevo);
+document.getElementById('r-bins').value='';
+document.getElementById('r-obs').value='';
+toast('Cosecha registrada','ok');
+updHeader();
+}catch(e){toast('Error: '+e.message,'err');}
+}
+
+// ── DISPONIBLE ──
+function renderDisponible(){
+const map={};
+registros.forEach(r=>{
+const mod=r.modulo||'—';
+if(!map[mod])map[mod]=[];
+const pend=Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0));
+if(pend>0)map[mod].push({...r,pendientes:pend});
+});
+const mods=Object.keys(map).filter(m=>map[m].length>0).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+const cont=document.getElementById('lista-disponible');
+if(!mods.length){cont.innerHTML='<div class="empty">Sin bins disponibles para venta.</div>';return;}
+cont.innerHTML=mods.map(mod=>{
+const items=map[mod];
+const totalPend=items.reduce((s,r)=>s+r.pendientes,0);
+return`<div class="disp-card">
+<div class="disp-hdr">
+<div class="disp-mod">${mod}</div>
+<div style="text-align:right;">
+<div style="font-size:1rem;font-weight:800;color:var(--gold);">${totalPend} bins</div>
+<div style="font-size:0.55rem;color:var(--txt3);">≈ ${totalPend*JABAS_BIN} jabas</div>
+</div>
+</div>
+<div class="disp-body">
+${items.map(r=>`<div class="var-row">
+<div class="var-info">
+<div class="var-name">${r.variedad}</div>
+<div class="var-det">${r.fecha_cosecha} · ${r.peso_bin||435} kg/bin</div>
+</div>
+<div class="var-nums">
+<div class="var-pend">${r.pendientes}</div>
+<div class="var-jabas">≈${r.pendientes*JABAS_BIN} jabas</div>
+</div>
+</div>`).join('')}
+<button class="btn-desp" onclick="abrirDespachoRapido('${mod}')">🚛 Despachar ${mod}</button>
+</div>
+</div>`;
+}).join('');
+}
+
+function wspDisponible(){
+const map={};
+registros.forEach(r=>{
+const mod=r.modulo||'—';
+const pend=Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0));
+if(pend<=0)return;
+if(!map[mod])map[mod]={vars:{},total:0};
+const v=r.variedad||'—';
+if(!map[mod].vars[v])map[mod].vars[v]=0;
+map[mod].vars[v]+=pend;
+map[mod].total+=pend;
+});
+const mods=Object.keys(map).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+if(!mods.length){toast('Sin disponibles','err');return;}
+const lines=['*DISPONIBLE PARA VENTA - ARATO*'];
+lines.push('Fecha: '+new Date().toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'numeric'}));
+lines.push('----------------');
+let grandTotal=0;
+mods.forEach(mod=>{
+lines.push('');
+lines.push('*'+mod+':* '+map[mod].total+' bins');
+Object.keys(map[mod].vars).forEach(v=>{
+const p=map[mod].vars[v];
+lines.push('  '+v+': '+p+' bins ('+p*JABAS_BIN+' jabas)');
+});
+grandTotal+=map[mod].total;
+});
+lines.push('');
+lines.push('----------------');
+lines.push('*TOTAL DISPONIBLE: '+grandTotal+' bins*');
+lines.push('_Arato Mission Produce_');
+window.open('https://wa.me/?text='+encodeURIComponent(lines.join('\n')),'_blank');
+}
+
+// ── DESPACHO RÁPIDO MODAL ──
+function abrirDespachoRapido(mod){
+const items=registros.filter(r=>r.modulo===mod&&Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0))>0);
+const totalPend=items.reduce((s,r)=>s+Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0)),0);
+document.getElementById('md-id').value=mod;
+document.getElementById('modal-desp-info').innerHTML=
+`<strong>${mod}</strong> — ${totalPend} bins disponibles (≈${totalPend*JABAS_BIN} jabas)<br>`+
+items.map(r=>`<span style="font-size:0.65rem;color:var(--txt3);">${r.variedad}: ${Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0))} bins</span>`).join(' · ');
+document.getElementById('md-bins').value='';
+document.getElementById('md-jabas').value='';
+document.getElementById('md-cliente').value='';
+document.getElementById('md-obs').value='';
+document.getElementById('modal-desp').classList.add('on');
+}
+
+function cerrarModal(){document.getElementById('modal-desp').classList.remove('on');}
+function mdCalcJabas(){const b=parseInt(document.getElementById('md-bins').value)||0;document.getElementById('md-jabas').value=b*JABAS_BIN;}
+function mdCalcBins(){const j=parseInt(document.getElementById('md-jabas').value)||0;document.getElementById('md-bins').value=Math.round(j/JABAS_BIN);}
+
+async function guardarDespachoRapido(){
+const mod=document.getElementById('md-id').value;
+const bins=parseInt(document.getElementById('md-bins').value)||0;
+const obs=document.getElementById('md-obs').value.trim();
+const cliente=document.getElementById('md-cliente').value.trim();
+if(!bins){toast('Ingresa la cantidad','err');return;}
+// Descontar del registro más antiguo pendiente
+const items=registros.filter(r=>r.modulo===mod&&Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0))>0)
+.sort((a,b)=>a.fecha_cosecha.localeCompare(b.fecha_cosecha));
+let resta=bins;
+try{
+for(const r of items){
+if(resta<=0)break;
+const pend=Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0));
+const desc=Math.min(pend,resta);
+const newVend=(r.bins_vendidos||0)+desc;
+await apiFetch('cosecha_modulos?id=eq.'+r.id,'PATCH',{bins_vendidos:newVend,obs:(cliente?'Cliente: '+cliente+'. ':'')+obs});
+r.bins_vendidos=newVend;
+resta-=desc;
+}
+cerrarModal();
+toast('✅ Despacho registrado','ok');
+updHeader();
+renderDisponible();
+renderHistorial();
+}catch(e){toast('Error: '+e.message,'err');}
+}
+
+// ── DESPACHO FORMAL (GUÍA) ──
+function dsGoStep(n){
+document.querySelectorAll('.step-view').forEach(v=>v.classList.remove('on'));
+document.getElementById('ds-'+n).classList.add('on');
+if(n===2&&dsLineas.length===0)dsAddLinea();
+if(n===3)dsRenderGuia();
+window.scrollTo(0,0);
+}
+
+function dsAddLinea(){
+dsLineas.push({id:dsLinId++,fcosecha:hoy(),viaje:1,variedad:'Fuerte',modulo:'',calidad:'Ind. Exportable',envase:'Jabas',cantidad:0});
+dsRenderLineas();
+}
+
+function dsDelLinea(id){dsLineas=dsLineas.filter(l=>l.id!==id);dsRenderLineas();}
+
+function dsCaptureLineas(){
+dsLineas.forEach(l=>{
+const get=id=>document.getElementById(id);
+if(get('lfc-'+l.id))l.fcosecha=get('lfc-'+l.id).value;
+if(get('lvi-'+l.id))l.viaje=parseInt(get('lvi-'+l.id).value)||1;
+if(get('lva-'+l.id))l.variedad=get('lva-'+l.id).value;
+if(get('lmo-'+l.id))l.modulo=get('lmo-'+l.id).value.toUpperCase();
+if(get('lca-'+l.id))l.calidad=get('lca-'+l.id).value;
+if(get('len-'+l.id))l.envase=get('len-'+l.id).value;
+if(get('lcn-'+l.id))l.cantidad=parseInt(get('lcn-'+l.id).value)||0;
+});
+}
+
+function dsCalcPeso(l){return l.envase==='Jabas'?l.cantidad*20:l.cantidad*435;}
+
+function dsRenderLineas(){
+const cont=document.getElementById('ds-lineas-cont');
+cont.innerHTML=dsLineas.map((l,i)=>`
+<div class="desp-linea">
+<div class="desp-linea-num">Línea ${i+1}</div>
+${dsLineas.length>1?`<button class="desp-linea-del" onclick="dsDelLinea(${l.id})">✕</button>`:''}
+<div class="g2" style="margin-top:8px;">
+<div class="f"><label>Fecha cosecha</label><input type="date" id="lfc-${l.id}" value="${l.fcosecha}"></div>
+<div class="f"><label>Viaje #</label><input type="number" id="lvi-${l.id}" value="${l.viaje}" min="1" style="font-family:'JetBrains Mono',monospace;font-weight:600;"></div>
+</div>
+<div class="g2">
+<div class="f"><label>Variedad</label>
+<select id="lva-${l.id}">
+<option ${l.variedad==='Fuerte'?'selected':''}>Fuerte</option>
+<option ${l.variedad==='Zutano'?'selected':''}>Zutano</option>
+<option ${l.variedad==='Hass'?'selected':''}>Hass</option>
+<option ${l.variedad==='Otra'?'selected':''}>Otra</option>
+</select>
+</div>
+<div class="f"><label>Módulo</label><input type="text" id="lmo-${l.id}" value="${l.modulo}" placeholder="M24" style="text-transform:uppercase;font-family:'JetBrains Mono',monospace;font-weight:700;"></div>
+</div>
+<div class="g3">
+<div class="f"><label>Calidad</label>
+<select id="lca-${l.id}">
+<option ${l.calidad==='Ind. Exportable'?'selected':''}>Ind. Exportable</option>
+<option ${l.calidad==='Descarte'?'selected':''}>Descarte</option>
+<option ${l.calidad==='Industrial'?'selected':''}>Industrial</option>
+</select>
+</div>
+<div class="f"><label>Envase</label>
+<select id="len-${l.id}" onchange="dsUpdPeso(${l.id})">
+<option ${l.envase==='Jabas'?'selected':''}>Jabas</option>
+<option ${l.envase==='Bins'?'selected':''}>Bins</option>
+</select>
+</div>
+<div class="f"><label>Cantidad</label><input type="number" id="lcn-${l.id}" value="${l.cantidad}" min="0" oninput="dsUpdPeso(${l.id})" style="font-family:'JetBrains Mono',monospace;font-weight:800;font-size:1rem;"></div>
+</div>
+<div style="background:var(--bg3);border-radius:7px;padding:7px 10px;font-size:0.72rem;display:flex;justify-content:space-between;">
+<span style="color:var(--txt3);">Peso total</span>
+<span style="font-weight:800;color:var(--g);font-family:'JetBrains Mono',monospace;" id="lpeso-${l.id}">${dsCalcPeso(l).toLocaleString()} kg</span>
+</div>
+</div>`).join('');
+}
+
+function dsUpdPeso(id){
+const en=document.getElementById('len-'+id);
+const cn=document.getElementById('lcn-'+id);
+const pe=document.getElementById('lpeso-'+id);
+if(!en||!cn||!pe)return;
+const p=(en.value==='Jabas'?parseInt(cn.value||0)*20:parseInt(cn.value||0)*435);
+pe.textContent=p.toLocaleString()+' kg';
+}
+
+function dsRenderGuia(){
+dsCaptureLineas();
+const fecha=document.getElementById('d-fecha').value;
+const fundo=document.getElementById('d-fundo').value;
+const cliente=(document.getElementById('d-cliente').value||'—').toUpperCase();
+const placa=document.getElementById('d-placa').value||'—';
+const licencia=document.getElementById('d-licencia').value||'—';
+document.getElementById('g-num').textContent=fecha.replace(/-/g,'').slice(4);
+document.getElementById('g-fecha-bar').textContent=fecha;
+document.getElementById('g-cliente-firma').textContent=cliente;
+document.getElementById('g-meta').innerHTML=[
+['Fecha despacho',fecha],['Fundo',fundo],
+['Cliente',cliente],['Placa',placa],['Licencia',licencia],['','']
+].map(([l,v])=>`<div class="guia-meta-item"><div class="guia-meta-lbl">${l}</div><div class="guia-meta-val">${v}</div></div>`).join('');
+let totC=0,totP=0;
+document.getElementById('g-tbody').innerHTML=dsLineas.map(l=>{
+const p=dsCalcPeso(l);totC+=l.cantidad||0;totP+=p;
+return`<tr>
+<td>${l.fcosecha||'—'}</td>
+<td style="font-family:'JetBrains Mono',monospace;font-weight:600;">${l.viaje||1}</td>
+<td style="font-weight:600;">${l.variedad}</td>
+<td style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--g);">${l.modulo||'—'}</td>
+<td style="font-size:0.6rem;">${l.calidad}</td>
+<td>${l.envase}</td>
+<td style="font-weight:700;">${(l.cantidad||0).toLocaleString()}</td>
+<td style="font-weight:700;">${p.toLocaleString()}</td>
+</tr>`;
+}).join('')+`<tr class="guia-total-row">
+<td colspan="6" style="text-align:right;font-weight:800;">TOTAL</td>
+<td>${totC.toLocaleString()}</td>
+<td>${totP.toLocaleString()}</td>
+</tr>`;
+}
+
+async function confirmarDespacho(){
+if(!confirm('Confirmar despacho y descontar del stock?'))return;
+dsCaptureLineas();
+try{
+for(const l of dsLineas){
+if(!l.modulo||!l.cantidad)continue;
+const bins=l.envase==='Jabas'?Math.round(l.cantidad/JABAS_BIN):l.cantidad;
+const items=registros.filter(r=>{
+const modMatch=r.modulo.toUpperCase()===('MÓDULO '+l.modulo.replace(/[^0-9]/g,'').trim()).toUpperCase()||r.modulo.toUpperCase()===l.modulo.toUpperCase();
+const varMatch=r.variedad===l.variedad;
+return modMatch&&varMatch&&Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0))>0;
+}).sort((a,b)=>a.fecha_cosecha.localeCompare(b.fecha_cosecha));
+let resta=bins;
+for(const r of items){
+if(resta<=0)break;
+const pend=Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0));
+const desc=Math.min(pend,resta);
+await apiFetch('cosecha_modulos?id=eq.'+r.id,'PATCH',{bins_vendidos:(r.bins_vendidos||0)+desc});
+r.bins_vendidos=(r.bins_vendidos||0)+desc;
+resta-=desc;
+}
+}
+toast('✅ Stock descontado','ok');
+updHeader();
+}catch(e){toast('Error: '+e.message,'err');}
+}
+
+async function descargarImagen(){
+if(typeof html2canvas==='undefined'){toast('Cargando...');setTimeout(descargarImagen,800);return;}
+toast('Generando imagen...');
+try{
+const canvas=await html2canvas(document.getElementById('guia-doc'),{scale:2,backgroundColor:'#ffffff',useCORS:true});
+const a=document.createElement('a');
+a.download='Parte_Cosecha_Arato_'+document.getElementById('d-fecha').value+'.png';
+a.href=canvas.toDataURL('image/png');a.click();
+toast('✅ Imagen descargada','ok');
+}catch(e){toast('Error: '+e.message,'err');}
+}
+
+function compartirWsp(){
+dsCaptureLineas();
+const fecha=document.getElementById('d-fecha').value;
+const cliente=(document.getElementById('d-cliente').value||'—').toUpperCase();
+const placa=document.getElementById('d-placa').value||'—';
+const fundo=document.getElementById('d-fundo').value;
+let totC=0,totP=0;
+const lines=['*PARTE DE COSECHA - ARATO MISSION PRODUCE*'];
+lines.push('Fecha: '+fecha+' | Fundo: '+fundo);
+lines.push('Cliente: '+cliente);
+lines.push('Placa: '+placa);
+lines.push('----------------');
+dsLineas.forEach((l,i)=>{const p=dsCalcPeso(l);totC+=l.cantidad||0;totP+=p;
+lines.push((i+1)+'. '+l.variedad+' | '+l.modulo+' | '+l.calidad);
+lines.push('   '+l.envase+': '+l.cantidad+' = '+p.toLocaleString()+' kg');
+});
+lines.push('----------------');
+lines.push('*TOTAL: '+totC.toLocaleString()+' uds | '+totP.toLocaleString()+' kg*');
+lines.push('');lines.push('_Arato Mission Produce_');
+window.open('https://wa.me/?text='+encodeURIComponent(lines.join('\n')),'_blank');
+}
+
+function descargarExcel(){
+if(typeof XLSX==='undefined'){toast('Cargando...');setTimeout(descargarExcel,800);return;}
+dsCaptureLineas();
+const fecha=document.getElementById('d-fecha').value;
+const fundo=document.getElementById('d-fundo').value;
+const cliente=(document.getElementById('d-cliente').value||'').toUpperCase();
+const placa=document.getElementById('d-placa').value||'';
+const licencia=document.getElementById('d-licencia').value||'';
+let totC=0,totP=0;
+const dataRows=dsLineas.map(l=>{const p=dsCalcPeso(l);totC+=l.cantidad||0;totP+=p;
+return[l.fcosecha||'',l.viaje||1,cliente,l.variedad,l.modulo||'',l.calidad,l.envase,l.cantidad||0,p];});
+const wb=XLSX.utils.book_new();
+const data=[
+['PARTE DE COSECHA — ARATO MISSION PRODUCE'],[],
+['Fecha despacho:',fecha,'','Fundo:',fundo],
+['Placa:',placa,'','Licencia:',licencia],
+['Cliente:',cliente],[],
+['FECHA COSECHA','VIAJE','CLIENTE','VARIEDAD','MÓDULO','CALIDAD','ENVASE','CANTIDAD','PESO KG'],
+...dataRows,[],
+['','','','','','','TOTAL',totC,totP],[],
+['FUNDO:',fundo,'','PLACA:',placa],
+['LICENCIA:',licencia,'','CLIENTE:',cliente]
+];
+const ws=XLSX.utils.aoa_to_sheet(data);
+ws['!cols']=[{wch:13},{wch:6},{wch:22},{wch:10},{wch:8},{wch:18},{wch:8},{wch:10},{wch:10}];
+ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:8}}];
+const hS={font:{bold:true,color:{rgb:'FFFFFF'},sz:13},fill:{fgColor:{rgb:'1A5C38'}},alignment:{horizontal:'center',vertical:'center'}};
+const colH={font:{bold:true,color:{rgb:'FFFFFF'},sz:9},fill:{fgColor:{rgb:'15803D'}},alignment:{horizontal:'center'}};
+const totS={font:{bold:true,color:{rgb:'15803D'},sz:11},fill:{fgColor:{rgb:'DCFCE7'}},alignment:{horizontal:'center'}};
+if(ws['A1'])ws['A1'].s=hS;
+['A7','B7','C7','D7','E7','F7','G7','H7','I7'].forEach(c=>{if(ws[c])ws[c].s=colH;});
+dataRows.forEach((_,i)=>{const r=7+i+1;const bg=i%2===0?'F8FAF8':'FFFFFF';
+['A','B','C','D','E','F','G'].forEach(c=>{if(ws[c+r])ws[c+r].s={fill:{fgColor:{rgb:bg}},font:{sz:9},alignment:{horizontal:'center'}};});
+if(ws['H'+r])ws['H'+r].s={font:{bold:true,sz:10},fill:{fgColor:{rgb:bg}},alignment:{horizontal:'center'}};
+if(ws['I'+r])ws['I'+r].s={font:{bold:true,sz:10},fill:{fgColor:{rgb:bg}},alignment:{horizontal:'center'}};});
+const tR=7+dataRows.length+2;
+if(ws['G'+tR])ws['G'+tR].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:10},fill:{fgColor:{rgb:'1A5C38'}},alignment:{horizontal:'right'}};
+if(ws['H'+tR])ws['H'+tR].s=totS;if(ws['I'+tR])ws['I'+tR].s=totS;
+XLSX.utils.book_append_sheet(wb,ws,'Parte de Cosecha');
+XLSX.writeFile(wb,'ParteCosecha_Arato_'+fecha+'.xlsx');
+toast('✅ Excel descargado','ok');
+}
+
+function dsNuevo(){if(!confirm('Limpiar despacho?'))return;dsLineas=[];dsLinId=0;dsGoStep(1);toast('Listo','ok');}
+
+// HISTORIAL
+function renderHistorial(){
+const cont=document.getElementById('lista-historial');
+if(!registros.length){cont.innerHTML='<div class="empty">Sin registros.</div>';return;}
+cont.innerHTML=registros.map(r=>{
+const pend=Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0));
+return`<div style="background:#fff;border:1px solid var(--bdr);border-radius:10px;padding:11px 12px;margin-bottom:7px;">
+<div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+<div>
+<div style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;font-weight:700;color:var(--g);">${r.modulo}</div>
+<div style="font-size:0.7rem;font-weight:600;">${r.variedad} · ${r.fecha_cosecha}</div>
+${r.obs?`<div style="font-size:0.6rem;color:var(--txt3);">${r.obs}</div>`:''}
+</div>
+<button onclick="eliminarRegistro(${r.id})" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:0.75rem;">🗑️</button>
+</div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;">
+<div style="text-align:center;background:var(--bg3);border-radius:7px;padding:6px;">
+<div style="font-size:0.78rem;font-weight:800;">${r.bins_cosechados||0}</div>
+<div style="font-size:0.48rem;color:var(--txt3);text-transform:uppercase;">Cosech.</div>
+</div>
+<div style="text-align:center;background:var(--bc);border-radius:7px;padding:6px;">
+<div style="font-size:0.78rem;font-weight:800;color:var(--b);">${r.bins_vendidos||0}</div>
+<div style="font-size:0.48rem;color:var(--b);text-transform:uppercase;">Vendido</div>
+</div>
+<div style="text-align:center;background:${pend>0?'var(--goldc)':'var(--gc)'};border-radius:7px;padding:6px;">
+<div style="font-size:0.78rem;font-weight:800;color:${pend>0?'var(--gold)':'var(--g)'};">${pend}</div>
+<div style="font-size:0.48rem;color:${pend>0?'var(--gold)':'var(--g)'};text-transform:uppercase;">Pendiente</div>
+</div>
+<div style="text-align:center;background:var(--bg3);border-radius:7px;padding:6px;">
+<div style="font-size:0.78rem;font-weight:800;">${(r.peso_bin||435)} kg</div>
+<div style="font-size:0.48rem;color:var(--txt3);text-transform:uppercase;">Peso/bin</div>
+</div>
+</div>
+</div>`;
+}).join('');
+}
+
+async function eliminarRegistro(id){
+if(!confirm('Eliminar este registro?'))return;
+try{await apiFetch('cosecha_modulos?id=eq.'+id,'DELETE');
+registros=registros.filter(r=>r.id!==id);
+renderHistorial();renderDisponible();updHeader();toast('Eliminado','err');
+}catch(e){toast('Error: '+e.message,'err');}
+}
+
+function exportarExcel(){
+if(typeof XLSX==='undefined'){toast('Cargando...');setTimeout(exportarExcel,800);return;}
+const wb=XLSX.utils.book_new();
+const rows=[['FECHA COSECHA','MODULO','VARIEDAD','BINS COSECH.','BINS VEND.','BINS PEND.','JABAS PEND.','PESO/BIN','TOTAL KG','KG VENDIDO','OBS']];
+registros.forEach(r=>{
+const pend=Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0));
+const peso=r.peso_bin||435;
+rows.push([r.fecha_cosecha||'',r.modulo||'',r.variedad||'',r.bins_cosechados||0,r.bins_vendidos||0,pend,pend*JABAS_BIN,peso,(r.bins_cosechados||0)*peso,(r.bins_vendidos||0)*peso,r.obs||'']);
+});
+const ws=XLSX.utils.aoa_to_sheet(rows);
+ws['!cols']=[{wch:13},{wch:12},{wch:10},{wch:12},{wch:11},{wch:11},{wch:12},{wch:9},{wch:11},{wch:11},{wch:20}];
+const hS={font:{bold:true,color:{rgb:'FFFFFF'},sz:10},fill:{fgColor:{rgb:'1A5C38'}},alignment:{horizontal:'center'}};
+'ABCDEFGHIJK'.split('').forEach(c=>{if(ws[c+'1'])ws[c+'1'].s=hS;});
+XLSX.utils.book_append_sheet(wb,ws,'Historial Cosecha');
+XLSX.writeFile(wb,'Cosecha_Historial_Arato_'+hoy()+'.xlsx');
+toast('✅ Excel descargado','ok');
+}
+
+document.getElementById('modal-desp').addEventListener('click',function(e){if(e.target===this)cerrarModal();});
+
+cargarRegistros();
+</script>
+</body>
+</html>
