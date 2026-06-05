@@ -212,7 +212,8 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--txt);min-heig
     <div class="step-view on" id="ds-1">
       <div class="card">
         <div class="ctitle">Datos del despacho</div>
-        <div class="g2">
+        <div class="g3">
+          <div class="f"><label>N° Parte</label><input type="number" id="d-nro" value="1" min="1" style="font-family:'JetBrains Mono',monospace;font-weight:800;font-size:1.1rem;"></div>
           <div class="f"><label>Fecha despacho</label><input type="date" id="d-fecha"></div>
           <div class="f"><label>Fundo</label>
             <select id="d-fundo"><option value="ARATO 1">Arato 1</option><option value="ARATO 2">Arato 2</option></select>
@@ -303,6 +304,9 @@ const hoy=()=>{const d=new Date(),o=d.getTimezoneOffset();return new Date(d.getT
 // Init fechas
 document.getElementById('r-fecha').value=hoy();
 document.getElementById('d-fecha').value=hoy();
+// Restaurar último correlativo usado
+const lastNro=localStorage.getItem('arato_nro_parte');
+if(lastNro)document.getElementById('d-nro').value=parseInt(lastNro)+1;
 
 function toast(t,cl){const el=document.getElementById('toast');el.textContent=t;el.className='toast '+(cl||'');el.style.display='block';setTimeout(()=>el.style.display='none',2500);}
 
@@ -568,12 +572,15 @@ const fundo=document.getElementById('d-fundo').value;
 const cliente=(document.getElementById('d-cliente').value||'—').toUpperCase();
 const placa=document.getElementById('d-placa').value||'—';
 const licencia=document.getElementById('d-licencia').value||'—';
-document.getElementById('g-num').textContent=fecha.replace(/-/g,'').slice(4);
+const nro=String(document.getElementById('d-nro').value||1).padStart(3,'0');
+document.getElementById('g-num').textContent=nro;
 document.getElementById('g-fecha-bar').textContent=fecha;
 document.getElementById('g-cliente-firma').textContent=cliente;
 document.getElementById('g-meta').innerHTML=[
 ['Fecha despacho',fecha],['Fundo',fundo],
-['Cliente',cliente],['Placa',placa],['Licencia',licencia],['','']
+['Cliente',cliente],['Placa',placa],
+['Licencia',licencia],['Fecha despacho',fecha],
+['Fecha cosecha',dsLineas.length?[...new Set(dsLineas.map(l=>l.fcosecha))].sort().join(' / '):'—'],['','']
 ].map(([l,v])=>`<div class="guia-meta-item"><div class="guia-meta-lbl">${l}</div><div class="guia-meta-val">${v}</div></div>`).join('');
 let totC=0,totP=0;
 document.getElementById('g-tbody').innerHTML=dsLineas.map(l=>{
@@ -617,6 +624,7 @@ r.bins_vendidos=(r.bins_vendidos||0)+desc;
 resta-=desc;
 }
 }
+localStorage.setItem('arato_nro_parte', document.getElementById('d-nro').value);
 toast('✅ Stock descontado','ok');
 updHeader();
 }catch(e){toast('Error: '+e.message,'err');}
