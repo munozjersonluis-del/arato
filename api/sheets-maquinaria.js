@@ -14,12 +14,14 @@ const credentials = {
   token_uri:"https://oauth2.googleapis.com/token"
 };
 
-function fetchSupa(path) {
-  return new Promise((resolve, reject) => {
-    const options = { hostname: SUPA_HOST, path: '/rest/v1/'+path, headers: {'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY} };
-    https.get(options, (r) => {
-      let d=''; r.on('data',c=>d+=c); r.on('end',()=>{try{resolve(JSON.parse(d));}catch(e){resolve([]);}});
-    }).on('error', reject);
+const META = 2.3;
+function r1(n){return Math.round((n||0)*10)/10;}
+function r2(n){return Math.round((n||0)*100)/100;}
+
+function fetchSupa(path){
+  return new Promise((resolve,reject)=>{
+    const options={hostname:SUPA_HOST,path:'/rest/v1/'+path,headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}};
+    https.get(options,(r)=>{let d='';r.on('data',c=>d+=c);r.on('end',()=>{try{resolve(JSON.parse(d));}catch(e){resolve([]);}});}).on('error',reject);
   });
 }
 
@@ -29,29 +31,90 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin','*');
   if(req.method==='OPTIONS')return res.status(200).end();
   try {
-    const auth = new google.auth.GoogleAuth({credentials, scopes:['https://www.googleapis.com/auth/spreadsheets']});
-    const sheets = google.sheets({version:'v4', auth});
+    const auth = new google.auth.GoogleAuth({credentials,scopes:['https://www.googleapis.com/auth/spreadsheets']});
+    const sheets = google.sheets({version:'v4',auth});
     const rows = await fetchSupa('maquinaria_registros?select=*&order=fecha.asc,maquina.asc');
-    if(!rows||!rows.length) return res.status(200).json({ok:true,msg:'Sin datos'});
+    if(!rows||!rows.length)return res.status(200).json({ok:true,msg:'Sin datos'});
 
-    // Get/create sheet
     const meta = await sheets.spreadsheets.get({spreadsheetId:SHEET_ID});
     const existing = meta.data.sheets.map(s=>s.properties.title);
-    if(!existing.includes('Maquinaria')) {
-      await sheets.spreadsheets.batchUpdate({spreadsheetId:SHEET_ID,resource:{requests:[{addSheet:{properties:{title:'Maquinaria'}}}]}});
-    }
-    await sheets.spreadsheets.values.clear({spreadsheetId:SHEET_ID,range:'Maquinaria!A:Z'});
 
-    // Build data
-    const data = [
-      ['ARATO MISSION PRODUCE — CONTROL DE MAQUINARIA','','','','','','','','','',''],
-      ['Actualizado: '+new Date().toLocaleString('es-PE'),'','','','','','','','','',''],
-      ['','','','','','','','','','',''],
-      ['MAQUINA','FECHA','HORA INICIO','HORA FIN','HRS EJEC','BINS','TONELADAS','TN/HR','META','ESTADO','MODULOS']
+    // ── HOJA 1: BASE DE DATOS ──
+    if(!existing.includes('Base_Datos')){
+      await sheets.spreadsheets.batchUpdate({spreadsheetId:SHEET_ID,resource:{requests:[{addSheet:{properties:{title:'Base_Datos',index:0}}}]}});
+    }
+    await sheets.spreadsheets.values.clear({spreadsheetId:SHEET_ID,range:'Base_Datos!A:Z'});
+
+    const baseDatos = [
+      ['REGISTRO CONTINUO DE MAQUINARIA Y CAMPO','','','','','','','','','','',''],
+      ['','','','','','','','','','','',''],
+      ['','','','','','','','','','','',''],
+      ['Maquina','Operador','Fecha','Hora Inicio','Hora Fin','Hrs Ejec','Bins','Toneladas','TN/Hr Real','Meta','Estado','Modulos']
     ];
     rows.forEach(r=>{
-      data.push([r.maquina||'',r.fecha||'',r.hora_inicio||'',r.hora_fin||'',r.hrs_ejec||0,r.bins||0,r.toneladas||0,r.tn_hr||0,r.meta||2.3,r.estado||'',r.modulos||'']);
+      baseDatos.push([
+        r.maquina||'',
+        r.operador||'',
+        r.fecha||'',
+        r.hora_inicio||'',
+        r.hora_fin||'',
+        r1(r.hrs_ejec),
+        r1(r.bins),
+        r2(r.toneladas),
+        r2(r.tn_hr),
+        r.meta||META,
+        r.estado||'',
+        r.modulos||''
+      ]);
     });
+
+    await sheets.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:'Base_Datos!A1',valueInputOption:'RAW',resource:{values:baseDatos}});
+
+    // Format Base_Datos
+    const meta2 = await sheets.spreadsheets.get({spreadsheetId:SHEET_ID});
+    const s1 = meta2.data.sheets.find(s=>s.properties.title==='Base_Datos');
+    const sid1 = s1.properties.sheetId;
+
+    const VERDE=rgb('1A5C38'),VERDE2=rgb('2D6A4F'),VERDE_C=rgb('DCFCE7'),VERDE_T=rgb('15803D');
+    const ROJO=rgb('DC2626'),ROJO_C=rgb('FEE2E2'),AMARILLO=rgb('D97706'),AMARILLO_C=rgb('FEF3C7');
+    const BLANCO={red:1,green:1,blue:1},GRIS=rgb('F8FAFC'),NEGRO=rgb('111827');
+
+    function cell(sid,r1i,c1,r2i,c2,bg,fg,bold,sz){
+      return{repeatCell:{range:{sheetId:sid,startRowIndex:r1i,endRowIndex:r2i,startColumnIndex:c1,endColumnIndex:c2},
+        cell:{userEnteredFormat:{backgroundColor:bg,textFormat:{foregroundColor:fg,bold:!!bold,fontSize:sz||10},horizontalAlignment:'CENTER',verticalAlignment:'MIDDLE'}},
+        fields:'userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,verticalAlignment)'}};
+    }
+    function merge(sid,r1i,c1,r2i,c2){return{mergeCells:{range:{sheetId:sid,startRowIndex:r1i,endRowIndex:r2i,startColumnIndex:c1,endColumnIndex:c2},mergeType:'MERGE_ALL'}};}
+    function colW(sid,c,w){return{updateDimensionProperties:{range:{sheetId:sid,dimension:'COLUMNS',startIndex:c,endIndex:c+1},properties:{pixelSize:w},fields:'pixelSize'}};}
+    function rowH(sid,r,h){return{updateDimensionProperties:{range:{sheetId:sid,dimension:'ROWS',startIndex:r,endIndex:r+1},properties:{pixelSize:h},fields:'pixelSize'}};}
+
+    const reqs1 = [
+      merge(sid1,0,0,1,12), cell(sid1,0,0,1,12,VERDE,BLANCO,true,14), rowH(sid1,0,36),
+      cell(sid1,3,0,4,12,VERDE2,BLANCO,true,10), rowH(sid1,3,24),
+      [100,100,90,90,80,70,70,90,80,60,70,120].map((w,i)=>colW(sid1,i,w)),
+    ].flat();
+
+    rows.forEach((_,i)=>{
+      const row=4+i;
+      const bg=i%2===0?GRIS:BLANCO;
+      const r=rows[i];
+      const tnhr=r.tn_hr||0;
+      const isBien=tnhr>=META;
+      const isReg=tnhr>=META*0.7;
+      const estadoBg=isBien?VERDE_C:isReg?AMARILLO_C:ROJO_C;
+      const estadoTxt=isBien?VERDE_T:isReg?AMARILLO:ROJO;
+      reqs1.push(cell(sid1,row,0,row+1,12,bg,NEGRO,false,9));
+      reqs1.push(cell(sid1,row,8,row+1,9,bg,isBien?VERDE_T:isReg?AMARILLO:ROJO,true,10)); // TN/Hr
+      reqs1.push(cell(sid1,row,10,row+1,11,estadoBg,estadoTxt,true,9)); // Estado
+      reqs1.push(rowH(sid1,row,18));
+    });
+    await sheets.spreadsheets.batchUpdate({spreadsheetId:SHEET_ID,resource:{requests:reqs1}});
+
+    // ── HOJA 2: DASHBOARD ──
+    if(!existing.includes('Dashboard_Graficos')){
+      await sheets.spreadsheets.batchUpdate({spreadsheetId:SHEET_ID,resource:{requests:[{addSheet:{properties:{title:'Dashboard_Graficos'}}}]}});
+    }
+    await sheets.spreadsheets.values.clear({spreadsheetId:SHEET_ID,range:'Dashboard_Graficos!A:Z'});
 
     // Resumen por maquina
     const maqMap={};
@@ -62,67 +125,87 @@ module.exports = async (req, res) => {
       maqMap[r.maquina].hrs+=r.hrs_ejec||0;
       maqMap[r.maquina].count++;
     });
-    data.push(['','','','','','','','','','','']);
-    data.push(['RESUMEN POR MAQUINA','','','','','','','','','','']);
-    data.push(['MAQUINA','REGISTROS','TOTAL HRS','TOTAL BINS','TOTAL TN','TN/HR PROM','','','','','']);
-    Object.keys(maqMap).sort().forEach(m=>{
+    const maqNames=Object.keys(maqMap).sort();
+
+    // Rendimiento cronologico
+    const fechas=[...new Set(rows.map(r=>r.fecha))].sort();
+
+    const dash=[
+      ['PANEL DE CONTROL GENERAL Y FILTRADO POR FECHAS','','','','',''],
+      ['','','','','',''],
+      ['','','','','',''],
+      ['Resumen General por Maquina (Consolidado Historico)','','','','',''],
+      ['Maquina','Total Horas','Total Bins','Total Toneladas','TN/Hr Promedio','Estado Global'],
+    ];
+    maqNames.forEach(m=>{
       const d=maqMap[m];
-      const prom=d.hrs>0?+(d.tons/d.hrs).toFixed(4):0;
-      data.push([m,d.count,+d.hrs.toFixed(2),+d.bins.toFixed(2),+d.tons.toFixed(4),prom,'','','','','']);
+      const prom=d.hrs>0?r2(d.tons/d.hrs):0;
+      const estado=prom>=META?'BIEN':prom>=META*0.7?'REGULAR':'MAL';
+      dash.push([m,r1(d.hrs),r1(d.bins),r2(d.tons),prom,estado]);
+    });
+    dash.push(['','','','','','']);
+    dash.push(['','','','','','']);
+    dash.push(['Rendimiento Cronologico Diario (Evolucion por Fechas)','','','','','']);
+
+    // Header row for chart data
+    const chartHeader=['Fecha',...maqNames.map(m=>'TN/Hr '+m),'Meta Minima'];
+    dash.push(chartHeader);
+    fechas.forEach(f=>{
+      const row=[f];
+      maqNames.forEach(m=>{
+        const rec=rows.find(r=>r.fecha===f&&r.maquina===m);
+        row.push(rec?r2(rec.tn_hr):0);
+      });
+      row.push(META);
+      dash.push(row);
     });
 
-    await sheets.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:'Maquinaria!A1',valueInputOption:'RAW',resource:{values:data}});
+    await sheets.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:'Dashboard_Graficos!A1',valueInputOption:'RAW',resource:{values:dash}});
 
-    // Format
-    const meta2 = await sheets.spreadsheets.get({spreadsheetId:SHEET_ID});
-    const s = meta2.data.sheets.find(s=>s.properties.title==='Maquinaria');
-    const sid = s.properties.sheetId;
+    // Format Dashboard
+    const meta3=await sheets.spreadsheets.get({spreadsheetId:SHEET_ID});
+    const s2=meta3.data.sheets.find(s=>s.properties.title==='Dashboard_Graficos');
+    const sid2=s2.properties.sheetId;
 
-    const VERDE=rgb('1A5C38'),VERDE2=rgb('2D6A4F'),VERDE_C=rgb('DCFCE7'),VERDE_T=rgb('15803D');
-    const ROJO=rgb('DC2626'),ROJO_C=rgb('FEE2E2');
-    const NARANJA=rgb('D97706'),NARANJA_C=rgb('FEF3C7');
-    const BLANCO={red:1,green:1,blue:1},GRIS=rgb('F8FAFC'),NEGRO=rgb('111827');
-
-    function cell(r1,c1,r2,c2,bg,fg,bold,sz){
-      return{repeatCell:{range:{sheetId:sid,startRowIndex:r1,endRowIndex:r2,startColumnIndex:c1,endColumnIndex:c2},
-        cell:{userEnteredFormat:{backgroundColor:bg,textFormat:{foregroundColor:fg,bold:!!bold,fontSize:sz||10},horizontalAlignment:'CENTER',verticalAlignment:'MIDDLE'}},
-        fields:'userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,verticalAlignment)'}};
-    }
-    function merge(r1,c1,r2,c2){return{mergeCells:{range:{sheetId:sid,startRowIndex:r1,endRowIndex:r2,startColumnIndex:c1,endColumnIndex:c2},mergeType:'MERGE_ALL'}};}
-    function colW(c,w){return{updateDimensionProperties:{range:{sheetId:sid,dimension:'COLUMNS',startIndex:c,endIndex:c+1},properties:{pixelSize:w},fields:'pixelSize'}};}
-    function rowH(r,h){return{updateDimensionProperties:{range:{sheetId:sid,dimension:'ROWS',startIndex:r,endIndex:r+1},properties:{pixelSize:h},fields:'pixelSize'}};}
-
-    const reqs=[
-      merge(0,0,1,11),cell(0,0,1,11,VERDE,BLANCO,true,13),rowH(0,30),
-      merge(1,0,2,11),cell(1,0,2,11,VERDE2,BLANCO,false,9),rowH(1,14),
-      cell(3,0,4,11,VERDE,BLANCO,true,10),rowH(3,22),
-      [90,90,90,80,80,70,90,70,60,80,120].map((w,i)=>colW(i,w)),
+    const reqs2=[
+      merge(sid2,0,0,1,6), cell(sid2,0,0,1,6,VERDE,BLANCO,true,13), rowH(sid2,0,30),
+      merge(sid2,3,0,4,6), cell(sid2,3,0,4,6,VERDE2,BLANCO,true,11),
+      cell(sid2,4,0,5,6,VERDE,BLANCO,true,10), rowH(sid2,4,22),
+      [140,100,100,110,110,90].map((w,i)=>colW(sid2,i,w)),
     ].flat();
 
-    rows.forEach((_,i)=>{
-      const row=4+i;
+    maqNames.forEach((_,i)=>{
+      const row=5+i;
       const bg=i%2===0?GRIS:BLANCO;
-      const r=rows[i];
-      const isBien=(r.tn_hr||0)>=(r.meta||2.3);
-      reqs.push(cell(row,0,row+1,11,bg,NEGRO,false,9));
-      reqs.push(cell(row,9,row+1,10,isBien?VERDE_C:ROJO_C,isBien?VERDE_T:ROJO,true,9));
-      reqs.push(rowH(row,18));
+      const d=maqMap[maqNames[i]];
+      const prom=d.hrs>0?r2(d.tons/d.hrs):0;
+      const isBien=prom>=META;
+      reqs2.push(cell(sid2,row,0,row+1,6,bg,NEGRO,false,10));
+      reqs2.push(cell(sid2,row,4,row+1,5,bg,isBien?VERDE_T:ROJO,true,10));
+      reqs2.push(cell(sid2,row,5,row+1,6,isBien?VERDE_C:ROJO_C,isBien?VERDE_T:ROJO,true,10));
+      reqs2.push(rowH(sid2,row,20));
     });
 
-    // Resumen header
-    const resRow=4+rows.length+2;
-    reqs.push(merge(resRow,0,resRow+1,11));
-    reqs.push(cell(resRow,0,resRow+1,11,VERDE,BLANCO,true,11));
-    reqs.push(cell(resRow+1,0,resRow+2,6,VERDE2,BLANCO,true,9));
-    Object.keys(maqMap).sort().forEach((m,i)=>{
-      const row=resRow+2+i;
-      const bg=i%2===0?GRIS:BLANCO;
-      reqs.push(cell(row,0,row+1,6,bg,NEGRO,false,10));
-      reqs.push(rowH(row,20));
+    const cronRow=5+maqNames.length+3;
+    reqs2.push(merge(sid2,cronRow,0,cronRow+1,maqNames.length+2));
+    reqs2.push(cell(sid2,cronRow,0,cronRow+1,maqNames.length+2,VERDE2,BLANCO,true,11));
+    reqs2.push(cell(sid2,cronRow+1,0,cronRow+2,maqNames.length+2,VERDE,BLANCO,true,10));
+    fechas.forEach((_,i)=>{
+      const row=cronRow+2+i;
+      reqs2.push(cell(sid2,row,0,row+1,maqNames.length+2,i%2===0?GRIS:BLANCO,NEGRO,false,10));
+      // Color TN/Hr cells
+      maqNames.forEach((m,mi)=>{
+        const rec=rows.find(r=>r.fecha===fechas[i]&&r.maquina===m);
+        const tnhr=rec?rec.tn_hr:0;
+        const isBien=tnhr>=META;
+        const isReg=tnhr>=META*0.7;
+        reqs2.push(cell(sid2,row,mi+1,row+1,mi+2,isBien?VERDE_C:isReg?AMARILLO_C:ROJO_C,isBien?VERDE_T:isReg?AMARILLO:ROJO,true,10));
+      });
+      reqs2.push(rowH(sid2,row,20));
     });
 
-    await sheets.spreadsheets.batchUpdate({spreadsheetId:SHEET_ID,resource:{requests:reqs}});
-    res.status(200).json({ok:true,registros:rows.length});
+    await sheets.spreadsheets.batchUpdate({spreadsheetId:SHEET_ID,resource:{requests:reqs2}});
+    res.status(200).json({ok:true,registros:rows.length,maquinas:maqNames.length,fechas:fechas.length});
   } catch(e) {
     console.error(e.message);
     res.status(500).json({error:e.message});
