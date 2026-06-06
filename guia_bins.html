@@ -190,8 +190,13 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--txt);min-heig
 
   <!-- Agregar nuevo grupo -->
   <div class="no-print" style="margin-top:4px;">
-    <div style="font-size:0.6rem;font-weight:800;color:var(--txt3);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">+ Agregar grupo</div>
-    <div class="add-grupo-grid" id="addGrupoGrid"></div>
+    <button onclick="toggleAddGrid()" id="btn-add-grid" style="width:100%;padding:9px;background:#fff;border:1.5px solid var(--bdr);border-radius:10px;font-size:0.72rem;font-weight:700;color:var(--txt3);cursor:pointer;font-family:Inter,sans-serif;display:flex;justify-content:space-between;align-items:center;">
+      <span>➕ Agregar grupo</span>
+      <span id="arrow-add-grid">▼</span>
+    </button>
+    <div id="addGrupoWrap" style="display:none;margin-top:6px;">
+      <div class="add-grupo-grid" id="addGrupoGrid"></div>
+    </div>
   </div>
 </div>
 
@@ -291,6 +296,14 @@ function getColorDeBin(g, sg, idx) {
 
 function getModuloLabel(colorId) {
   return colorModulos[colorId] || colorId;
+}
+
+function toggleAddGrid() {
+  const wrap = document.getElementById('addGrupoWrap');
+  const arrow = document.getElementById('arrow-add-grid');
+  const visible = wrap.style.display !== 'none';
+  wrap.style.display = visible ? 'none' : 'block';
+  arrow.textContent = visible ? '▼' : '▲';
 }
 
 // ── RENDER PRINCIPAL ──
