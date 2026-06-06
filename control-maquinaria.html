@@ -508,8 +508,8 @@ async function importExcel(input) {
         const fin   = fmtHora(get(r,"fin"));
         const bins  = parseFloat(get(r,"bins"))||0;
         const hrs   = parseFloat(get(r,"hrs"))||parseFloat(get(r,"ejec"))||horasEntre(ini,fin);
-        const tons  = parseFloat(get(r,"ton"))||+(bins*KG_BIN/1000).toFixed(4);
-        const tnhr  = hrs>0 ? +(tons/hrs).toFixed(4) : 0;
+        const tons  = parseFloat(get(r,"ton"))||+(bins*KG_BIN/1000).toFixed(1);
+        const tnhr  = hrs>0 ? +(tons/hrs).toFixed(1) : 0;
         const modulos = String(get(r,"modulo")||"").trim();
         const dup = records.find(x=>x.maquina===maquina&&x.fecha===fecha&&x.horaInicio===ini);
         if (!dup) { records.push({maquina,operador,fecha,horaInicio:ini,horaFin:fin,hrsEjec:hrs,bins,toneladas:tons,tnhr,estado:calcEstado(tnhr),modulos}); imported++; }
@@ -564,7 +564,7 @@ function renderDashboard() {
     const tHrs  = recs.reduce((s,r)=>s+r.hrsEjec,0);
     const tBins = recs.reduce((s,r)=>s+r.bins,0);
     const tTons = recs.reduce((s,r)=>s+r.toneladas,0);
-    const avg   = tHrs>0 ? +(tTons/tHrs).toFixed(4) : 0;
+    const avg   = tHrs>0 ? +(tTons/tHrs).toFixed(1) : 0;
     const est   = calcEstado(avg);
     const pct   = Math.min(100,(avg/META)*100).toFixed(0);
     const col   = COLORS[i%COLORS.length];
@@ -575,9 +575,9 @@ function renderDashboard() {
       </div>
       <div style="font-size:12px;color:var(--sub);margin-bottom:10px">👤 ${operadores}</div>
       <div class="machine-stats">
-        <div><span>Horas: </span><strong>${tHrs.toFixed(2)}</strong></div>
+        <div><span>Horas: </span><strong>${tHrs.toFixed(1)}</strong></div>
         <div><span>Bins: </span><strong>${tBins.toFixed(1)}</strong></div>
-        <div><span>Toneladas: </span><strong>${tTons.toFixed(2)} t</strong></div>
+        <div><span>Toneladas: </span><strong>${tTons.toFixed(1)} t</strong></div>
         <div><span>TN/Hr prom: </span><strong style="color:${avg>=META?'var(--green)':'var(--red)'}">${avg}</strong></div>
       </div>
       <div class="progress-bar-bg"><div class="progress-bar" style="width:${pct}%;background:${avg>=META?'var(--green)':'var(--red)'}"></div></div>
