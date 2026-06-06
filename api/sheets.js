@@ -373,9 +373,9 @@ module.exports = async function handler(req, res) {
         await sheets.spreadsheets.values.clear({ spreadsheetId: SHEET_ID, range: 'Guia Bins!A:Z' });
 
         const dataGuia = [
-          ['ARATO MISSION PRODUCE — CONTROL DE GUIA DE BINS'],
-          ['Actualizado:', new Date().toLocaleString('es-PE')],
-          [],
+          ['ARATO MISSION PRODUCE — CONTROL DE GUIA DE BINS','','','','','','','',''],
+          ['Actualizado:', new Date().toLocaleString('es-PE'),'','','','','','',''],
+          ['','','','','','','','',''],
           ['FECHA', 'GRUPO', 'SUBGRUPO', 'TOTAL BINS', 'LLEGADOS', 'FALTANTES', 'PENDIENTES', '% LLEGADO', 'OBS']
         ];
         guiaRows.forEach(r => {
