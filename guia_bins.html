@@ -2,657 +2,472 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Guía de Control de Bins — Arato</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>Guía de Bins — Arato</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 :root{
-  --verde:#16A34A;--verde-c:#DCFCE7;
-  --rojo:#DC2626;--rojo-c:#FEE2E2;
-  --azul:#2563EB;--azul-c:#DBEAFE;
-  --amarillo:#D97706;--amarillo-c:#FEF3C7;
-  --bg:#F0F4F8;--bg2:#FFFFFF;--bg3:#F8FAFC;
-  --texto:#1E293B;--texto2:#475569;--texto3:#94A3B8;
-  --border:#E2E8F0;--shadow:0 2px 8px rgba(0,0,0,0.08);
+--g:#16A34A;--gc:#DCFCE7;--g2:#15803D;
+--r:#DC2626;--rc:#FEE2E2;
+--y:#D97706;--yc:#FEF3C7;
+--b:#2563EB;
+--bg:#F3F4F6;--bg2:#fff;--bg3:#F8FAFC;
+--txt:#111827;--txt2:#374151;--txt3:#6B7280;
+--bdr:#E5E7EB;
 }
-body{font-family:Inter,sans-serif;background:var(--bg);color:var(--texto);min-height:100vh;}
+body{font-family:Inter,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;}
 
 /* HEADER */
-.hdr{background:#1A5C38;padding:14px 16px 10px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.2);}
-.hdr-top{display:flex;align-items:center;justify-content:space-between;}
-.hdr-title{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#fff;letter-spacing:2px;}
-.hdr-sub{font-size:0.6rem;color:rgba(255,255,255,0.75);letter-spacing:1px;text-transform:uppercase;}
-.hdr-btns{display:flex;gap:6px;}
-.hdr-btn{background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:8px;padding:7px 11px;font-size:0.72rem;font-weight:700;cursor:pointer;}
-.hdr-btn:active{background:rgba(255,255,255,0.35);}
+.hdr{background:linear-gradient(135deg,#1A5C38,#16A34A);padding:12px 14px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.2);}
+.hdr-row{display:flex;justify-content:space-between;align-items:center;}
+.hdr-title{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:#fff;letter-spacing:2px;}
+.hdr-sub{font-size:0.55rem;color:rgba(255,255,255,0.7);margin-top:1px;}
+.hdr-btns{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;}
+.hdr-btn{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:7px;padding:5px 9px;font-size:0.62rem;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;}
 
-.wrap{max-width:860px;margin:0 auto;padding:14px;}
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:10px 12px;background:#fff;border-bottom:1px solid var(--bdr);}
+.kpi{text-align:center;padding:6px 4px;}
+.kpi-val{font-size:1.1rem;font-weight:800;}
+.kpi-lbl{font-size:0.48rem;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;}
 
-/* CARD */
-.card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:var(--shadow);}
-.ctitle{font-size:0.6rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--texto3);margin-bottom:10px;}
+.wrap{max-width:640px;margin:0 auto;padding:10px;}
 
-/* GRUPOS SELECTOR */
-.grupos-grid{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px;}
-.grupo-btn{padding:8px 14px;border-radius:10px;border:2px solid var(--border);background:var(--bg3);color:var(--texto2);font-size:0.8rem;font-weight:700;cursor:pointer;transition:all 0.15s;}
-.grupo-btn.activo{background:#1A5C38;border-color:#1A5C38;color:#fff;}
-.grupo-btn.tiene-datos{border-color:var(--verde);color:var(--verde);}
+/* GRUPO ACORDEON */
+.grupo-card{background:#fff;border:1.5px solid var(--bdr);border-radius:12px;margin-bottom:8px;overflow:hidden;}
+.grupo-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;user-select:none;background:#fff;}
+.grupo-hdr:active{background:var(--bg3);}
+.grupo-hdr.open{background:var(--gc);border-bottom:1.5px solid var(--g);}
+.grupo-letra{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:1px;}
+.grupo-hdr.open .grupo-letra{color:var(--g2);}
+.grupo-info{font-size:0.62rem;color:var(--txt3);font-weight:600;}
+.grupo-arrow{font-size:0.8rem;color:var(--txt3);transition:transform 0.2s;}
+.grupo-hdr.open .grupo-arrow{transform:rotate(180deg);color:var(--g);}
+.grupo-body{display:none;padding:8px 10px;}
+.grupo-hdr.open + .grupo-body{display:block;}
 
-/* SUBGRUPOS */
-.subgrupos-wrap{margin-bottom:14px;}
-.subgrupo-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
-.subgrupo-titulo{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:#1A5C38;letter-spacing:1px;}
-.subgrupo-stats{font-size:0.65rem;color:var(--texto3);font-weight:600;}
-.sg-tabs{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;}
-.sg-tab{padding:6px 12px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg3);color:var(--texto2);font-size:0.75rem;font-weight:700;cursor:pointer;}
-.sg-tab.activo{background:var(--azul);border-color:var(--azul);color:#fff;}
-.sg-tab .sg-check{font-size:0.6rem;margin-left:3px;}
-.btn-add-sg{padding:6px 12px;border-radius:8px;border:1.5px dashed var(--verde);background:none;color:var(--verde);font-size:0.75rem;font-weight:700;cursor:pointer;}
+/* SUBGRUPO ACORDEON */
+.sg-card{border:1px solid var(--bdr);border-radius:9px;margin-bottom:6px;overflow:hidden;background:var(--bg3);}
+.sg-hdr{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;cursor:pointer;user-select:none;}
+.sg-hdr:active{background:var(--bdr);}
+.sg-hdr.open{background:#fff;border-bottom:1px solid var(--bdr);}
+.sg-nombre{font-family:monospace;font-size:0.88rem;font-weight:700;}
+.sg-stats{font-size:0.6rem;color:var(--txt3);}
+.sg-pct{font-size:0.72rem;font-weight:800;}
+.sg-arrow{font-size:0.65rem;color:var(--txt3);transition:transform 0.2s;}
+.sg-hdr.open .sg-arrow{transform:rotate(180deg);}
+.sg-body{display:none;padding:10px;}
+.sg-hdr.open + .sg-body{display:block;}
 
 /* BINS GRID */
-.bins-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:6px;margin-bottom:12px;}
-.bin-item{
-  aspect-ratio:1;
-  border-radius:8px;
-  border:2px solid var(--border);
-  background:var(--bg3);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  cursor:pointer;
-  font-weight:800;
-  font-size:0.85rem;
-  color:var(--texto2);
-  transition:all 0.15s;
-  position:relative;
-  user-select:none;
-}
-.bin-item:active{transform:scale(0.92);}
-.bin-item.llegado{background:var(--verde-c);border-color:var(--verde);color:var(--verde);}
-.bin-item.llegado::after{content:'✓';position:absolute;top:2px;right:4px;font-size:0.6rem;color:var(--verde);}
-.bin-item.faltante{background:var(--rojo-c);border-color:var(--rojo);color:var(--rojo);}
-.bin-item .bin-num{font-size:0.9rem;font-weight:800;line-height:1;}
-.bin-item .bin-hora{font-size:0.45rem;color:var(--texto3);margin-top:1px;}
+.bins-grid{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;}
+.bin{width:38px;height:38px;border-radius:7px;border:1.5px solid var(--bdr);background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:0.58rem;font-weight:700;color:var(--txt3);cursor:pointer;transition:all 0.1s;flex-direction:column;gap:1px;}
+.bin:active{transform:scale(0.92);}
+.bin.llegado{background:var(--gc);border-color:var(--g);color:var(--g2);}
+.bin.faltante{background:var(--rc);border-color:var(--r);color:var(--r);}
+.bin-hora{font-size:0.4rem;font-weight:600;opacity:0.8;}
 
-/* PROGRESO */
-.prog-wrap{margin-bottom:10px;}
-.prog-bar-bg{background:var(--bg3);border-radius:20px;height:10px;overflow:hidden;margin-bottom:5px;}
-.prog-bar-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,#16A34A,#22C55E);transition:width 0.3s;}
-.prog-info{display:flex;justify-content:space-between;font-size:0.62rem;color:var(--texto3);font-weight:600;}
+/* BOTONES SUBGRUPO */
+.sg-actions{display:flex;gap:6px;margin-top:6px;}
+.sg-btn{flex:1;padding:7px;border-radius:8px;font-size:0.68rem;font-weight:700;cursor:pointer;border:none;font-family:Inter,sans-serif;}
 
-/* RESUMEN */
-.resumen-row{display:flex;gap:6px;margin-bottom:10px;}
-.res-kpi{flex:1;background:var(--bg3);border-radius:10px;padding:10px;text-align:center;border:1px solid var(--border);}
-.res-kpi-val{font-size:1.4rem;font-weight:800;}
-.res-kpi-lbl{font-size:0.55rem;color:var(--texto3);font-weight:700;text-transform:uppercase;letter-spacing:1px;}
+/* AGREGAR GRUPO */
+.add-grupo-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-bottom:10px;}
+.add-grupo-btn{padding:10px 4px;border-radius:8px;border:1.5px dashed var(--bdr);background:var(--bg3);color:var(--txt3);font-size:0.72rem;font-weight:700;cursor:pointer;text-align:center;}
+.add-grupo-btn:active{background:var(--gc);border-color:var(--g);color:var(--g);}
+.add-grupo-btn.usado{background:var(--gc);border-color:var(--g);border-style:solid;color:var(--g2);}
 
 /* MODAL */
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:none;align-items:flex-end;}
 .modal-bg.open{display:flex;}
-.modal{background:#fff;border-radius:16px;padding:20px;width:88%;max-width:360px;}
-.modal-title{font-size:1rem;font-weight:800;margin-bottom:14px;}
-.modal-input{width:100%;background:var(--bg3);border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;font-size:0.9rem;font-family:Inter,sans-serif;margin-bottom:10px;}
-.modal-btns{display:flex;gap:8px;}
-.modal-btn{flex:1;border:none;border-radius:9px;padding:11px;font-weight:700;cursor:pointer;font-size:0.85rem;font-family:Inter,sans-serif;}
-.modal-btn-ok{background:var(--verde);color:#fff;}
-.modal-btn-cancel{background:var(--bg3);color:var(--texto2);}
+.modal{background:#fff;border-radius:16px 16px 0 0;padding:20px;width:100%;}
+.modal-title{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:1px;margin-bottom:14px;}
+.modal-input{width:100%;padding:10px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:0.9rem;font-family:Inter,sans-serif;margin-bottom:10px;outline:none;}
+.modal-input:focus{border-color:var(--g);}
+.modal-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.modal-btn{padding:11px;border-radius:9px;font-size:0.82rem;font-weight:700;cursor:pointer;border:none;font-family:Inter,sans-serif;}
+.modal-btn-ok{background:var(--g);color:#fff;}
+.modal-btn-cancel{background:var(--bg3);color:var(--txt3);}
 
-/* FLASH */
-.flash{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:#1E293B;color:#fff;padding:9px 18px;border-radius:10px;font-size:0.78rem;font-weight:600;z-index:999;display:none;white-space:nowrap;}
+/* BIN MODAL */
+.bin-modal-btns{display:flex;flex-direction:column;gap:8px;}
+.bin-modal-btn{padding:12px;border-radius:9px;font-size:0.85rem;font-weight:700;cursor:pointer;border:none;font-family:Inter,sans-serif;}
 
-/* BOTONES */
-.btn{border:none;border-radius:10px;padding:10px 16px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;}
-.btn-g{background:var(--verde);color:#fff;}
-.btn-r{background:var(--rojo);color:#fff;}
-.btn-ghost{background:none;border:1.5px solid var(--border);color:var(--texto2);}
-.btn-sm{padding:6px 12px;font-size:0.7rem;border-radius:8px;}
+.flash{position:fixed;top:70px;left:50%;transform:translateX(-50%);padding:9px 18px;border-radius:10px;font-size:0.75rem;font-weight:700;color:#fff;z-index:999;display:none;white-space:nowrap;}
 
-/* PRINT */
 @media print {
-  .hdr,.hdr-btns,.no-print,#gruposGrid button:not(.activo){display:none!important;}
-  body{background:white;}
-  .wrap{padding:0;}
-  .card{box-shadow:none;border:1px solid #ccc;break-inside:avoid;margin-bottom:8px;}
-  .bins-grid{grid-template-columns:repeat(10,1fr)!important;gap:4px!important;}
-  .bin-item{font-size:0.65rem;aspect-ratio:1;}
-  .bin-item.llegado{background:#DCFCE7!important;border-color:#16A34A!important;color:#16A34A!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  .bin-item.faltante{background:#FEE2E2!important;border-color:#DC2626!important;color:#DC2626!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  .prog-bar-fill{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .hdr,.hdr-btns,.no-print,.sg-actions,.add-grupo-grid,.grupo-arrow,.sg-arrow{display:none!important;}
+  .grupo-body{display:block!important;}
+  .sg-body{display:block!important;}
+  body{background:#fff;}
 }
 </style>
 </head>
 <body>
 
 <div class="hdr">
-  <div class="hdr-top">
+  <div class="hdr-row">
     <div>
-      <div class="hdr-title">🌿 GUÍA DE CONTROL DE BINS</div>
-      <div class="hdr-sub">Arato Mission Produce · <span id="fechaHdr"></span></div>
+      <div class="hdr-title">📋 GUÍA DE BINS</div>
+      <div class="hdr-sub" id="fechaHdr"></div>
     </div>
     <div class="hdr-btns">
-      <button class="hdr-btn no-print" onclick="verHistorial()">📅 Historial</button>
+      <button class="hdr-btn no-print" onclick="syncAll()">🔄 Sync</button>
+      <button class="hdr-btn no-print" onclick="verHistorialFecha()">📅 Historial</button>
       <button class="hdr-btn no-print" onclick="window.print()">🖨️ Imprimir</button>
-      <button class="hdr-btn no-print" onclick="resetearHoy()">🗑️ Resetear</button>
     </div>
   </div>
+</div>
+
+<div class="kpis">
+  <div class="kpi"><div class="kpi-val" id="kpi-total" style="color:var(--b);">0</div><div class="kpi-lbl">Total bins</div></div>
+  <div class="kpi"><div class="kpi-val" id="kpi-llegados" style="color:var(--g);">0</div><div class="kpi-lbl">Llegados</div></div>
+  <div class="kpi"><div class="kpi-val" id="kpi-faltantes" style="color:var(--r);">0</div><div class="kpi-lbl">Faltantes</div></div>
+  <div class="kpi"><div class="kpi-val" id="kpi-pend" style="color:var(--y);">0</div><div class="kpi-lbl">Pendientes</div></div>
 </div>
 
 <div class="flash" id="flash"></div>
 
-<!-- Modal agregar subgrupo -->
-<div class="modal-bg" id="modalSG">
-  <div class="modal">
-    <div class="modal-title">➕ Agregar subgrupo</div>
-    <div style="font-size:0.72rem;color:var(--texto3);margin-bottom:10px;">Grupo seleccionado: <strong id="modalGrupoLabel"></strong></div>
-    <div style="font-size:0.72rem;color:var(--texto2);margin-bottom:6px;font-weight:600;">Subgrupo (ej: A1, A2):</div>
-    <input class="modal-input" id="sgNombre" placeholder="Ej: A1" style="text-transform:uppercase;" maxlength="5">
-    <div style="font-size:0.72rem;color:var(--texto2);margin-bottom:6px;font-weight:600;">Cantidad de bins:</div>
-    <input class="modal-input" type="number" id="sgCantidad" placeholder="Ej: 60" min="1" max="70" value="60">
-    <div class="modal-btns">
-      <button class="modal-btn modal-btn-ok" onclick="confirmarAgregarSG()">✅ Agregar</button>
-      <button class="modal-btn modal-btn-cancel" onclick="cerrarModal()">Cancelar</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal info bin -->
+<!-- MODAL: Bin -->
 <div class="modal-bg" id="modalBin">
   <div class="modal">
-    <div class="modal-title" id="modalBinTitle">Bin #</div>
-    <div style="font-size:0.75rem;color:var(--texto3);margin-bottom:12px;" id="modalBinSub"></div>
-    <div class="modal-btns" style="flex-direction:column;gap:8px;">
-      <button class="modal-btn modal-btn-ok" onclick="marcarBinLlegado()">✅ Marcar como LLEGADO</button>
-      <button class="modal-btn" style="background:var(--rojo-c);color:var(--rojo);" onclick="marcarBinFaltante()">⚠️ Marcar como FALTANTE</button>
-      <button class="modal-btn" style="background:var(--bg3);color:var(--texto2);" onclick="quitarMarcaBin()">↩️ Quitar marca</button>
-      <button class="modal-btn modal-btn-cancel" onclick="cerrarModalBin()">Cancelar</button>
+    <div class="modal-title" id="mBinTitle">Bin #</div>
+    <div style="font-size:0.75rem;color:var(--txt3);margin-bottom:14px;" id="mBinSub"></div>
+    <div class="bin-modal-btns">
+      <button class="bin-modal-btn" style="background:var(--gc);color:var(--g2);" onclick="marcarBin('llegado')">✅ LLEGADO</button>
+      <button class="bin-modal-btn" style="background:var(--rc);color:var(--r);" onclick="marcarBin('faltante')">⚠️ FALTANTE</button>
+      <button class="bin-modal-btn" style="background:var(--bg3);color:var(--txt3);" onclick="marcarBin('')">↩️ Quitar marca</button>
+      <button class="bin-modal-btn" style="background:var(--bg3);color:var(--txt3);" onclick="cerrarModal('modalBin')">Cancelar</button>
     </div>
   </div>
 </div>
 
-<!-- Modal confirmar eliminar -->
-<div class="modal-bg" id="modalEliminar">
+<!-- MODAL: Agregar subgrupo -->
+<div class="modal-bg" id="modalSG">
   <div class="modal">
-    <div class="modal-title">⚠️ Confirmar eliminación</div>
-    <div style="font-size:0.82rem;color:var(--texto2);margin-bottom:16px;" id="modalEliminarMsg"></div>
+    <div class="modal-title" id="mSGTitle">Agregar subgrupo</div>
+    <div style="font-size:0.7rem;color:var(--txt3);margin-bottom:8px;">Nombre del subgrupo</div>
+    <input class="modal-input" id="mSGNombre" style="text-transform:uppercase;font-family:monospace;font-weight:700;font-size:1rem;" maxlength="5">
+    <div style="font-size:0.7rem;color:var(--txt3);margin-bottom:6px;">Cantidad de bins</div>
+    <input class="modal-input" type="number" id="mSGCantidad" value="60" min="1" max="100">
     <div class="modal-btns">
-      <button class="modal-btn modal-btn-ok" style="background:var(--rojo);" onclick="ejecutarEliminar()">🗑️ Eliminar</button>
-      <button class="modal-btn modal-btn-cancel" onclick="cerrarModalEliminar()">Cancelar</button>
+      <button class="modal-btn modal-btn-ok" onclick="confirmarAgregarSG()">✅ Agregar</button>
+      <button class="modal-btn modal-btn-cancel" onclick="cerrarModal('modalSG')">Cancelar</button>
     </div>
   </div>
 </div>
 
 <div class="wrap">
+  <!-- Grupos desplegables -->
+  <div id="gruposWrap"></div>
 
-  <!-- Selector de grupo -->
-  <div class="card">
-    <div class="ctitle">Selecciona un grupo</div>
-    <div class="grupos-grid" id="gruposGrid"></div>
+  <!-- Agregar nuevo grupo -->
+  <div class="no-print" style="margin-top:4px;">
+    <div style="font-size:0.6rem;font-weight:800;color:var(--txt3);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">+ Agregar grupo</div>
+    <div class="add-grupo-grid" id="addGrupoGrid"></div>
   </div>
-
-  <!-- Panel del grupo seleccionado -->
-  <div id="panelGrupo" style="display:none;">
-
-    <!-- KPIs resumen -->
-    <div class="card">
-      <div class="ctitle" id="resumenTitulo">Resumen del grupo</div>
-      <div class="resumen-row">
-        <div class="res-kpi"><div class="res-kpi-val" style="color:var(--texto);" id="kpiTotal">0</div><div class="res-kpi-lbl">Total bins</div></div>
-        <div class="res-kpi"><div class="res-kpi-val" style="color:var(--verde);" id="kpiLlegados">0</div><div class="res-kpi-lbl">Llegaron ✅</div></div>
-        <div class="res-kpi"><div class="res-kpi-val" style="color:var(--texto3);" id="kpiFaltantes">0</div><div class="res-kpi-lbl">Pendientes ⬜</div></div>
-        <div class="res-kpi"><div class="res-kpi-val" style="color:var(--rojo);" id="kpiMarcados">0</div><div class="res-kpi-lbl">Faltantes ⚠️</div></div>
-      </div>
-      <div class="prog-wrap">
-        <div class="prog-bar-bg"><div class="prog-bar-fill" id="progBarra" style="width:0%"></div></div>
-        <div class="prog-info"><span id="progPct">0%</span><span id="progTxt">0 / 0 bins</span></div>
-      </div>
-      <!-- Botones de reporte -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;" class="no-print">
-        <button onclick="enviarReporteWsp()" style="background:#25D366;color:#fff;border:none;border-radius:10px;padding:12px 8px;font-size:0.8rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
-          <span style="font-size:1.1rem;">📲</span> Enviar WhatsApp
-        </button>
-        <button onclick="sincronizarSheets()" style="background:#0F9D58;color:#fff;border:none;border-radius:10px;padding:12px 8px;font-size:0.8rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
-          <span style="font-size:1.1rem;">📋</span> Sync Sheets
-        </button>
-      </div>
-    </div>
-
-    <!-- Subgrupos -->
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-        <div class="ctitle" style="margin-bottom:0;">Subgrupos</div>
-        <button class="btn btn-g btn-sm no-print" onclick="abrirModalSG()">➕ Agregar subgrupo</button>
-      </div>
-      <div class="sg-tabs" id="sgTabs"></div>
-      <div id="sgPanel"></div>
-    </div>
-
-  </div>
-
 </div>
 
 <script>
-// ── Estado ──
-const GRUPOS = ['A','B','C','D','E','F','G','H','I','J'];
-let data = JSON.parse(localStorage.getItem('arato_guia') || '{}');
-let grupoActivo = null;
-let sgActivo = null;
-let binSeleccionado = null;
+const SURL='https://rqvcvffyynpnighzwxju.supabase.co';
+const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdmN2ZmZ5eW5wbmlnaHp3eGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MjgyNDcsImV4cCI6MjA5MzMwNDI0N30.fFufNEdRvAzl6O6BqtTbx83O3Eg8Wd7gACNJDGQKga4';
 
-// Fecha actual
+const GRUPOS_ALL = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+let data = {};
+let _binCtx = null; // {grupo, sg, idx}
+let _sgCtx = null;  // {grupo}
+let _abiertos = {}; // {grupo: bool, grupo_sg: bool}
+
 function fechaHoy() {
-  const d = new Date();
-  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  const d=new Date(),o=d.getTimezoneOffset();
+  return new Date(d.getTime()-o*60000).toISOString().slice(0,10);
 }
 
-// Auto-reset si es un día nuevo
-function checkFecha() {
-  const hoy = fechaHoy();
-  const guardada = localStorage.getItem('arato_guia_fecha');
-  if (guardada && guardada !== hoy) {
-    // Guardar copia del día anterior
-    localStorage.setItem('arato_guia_' + guardada, JSON.stringify(data));
-    data = {};
-    flash('📅 Nuevo día — guía reseteada automáticamente', 'azul');
-  }
-  localStorage.setItem('arato_guia_fecha', hoy);
-}
+document.getElementById('fechaHdr').textContent = new Date().toLocaleDateString('es-PE',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 
-// Inicializar estructura de datos
-function initData() {
-  GRUPOS.forEach(g => {
-    if (!data[g]) data[g] = { subgrupos: {} };
-  });
+function flash(msg, tipo) {
+  const f=document.getElementById('flash');
+  f.textContent=msg;
+  f.style.background=tipo==='verde'?'#16A34A':tipo==='rojo'?'#DC2626':tipo==='azul'?'#2563EB':'#1E293B';
+  f.style.display='block';
+  setTimeout(()=>f.style.display='none',2200);
 }
 
 function guardar() {
-  localStorage.setItem('arato_guia', JSON.stringify(data));
+  localStorage.setItem('arato_guia_v2', JSON.stringify(data));
 }
 
-function flash(msg, tipo) {
-  const f = document.getElementById('flash');
-  f.textContent = msg;
-  f.style.background = tipo==='verde'?'#16A34A':tipo==='rojo'?'#DC2626':tipo==='azul'?'#2563EB':'#1E293B';
-  f.style.display = 'block';
-  setTimeout(() => f.style.display='none', 2000);
+function cargar() {
+  const saved = localStorage.getItem('arato_guia_v2');
+  if(saved) { try { data=JSON.parse(saved); } catch(e){data={};} }
 }
 
-// ── FECHA ──
-function formatFecha() {
-  const d = new Date();
-  return d.toLocaleDateString('es-PE', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
-}
-document.getElementById('fechaHdr').textContent = formatFecha();
-
-// ── GRUPOS ──
-function renderGrupos() {
-  const grid = document.getElementById('gruposGrid');
-  grid.innerHTML = '';
-  GRUPOS.forEach(g => {
-    const tiene = data[g] && Object.keys(data[g].subgrupos).length > 0;
-    const activo = g === grupoActivo;
-
-    const wrap = document.createElement('div');
-    wrap.style.cssText = 'display:flex;align-items:center;gap:4px;';
-
-    const btn = document.createElement('button');
-    btn.className = 'grupo-btn' + (activo?' activo':tiene?' tiene-datos':'');
-    btn.textContent = 'Grupo ' + g + (tiene?' ✓':'');
-    btn.addEventListener('click', function(e) { e.stopPropagation(); seleccionarGrupo(g); });
-    wrap.appendChild(btn);
-
-    if (tiene) {
-      const del = document.createElement('button');
-      del.textContent = '🗑️';
-      del.title = 'Eliminar grupo ' + g;
-      del.style.cssText = 'background:none;border:1px solid var(--rojo);color:var(--rojo);border-radius:6px;padding:4px 7px;font-size:0.65rem;cursor:pointer;';
-      del.addEventListener('click', function(e) { e.stopPropagation(); eliminarGrupo(g); });
-      wrap.appendChild(del);
-    }
-
-    grid.appendChild(wrap);
-  });
+function cerrarModal(id) {
+  document.getElementById(id).classList.remove('open');
 }
 
-function seleccionarGrupo(g) {
-  grupoActivo = g;
-  sgActivo = null;
+// ── RENDER PRINCIPAL ──
+function render() {
   renderGrupos();
-  renderPanel();
-  document.getElementById('panelGrupo').style.display = 'block';
+  renderAddGrid();
+  updKPIs();
 }
 
-// ── PANEL ──
-function renderPanel() {
-  if (!grupoActivo) return;
-  const gData = data[grupoActivo];
-  const sgs = Object.keys(gData.subgrupos);
-  document.getElementById('resumenTitulo').textContent = 'Resumen · Grupo ' + grupoActivo;
-
-  // Auto-seleccionar primer subgrupo
-  if (!sgActivo && sgs.length > 0) sgActivo = sgs[0];
-
-  // Tabs
-  const tabs = document.getElementById('sgTabs');
-  tabs.innerHTML = sgs.map(sg => {
-    const bins = gData.subgrupos[sg].bins;
-    const llegados = bins.filter(b => b.estado==='llegado').length;
-    const total = bins.length;
-    return `<button class="sg-tab ${sg===sgActivo?'activo':''}" onclick="seleccionarSG('${sg}')">
-      ${sg} <span class="sg-check">${llegados}/${total} bins</span>
-    </button>`;
-  }).join('') + `<button class="btn-add-sg no-print" onclick="abrirModalSG()">+ Subgrupo</button>`;
-
-  // Panel bins
-  renderBins();
-  actualizarKPIs();
-}
-
-function seleccionarSG(sg) {
-  sgActivo = sg;
-  renderPanel();
-}
-
-function renderBins() {
-  const panel = document.getElementById('sgPanel');
-  if (!sgActivo || !data[grupoActivo]?.subgrupos[sgActivo]) {
-    panel.innerHTML = '<div style="text-align:center;padding:20px;color:var(--texto3);">Selecciona o agrega un subgrupo.</div>';
+function renderGrupos() {
+  const wrap = document.getElementById('gruposWrap');
+  const gruposActivos = Object.keys(data).filter(g=>data[g]&&Object.keys(data[g]).length>0).sort();
+  if(!gruposActivos.length) {
+    wrap.innerHTML = '<div style="text-align:center;padding:30px 20px;color:var(--txt3);font-size:0.82rem;">Toca un grupo abajo para comenzar</div>';
     return;
   }
-  const bins = data[grupoActivo].subgrupos[sgActivo].bins;
-  const llegados = bins.filter(b=>b.estado==='llegado').length;
-  const total = bins.length;
-
-  panel.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-      <div style="font-size:0.72rem;font-weight:700;color:var(--texto2);">
-        Subgrupo <strong style="color:#1A5C38;font-size:0.9rem;">${sgActivo}</strong> — ${total} bins
-      </div>
-      <div style="display:flex;gap:5px;">
-        <button class="btn btn-ghost btn-sm no-print" onclick="marcarTodos('llegado')">✅ Todos llegaron</button>
-        <button class="btn btn-ghost btn-sm no-print" style="color:var(--rojo);" onclick="confirmarEliminarSG()">🗑️</button>
-      </div>
-    </div>
-    <div class="bins-grid">
-      ${bins.map((b,i) => `
-        <div class="bin-item ${b.estado||''}" onclick="seleccionarBin(${i})">
-          <div class="bin-num">${b.num}</div>
-          ${b.hora ? `<div class="bin-hora">${b.hora}</div>` : ''}
+  wrap.innerHTML = gruposActivos.map(g => {
+    const sgs = Object.keys(data[g]).sort();
+    let totBins=0,totLleg=0,totFalt=0;
+    sgs.forEach(sg=>{
+      const bins=data[g][sg]||[];
+      totBins+=bins.length;
+      totLleg+=bins.filter(b=>b.e==='l').length;
+      totFalt+=bins.filter(b=>b.e==='f').length;
+    });
+    const pend=totBins-totLleg-totFalt;
+    const isOpen=_abiertos[g];
+    return `<div class="grupo-card" id="gc-${g}">
+      <div class="grupo-hdr ${isOpen?'open':''}" onclick="toggleGrupo('${g}')">
+        <div>
+          <span class="grupo-letra">Grupo ${g}</span>
+          <span style="font-size:0.62rem;color:var(--txt3);margin-left:8px;">${sgs.length} subgrupos</span>
         </div>
-      `).join('')}
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
-      <div style="display:flex;align-items:center;gap:5px;font-size:0.62rem;color:var(--texto3);">
-        <div style="width:14px;height:14px;border-radius:3px;background:var(--verde-c);border:1.5px solid var(--verde);"></div> Llegó
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="text-align:right;">
+            <div style="font-size:0.65rem;font-weight:700;color:var(--g);">✓ ${totLleg}</div>
+            <div style="font-size:0.55rem;color:var(--txt3);">${pend} pend · ${totFalt} falt</div>
+          </div>
+          <span class="grupo-arrow">▼</span>
+        </div>
       </div>
-      <div style="display:flex;align-items:center;gap:5px;font-size:0.62rem;color:var(--texto3);">
-        <div style="width:14px;height:14px;border-radius:3px;background:var(--rojo-c);border:1.5px solid var(--rojo);"></div> Faltante
+      <div class="grupo-body">
+        ${sgs.map(sg => renderSG(g, sg)).join('')}
+        <button class="no-print" onclick="_sgCtx={grupo:'${g}'};abrirModalSG()" style="width:100%;padding:8px;background:var(--gc);border:1.5px dashed var(--g);color:var(--g);border-radius:8px;font-size:0.72rem;font-weight:700;cursor:pointer;margin-top:2px;font-family:Inter,sans-serif;">+ Agregar subgrupo</button>
       </div>
-      <div style="display:flex;align-items:center;gap:5px;font-size:0.62rem;color:var(--texto3);">
-        <div style="width:14px;height:14px;border-radius:3px;background:var(--bg3);border:1.5px solid var(--border);"></div> Pendiente
-      </div>
-    </div>
-  `;
+    </div>`;
+  }).join('');
 }
 
-function actualizarKPIs() {
-  if (!grupoActivo) return;
-  let total=0, llegados=0, faltantes=0, marcados=0;
-  Object.values(data[grupoActivo].subgrupos).forEach(sg => {
-    sg.bins.forEach(b => {
-      total++;
-      if (b.estado==='llegado') llegados++;
-      else if (b.estado==='faltante') { faltantes++; marcados++; }
-      else faltantes++;
+function renderSG(g, sg) {
+  const bins = data[g][sg]||[];
+  const llegados=bins.filter(b=>b.e==='l').length;
+  const faltantes=bins.filter(b=>b.e==='f').length;
+  const total=bins.length;
+  const pend=total-llegados-faltantes;
+  const pct=total>0?Math.round(llegados/total*100):0;
+  const isOpen=_abiertos[g+'_'+sg];
+  return `<div class="sg-card" id="sgc-${g}-${sg}">
+    <div class="sg-hdr ${isOpen?'open':''}" onclick="toggleSG('${g}','${sg}')">
+      <div>
+        <span class="sg-nombre">${sg}</span>
+        <span class="sg-stats"> — ${llegados}✓ ${faltantes}⚠ ${pend}⬜</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span class="sg-pct" style="color:${pct===100?'var(--g)':pct>0?'var(--y)':'var(--txt3)'};">${pct}%</span>
+        <span class="sg-arrow">▼</span>
+      </div>
+    </div>
+    <div class="sg-body">
+      <div class="bins-grid">
+        ${bins.map((b,i)=>{
+          const cls=b.e==='l'?'llegado':b.e==='f'?'faltante':'';
+          return `<div class="bin ${cls}" onclick="abrirModalBin('${g}','${sg}',${i})">${b.n}${b.h?`<div class="bin-hora">${b.h}</div>`:''}</div>`;
+        }).join('')}
+      </div>
+      <div class="sg-actions no-print">
+        <button class="sg-btn" style="background:var(--gc);color:var(--g2);" onclick="marcarTodos('${g}','${sg}','l')">✅ Todos llegaron</button>
+        <button class="sg-btn" style="background:var(--rc);color:var(--r);flex:0.5;" onclick="eliminarSG('${g}','${sg}')">🗑️</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderAddGrid() {
+  const grid = document.getElementById('addGrupoGrid');
+  grid.innerHTML = GRUPOS_ALL.map(g => {
+    const usado = data[g] && Object.keys(data[g]).length > 0;
+    return `<button class="add-grupo-btn ${usado?'usado':''}" onclick="agregarGrupo('${g}')">${g}${usado?'✓':''}</button>`;
+  }).join('');
+}
+
+function updKPIs() {
+  let tot=0,lleg=0,falt=0;
+  Object.keys(data).forEach(g=>{
+    Object.keys(data[g]||{}).forEach(sg=>{
+      const bins=data[g][sg]||[];
+      tot+=bins.length;
+      lleg+=bins.filter(b=>b.e==='l').length;
+      falt+=bins.filter(b=>b.e==='f').length;
     });
   });
-  document.getElementById('kpiTotal').textContent = total;
-  document.getElementById('kpiLlegados').textContent = llegados;
-  document.getElementById('kpiFaltantes').textContent = total - llegados - marcados;
-  document.getElementById('kpiMarcados').textContent = marcados;
-  const pct = total > 0 ? Math.round(llegados/total*100) : 0;
-  document.getElementById('progBarra').style.width = pct + '%';
-  document.getElementById('progPct').textContent = pct + '%';
-  document.getElementById('progTxt').textContent = llegados + ' / ' + total + ' bins llegaron';
+  document.getElementById('kpi-total').textContent=tot;
+  document.getElementById('kpi-llegados').textContent=lleg;
+  document.getElementById('kpi-faltantes').textContent=falt;
+  document.getElementById('kpi-pend').textContent=tot-lleg-falt;
 }
 
-// ── BINS ──
-function seleccionarBin(idx) {
-  const bins = data[grupoActivo].subgrupos[sgActivo].bins;
-  binSeleccionado = idx;
-  const b = bins[idx];
-  document.getElementById('modalBinTitle').textContent = 'Bin #' + b.num + ' — ' + sgActivo;
-  document.getElementById('modalBinSub').textContent = b.estado === 'llegado' ? '✅ Ya llegó · ' + (b.hora||'') : b.estado === 'faltante' ? '⚠️ Marcado como faltante' : '⬜ Pendiente';
-  document.getElementById('modalBin').classList.add('open');
+// ── TOGGLE ──
+function toggleGrupo(g) {
+  _abiertos[g] = !_abiertos[g];
+  renderGrupos();
 }
 
-function marcarBinLlegado() {
-  if (binSeleccionado === null) return;
-  const bins = data[grupoActivo].subgrupos[sgActivo].bins;
-  const ahora = new Date();
-  const hora = ahora.getHours().toString().padStart(2,'0') + ':' + ahora.getMinutes().toString().padStart(2,'0');
-  bins[binSeleccionado].estado = 'llegado';
-  bins[binSeleccionado].hora = hora;
-  guardar(); cerrarModalBin(); renderBins(); actualizarKPIs(); renderPanel();
-  flash('✅ Bin marcado como llegado', 'verde');
+function toggleSG(g, sg) {
+  const key=g+'_'+sg;
+  _abiertos[key] = !_abiertos[key];
+  renderGrupos();
 }
 
-function marcarBinFaltante() {
-  if (binSeleccionado === null) return;
-  const bins = data[grupoActivo].subgrupos[sgActivo].bins;
-  bins[binSeleccionado].estado = 'faltante';
-  delete bins[binSeleccionado].hora;
-  guardar(); cerrarModalBin(); renderBins(); actualizarKPIs(); renderPanel();
-  flash('⚠️ Bin marcado como faltante', 'rojo');
+// ── AGREGAR GRUPO ──
+function agregarGrupo(g) {
+  if(data[g] && Object.keys(data[g]).length > 0) {
+    // Ya tiene datos — solo abrir/cerrar acordeón
+    _abiertos[g] = !_abiertos[g];
+    renderGrupos();
+    return;
+  }
+  // Nuevo grupo — crear y abrir modal
+  if(!data[g]) data[g] = {};
+  _abiertos[g] = true;
+  _sgCtx = {grupo: g};
+  abrirModalSG();
 }
 
-function quitarMarcaBin() {
-  if (binSeleccionado === null) return;
-  const bins = data[grupoActivo].subgrupos[sgActivo].bins;
-  bins[binSeleccionado].estado = '';
-  delete bins[binSeleccionado].hora;
-  guardar(); cerrarModalBin(); renderBins(); actualizarKPIs(); renderPanel();
-  flash('↩️ Marca quitada', 'azul');
-}
-
-function marcarTodos(estado) {
-  if (!confirm('¿Marcar todos los bins del subgrupo ' + sgActivo + ' como llegados?')) return;
-  const bins = data[grupoActivo].subgrupos[sgActivo].bins;
-  const hora = new Date().getHours().toString().padStart(2,'0') + ':' + new Date().getMinutes().toString().padStart(2,'0');
-  bins.forEach(b => { b.estado = estado; if(estado==='llegado') b.hora = hora; });
-  guardar(); renderBins(); actualizarKPIs(); renderPanel();
-  flash('✅ Todos marcados', 'verde');
-}
-
-// ── SUBGRUPOS ──
+// ── SUBGRUPO ──
 function abrirModalSG() {
-  if (!grupoActivo) { flash('Selecciona un grupo primero', 'rojo'); return; }
-  document.getElementById('modalGrupoLabel').textContent = 'Grupo ' + grupoActivo;
-  document.getElementById('sgNombre').value = '';
-  document.getElementById('sgCantidad').value = '60';
+  const g = _sgCtx.grupo;
+  document.getElementById('mSGTitle').textContent = 'Agregar subgrupo — Grupo ' + g;
+  // Auto-nombre
+  const existing = Object.keys(data[g]||{});
+  let nombre = g+'01';
+  for(let i=1;i<=99;i++) {
+    const n=g+String(i).padStart(2,'0');
+    if(!existing.includes(n)){nombre=n;break;}
+  }
+  document.getElementById('mSGNombre').value = nombre;
+  document.getElementById('mSGCantidad').value = '60';
   document.getElementById('modalSG').classList.add('open');
-  setTimeout(() => document.getElementById('sgNombre').focus(), 100);
+  setTimeout(()=>document.getElementById('mSGCantidad').focus(),100);
 }
 
 function confirmarAgregarSG() {
-  const nombre = document.getElementById('sgNombre').value.trim().toUpperCase();
-  const cantidad = parseInt(document.getElementById('sgCantidad').value) || 60;
-  if (!nombre) { flash('Ingresa el nombre del subgrupo', 'rojo'); return; }
-  if (data[grupoActivo].subgrupos[nombre]) { flash('El subgrupo ' + nombre + ' ya existe', 'amarillo'); return; }
-  // Crear bins numerados
-  data[grupoActivo].subgrupos[nombre] = {
-    bins: Array.from({length: cantidad}, (_, i) => ({ num: i+1, estado: '', hora: '' }))
-  };
-  sgActivo = nombre;
-  guardar(); cerrarModal(); renderGrupos(); renderPanel();
-  flash('✅ Subgrupo ' + nombre + ' creado con ' + cantidad + ' bins', 'verde');
+  const g = _sgCtx.grupo;
+  const nombre = document.getElementById('mSGNombre').value.trim().toUpperCase();
+  const cantidad = parseInt(document.getElementById('mSGCantidad').value)||60;
+  if(!nombre){flash('Ingresa el nombre','rojo');return;}
+  if(data[g][nombre]){flash('El subgrupo ya existe','rojo');return;}
+  data[g][nombre] = Array.from({length:cantidad},(_,i)=>({n:i+1,e:'',h:''}));
+  _abiertos[g]=true;
+  _abiertos[g+'_'+nombre]=true;
+  guardar();
+  cerrarModal('modalSG');
+  render();
+  flash('✅ Subgrupo '+nombre+' creado con '+cantidad+' bins','verde');
 }
 
-let _eliminarTipo = null;
-let _eliminarParam = null;
-
-function abrirModalEliminar(msg, tipo, param) {
-  _eliminarTipo = tipo;
-  _eliminarParam = param;
-  document.getElementById('modalEliminarMsg').textContent = msg;
-  document.getElementById('modalEliminar').classList.add('open');
+function eliminarSG(g, sg) {
+  if(!confirm('¿Eliminar subgrupo '+sg+'?'))return;
+  delete data[g][sg];
+  if(Object.keys(data[g]).length===0) delete data[g];
+  guardar(); render();
+  flash('Eliminado','rojo');
 }
 
-function cerrarModalEliminar() {
-  document.getElementById('modalEliminar').classList.remove('open');
-  _eliminarTipo = null;
-  _eliminarParam = null;
+function marcarTodos(g, sg, estado) {
+  if(!confirm('¿Marcar todos los bins de '+sg+' como llegados?'))return;
+  const hora=new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'});
+  data[g][sg].forEach(b=>{b.e=estado;b.h=estado==='l'?hora:'';});
+  guardar(); render();
+  flash('✅ Todos marcados','verde');
 }
 
-function ejecutarEliminar() {
-  document.getElementById('modalEliminar').classList.remove('open');
-  if (_eliminarTipo === 'grupo') {
-    var g = _eliminarParam;
-    data[g] = { subgrupos: {} };
-    if (grupoActivo === g) {
-      grupoActivo = null;
-      sgActivo = null;
-      document.getElementById('panelGrupo').style.display = 'none';
+// ── BIN MODAL ──
+function abrirModalBin(g, sg, idx) {
+  _binCtx = {g,sg,idx};
+  const b = data[g][sg][idx];
+  document.getElementById('mBinTitle').textContent = 'Bin #'+b.n+' — '+sg;
+  document.getElementById('mBinSub').textContent = b.e==='l'?'✅ Llegó a las '+b.h : b.e==='f'?'⚠️ Faltante':'⬜ Pendiente';
+  document.getElementById('modalBin').classList.add('open');
+}
+
+function marcarBin(estado) {
+  if(!_binCtx)return;
+  const {g,sg,idx}=_binCtx;
+  const hora=new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'});
+  data[g][sg][idx].e=estado;
+  data[g][sg][idx].h=estado==='l'?hora:'';
+  guardar(); cerrarModal('modalBin'); render();
+  flash(estado==='l'?'✅ Llegado':estado==='f'?'⚠️ Faltante':'↩️ Quitado', estado==='l'?'verde':estado==='f'?'rojo':'azul');
+}
+
+// ── SUPABASE SYNC ──
+async function supaFetch(path,method,body){
+  const opts={method:method||'GET',headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json'}};
+  if(body)opts.body=JSON.stringify(body);
+  if(method==='POST')opts.headers['Prefer']='return=representation';
+  if(method==='PATCH')opts.headers['Prefer']='return=representation';
+  const r=await fetch(SURL+'/rest/v1/'+path,opts);
+  if(!r.ok)throw new Error(r.status);
+  return method==='DELETE'?null:r.json();
+}
+
+async function syncAll(){
+  const fecha=fechaHoy();
+  let count=0;
+  for(const g of Object.keys(data)){
+    for(const sg of Object.keys(data[g]||{})){
+      const bins=data[g][sg]||[];
+      const llegados=bins.filter(b=>b.e==='l').length;
+      const total=bins.length;
+      const faltantes=bins.filter(b=>b.e==='f').length;
+      if(!total)continue;
+      try{
+        const ex=await supaFetch('guia_registros?select=id&grupo=eq.'+g+'&subgrupo=eq.'+sg+'&fecha=eq.'+fecha);
+        const payload={grupo:g,subgrupo:sg,viaje:total,bins:llegados,fecha,obs:'Total:'+total+' L:'+llegados+' F:'+faltantes};
+        if(ex&&ex.length)await supaFetch('guia_registros?id=eq.'+ex[0].id,'PATCH',payload);
+        else await supaFetch('guia_registros','POST',payload);
+        count++;
+      }catch(e){}
     }
-    guardar();
-    renderGrupos();
-    flash('🗑️ Grupo ' + g + ' eliminado', 'rojo');
-  } else if (_eliminarTipo === 'subgrupo') {
-    var sg = _eliminarParam;
-    delete data[grupoActivo].subgrupos[sg];
-    var keys = Object.keys(data[grupoActivo].subgrupos);
-    sgActivo = keys.length > 0 ? keys[0] : null;
-    guardar();
-    renderGrupos();
-    renderPanel();
-    flash('🗑️ Subgrupo ' + sg + ' eliminado', 'rojo');
-  } else if (_eliminarTipo === 'resetHoy') {
-    localStorage.setItem('arato_guia_' + fechaHoy(), JSON.stringify(data));
-    data = {};
-    initData();
-    guardar();
-    grupoActivo = null; sgActivo = null;
-    document.getElementById('panelGrupo').style.display = 'none';
-    renderGrupos();
-    flash('✅ Guía reseteada', 'azul');
   }
-  _eliminarTipo = null;
-  _eliminarParam = null;
+  flash('✅ Sincronizado '+count+' subgrupos','verde');
 }
 
-function eliminarGrupo(g) {
-  abrirModalEliminar('¿Eliminar el Grupo ' + g + ' y todos sus subgrupos?', 'grupo', g);
-}
-
-function confirmarEliminarSG() {
-  abrirModalEliminar('¿Eliminar el subgrupo ' + sgActivo + '?', 'subgrupo', sgActivo);
-}
-
-// ── MODALES ──
-function cerrarModal() { document.getElementById('modalSG').classList.remove('open'); }
-function cerrarModalBin() { document.getElementById('modalBin').classList.remove('open'); binSeleccionado = null; }
-
-document.getElementById('modalSG').addEventListener('click', e => { if(e.target===document.getElementById('modalSG')) cerrarModal(); });
-document.getElementById('modalBin').addEventListener('click', e => { if(e.target===document.getElementById('modalBin')) cerrarModalBin(); });
-document.getElementById('modalEliminar').addEventListener('click', e => { if(e.target===document.getElementById('modalEliminar')) cerrarModalEliminar(); });
-
-// Enter en modal
-document.getElementById('sgCantidad').addEventListener('keydown', e => { if(e.key==='Enter') confirmarAgregarSG(); });
-document.getElementById('sgNombre').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('sgCantidad').focus(); });
-
-function resetearHoy() {
-  abrirModalEliminar('¿Resetear la guía de HOY? Se perderán todos los datos del día.', 'resetHoy', null);
-}
-
-function enviarReporteWsp() {
-  if (!grupoActivo) { flash('Selecciona un grupo primero', 'rojo'); return; }
-  const gData = data[grupoActivo];
-  const sgs = Object.keys(gData.subgrupos);
-  if (!sgs.length) { flash('No hay subgrupos', 'rojo'); return; }
-
-  const fecha = new Date().toLocaleDateString('es-PE', {day:'2-digit', month:'2-digit', year:'numeric'});
-  var lineas = [];
-  lineas.push('📋 *REPORTE BINS — Grupo ' + grupoActivo + '*');
-  lineas.push('📅 ' + fecha);
-  lineas.push('');
-
-  var totalLlegados = 0;
-  sgs.forEach(function(sg) {
-    var bins = gData.subgrupos[sg].bins;
-    var llegados = bins.filter(function(b){ return b.estado === 'llegado'; }).length;
-    totalLlegados += llegados;
-    if (llegados > 0) {
-      lineas.push('✅ ' + sg + ': *' + llegados + '* bins recepcionados');
-    }
-  });
-
-  lineas.push('');
-  lineas.push('📦 *TOTAL: ' + totalLlegados + ' bins recepcionados*');
-  lineas.push('');
-  lineas.push('_Arato Mission Produce_');
-
-  var msg = lineas.join('\n');
-  var url = 'https://wa.me/?text=' + encodeURIComponent(msg);
-  window.open(url, '_blank');
-}
-
-async function sincronizarSheets() {
-  if (!grupoActivo) { flash('Selecciona un grupo primero', 'rojo'); return; }
-  flash('Sincronizando con Google Sheets...', 'azul');
-
-  try {
-    const gData = data[grupoActivo];
-    const sgs = Object.keys(gData.subgrupos);
-    const fecha = fechaHoy();
-    const rows = [];
-
-    // Encabezados
-    rows.push(['FECHA', 'GRUPO', 'SUBGRUPO', 'BIN #', 'ESTADO', 'HORA LLEGADA']);
-
-    sgs.forEach(function(sg) {
-      gData.subgrupos[sg].bins.forEach(function(b) {
-        rows.push([
-          fecha,
-          grupoActivo,
-          sg,
-          b.num,
-          b.estado === 'llegado' ? 'Recepcionado' : b.estado === 'faltante' ? 'Faltante' : 'Pendiente',
-          b.hora || ''
-        ]);
-      });
+async function verHistorialFecha(){
+  const fecha=prompt('Fecha (YYYY-MM-DD):',fechaHoy());
+  if(!fecha)return;
+  try{
+    flash('Cargando...','azul');
+    const rows=await supaFetch('guia_registros?select=*&fecha=eq.'+fecha+'&order=grupo.asc,subgrupo.asc');
+    if(!rows||!rows.length){flash('Sin datos para '+fecha,'rojo');return;}
+    let msg='📋 Historial '+fecha+'\n\n';
+    let grupo='';
+    rows.forEach(r=>{
+      if(r.grupo!==grupo){msg+='Grupo '+r.grupo+':\n';grupo=r.grupo;}
+      msg+='  '+r.subgrupo+': '+r.bins+'/'+r.viaje+' llegados\n';
     });
-
-    // Enviar a Vercel API de sheets
-    var response = await fetch('/api/sheets-guia', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rows: rows, grupo: grupoActivo, fecha: fecha })
-    });
-
-    if (response.ok) {
-      flash('✅ Sincronizado con Google Sheets', 'verde');
-    } else {
-      flash('Error al sincronizar', 'rojo');
-    }
-  } catch(e) {
-    flash('Error: ' + e.message, 'rojo');
-  }
+    alert(msg);
+  }catch(e){flash('Error: '+e.message,'rojo');}
 }
 
-function verHistorial() {
-  var keys = [];
-  for (var i = 0; i < localStorage.length; i++) {
-    var k = localStorage.key(i);
-    if (k && k.startsWith('arato_guia_2')) keys.push(k);
-  }
-  if (!keys.length) { flash('Sin historial guardado', 'azul'); return; }
-  keys.sort().reverse();
-  var msg = 'Días guardados:\n' + keys.map(k => k.replace('arato_guia_','')).join('\n');
-  flash('📅 ' + keys.length + ' días en historial', 'azul');
-}
+// Cerrar modales al tocar fondo
+['modalBin','modalSG'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',function(e){if(e.target===this)cerrarModal(id);});
+});
 
-// ── INIT ──
-checkFecha();
-initData();
-renderGrupos();
+// Enter en modal SG
+document.getElementById('mSGCantidad').addEventListener('keydown',e=>{if(e.key==='Enter')confirmarAgregarSG();});
+
+// Init
+cargar();
+render();
 </script>
 </body>
 </html>
