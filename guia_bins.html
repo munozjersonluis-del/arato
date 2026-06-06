@@ -62,6 +62,13 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--txt);min-heig
 .sg-body{display:none;padding:10px;}
 .sg-hdr.open + .sg-body{display:block;}
 
+/* COLORES MODULOS */
+.color-config{background:#fff;border:1.5px solid var(--bdr);border-radius:12px;padding:12px;margin-bottom:10px;}
+.color-row{display:grid;grid-template-columns:32px 1fr 1fr;gap:8px;align-items:center;margin-bottom:8px;}
+.color-circle{width:28px;height:28px;border-radius:50%;border:2px solid rgba(0,0,0,0.1);}
+.color-label{font-size:0.72rem;font-weight:700;}
+.color-select{padding:7px 8px;border:1.5px solid var(--bdr);border-radius:7px;font-size:0.78rem;font-family:Inter,sans-serif;width:100%;}
+
 /* BINS GRID */
 .bins-grid{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;}
 .bin{width:38px;height:38px;border-radius:7px;border:1.5px solid var(--bdr);background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:0.58rem;font-weight:700;color:var(--txt3);cursor:pointer;transition:all 0.1s;flex-direction:column;gap:1px;}
@@ -115,6 +122,7 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--txt);min-heig
       <div class="hdr-sub" id="fechaHdr"></div>
     </div>
     <div class="hdr-btns">
+      <button class="hdr-btn no-print" onclick="abrirColorConfig()">🎨 Módulos</button>
       <button class="hdr-btn no-print" onclick="syncAll()">🔄 Sync</button>
       <button class="hdr-btn no-print" onclick="window.open('https://docs.google.com/spreadsheets/d/1wKwRNcox1Ydnqwz9CkDP1_hheaAnWO8y0xWcuq9hTlk','_blank')">📊 Sheets</button>
       <button class="hdr-btn no-print" onclick="verHistorialFecha()">📅 Historial</button>
@@ -136,7 +144,12 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--txt);min-heig
 <div class="modal-bg" id="modalBin">
   <div class="modal">
     <div class="modal-title" id="mBinTitle">Bin #</div>
-    <div style="font-size:0.75rem;color:var(--txt3);margin-bottom:14px;" id="mBinSub"></div>
+    <div style="font-size:0.75rem;color:var(--txt3);margin-bottom:10px;" id="mBinSub"></div>
+    <!-- Color/Módulo selector -->
+    <div style="margin-bottom:12px;">
+      <div style="font-size:0.62rem;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Módulo de origen</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;" id="colorBtns"></div>
+    </div>
     <div class="bin-modal-btns">
       <button class="bin-modal-btn" style="background:var(--gc);color:var(--g2);" onclick="marcarBin('l')">✅ LLEGADO</button>
       <button class="bin-modal-btn" style="background:var(--rc);color:var(--r);" onclick="marcarBin('f')">⚠️ FALTANTE</button>
@@ -162,6 +175,15 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--txt);min-heig
 </div>
 
 <div class="wrap">
+  <!-- Config colores módulos -->
+  <div class="color-config no-print" id="colorConfig" style="display:none;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div style="font-size:0.62rem;font-weight:800;color:var(--txt3);letter-spacing:1px;text-transform:uppercase;">Colores de módulos</div>
+      <button onclick="cerrarColorConfig()" style="background:none;border:none;cursor:pointer;font-size:0.9rem;">✕</button>
+    </div>
+    <div id="colorRows"></div>
+    <button onclick="guardarColores()" style="width:100%;padding:9px;background:var(--g);color:#fff;border:none;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;">✅ Guardar configuración</button>
+  </div>
   <!-- Grupos desplegables -->
   <div id="gruposWrap"></div>
 
@@ -208,6 +230,66 @@ function cargar() {
 
 function cerrarModal(id) {
   document.getElementById(id).classList.remove('open');
+}
+
+// ── COLORES MODULOS ──
+const COLORES = [
+  {id:'verde',  label:'Verde',   hex:'#16A34A', light:'#DCFCE7', dark:'#15803D'},
+  {id:'azul',   label:'Azul',    hex:'#2563EB', light:'#DBEAFE', dark:'#1D4ED8'},
+  {id:'amarillo',label:'Amarillo',hex:'#D97706', light:'#FEF3C7', dark:'#B45309'},
+  {id:'rojo',   label:'Rojo',    hex:'#DC2626', light:'#FEE2E2', dark:'#B91C1C'},
+  {id:'morado', label:'Morado',  hex:'#7C3AED', light:'#F3E8FF', dark:'#6D28D9'},
+  {id:'celeste',label:'Celeste', hex:'#0891B2', light:'#CFFAFE', dark:'#0E7490'},
+];
+
+let colorModulos = {}; // {colorId: 'Módulo X'}
+
+function cargarColores() {
+  try { colorModulos = JSON.parse(localStorage.getItem('arato_colores')||'{}'); } catch(e) { colorModulos={}; }
+}
+
+function guardarColores() {
+  COLORES.forEach(c => {
+    const sel = document.getElementById('csel-'+c.id);
+    if(sel) colorModulos[c.id] = sel.value;
+  });
+  localStorage.setItem('arato_colores', JSON.stringify(colorModulos));
+  cerrarColorConfig();
+  render();
+  flash('✅ Colores guardados','verde');
+}
+
+function abrirColorConfig() {
+  const panel = document.getElementById('colorConfig');
+  const rows = document.getElementById('colorRows');
+  rows.innerHTML = COLORES.map(c => {
+    const modActual = colorModulos[c.id] || '';
+    return `<div class="color-row">
+      <div class="color-circle" style="background:${c.hex};"></div>
+      <div class="color-label">${c.label}</div>
+      <select class="color-select" id="csel-${c.id}">
+        <option value="">— Sin asignar —</option>
+        ${Array.from({length:24},(_,i)=>`<option value="Módulo ${i+1}" ${modActual==='Módulo '+(i+1)?'selected':''}>Módulo ${i+1}</option>`).join('')}
+      </select>
+    </div>`;
+  }).join('');
+  panel.style.display = 'block';
+}
+
+function cerrarColorConfig() {
+  document.getElementById('colorConfig').style.display = 'none';
+}
+
+function getColorDeBin(g, sg, idx) {
+  // Check if bin has a color assigned
+  const bins = data[g] && data[g][sg] ? data[g][sg] : [];
+  const bin = bins[idx];
+  if(bin && bin.c) return COLORES.find(c=>c.id===bin.c)||null;
+  return null;
+}
+
+function getModuloLabel(colorId) {
+  return colorModulos[colorId] || colorId;
 }
 
 // ── RENDER PRINCIPAL ──
@@ -280,13 +362,34 @@ function renderSG(g, sg) {
       <div class="bins-grid">
         ${bins.map((b,i)=>{
           const cls=b.e==='l'?'llegado':b.e==='f'?'faltante':'';
-          return `<div class="bin ${cls}" onclick="abrirModalBin('${g}','${sg}',${i})">${b.n}${b.h?`<div class="bin-hora">${b.h}</div>`:''}</div>`;
+          const col=b.c?COLORES.find(c=>c.id===b.c):null;
+          const bg=col&&b.e==='l'?col.light:b.e==='l'?'var(--gc)':b.e==='f'?'var(--rc)':'var(--bg3)';
+          const border=col&&b.e==='l'?col.hex:b.e==='l'?'var(--g)':b.e==='f'?'var(--r)':'var(--bdr)';
+          const color=col&&b.e==='l'?col.dark:b.e==='l'?'var(--g2)':b.e==='f'?'var(--r)':'var(--txt3)';
+          return `<div class="bin" style="background:${bg};border-color:${border};color:${color};" onclick="abrirModalBin('${g}','${sg}',${i})">${b.n}${b.h?`<div class="bin-hora">${b.h}</div>`:''}</div>`;
         }).join('')}
       </div>
       <div class="sg-actions no-print">
         <button class="sg-btn" style="background:var(--gc);color:var(--g2);" onclick="marcarTodos('${g}','${sg}','l')">✅ Todos llegaron</button>
         <button class="sg-btn" style="background:var(--rc);color:var(--r);flex:0.5;" onclick="eliminarSG('${g}','${sg}')">🗑️</button>
       </div>
+      ${(()=>{
+        // Module summary
+        const modCount = {};
+        bins.forEach(b=>{
+          if(b.e==='l'&&b.c&&colorModulos[b.c]){
+            const mod=colorModulos[b.c];
+            modCount[mod]=(modCount[mod]||0)+1;
+          }
+        });
+        const mods=Object.keys(modCount);
+        if(!mods.length) return '';
+        return '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;">'+
+          mods.map(m=>{
+            const col=COLORES.find(c=>colorModulos[c.id]===m);
+            return `<div style="padding:3px 8px;border-radius:6px;background:${col?col.light:'var(--bg3)'};color:${col?col.dark:'var(--txt3)'};font-size:0.62rem;font-weight:700;">${m}: ${modCount[m]}</div>`;
+          }).join('')+'</div>';
+      })()}
     </div>
   </div>`;
 }
@@ -395,8 +498,41 @@ function abrirModalBin(g, sg, idx) {
   _binCtx = {g,sg,idx};
   const b = data[g][sg][idx];
   document.getElementById('mBinTitle').textContent = 'Bin #'+b.n+' — '+sg;
-  document.getElementById('mBinSub').textContent = b.e==='l'?'✅ Llegó a las '+b.h : b.e==='f'?'⚠️ Faltante':'⬜ Pendiente';
+  document.getElementById('mBinSub').textContent = b.e==='l'?'✅ Llegó a las '+b.h+(b.c?' · '+getModuloLabel(b.c):'') : b.e==='f'?'⚠️ Faltante':'⬜ Pendiente';
+  
+  // Render color buttons - only show assigned colors
+  const asignados = COLORES.filter(c => colorModulos[c.id]);
+  const colorBtns = document.getElementById('colorBtns');
+  if(asignados.length) {
+    colorBtns.innerHTML = asignados.map(c => {
+      const activo = b.c === c.id;
+      return `<button onclick="selColorBin('${c.id}')" id="cbtn-${c.id}" style="padding:7px 12px;border-radius:8px;border:2px solid ${activo?c.hex:'var(--bdr)'};background:${activo?c.light:'var(--bg3)'};color:${activo?c.dark:'var(--txt3)'};font-size:0.72rem;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;">
+        ${colorModulos[c.id]}
+      </button>`;
+    }).join('');
+  } else {
+    colorBtns.innerHTML = '<div style="font-size:0.68rem;color:var(--txt3);">Configura módulos con 🎨 Módulos primero</div>';
+  }
+  
   document.getElementById('modalBin').classList.add('open');
+}
+
+function selColorBin(colorId) {
+  if(!_binCtx) return;
+  const {g,sg,idx} = _binCtx;
+  const b = data[g][sg][idx];
+  // Toggle
+  b.c = b.c === colorId ? '' : colorId;
+  // Update button styles
+  COLORES.forEach(c => {
+    const btn = document.getElementById('cbtn-'+c.id);
+    if(!btn) return;
+    const activo = b.c === c.id;
+    btn.style.borderColor = activo ? c.hex : 'var(--bdr)';
+    btn.style.background = activo ? c.light : 'var(--bg3)';
+    btn.style.color = activo ? c.dark : 'var(--txt3)';
+  });
+  guardar();
 }
 
 function marcarBin(estado) {
@@ -498,6 +634,7 @@ document.getElementById('mSGCantidad').addEventListener('keydown',e=>{if(e.key==
 
 // Init
 cargar();
+cargarColores();
 render();
 </script>
 </body>
