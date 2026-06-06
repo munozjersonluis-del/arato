@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Control de Maquinaria – Arato</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #080d1a;
+  --surface: #0f1729;
+  --surface2: #162035;
+  --border: rgba(255,255,255,0.08);
+  --orange: #f97316;
+  --orange2: #ea580c;
+  --blue: #38bdf8;
+  --green: #22c55e;
+  --red: #ef4444;
+  --yellow: #f59e0b;
+  --text: #f1f5f9;
+  --muted: #64748b;
+  --sub: #94a3b8;
+  --meta: 2.3;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh}
+/* HEADER */
+.header{
+  background:linear-gradient(135deg,#0a1020 0%,#111827 100%);
+  border-bottom:2px solid rgba(249,115,22,0.4);
+  padding:12px 16px;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;
+  position:sticky;top:0;z-index:100;
+}
+.brand .sup{font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--orange);letter-spacing:3px;text-transform:uppercase;font-weight:700}
+.brand .title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;letter-spacing:1px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab-btn{
+  font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;
+  border:none;border-radius:7px;padding:8px 16px;cursor:pointer;
+  background:rgba(255,255,255,0.05);color:var(--sub);transition:all .2s;
+}
+.tab-btn.active{background:var(--orange);color:#fff}
+.import-btn{
+  font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;
+  background:rgba(56,189,248,0.12);color:var(--blue);border:1px solid rgba(56,189,248,0.3);
+  border-radius:7px;padding:8px 14px;cursor:pointer;transition:all .2s;
+}
+.import-btn:hover{background:rgba(56,189,248,0.22)}
+/* MAIN */
+.main{padding:18px 14px;max-width:960px;margin:0 auto}
+/* PAGES */
+.page{display:none}.page.active{display:block}
+/* TOAST */
+.toast{
+  position:fixed;top:72px;right:16px;z-index:999;
+  border-radius:10px;padding:12px 18px;font-weight:600;font-size:14px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.5);animation:slideIn .25s ease;
+  pointer-events:none;
+}
+.toast.ok{background:#14532d;border:1px solid var(--green);color:var(--green)}
+.toast.err{background:#450a0a;border:1px solid var(--red);color:var(--red)}
+@keyframes slideIn{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+/* SECTION TITLE */
+.sec-title{
+  font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;
+  color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;
+}
+/* STAT CARDS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:22px}
+.stat-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  padding:14px 16px;border-left:3px solid var(--orange);
+}
+.stat-card.blue{border-left-color:var(--blue)}
+.stat-card.purple{border-left-color:#a78bfa}
+.stat-card.green{border-left-color:var(--green)}
+.stat-card.yellow{border-left-color:var(--yellow)}
+.stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;font-weight:600}
+.stat-value{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--text)}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:3px}
+/* MACHINE CARDS */
+.machines-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:22px}
+.machine-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:16px;border-top:3px solid var(--orange);
+}
+.machine-name{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;margin-bottom:10px}
+.machine-stats{display:grid;grid-template-columns:1fr 1fr;gap:7px;font-size:13px}
+.machine-stats span{color:var(--muted)}
+.machine-stats strong{color:var(--text)}
+.progress-bar-bg{background:rgba(255,255,255,0.07);border-radius:4px;height:6px;margin-top:12px}
+.progress-bar{height:6px;border-radius:4px;transition:width .6s ease}
+.progress-label{font-size:10px;color:var(--muted);margin-top:4px}
+/* BADGE */
+.badge{
+  display:inline-block;border-radius:5px;padding:2px 9px;
+  font-size:10px;font-weight:800;letter-spacing:1.5px;font-family:'Barlow Condensed',sans-serif;
+}
+.badge.BIEN{background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3)}
+.badge.MAL{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.badge.REGULAR{background:rgba(245,158,11,.15);color:var(--yellow);border:1px solid rgba(245,158,11,.3)}
+/* CHART */
+.chart-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:13px;
+  padding:18px 16px;
+}
+/* FORM */
+.form-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:13px;
+  padding:22px 18px;display:flex;flex-direction:column;gap:15px;max-width:460px;
+}
+.field label{display:block;font-size:11px;color:var(--sub);font-weight:600;letter-spacing:.5px;margin-bottom:6px;text-transform:uppercase}
+.field input,.field select{
+  width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);
+  border-radius:8px;padding:11px 13px;color:var(--text);font-size:15px;font-family:'Barlow',sans-serif;
+  outline:none;transition:border .2s;
+}
+.field input:focus,.field select:focus{border-color:var(--orange)}
+.field input::placeholder{color:#475569}
+.preview-box{
+  background:rgba(249,115,22,.07);border:1px solid rgba(249,115,22,.2);
+  border-radius:9px;padding:13px 15px;
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;
+}
+.preview-box span{color:var(--muted)}
+.submit-btn{
+  background:linear-gradient(135deg,var(--orange2),var(--orange));
+  color:#fff;border:none;border-radius:10px;padding:14px;
+  font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;letter-spacing:1px;
+  cursor:pointer;transition:opacity .2s;
+}
+.submit-btn:hover{opacity:.88}
+/* TABLE */
+.filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.filters select,.filters input{
+  background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);
+  border-radius:8px;padding:8px 13px;color:var(--text);font-size:13px;font-family:'Barlow',sans-serif;outline:none;
+}
+.filters select option{background:#1e293b}
+.record-count{font-size:12px;color:var(--muted)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{background:rgba(255,255,255,0.05)}
+th{
+  padding:9px 11px;text-align:left;font-family:'Barlow Condensed',sans-serif;
+  font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;
+  border-bottom:1px solid var(--border);white-space:nowrap;
+}
+td{padding:9px 11px;border-bottom:1px solid rgba(255,255,255,0.04);white-space:nowrap}
+tr:nth-child(even) td{background:rgba(255,255,255,0.015)}
+.td-maquina{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;color:var(--orange)}
+.td-num{font-family:monospace}
+.td-tnhr-ok{color:var(--green);font-weight:700;font-family:monospace}
+.td-tnhr-bad{color:var(--red);font-weight:700;font-family:monospace}
+.td-modulos{color:var(--sub);font-size:12px}
+/* EMPTY */
+.empty{text-align:center;padding:60px 20px;color:var(--muted)}
+.empty .icon{font-size:48px;margin-bottom:14px}
+.empty p{font-size:16px;font-weight:600;margin-bottom:6px;color:#475569}
+.empty small{font-size:13px}
+
+/* AUTOCOMPLETE */
+.sug-list{
+  position:absolute;top:100%;left:0;right:0;z-index:200;
+  background:#1e293b;border:1px solid rgba(249,115,22,.4);border-radius:0 0 8px 8px;
+  max-height:180px;overflow-y:auto;display:none;
+}
+.sug-item{
+  padding:10px 13px;font-size:14px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.05);
+  transition:background .15s;
+}
+.sug-item:hover,.sug-item.active{background:rgba(249,115,22,.15);color:var(--orange)}
+.sug-item small{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="brand">
+    <div class="sup">Arato Mission Produce</div>
+    <div class="title">Control de Maquinaria</div>
+  </div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="setTab('dashboard')">📊 Dashboard</button>
+    <button class="tab-btn" onclick="setTab('registro')">➕ Registrar</button>
+    <button class="tab-btn" onclick="setTab('tabla')">📋 Tabla</button>
+    <button class="import-btn" onclick="cargarRegistros()" style="background:#2563EB;">☁️ Cargar</button>
+    <button class="import-btn" onclick="document.getElementById('xlsxInput').click()">📂 Importar Excel</button>
+    <input type="file" id="xlsxInput" accept=".xlsx,.xls" style="display:none" onchange="importExcel(this)"/>
+  </div>
+</div>
+
+<div class="main">
+  <!-- TOAST -->
+  <div id="toast" class="toast" style="display:none"></div>
+
+  <!-- DASHBOARD -->
+  <div id="page-dashboard" class="page active">
+    <div id="dash-empty" class="empty">
+      <div class="icon">📊</div>
+      <p>Sin datos todavía</p>
+      <small>Importa un Excel o registra manualmente</small>
+    </div>
+    <div id="dash-content" style="display:none">
+      <div class="sec-title">Resumen General</div>
+      <div class="stats-grid" id="stats-grid"></div>
+      <div class="sec-title">Por Máquina</div>
+      <div class="machines-grid" id="machines-grid"></div>
+      <div class="chart-card" id="chart-wrap" style="display:none">
+        <div class="sec-title">Evolución TN/Hr por Fecha</div>
+        <canvas id="myChart" height="90"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- REGISTRO -->
+  <div id="page-registro" class="page">
+    <div class="sec-title">Nuevo Registro</div>
+    <div class="form-card">
+      <div class="field" style="position:relative">
+        <label>Máquina *</label>
+        <input id="f-maquina" type="text" placeholder="Ej: INC-VAL-01" autocomplete="off"
+          oninput="onMaquinaInput()" onblur="hideSug('sug-maquina')"/>
+        <div id="sug-maquina" class="sug-list"></div>
+      </div>
+      <div class="field">
+        <label>Fecha *</label>
+        <input id="f-fecha" type="text" placeholder="DD/MM/AAAA" oninput="updatePreview()"/>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="field">
+          <label>Hora Inicio *</label>
+          <input id="f-inicio" type="time" oninput="updatePreview()"/>
+        </div>
+        <div class="field">
+          <label>Hora Fin *</label>
+          <input id="f-fin" type="time" oninput="updatePreview()"/>
+        </div>
+      </div>
+      <div class="field">
+        <label>Bins cosechados *</label>
+        <input id="f-bins" type="number" step="0.01" placeholder="Ej: 28.5" oninput="updatePreview()"/>
+      </div>
+      <div class="field" style="position:relative">
+        <label>Operador *</label>
+        <input id="f-operador" type="text" placeholder="Nombre del operador" autocomplete="off"
+          oninput="onOperadorInput()" onblur="hideSug('sug-operador')"/>
+        <div id="sug-operador" class="sug-list"></div>
+      </div>
+      <div class="field">
+        <label>Módulos</label>
+        <input id="f-modulos" type="text" placeholder="Ej: M01, M07"/>
+      </div>
+      <div class="preview-box" id="preview" style="display:none">
+        <div><span>Horas: </span><strong id="p-hrs">—</strong></div>
+        <div><span>Toneladas: </span><strong id="p-tons">—</strong></div>
+        <div><span>TN/Hr: </span><strong id="p-tnhr">—</strong></div>
+        <div><span>Estado: </span><span id="p-estado">—</span></div>
+      </div>
+      <button class="submit-btn" onclick="guardarRegistro()">Guardar Registro ➜</button>
+    </div>
+  </div>
+
+  <!-- TABLA -->
+  <div id="page-tabla" class="page">
+    <div class="filters">
+      <select id="filter-maquina" onchange="renderTabla()">
+        <option value="TODAS">Todas las máquinas</option>
+      </select>
+      <input id="filter-fecha" type="text" placeholder="Filtrar fecha DD/MM/AAAA" oninput="renderTabla()" style="width:200px"/>
+      <span class="record-count" id="record-count">0 registros</span>
+    </div>
+    <div id="tabla-empty" class="empty" style="display:none">
+      <div class="icon">📋</div>
+      <p>Sin registros</p>
+    </div>
+    <div class="table-wrap" id="tabla-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Máquina</th><th>Operador</th><th>Fecha</th><th>Inicio</th><th>Fin</th>
+            <th>Hrs</th><th>Bins</th><th>Toneladas</th><th>TN/Hr</th>
+            <th>Estado</th><th>Módulos</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Constants ──────────────────────────────────────────────
+const META = 2.3;
+const KG_BIN = 435;
+const COLORS = ["#f97316","#38bdf8","#a78bfa","#34d399","#fb7185","#fbbf24"];
+let records = [];
+let chartInstance = null;
+
+// ── Supabase ──
+const SURL='https://rqvcvffyynpnighzwxju.supabase.co';
+const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdmN2ZmZ5eW5wbmlnaHp3eGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MjgyNDcsImV4cCI6MjA5MzMwNDI0N30.fFufNEdRvAzl6O6BqtTbx83O3Eg8Wd7gACNJDGQKga4';
+
+async function supaFetch(path, method, body) {
+  const opts={method:method||'GET',headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json'}};
+  if(body)opts.body=JSON.stringify(body);
+  if(method==='POST')opts.headers['Prefer']='return=representation';
+  if(method==='PATCH')opts.headers['Prefer']='return=representation';
+  const r=await fetch(SURL+'/rest/v1/'+path,opts);
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  return method==='DELETE'?null:r.json();
+}
+
+async function cargarRegistros() {
+  try {
+    showToast('Cargando datos...','ok');
+    const rows = await supaFetch('maquinaria_registros?select=*&order=fecha.desc,created_at.desc');
+    records = rows.map(r => ({
+      id: r.id,
+      maquina: r.maquina||'',
+      operador: r.operador||'',
+      fecha: r.fecha||'',
+      horaInicio: r.hora_inicio||'',
+      horaFin: r.hora_fin||'',
+      hrsEjec: r.hrs_ejec||0,
+      bins: r.bins||0,
+      toneladas: r.toneladas||0,
+      tnhr: r.tn_hr||0,
+      estado: r.estado||'',
+      modulos: r.modulos||''
+    }));
+    updateMaquinaFilter();
+    renderDashboard();
+    showToast('✓ '+records.length+' registros cargados','ok');
+  } catch(e) {
+    showToast('Error cargando: '+e.message,'err');
+  }
+}
+
+async function eliminarRegistro(id) {
+  if(!confirm('¿Eliminar este registro?'))return;
+  try {
+    await supaFetch('maquinaria_registros?id=eq.'+id,'DELETE');
+    records = records.filter(r=>r.id!==id);
+    renderTabla();
+    renderDashboard();
+    showToast('Eliminado','ok');
+  } catch(e) { showToast('Error: '+e.message,'err'); }
+}
+
+// ── Utils ──────────────────────────────────────────────────
+function horasEntre(ini, fin) {
+  if (!ini || !fin) return 0;
+  const [hI,mI] = ini.split(":").map(Number);
+  const [hF,mF] = fin.split(":").map(Number);
+  let mins = (hF*60+mF)-(hI*60+mI);
+  if (mins < 0) mins += 1440;
+  return +(mins/60).toFixed(2);
+}
+function calcEstado(tnhr) {
+  if (tnhr >= META) return "BIEN";
+  if (tnhr >= META*0.7) return "REGULAR";
+  return "MAL";
+}
+function badge(estado) {
+  return `<span class="badge ${estado}">${estado}</span>`;
+}
+function showToast(msg, type="ok") {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = `toast ${type}`;
+  t.style.display = "block";
+  setTimeout(() => t.style.display = "none", 3000);
+}
+function setTab(tab) {
+  document.querySelectorAll(".tab-btn").forEach((b,i) => {
+    const names = ["dashboard","registro","tabla"];
+    b.classList.toggle("active", names[i] === tab);
+  });
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.getElementById("page-"+tab).classList.add("active");
+  if (tab === "dashboard") renderDashboard();
+  if (tab === "tabla") renderTabla();
+}
+
+// ── Build record ───────────────────────────────────────────
+function buildRecord(maquina,operador,fecha,ini,fin,bins,modulos) {
+  const b = parseFloat(bins)||0;
+  const tons = +(b*KG_BIN/1000).toFixed(4);
+  const hrs = horasEntre(ini,fin);
+  const tnhr = hrs>0 ? +(tons/hrs).toFixed(4) : 0;
+  return {maquina,operador,fecha,horaInicio:ini,horaFin:fin,hrsEjec:hrs,bins:b,toneladas:tons,tnhr,estado:calcEstado(tnhr),modulos};
+}
+
+// ── Form ───────────────────────────────────────────────────
+function updatePreview() {
+  const ini = document.getElementById("f-inicio").value;
+  const fin = document.getElementById("f-fin").value;
+  const bins = document.getElementById("f-bins").value;
+  if (!ini||!fin||!bins) { document.getElementById("preview").style.display="none"; return; }
+  const hrs = horasEntre(ini,fin);
+  const b = parseFloat(bins)||0;
+  const tons = +(b*KG_BIN/1000).toFixed(3);
+  const tnhr = hrs>0 ? +(tons/hrs).toFixed(3) : 0;
+  const estado = calcEstado(tnhr);
+  document.getElementById("p-hrs").textContent = hrs;
+  document.getElementById("p-tons").textContent = tons+" t";
+  document.getElementById("p-tnhr").innerHTML = `<span style="color:${tnhr>=META?'var(--green)':'var(--red)'}">${tnhr}</span>`;
+  document.getElementById("p-estado").innerHTML = badge(estado);
+  document.getElementById("preview").style.display = "grid";
+}
+async function guardarRegistro() {
+  const maquina  = document.getElementById("f-maquina").value.trim().toUpperCase();
+  const operador = document.getElementById("f-operador").value.trim();
+  const fecha    = document.getElementById("f-fecha").value.trim();
+  const ini      = document.getElementById("f-inicio").value;
+  const fin      = document.getElementById("f-fin").value;
+  const bins     = document.getElementById("f-bins").value;
+  const modulos  = document.getElementById("f-modulos").value.trim();
+  if (!maquina||!fecha||!ini||!fin||!bins) { showToast("Completa los campos obligatorios","err"); return; }
+  const rec = buildRecord(maquina,operador,fecha,ini,fin,bins,modulos);
+  try {
+    const saved = await supaFetch('maquinaria_registros','POST',{
+      maquina: rec.maquina,
+      operador: rec.operador||'',
+      fecha: rec.fecha,
+      hora_inicio: rec.horaInicio,
+      hora_fin: rec.horaFin,
+      hrs_ejec: rec.hrsEjec,
+      bins: rec.bins,
+      toneladas: rec.toneladas,
+      tn_hr: rec.tnhr,
+      meta: META,
+      estado: rec.estado,
+      modulos: rec.modulos
+    });
+    rec.id = Array.isArray(saved)?saved[0].id:saved.id;
+    records.unshift(rec);
+    document.getElementById("f-bins").value="";
+    document.getElementById("f-modulos").value="";
+    document.getElementById("f-inicio").value="";
+    document.getElementById("f-fin").value="";
+    document.getElementById("preview").style.display="none";
+    showToast("✓ Registro guardado","ok");
+    updateMaquinaFilter();
+    setTab("dashboard");
+  } catch(e) {
+    showToast("Error guardando: "+e.message,"err");
+  }
+}
+
+// ── Import Excel ───────────────────────────────────────────
+function fmtHora(v) {
+  if (!v) return "";
+  if (typeof v === "number") {
+    const totalMins = Math.round(v*24*60);
+    const h = Math.floor(totalMins/60)%24;
+    const m = totalMins%60;
+    return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
+  }
+  return String(v).trim();
+}
+function fmtFecha(v) {
+  if (!v) return "";
+  if (typeof v === "number") {
+    const d = XLSX.SSF.parse_date_code(v);
+    return `${String(d.d).padStart(2,"0")}/${String(d.m).padStart(2,"0")}/${d.y}`;
+  }
+  return String(v).trim();
+}
+async function importExcel(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const wb = XLSX.read(e.target.result, {type:"array"});
+      const ws = wb.Sheets["Base_Datos"] || wb.Sheets[wb.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json(ws, {header:1});
+      let hi = json.findIndex(r => r.some(c => String(c||"").toLowerCase().includes("maquina")));
+      if (hi<0) hi=1;
+      const headers = json[hi].map(h=>String(h||"").toLowerCase());
+      const rows = json.slice(hi+1).filter(r=>r[0]&&String(r[0]).trim());
+      const get = (r,key) => { const i=headers.findIndex(h=>h.includes(key)); return i>=0?r[i]:""; };
+      let imported=0;
+      rows.forEach(r=>{
+        const maquina = String(get(r,"maquina")||"").trim().toUpperCase();
+        if (!maquina) return;
+        const operador = String(get(r,"operador")||get(r,"oper")||"").trim();
+        const fecha = fmtFecha(get(r,"fecha"));
+        const ini   = fmtHora(get(r,"inicio"));
+        const fin   = fmtHora(get(r,"fin"));
+        const bins  = parseFloat(get(r,"bins"))||0;
+        const hrs   = parseFloat(get(r,"hrs"))||parseFloat(get(r,"ejec"))||horasEntre(ini,fin);
+        const tons  = parseFloat(get(r,"ton"))||+(bins*KG_BIN/1000).toFixed(4);
+        const tnhr  = hrs>0 ? +(tons/hrs).toFixed(4) : 0;
+        const modulos = String(get(r,"modulo")||"").trim();
+        const dup = records.find(x=>x.maquina===maquina&&x.fecha===fecha&&x.horaInicio===ini);
+        if (!dup) { records.push({maquina,operador,fecha,horaInicio:ini,horaFin:fin,hrsEjec:hrs,bins,toneladas:tons,tnhr,estado:calcEstado(tnhr),modulos}); imported++; }
+      });
+      showToast(`✓ ${imported} registros importados`,"ok");
+      updateMaquinaFilter();
+      setTab("dashboard");
+    } catch(err) { showToast("Error al leer el Excel","err"); console.error(err); }
+  };
+  reader.readAsArrayBuffer(file);
+  input.value="";
+}
+
+// ── Filter helpers ─────────────────────────────────────────
+function updateMaquinaFilter() {
+  const sel = document.getElementById("filter-maquina");
+  const cur = sel.value;
+  const maquinas = [...new Set(records.map(r=>r.maquina))].sort();
+  sel.innerHTML = '<option value="TODAS">Todas las máquinas</option>';
+  maquinas.forEach(m=>{ const o=document.createElement("option"); o.value=m; o.textContent=m; sel.appendChild(o); });
+  if (maquinas.includes(cur)) sel.value=cur;
+}
+function filteredRecords() {
+  const m = document.getElementById("filter-maquina").value;
+  const f = document.getElementById("filter-fecha").value.trim();
+  return records.filter(r=>(m==="TODAS"||r.maquina===m)&&(!f||r.fecha===f));
+}
+
+// ── Dashboard ──────────────────────────────────────────────
+function renderDashboard() {
+  const empty = document.getElementById("dash-empty");
+  const content = document.getElementById("dash-content");
+  if (records.length===0) { empty.style.display="block"; content.style.display="none"; return; }
+  empty.style.display="none"; content.style.display="block";
+
+  const totalBins = records.reduce((s,r)=>s+r.bins,0);
+  const totalTons = records.reduce((s,r)=>s+r.toneladas,0);
+  const totalHrs  = records.reduce((s,r)=>s+r.hrsEjec,0);
+  const maquinas  = [...new Set(records.map(r=>r.maquina))].sort();
+
+  document.getElementById("stats-grid").innerHTML = `
+    <div class="stat-card"><div class="stat-label">Registros</div><div class="stat-value">${records.length}</div></div>
+    <div class="stat-card blue"><div class="stat-label">Máquinas</div><div class="stat-value">${maquinas.length}</div></div>
+    <div class="stat-card purple"><div class="stat-label">Total Bins</div><div class="stat-value">${totalBins.toFixed(1)}</div></div>
+    <div class="stat-card green"><div class="stat-label">Total Toneladas</div><div class="stat-value">${totalTons.toFixed(1)}<span style="font-size:14px">t</span></div></div>
+    <div class="stat-card yellow"><div class="stat-label">Meta TN/Hr</div><div class="stat-value">${META}</div><div class="stat-sub">mínimo requerido</div></div>
+  `;
+
+  const mg = document.getElementById("machines-grid");
+  mg.innerHTML = maquinas.map((m,i)=>{
+    const recs = records.filter(r=>r.maquina===m);
+    const tHrs  = recs.reduce((s,r)=>s+r.hrsEjec,0);
+    const tBins = recs.reduce((s,r)=>s+r.bins,0);
+    const tTons = recs.reduce((s,r)=>s+r.toneladas,0);
+    const avg   = tHrs>0 ? +(tTons/tHrs).toFixed(4) : 0;
+    const est   = calcEstado(avg);
+    const pct   = Math.min(100,(avg/META)*100).toFixed(0);
+    const col   = COLORS[i%COLORS.length];
+    const operadores = [...new Set(recs.map(r=>r.operador).filter(Boolean))].join(", ") || "—";
+    return `<div class="machine-card" style="border-top-color:${col}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div class="machine-name" style="color:${col}">${m}</div>${badge(est)}
+      </div>
+      <div style="font-size:12px;color:var(--sub);margin-bottom:10px">👤 ${operadores}</div>
+      <div class="machine-stats">
+        <div><span>Horas: </span><strong>${tHrs.toFixed(2)}</strong></div>
+        <div><span>Bins: </span><strong>${tBins.toFixed(1)}</strong></div>
+        <div><span>Toneladas: </span><strong>${tTons.toFixed(2)} t</strong></div>
+        <div><span>TN/Hr prom: </span><strong style="color:${avg>=META?'var(--green)':'var(--red)'}">${avg}</strong></div>
+      </div>
+      <div class="progress-bar-bg"><div class="progress-bar" style="width:${pct}%;background:${avg>=META?'var(--green)':'var(--red)'}"></div></div>
+      <div class="progress-label">${pct}% de la meta (${META} TN/Hr)</div>
+    </div>`;
+  }).join("");
+
+  // Chart
+  const fechas = [...new Set(records.map(r=>r.fecha))].sort((a,b)=>{
+    const pa=a.split("/"),pb=b.split("/");
+    return new Date(pa[2],pa[1]-1,pa[0])-new Date(pb[2],pb[1]-1,pb[0]);
+  });
+  if (fechas.length>1) {
+    document.getElementById("chart-wrap").style.display="block";
+    const datasets = maquinas.map((m,i)=>({
+      label:m,
+      data:fechas.map(f=>{
+        const recs=records.filter(r=>r.maquina===m&&r.fecha===f);
+        if (!recs.length) return null;
+        const avg=recs.reduce((s,r)=>s+r.tnhr,0)/recs.length;
+        return +avg.toFixed(3);
+      }),
+      borderColor:COLORS[i%COLORS.length],
+      backgroundColor:COLORS[i%COLORS.length]+"33",
+      pointRadius:5,borderWidth:2,tension:0.3,spanGaps:true
+    }));
+    datasets.push({
+      label:"Meta "+META,data:fechas.map(()=>META),
+      borderColor:"#f59e0b",borderDash:[6,4],borderWidth:1.5,
+      pointRadius:0,fill:false
+    });
+    const ctx = document.getElementById("myChart").getContext("2d");
+    if (chartInstance) chartInstance.destroy();
+    chartInstance = new Chart(ctx,{
+      type:"line",
+      data:{labels:fechas,datasets},
+      options:{
+        responsive:true,
+        plugins:{legend:{labels:{color:"#94a3b8",font:{family:"Barlow Condensed",size:13}}}},
+        scales:{
+          x:{ticks:{color:"#64748b"},grid:{color:"rgba(255,255,255,0.05)"}},
+          y:{ticks:{color:"#64748b"},grid:{color:"rgba(255,255,255,0.05)"},beginAtZero:true}
+        }
+      }
+    });
+  } else {
+    document.getElementById("chart-wrap").style.display="none";
+  }
+}
+
+// ── Tabla ──────────────────────────────────────────────────
+function renderTabla() {
+  const data = [...filteredRecords()].reverse();
+  document.getElementById("record-count").textContent = data.length+" registros";
+  const empty = document.getElementById("tabla-empty");
+  const wrap  = document.getElementById("tabla-wrap");
+  if (data.length===0) { empty.style.display="block"; wrap.style.display="none"; return; }
+  empty.style.display="none"; wrap.style.display="block";
+  document.getElementById("tabla-body").innerHTML = data.map(r=>`
+    <tr>
+      <td class="td-maquina">${r.maquina}</td>
+      <td style="color:var(--sub);font-size:13px">${r.operador||"—"}</td>
+      <td>${r.fecha}</td>
+      <td>${r.horaInicio}</td>
+      <td>${r.horaFin}</td>
+      <td class="td-num">${r.hrsEjec}</td>
+      <td class="td-num">${r.bins}</td>
+      <td class="td-num">${r.toneladas} t</td>
+      <td class="${r.tnhr>=META?'td-tnhr-ok':'td-tnhr-bad'}">${r.tnhr}</td>
+      <td>${badge(r.estado)}</td>
+      <td class="td-modulos">${r.modulos||"—"}</td>
+      <td><button onclick="eliminarRegistro(${r.id})" style="background:none;border:1px solid #DC2626;color:#DC2626;border-radius:5px;padding:3px 7px;font-size:0.65rem;cursor:pointer;">🗑️</button></td>
+    </tr>`).join("");
+}
+
+
+// ── Autocomplete cruzado Máquina <-> Operador ──────────
+function getPairs() {
+  // retorna array de {maquina, operador} únicos del historial
+  const seen = new Set();
+  const pairs = [];
+  records.forEach(r => {
+    if (!r.maquina) return;
+    const key = r.maquina + '||' + (r.operador||'');
+    if (!seen.has(key)) { seen.add(key); pairs.push({maquina:r.maquina, operador:r.operador||''}); }
+  });
+  return pairs;
+}
+function showSug(id, items) {
+  const el = document.getElementById(id);
+  if (!items.length) { el.style.display='none'; return; }
+  el.innerHTML = items.map((it,i) =>
+    `<div class="sug-item" onmousedown="pickSug('${id}',${i})" data-i="${i}">
+      ${it.label}<small>${it.sub}</small>
+    </div>`
+  ).join('');
+  el.style.display = 'block';
+  el._items = items;
+}
+function hideSug(id) {
+  setTimeout(() => { const el=document.getElementById(id); if(el) el.style.display='none'; }, 150);
+}
+function pickSug(sugId, idx) {
+  const items = document.getElementById(sugId)._items;
+  if (!items || !items[idx]) return;
+  const it = items[idx];
+  document.getElementById('f-maquina').value  = it.maquina;
+  document.getElementById('f-operador').value = it.operador;
+  document.getElementById(sugId).style.display = 'none';
+  updatePreview();
+}
+function onMaquinaInput() {
+  updatePreview();
+  const val = document.getElementById('f-maquina').value.trim().toUpperCase();
+  if (!val) { hideSug('sug-maquina'); return; }
+  const pairs = getPairs();
+  const matches = pairs
+    .filter(p => p.maquina.includes(val))
+    .map(p => ({maquina:p.maquina, operador:p.operador, label:p.maquina, sub:p.operador||'Sin operador registrado'}));
+  showSug('sug-maquina', matches);
+}
+function onOperadorInput() {
+  const val = document.getElementById('f-operador').value.trim().toLowerCase();
+  if (!val) { hideSug('sug-operador'); return; }
+  const pairs = getPairs();
+  const matches = pairs
+    .filter(p => p.operador.toLowerCase().includes(val))
+    .map(p => ({maquina:p.maquina, operador:p.operador, label:p.operador, sub:p.maquina}));
+  showSug('sug-operador', matches);
+}
+
+// init
+document.getElementById("f-fecha").value = new Date().toLocaleDateString("es-PE",{day:"2-digit",month:"2-digit",year:"numeric"}).replace(/\//g,"/");
+</script>
+</body>
+</html>
