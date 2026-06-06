@@ -439,6 +439,10 @@ async function syncAll(){
       }catch(e){}
     }
   }
+  // Also sync to Google Sheets
+  try {
+    await fetch('/api/sheets-guia', {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'});
+  } catch(e) {}
   flash('✅ Sincronizado '+count+' subgrupos','verde');
 }
 
