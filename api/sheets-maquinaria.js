@@ -50,7 +50,7 @@ module.exports = async (req, res) => {
         cell:{userEnteredFormat:{backgroundColor:bg,textFormat:{foregroundColor:fg,bold:!!bold,fontSize:sz||10,fontFamily:'Arial'},horizontalAlignment:ha,verticalAlignment:'MIDDLE'}},
         fields:'userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,verticalAlignment)'}};
     }
-    function merge(sid,r1i,c1,r2i,c2){return{mergeCells:{range:{sheetId:sid,startRowIndex:r1i,endRowIndex:r2i,startColumnIndex:c1,endColumnIndex:c2},mergeType:'MERGE_ALL'}};}
+
     function colW(sid,c,w){return{updateDimensionProperties:{range:{sheetId:sid,dimension:'COLUMNS',startIndex:c,endIndex:c+1},properties:{pixelSize:w},fields:'pixelSize'}};}
     function rowH(sid,r,h){return{updateDimensionProperties:{range:{sheetId:sid,dimension:'ROWS',startIndex:r,endIndex:r+1},properties:{pixelSize:h},fields:'pixelSize'}};}
 
@@ -58,7 +58,7 @@ module.exports = async (req, res) => {
     if(!existing.includes('Base_Datos')){
       await sheets.spreadsheets.batchUpdate({spreadsheetId:SHEET_ID,resource:{requests:[{addSheet:{properties:{title:'Base_Datos',index:0}}}]}});
     }
-    await sheets.spreadsheets.values.clear({spreadsheetId:SHEET_ID,range:'Base_Datos!A:L'});
+    await sheets.spreadsheets.values.clear({spreadsheetId:SHEET_ID,range:'Base_Datos!A1:Z1000'});
 
     const bd=[
       ['REGISTRO CONTINUO DE MAQUINARIA Y CAMPO','','','','','','','','','',''],
@@ -72,7 +72,7 @@ module.exports = async (req, res) => {
         r.meta||META,r.estado||'',r.modulos||'']);
     });
     // 30 filas vacías
-    for(let i=0;i<30;i++) bd.push(['','','','','','','',''  ,META,'','']);
+    for(let i=0;i<30;i++) bd.push(['','','','','','','','',META,'','']);
 
     await sheets.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:'Base_Datos!A1',valueInputOption:'RAW',resource:{values:bd}});
 
@@ -80,8 +80,9 @@ module.exports = async (req, res) => {
     const s1=m1.data.sheets.find(s=>s.properties.title==='Base_Datos');
     const sid1=s1.properties.sheetId;
 
+    // Unmerge all first to avoid conflicts
     const reqs1=[
-      merge(sid1,0,0,1,11),cell(sid1,0,0,1,11,VERDE,BLANCO,true,13),rowH(sid1,0,32),
+      cell(sid1,0,0,1,1,VERDE,BLANCO,true,13),rowH(sid1,0,32),
       rowH(sid1,1,6),rowH(sid1,2,6),
       cell(sid1,3,0,4,11,VERDE2,BLANCO,true,10),rowH(sid1,3,26),
       [100,90,90,80,70,60,90,90,60,70,140].map((w,i)=>colW(sid1,i,w)),
@@ -109,7 +110,7 @@ module.exports = async (req, res) => {
     if(!existing.includes('Dashboard_Graficos')){
       await sheets.spreadsheets.batchUpdate({spreadsheetId:SHEET_ID,resource:{requests:[{addSheet:{properties:{title:'Dashboard_Graficos'}}}]}});
     }
-    await sheets.spreadsheets.values.clear({spreadsheetId:SHEET_ID,range:'Dashboard_Graficos!A:Z'});
+    await sheets.spreadsheets.values.clear({spreadsheetId:SHEET_ID,range:'Dashboard_Graficos!A1:Z1000'});
 
     // Calcular resumen
     const maqMap={};
@@ -155,10 +156,13 @@ module.exports = async (req, res) => {
     const s2=m2.data.sheets.find(s=>s.properties.title==='Dashboard_Graficos');
     const sid2=s2.properties.sheetId;
 
+    // Unmerge all first
+
+
     const reqs2=[
-      merge(sid2,0,0,1,6),cell(sid2,0,0,1,6,VERDE,BLANCO,true,13),rowH(sid2,0,32),
+      cell(sid2,0,0,1,1,VERDE,BLANCO,true,13),rowH(sid2,0,32),
       rowH(sid2,1,6),rowH(sid2,2,6),
-      merge(sid2,3,0,4,6),cell(sid2,3,0,4,6,VERDE2,BLANCO,true,11),rowH(sid2,3,22),
+      cell(sid2,3,0,4,1,VERDE2,BLANCO,true,11),rowH(sid2,3,22),
       cell(sid2,4,0,5,6,VERDE,BLANCO,true,10),rowH(sid2,4,22),
       [150,100,100,110,110,100].map((w,i)=>colW(sid2,i,w)),
     ].flat();
@@ -178,7 +182,6 @@ module.exports = async (req, res) => {
 
     // Sección cronológica
     const cr=cronRow;
-    reqs2.push(merge(sid2,cr,0,cr+1,maqNames.length+2));
     reqs2.push(cell(sid2,cr,0,cr+1,maqNames.length+2,VERDE2,BLANCO,true,11));
     reqs2.push(rowH(sid2,cr,22));
     reqs2.push(cell(sid2,cr+1,0,cr+2,maqNames.length+2,VERDE,BLANCO,true,10));
