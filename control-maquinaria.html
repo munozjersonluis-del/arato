@@ -190,6 +190,8 @@ tr:nth-child(even) td{background:rgba(255,255,255,0.015)}
     <button class="tab-btn" onclick="setTab('registro')">➕ Registrar</button>
     <button class="tab-btn" onclick="setTab('tabla')">📋 Tabla</button>
     <button class="import-btn" onclick="cargarRegistros()" style="background:#2563EB;">☁️ Cargar</button>
+    <button class="import-btn" onclick="syncMaquinaria()" style="background:#16A34A;">🔄 Sync</button>
+    <button class="import-btn" onclick="window.open('https://docs.google.com/spreadsheets/d/1wKwRNcox1Ydnqwz9CkDP1_hheaAnWO8y0xWcuq9hTlk','_blank')" style="background:#0F9D58;">📊 Sheets</button>
     <button class="import-btn" onclick="document.getElementById('xlsxInput').click()">📂 Importar Excel</button>
     <input type="file" id="xlsxInput" accept=".xlsx,.xls" style="display:none" onchange="importExcel(this)"/>
   </div>
@@ -301,6 +303,16 @@ const KG_BIN = 435;
 const COLORS = ["#f97316","#38bdf8","#a78bfa","#34d399","#fb7185","#fbbf24"];
 let records = [];
 let chartInstance = null;
+
+async function syncMaquinaria() {
+  try {
+    showToast('Sincronizando...','ok');
+    const r = await fetch('/api/sheets-maquinaria', {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'});
+    const d = await r.json();
+    if(d.ok) showToast('✅ Google Sheets actualizado','ok');
+    else showToast('Error: '+(d.error||'sin respuesta'),'err');
+  } catch(e) { showToast('Error: '+e.message,'err'); }
+}
 
 // ── Supabase ──
 const SURL='https://rqvcvffyynpnighzwxju.supabase.co';
