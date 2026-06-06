@@ -403,9 +403,9 @@ function setTab(tab) {
 // ── Build record ───────────────────────────────────────────
 function buildRecord(maquina,operador,fecha,ini,fin,bins,modulos) {
   const b = parseFloat(bins)||0;
-  const tons = +(b*KG_BIN/1000).toFixed(4);
+  const tons = +(b*KG_BIN/1000).toFixed(1);
   const hrs = horasEntre(ini,fin);
-  const tnhr = hrs>0 ? +(tons/hrs).toFixed(4) : 0;
+  const tnhr = hrs>0 ? +(tons/hrs).toFixed(1) : 0;
   return {maquina,operador,fecha,horaInicio:ini,horaFin:fin,hrsEjec:hrs,bins:b,toneladas:tons,tnhr,estado:calcEstado(tnhr),modulos};
 }
 
@@ -417,8 +417,8 @@ function updatePreview() {
   if (!ini||!fin||!bins) { document.getElementById("preview").style.display="none"; return; }
   const hrs = horasEntre(ini,fin);
   const b = parseFloat(bins)||0;
-  const tons = +(b*KG_BIN/1000).toFixed(3);
-  const tnhr = hrs>0 ? +(tons/hrs).toFixed(3) : 0;
+  const tons = +(b*KG_BIN/1000).toFixed(1);
+  const tnhr = hrs>0 ? +(tons/hrs).toFixed(1) : 0;
   const estado = calcEstado(tnhr);
   document.getElementById("p-hrs").textContent = hrs;
   document.getElementById("p-tons").textContent = tons+" t";
