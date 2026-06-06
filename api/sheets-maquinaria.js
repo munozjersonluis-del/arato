@@ -4,6 +4,7 @@ const https = require('https');
 const SHEET_ID = '1wKwRNcox1Ydnqwz9CkDP1_hheaAnWO8y0xWcuq9hTlk';
 const SUPA_HOST = 'rqvcvffyynpnighzwxju.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdmN2ZmZ5eW5wbmlnaHp3eGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MjgyNDcsImV4cCI6MjA5MzMwNDI0N30.fFufNEdRvAzl6O6BqtTbx83O3Eg8Wd7gACNJDGQKga4';
+const META = 2.3;
 
 const credentials = {
   type:"service_account",project_id:"subtle-canto-498013-i0",
@@ -14,9 +15,7 @@ const credentials = {
   token_uri:"https://oauth2.googleapis.com/token"
 };
 
-const META = 2.3;
 function r1(n){return Math.round((n||0)*10)/10;}
-function r2(n){return Math.round((n||0)*10)/10;}
 
 function fetchSupa(path){
   return new Promise((resolve,reject)=>{
@@ -39,75 +38,71 @@ module.exports = async (req, res) => {
     const meta = await sheets.spreadsheets.get({spreadsheetId:SHEET_ID});
     const existing = meta.data.sheets.map(s=>s.properties.title);
 
-    // ── HOJA 1: BASE DE DATOS ──
-    if(!existing.includes('Base_Datos')){
-      await sheets.spreadsheets.batchUpdate({spreadsheetId:SHEET_ID,resource:{requests:[{addSheet:{properties:{title:'Base_Datos',index:0}}}]}});
-    }
-    await sheets.spreadsheets.values.clear({spreadsheetId:SHEET_ID,range:'Base_Datos!A:Z'});
-
-    const baseDatos = [
-      ['REGISTRO CONTINUO DE MAQUINARIA Y CAMPO','','','','','','','','','','',''],
-      ['','','','','','','','','','','',''],
-      ['','','','','','','','','','','',''],
-      ['Maquina','Operador','Fecha','Hora Inicio','Hora Fin','Hrs Ejec','Bins','Toneladas','TN/Hr Real','Meta','Estado','Modulos']
-    ];
-    rows.forEach(r=>{
-      baseDatos.push([
-        r.maquina||'',
-        r.operador||'',
-        r.fecha||'',
-        r.hora_inicio||'',
-        r.hora_fin||'',
-        r1(r.hrs_ejec),
-        r1(r.bins),
-        r2(r.toneladas),
-        r2(r.tn_hr),
-        r.meta||META,
-        r.estado||'',
-        r.modulos||''
-      ]);
-    });
-
-    await sheets.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:'Base_Datos!A1',valueInputOption:'RAW',resource:{values:baseDatos}});
-
-    // Format Base_Datos
-    const meta2 = await sheets.spreadsheets.get({spreadsheetId:SHEET_ID});
-    const s1 = meta2.data.sheets.find(s=>s.properties.title==='Base_Datos');
-    const sid1 = s1.properties.sheetId;
-
+    // Colores
     const VERDE=rgb('1A5C38'),VERDE2=rgb('2D6A4F'),VERDE_C=rgb('DCFCE7'),VERDE_T=rgb('15803D');
-    const ROJO=rgb('DC2626'),ROJO_C=rgb('FEE2E2'),AMARILLO=rgb('D97706'),AMARILLO_C=rgb('FEF3C7');
+    const ROJO=rgb('DC2626'),ROJO_C=rgb('FEE2E2');
+    const AMARILLO=rgb('D97706'),AMARILLO_C=rgb('FEF3C7');
+    const AZUL=rgb('1D4ED8'),AZUL_C=rgb('DBEAFE');
     const BLANCO={red:1,green:1,blue:1},GRIS=rgb('F8FAFC'),NEGRO=rgb('111827');
 
-    function cell(sid,r1i,c1,r2i,c2,bg,fg,bold,sz){
+    function cell(sid,r1i,c1,r2i,c2,bg,fg,bold,sz,ha='CENTER'){
       return{repeatCell:{range:{sheetId:sid,startRowIndex:r1i,endRowIndex:r2i,startColumnIndex:c1,endColumnIndex:c2},
-        cell:{userEnteredFormat:{backgroundColor:bg,textFormat:{foregroundColor:fg,bold:!!bold,fontSize:sz||10},horizontalAlignment:'CENTER',verticalAlignment:'MIDDLE'}},
+        cell:{userEnteredFormat:{backgroundColor:bg,textFormat:{foregroundColor:fg,bold:!!bold,fontSize:sz||10,fontFamily:'Arial'},horizontalAlignment:ha,verticalAlignment:'MIDDLE'}},
         fields:'userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,verticalAlignment)'}};
     }
     function merge(sid,r1i,c1,r2i,c2){return{mergeCells:{range:{sheetId:sid,startRowIndex:r1i,endRowIndex:r2i,startColumnIndex:c1,endColumnIndex:c2},mergeType:'MERGE_ALL'}};}
     function colW(sid,c,w){return{updateDimensionProperties:{range:{sheetId:sid,dimension:'COLUMNS',startIndex:c,endIndex:c+1},properties:{pixelSize:w},fields:'pixelSize'}};}
     function rowH(sid,r,h){return{updateDimensionProperties:{range:{sheetId:sid,dimension:'ROWS',startIndex:r,endIndex:r+1},properties:{pixelSize:h},fields:'pixelSize'}};}
 
-    const reqs1 = [
-      merge(sid1,0,0,1,12), cell(sid1,0,0,1,12,VERDE,BLANCO,true,14), rowH(sid1,0,36),
-      cell(sid1,3,0,4,12,VERDE2,BLANCO,true,10), rowH(sid1,3,24),
-      [100,100,90,90,80,70,70,90,80,60,70,120].map((w,i)=>colW(sid1,i,w)),
+    // ── HOJA 1: BASE_DATOS ──
+    if(!existing.includes('Base_Datos')){
+      await sheets.spreadsheets.batchUpdate({spreadsheetId:SHEET_ID,resource:{requests:[{addSheet:{properties:{title:'Base_Datos',index:0}}}]}});
+    }
+    await sheets.spreadsheets.values.clear({spreadsheetId:SHEET_ID,range:'Base_Datos!A:L'});
+
+    const bd=[
+      ['REGISTRO CONTINUO DE MAQUINARIA Y CAMPO','','','','','','','','','',''],
+      ['','','','','','','','','','',''],
+      ['','','','','','','','','','',''],
+      ['Maquina','Fecha','Hora Inicio','Hora Fin','Hrs Ejec','Bins','Toneladas','TN/Hr Real','Meta','Estado','Modulos']
+    ];
+    rows.forEach(r=>{
+      bd.push([r.maquina||'',r.fecha||'',r.hora_inicio||'',r.hora_fin||'',
+        r1(r.hrs_ejec),r1(r.bins),r1(r.toneladas),r1(r.tn_hr),
+        r.meta||META,r.estado||'',r.modulos||'']);
+    });
+    // 30 filas vacías
+    for(let i=0;i<30;i++) bd.push(['','','','','','','',''  ,META,'','']);
+
+    await sheets.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:'Base_Datos!A1',valueInputOption:'RAW',resource:{values:bd}});
+
+    const m1=await sheets.spreadsheets.get({spreadsheetId:SHEET_ID});
+    const s1=m1.data.sheets.find(s=>s.properties.title==='Base_Datos');
+    const sid1=s1.properties.sheetId;
+
+    const reqs1=[
+      merge(sid1,0,0,1,11),cell(sid1,0,0,1,11,VERDE,BLANCO,true,13),rowH(sid1,0,32),
+      rowH(sid1,1,6),rowH(sid1,2,6),
+      cell(sid1,3,0,4,11,VERDE2,BLANCO,true,10),rowH(sid1,3,26),
+      [100,90,90,80,70,60,90,90,60,70,140].map((w,i)=>colW(sid1,i,w)),
     ].flat();
 
-    rows.forEach((_,i)=>{
+    rows.forEach((r,i)=>{
       const row=4+i;
       const bg=i%2===0?GRIS:BLANCO;
-      const r=rows[i];
       const tnhr=r.tn_hr||0;
-      const isBien=tnhr>=META;
-      const isReg=tnhr>=META*0.7;
-      const estadoBg=isBien?VERDE_C:isReg?AMARILLO_C:ROJO_C;
-      const estadoTxt=isBien?VERDE_T:isReg?AMARILLO:ROJO;
-      reqs1.push(cell(sid1,row,0,row+1,12,bg,NEGRO,false,9));
-      reqs1.push(cell(sid1,row,8,row+1,9,bg,isBien?VERDE_T:isReg?AMARILLO:ROJO,true,10)); // TN/Hr
-      reqs1.push(cell(sid1,row,10,row+1,11,estadoBg,estadoTxt,true,9)); // Estado
-      reqs1.push(rowH(sid1,row,18));
+      const isBien=tnhr>=META,isReg=tnhr>=META*0.7;
+      reqs1.push(cell(sid1,row,0,row+1,11,bg,NEGRO,false,9));
+      reqs1.push(cell(sid1,row,7,row+1,8,bg,isBien?VERDE_T:isReg?AMARILLO:ROJO,true,10));
+      reqs1.push(cell(sid1,row,9,row+1,10,isBien?VERDE_C:isReg?AMARILLO_C:ROJO_C,isBien?VERDE_T:isReg?AMARILLO:ROJO,true,9));
+      reqs1.push(rowH(sid1,row,20));
     });
+    // Filas vacías
+    for(let i=0;i<30;i++){
+      const row=4+rows.length+i;
+      reqs1.push(cell(sid1,row,0,row+1,11,i%2===0?GRIS:BLANCO,NEGRO,false,9));
+      reqs1.push(rowH(sid1,row,18));
+    }
     await sheets.spreadsheets.batchUpdate({spreadsheetId:SHEET_ID,resource:{requests:reqs1}});
 
     // ── HOJA 2: DASHBOARD ──
@@ -116,45 +111,39 @@ module.exports = async (req, res) => {
     }
     await sheets.spreadsheets.values.clear({spreadsheetId:SHEET_ID,range:'Dashboard_Graficos!A:Z'});
 
-    // Resumen por maquina
+    // Calcular resumen
     const maqMap={};
     rows.forEach(r=>{
-      if(!maqMap[r.maquina])maqMap[r.maquina]={bins:0,tons:0,hrs:0,count:0};
+      if(!maqMap[r.maquina])maqMap[r.maquina]={hrs:0,bins:0,tons:0};
+      maqMap[r.maquina].hrs+=r.hrs_ejec||0;
       maqMap[r.maquina].bins+=r.bins||0;
       maqMap[r.maquina].tons+=r.toneladas||0;
-      maqMap[r.maquina].hrs+=r.hrs_ejec||0;
-      maqMap[r.maquina].count++;
     });
     const maqNames=Object.keys(maqMap).sort();
-
-    // Rendimiento cronologico
     const fechas=[...new Set(rows.map(r=>r.fecha))].sort();
 
     const dash=[
       ['PANEL DE CONTROL GENERAL Y FILTRADO POR FECHAS','','','','',''],
-      ['','','','','',''],
-      ['','','','','',''],
-      ['Resumen General por Maquina (Consolidado Historico)','','','','',''],
+      ['','','','','',''],['','','','','',''],
+      ['Resumen General por Maquina (Consolidado Histórico)','','','','',''],
       ['Maquina','Total Horas','Total Bins','Total Toneladas','TN/Hr Promedio','Estado Global'],
     ];
     maqNames.forEach(m=>{
       const d=maqMap[m];
-      const prom=d.hrs>0?r2(d.tons/d.hrs):0;
+      const prom=d.hrs>0?r1(d.tons/d.hrs):0;
       const estado=prom>=META?'BIEN':prom>=META*0.7?'REGULAR':'MAL';
-      dash.push([m,r1(d.hrs),r1(d.bins),r2(d.tons),prom,estado]);
+      dash.push([m,r1(d.hrs),r1(d.bins),r1(d.tons),prom,estado]);
     });
     dash.push(['','','','','','']);
     dash.push(['','','','','','']);
+    const cronRow=dash.length;
     dash.push(['Rendimiento Cronologico Diario (Evolucion por Fechas)','','','','','']);
-
-    // Header row for chart data
-    const chartHeader=['Fecha',...maqNames.map(m=>'TN/Hr '+m),'Meta Minima'];
-    dash.push(chartHeader);
+    dash.push(['Fecha',...maqNames.map(m=>'TN/Hr '+m),'Meta Minima']);
     fechas.forEach(f=>{
       const row=[f];
       maqNames.forEach(m=>{
         const rec=rows.find(r=>r.fecha===f&&r.maquina===m);
-        row.push(rec?r2(rec.tn_hr):0);
+        row.push(rec?r1(rec.tn_hr):0);
       });
       row.push(META);
       dash.push(row);
@@ -162,77 +151,89 @@ module.exports = async (req, res) => {
 
     await sheets.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:'Dashboard_Graficos!A1',valueInputOption:'RAW',resource:{values:dash}});
 
-    // Format Dashboard
-    const meta3=await sheets.spreadsheets.get({spreadsheetId:SHEET_ID});
-    const s2=meta3.data.sheets.find(s=>s.properties.title==='Dashboard_Graficos');
+    const m2=await sheets.spreadsheets.get({spreadsheetId:SHEET_ID});
+    const s2=m2.data.sheets.find(s=>s.properties.title==='Dashboard_Graficos');
     const sid2=s2.properties.sheetId;
 
     const reqs2=[
-      merge(sid2,0,0,1,6), cell(sid2,0,0,1,6,VERDE,BLANCO,true,13), rowH(sid2,0,30),
-      merge(sid2,3,0,4,6), cell(sid2,3,0,4,6,VERDE2,BLANCO,true,11),
-      cell(sid2,4,0,5,6,VERDE,BLANCO,true,10), rowH(sid2,4,22),
-      [140,100,100,110,110,90].map((w,i)=>colW(sid2,i,w)),
+      merge(sid2,0,0,1,6),cell(sid2,0,0,1,6,VERDE,BLANCO,true,13),rowH(sid2,0,32),
+      rowH(sid2,1,6),rowH(sid2,2,6),
+      merge(sid2,3,0,4,6),cell(sid2,3,0,4,6,VERDE2,BLANCO,true,11),rowH(sid2,3,22),
+      cell(sid2,4,0,5,6,VERDE,BLANCO,true,10),rowH(sid2,4,22),
+      [150,100,100,110,110,100].map((w,i)=>colW(sid2,i,w)),
     ].flat();
 
-    maqNames.forEach((_,i)=>{
+    // Filas de máquinas en resumen
+    maqNames.forEach((m,i)=>{
       const row=5+i;
+      const d=maqMap[m];
+      const prom=d.hrs>0?r1(d.tons/d.hrs):0;
+      const isBien=prom>=META,isReg=prom>=META*0.7;
       const bg=i%2===0?GRIS:BLANCO;
-      const d=maqMap[maqNames[i]];
-      const prom=d.hrs>0?r2(d.tons/d.hrs):0;
-      const isBien=prom>=META;
       reqs2.push(cell(sid2,row,0,row+1,6,bg,NEGRO,false,10));
-      reqs2.push(cell(sid2,row,4,row+1,5,bg,isBien?VERDE_T:ROJO,true,10));
-      reqs2.push(cell(sid2,row,5,row+1,6,isBien?VERDE_C:ROJO_C,isBien?VERDE_T:ROJO,true,10));
-      reqs2.push(rowH(sid2,row,20));
+      reqs2.push(cell(sid2,row,4,row+1,5,bg,isBien?VERDE_T:isReg?AMARILLO:ROJO,true,11));
+      reqs2.push(cell(sid2,row,5,row+1,6,isBien?VERDE_C:isReg?AMARILLO_C:ROJO_C,isBien?VERDE_T:isReg?AMARILLO:ROJO,true,10));
+      reqs2.push(rowH(sid2,row,22));
     });
 
-    const cronRow=5+maqNames.length+3;
-    reqs2.push(merge(sid2,cronRow,0,cronRow+1,maqNames.length+2));
-    reqs2.push(cell(sid2,cronRow,0,cronRow+1,maqNames.length+2,VERDE2,BLANCO,true,11));
-    reqs2.push(cell(sid2,cronRow+1,0,cronRow+2,maqNames.length+2,VERDE,BLANCO,true,10));
-    fechas.forEach((_,i)=>{
-      const row=cronRow+2+i;
-      reqs2.push(cell(sid2,row,0,row+1,maqNames.length+2,i%2===0?GRIS:BLANCO,NEGRO,false,10));
-      // Color TN/Hr cells
+    // Sección cronológica
+    const cr=cronRow;
+    reqs2.push(merge(sid2,cr,0,cr+1,maqNames.length+2));
+    reqs2.push(cell(sid2,cr,0,cr+1,maqNames.length+2,VERDE2,BLANCO,true,11));
+    reqs2.push(rowH(sid2,cr,22));
+    reqs2.push(cell(sid2,cr+1,0,cr+2,maqNames.length+2,VERDE,BLANCO,true,10));
+    reqs2.push(rowH(sid2,cr+1,22));
+
+    fechas.forEach((f,fi)=>{
+      const row=cr+2+fi;
+      const bg=fi%2===0?GRIS:BLANCO;
+      reqs2.push(cell(sid2,row,0,row+1,1,bg,NEGRO,false,10));
       maqNames.forEach((m,mi)=>{
-        const rec=rows.find(r=>r.fecha===fechas[i]&&r.maquina===m);
+        const rec=rows.find(r=>r.fecha===f&&r.maquina===m);
         const tnhr=rec?rec.tn_hr:0;
-        const isBien=tnhr>=META;
-        const isReg=tnhr>=META*0.7;
-        reqs2.push(cell(sid2,row,mi+1,row+1,mi+2,isBien?VERDE_C:isReg?AMARILLO_C:ROJO_C,isBien?VERDE_T:isReg?AMARILLO:ROJO,true,10));
+        const isBien=tnhr>=META,isReg=tnhr>=META*0.7;
+        reqs2.push(cell(sid2,row,mi+1,row+1,mi+2,
+          tnhr>0?(isBien?VERDE_C:isReg?AMARILLO_C:ROJO_C):bg,
+          tnhr>0?(isBien?VERDE_T:isReg?AMARILLO:ROJO):NEGRO,true,10));
       });
+      reqs2.push(cell(sid2,row,maqNames.length+1,row+1,maqNames.length+2,AZUL_C,AZUL,true,10));
       reqs2.push(rowH(sid2,row,20));
     });
 
     await sheets.spreadsheets.batchUpdate({spreadsheetId:SHEET_ID,resource:{requests:reqs2}});
-    // ── Add chart to Dashboard ──
+
+    // ── GRÁFICO ──
     try {
-      const meta4=await sheets.spreadsheets.get({spreadsheetId:SHEET_ID});
-      const s3=meta4.data.sheets.find(s=>s.properties.title==='Dashboard_Graficos');
+      const m3=await sheets.spreadsheets.get({spreadsheetId:SHEET_ID});
+      const s3=m3.data.sheets.find(s=>s.properties.title==='Dashboard_Graficos');
       const sid3=s3.properties.sheetId;
-      const cronRow=5+maqNames.length+3;
-      const dataRows=fechas.length;
-      // Delete existing charts first
-      const existCharts=s3.charts||[];
-      const delReqs=existCharts.map(c=>({deleteEmbeddedObject:{objectId:c.chartId}}));
-      if(delReqs.length){
-        await sheets.spreadsheets.batchUpdate({spreadsheetId:SHEET_ID,resource:{requests:delReqs}});
-      }
-      // Create line chart
+      // Delete old charts
+      (s3.charts||[]).forEach(async c=>{
+        try{await sheets.spreadsheets.batchUpdate({spreadsheetId:SHEET_ID,resource:{requests:[{deleteEmbeddedObject:{objectId:c.chartId}}]}});}catch(e){}
+      });
+      const dataStart=cr+1;
+      const dataEnd=cr+1+fechas.length;
       const series=maqNames.map((m,i)=>({
-        series:{sourceRange:{sources:[{sheetId:sid3,startRowIndex:cronRow+1,endRowIndex:cronRow+1+dataRows,startColumnIndex:i+1,endColumnIndex:i+2}]}},
+        series:{sourceRange:{sources:[{sheetId:sid3,startRowIndex:dataStart,endRowIndex:dataEnd+1,startColumnIndex:i+1,endColumnIndex:i+2}]}},
         targetAxis:'LEFT_AXIS'
       }));
-      // Add META line
       series.push({
-        series:{sourceRange:{sources:[{sheetId:sid3,startRowIndex:cronRow+1,endRowIndex:cronRow+1+dataRows,startColumnIndex:maqNames.length+1,endColumnIndex:maqNames.length+2}]}},
+        series:{sourceRange:{sources:[{sheetId:sid3,startRowIndex:dataStart,endRowIndex:dataEnd+1,startColumnIndex:maqNames.length+1,endColumnIndex:maqNames.length+2}]}},
         targetAxis:'LEFT_AXIS'
       });
-      await sheets.spreadsheets.batchUpdate({spreadsheetId:SHEET_ID,resource:{requests:[{addChart:{chart:{spec:{title:'Rendimiento TN/Hr por Maquina',basicChart:{chartType:'LINE',legendPosition:'BOTTOM_LEGEND',axis:[{position:'BOTTOM_AXIS',title:'Fecha'},{position:'LEFT_AXIS',title:'TN/Hr'}],domains:[{domain:{sourceRange:{sources:[{sheetId:sid3,startRowIndex:cronRow+1,endRowIndex:cronRow+1+dataRows,startColumnIndex:0,endColumnIndex:1}]}}}],series,headerCount:0}},position:{overlayPosition:{anchorCell:{sheetId:sid3,rowIndex:0,columnIndex:7},widthPixels:500,heightPixels:300}}}}}]}});
-    } catch(eChart){console.error('Chart error:',eChart.message);}
+      await sheets.spreadsheets.batchUpdate({spreadsheetId:SHEET_ID,resource:{requests:[{addChart:{chart:{
+        spec:{title:'Rendimiento TN/Hr vs Meta',basicChart:{
+          chartType:'LINE',legendPosition:'BOTTOM_LEGEND',
+          axis:[{position:'BOTTOM_AXIS',title:'Fecha'},{position:'LEFT_AXIS',title:'TN/Hr'}],
+          domains:[{domain:{sourceRange:{sources:[{sheetId:sid3,startRowIndex:dataStart+1,endRowIndex:dataEnd+1,startColumnIndex:0,endColumnIndex:1}]}}}],
+          series,headerCount:1
+        }},
+        position:{overlayPosition:{anchorCell:{sheetId:sid3,rowIndex:dataEnd+2,columnIndex:0},widthPixels:550,heightPixels:320}}
+      }}}]}});
+    }catch(eChart){console.error('Chart:',eChart.message);}
 
     res.status(200).json({ok:true,registros:rows.length,maquinas:maqNames.length,fechas:fechas.length});
-  } catch(e) {
+  }catch(e){
     console.error(e.message);
     res.status(500).json({error:e.message});
   }
