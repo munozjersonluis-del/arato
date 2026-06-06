@@ -16,7 +16,7 @@ const credentials = {
 
 const META = 2.3;
 function r1(n){return Math.round((n||0)*10)/10;}
-function r2(n){return Math.round((n||0)*100)/100;}
+function r2(n){return Math.round((n||0)*10)/10;}
 
 function fetchSupa(path){
   return new Promise((resolve,reject)=>{
