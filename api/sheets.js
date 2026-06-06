@@ -357,6 +357,69 @@ module.exports = async function handler(req, res) {
       console.error('Stock sheet error:', e3.message);
     }
 
+    // ── HOJA 4: GUIA BINS ──
+    try {
+      const guiaRows = await fetchSupa('guia_registros?select=fecha,grupo,subgrupo,viaje,bins,obs&order=fecha.desc,grupo.asc,subgrupo.asc');
+      if (guiaRows && guiaRows.length > 0) {
+        // Create or find sheet
+        const metaG = await sheets.spreadsheets.get({ spreadsheetId: SHEET_ID });
+        const existG = metaG.data.sheets.map(s => s.properties.title);
+        if (!existG.includes('Guia Bins')) {
+          await sheets.spreadsheets.batchUpdate({
+            spreadsheetId: SHEET_ID,
+            resource: { requests: [{ addSheet: { properties: { title: 'Guia Bins' } } }] }
+          });
+        }
+        await sheets.spreadsheets.values.clear({ spreadsheetId: SHEET_ID, range: 'Guia Bins!A:Z' });
+
+        const dataGuia = [
+          ['ARATO MISSION PRODUCE — CONTROL DE GUIA DE BINS'],
+          ['Actualizado:', new Date().toLocaleString('es-PE')],
+          [],
+          ['FECHA', 'GRUPO', 'SUBGRUPO', 'TOTAL BINS', 'LLEGADOS', 'FALTANTES', 'PENDIENTES', '% LLEGADO', 'OBS']
+        ];
+        guiaRows.forEach(r => {
+          const total = r.viaje || 0;
+          const llegados = r.bins || 0;
+          const obs = r.obs || '';
+          const faltantes = parseInt((obs.match(/F:(\d+)/)||[0,0])[1]) || 0;
+          const pend = total - llegados - faltantes;
+          const pct = total > 0 ? Math.round(llegados/total*100) : 0;
+          dataGuia.push([r.fecha||'', r.grupo||'', r.subgrupo||'', total, llegados, faltantes, pend, pct+'%', obs]);
+        });
+
+        await sheets.spreadsheets.values.update({
+          spreadsheetId: SHEET_ID, range: 'Guia Bins!A1',
+          valueInputOption: 'RAW', resource: { values: dataGuia }
+        });
+
+        // Format
+        const metaG2 = await sheets.spreadsheets.get({ spreadsheetId: SHEET_ID });
+        const sG = metaG2.data.sheets.find(s => s.properties.title === 'Guia Bins');
+        const sGid = sG.properties.sheetId;
+        const reqsG = [
+          merge(sGid,0,1,0,9), rep(sGid,0,1,0,9, fmt(C.VERDE,C.BLANCO,true,13)), rowH(sGid,0,30),
+          merge(sGid,1,2,0,9), rep(sGid,1,2,0,9, fmt(C.VERDE2,C.BLANCO,false,9)), rowH(sGid,1,14),
+          rep(sGid,3,4,0,9, fmt(C.VERDE,C.BLANCO,true,10)), rowH(sGid,3,22),
+          [80,70,90,100,90,90,100,90,180].map((w,i)=>colW(sGid,i,w)),
+        ].flat();
+        guiaRows.forEach((r,i) => {
+          const row = 4+i;
+          const bg = i%2===0 ? C.GRIS : C.BLANCO;
+          const pct = r.viaje>0 ? Math.round((r.bins||0)/r.viaje*100) : 0;
+          reqsG.push(rep(sGid,row,row+1,0,9, fmt(bg,C.NEGRO,false,9)));
+          // Color % column green if 100%, yellow if partial
+          const pctColor = pct===100 ? C.VERDE_C : pct>0 ? C.AMARILLO_C : C.ROJO_C;
+          const pctTxt = pct===100 ? C.VERDE : pct>0 ? C.AMARILLO : C.ROJO;
+          reqsG.push(rep(sGid,row,row+1,7,8, fmt(pctColor,pctTxt,true,9)));
+          reqsG.push(rowH(sGid,row,18));
+        });
+        await sheets.spreadsheets.batchUpdate({ spreadsheetId: SHEET_ID, resource: { requests: reqsG } });
+      }
+    } catch(e4) {
+      console.error('Guia sheet error:', e4.message);
+    }
+
     res.status(200).json({ ok:true, viajes:tv, bins:rowsBins ? rowsBins.length : 0, dias:dias.length });
 
   } catch(e) {
