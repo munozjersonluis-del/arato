@@ -191,8 +191,9 @@ tr:nth-child(even) td{background:rgba(255,255,255,0.015)}
     <button class="tab-btn" onclick="setTab('tabla')">📋 Tabla</button>
     <button class="import-btn" onclick="cargarRegistros()" style="background:#2563EB;">☁️ Cargar</button>
     <button class="import-btn" onclick="syncMaquinaria()" style="background:#16A34A;">🔄 Sync</button>
-    <button class="import-btn" onclick="window.open('https://docs.google.com/spreadsheets/d/1wKwRNcox1Ydnqwz9CkDP1_hheaAnWO8y0xWcuq9hTlk','_blank')" style="background:#0F9D58;">📊 Sheets</button>
-    <button class="import-btn" onclick="document.getElementById('xlsxInput').click()">📂 Importar Excel</button>
+    <button class="import-btn" onclick="exportarExcelCompleto()" style="background:#D97706;">📊 Excel</button>
+    <button class="import-btn" onclick="window.open('https://docs.google.com/spreadsheets/d/1wKwRNcox1Ydnqwz9CkDP1_hheaAnWO8y0xWcuq9hTlk','_blank')" style="background:#0F9D58;">🔗 Sheets</button>
+    <button class="import-btn" onclick="document.getElementById('xlsxInput').click()">📂 Importar</button>
     <input type="file" id="xlsxInput" accept=".xlsx,.xls" style="display:none" onchange="importExcel(this)"/>
   </div>
 </div>
@@ -303,6 +304,126 @@ const KG_BIN = 435;
 const COLORS = ["#f97316","#38bdf8","#a78bfa","#34d399","#fb7185","#fbbf24"];
 let records = [];
 let chartInstance = null;
+
+function exportarExcelCompleto() {
+  if(!records.length){showToast('Sin datos para exportar','err');return;}
+  const wb = XLSX.utils.book_new();
+  const META_VAL = META;
+
+  // ── HOJA 1: BASE DE DATOS ──
+  const bd = [
+    ['REGISTRO CONTINUO DE MAQUINARIA Y CAMPO','','','','','','','','','',''],
+    ['','','','','','','','','','',''],
+    ['','','','','','','','','','',''],
+    ['Maquina','Operador','Fecha','Hora Inicio','Hora Fin','Hrs Ejec','Bins','Toneladas','TN/Hr Real','Meta','Estado','Modulos']
+  ];
+  records.forEach(r=>{
+    bd.push([r.maquina||'',r.operador||'',r.fecha||'',r.horaInicio||'',r.horaFin||'',
+      +r.hrsEjec.toFixed(1),+r.bins.toFixed(1),+r.toneladas.toFixed(1),+r.tnhr.toFixed(1),
+      META_VAL,r.estado||'',r.modulos||'']);
+  });
+  const ws1 = XLSX.utils.aoa_to_sheet(bd);
+  ws1['!cols']=[{wch:12},{wch:14},{wch:11},{wch:10},{wch:8},{wch:8},{wch:7},{wch:10},{wch:10},{wch:6},{wch:8},{wch:18}];
+  ws1['!merges']=[{s:{r:0,c:0},e:{r:0,c:11}}];
+
+  // Estilos hoja 1
+  const hdrS={font:{bold:true,color:{rgb:'FFFFFF'},sz:13},fill:{fgColor:{rgb:'1A5C38'}},alignment:{horizontal:'center',vertical:'center'}};
+  const colS={font:{bold:true,color:{rgb:'FFFFFF'},sz:10},fill:{fgColor:{rgb:'2D6A4F'}},alignment:{horizontal:'center'}};
+  if(ws1['A1'])ws1['A1'].s=hdrS;
+  ['A4','B4','C4','D4','E4','F4','G4','H4','I4','J4','K4','L4'].forEach(c=>{if(ws1[c])ws1[c].s=colS;});
+  records.forEach((_,i)=>{
+    const row=i+5;const r=records[i];const bg=i%2===0?'F8FAFC':'FFFFFF';
+    const isBien=(r.tnhr||0)>=META_VAL;const isReg=(r.tnhr||0)>=META_VAL*0.7;
+    ['A','B','C','D','E','F','G','H','L'].forEach(c=>{if(ws1[c+row])ws1[c+row].s={fill:{fgColor:{rgb:bg}},font:{sz:9},alignment:{horizontal:'center'}};});
+    if(ws1['I'+row])ws1['I'+row].s={font:{bold:true,color:{rgb:isBien?'15803D':isReg?'D97706':'DC2626'},sz:10},fill:{fgColor:{rgb:bg}},alignment:{horizontal:'center'}};
+    if(ws1['K'+row])ws1['K'+row].s={font:{bold:true,color:{rgb:isBien?'15803D':isReg?'D97706':'DC2626'},sz:9},fill:{fgColor:{rgb:isBien?'DCFCE7':isReg?'FEF3C7':'FEE2E2'}},alignment:{horizontal:'center'}};
+  });
+  XLSX.utils.book_append_sheet(wb, ws1, 'Base_Datos');
+
+  // ── HOJA 2: DASHBOARD ──
+  const maqMap={};
+  records.forEach(r=>{
+    if(!maqMap[r.maquina])maqMap[r.maquina]={bins:0,tons:0,hrs:0};
+    maqMap[r.maquina].bins+=r.bins||0;
+    maqMap[r.maquina].tons+=r.toneladas||0;
+    maqMap[r.maquina].hrs+=r.hrsEjec||0;
+  });
+  const maqNames=Object.keys(maqMap).sort();
+  const fechas=[...new Set(records.map(r=>r.fecha))].sort((a,b)=>{
+    const pa=a.split('/'),pb=b.split('/');
+    return new Date(pa[2],pa[1]-1,pa[0])-new Date(pb[2],pb[1]-1,pb[0]);
+  });
+
+  const dash=[
+    ['PANEL DE CONTROL GENERAL Y FILTRADO POR FECHAS','','','','',''],
+    ['','','','','',''],['','','','','',''],
+    ['Resumen General por Maquina (Consolidado Historico)','','','','',''],
+    ['Maquina','Total Horas','Total Bins','Total Toneladas','TN/Hr Promedio','Estado Global'],
+  ];
+  maqNames.forEach(m=>{
+    const d=maqMap[m];
+    const prom=d.hrs>0?+(d.tons/d.hrs).toFixed(1):0;
+    const estado=prom>=META_VAL?'BIEN':prom>=META_VAL*0.7?'REGULAR':'MAL';
+    dash.push([m,+d.hrs.toFixed(1),+d.bins.toFixed(1),+d.tons.toFixed(1),prom,estado]);
+  });
+  dash.push(['','','','','','']);
+  dash.push(['','','','','','']);
+  dash.push(['Rendimiento Cronologico Diario (Evolucion por Fechas)','','','','','']);
+  dash.push(['Fecha',...maqNames.map(m=>'TN/Hr '+m),'Meta Minima']);
+  fechas.forEach(f=>{
+    const row=[f];
+    maqNames.forEach(m=>{
+      const rec=records.find(r=>r.fecha===f&&r.maquina===m);
+      row.push(rec?+(rec.tnhr||0).toFixed(1):0);
+    });
+    row.push(META_VAL);
+    dash.push(row);
+  });
+
+  const ws2=XLSX.utils.aoa_to_sheet(dash);
+  ws2['!cols']=[{wch:18},{wch:12},{wch:12},{wch:14},{wch:14},{wch:12}];
+  ws2['!merges']=[{s:{r:0,c:0},e:{r:0,c:5}},{s:{r:3,c:0},e:{r:3,c:5}}];
+
+  const hS2={font:{bold:true,color:{rgb:'FFFFFF'},sz:13},fill:{fgColor:{rgb:'1A5C38'}},alignment:{horizontal:'center',vertical:'center'}};
+  const h2S={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'2D6A4F'}},alignment:{horizontal:'center'}};
+  const colH2={font:{bold:true,color:{rgb:'FFFFFF'},sz:10},fill:{fgColor:{rgb:'1A5C38'}},alignment:{horizontal:'center'}};
+  if(ws2['A1'])ws2['A1'].s=hS2;
+  if(ws2['A4'])ws2['A4'].s=h2S;
+  ['A5','B5','C5','D5','E5','F5'].forEach(c=>{if(ws2[c])ws2[c].s=colH2;});
+  maqNames.forEach((_,i)=>{
+    const row=i+6;const m=maqNames[i];const d=maqMap[m];
+    const prom=d.hrs>0?+(d.tons/d.hrs).toFixed(1):0;
+    const isBien=prom>=META_VAL;const isReg=prom>=META_VAL*0.7;
+    const bg=i%2===0?'F8FAFC':'FFFFFF';
+    ['A','B','C','D'].forEach(c=>{if(ws2[c+row])ws2[c+row].s={fill:{fgColor:{rgb:bg}},font:{sz:10},alignment:{horizontal:'center'}};});
+    if(ws2['E'+row])ws2['E'+row].s={font:{bold:true,color:{rgb:isBien?'15803D':isReg?'D97706':'DC2626'},sz:11},fill:{fgColor:{rgb:bg}},alignment:{horizontal:'center'}};
+    if(ws2['F'+row])ws2['F'+row].s={font:{bold:true,color:{rgb:isBien?'15803D':isReg?'D97706':'DC2626'},sz:10},fill:{fgColor:{rgb:isBien?'DCFCE7':isReg?'FEF3C7':'FEE2E2'}},alignment:{horizontal:'center'}};
+  });
+
+  const cronStart=5+maqNames.length+4;
+  const cronHdrRow=cronStart+1;
+  if(ws2['A'+(cronStart-1)])ws2['A'+(cronStart-1)].s=h2S;
+  // Color cronologico rows
+  fechas.forEach((_,i)=>{
+    const row=cronHdrRow+1+i;const bg=i%2===0?'F8FAFC':'FFFFFF';
+    if(ws2['A'+row])ws2['A'+row].s={fill:{fgColor:{rgb:bg}},font:{sz:10},alignment:{horizontal:'center'}};
+    maqNames.forEach((m,mi)=>{
+      const rec=records.find(r=>r.fecha===fechas[i]&&r.maquina===m);
+      const tnhr=rec?rec.tnhr:0;
+      const isBien=tnhr>=META_VAL;const isReg=tnhr>=META_VAL*0.7;
+      const col=String.fromCharCode(66+mi);
+      if(ws2[col+row])ws2[col+row].s={font:{bold:true,color:{rgb:isBien?'15803D':isReg?'D97706':'DC2626'},sz:10},fill:{fgColor:{rgb:isBien?'DCFCE7':isReg?'FEF3C7':'FEE2E2'}},alignment:{horizontal:'center'}};
+    });
+    const metaCol=String.fromCharCode(66+maqNames.length);
+    if(ws2[metaCol+row])ws2[metaCol+row].s={fill:{fgColor:{rgb:bg}},font:{bold:true,color:{rgb:'2563EB'},sz:10},alignment:{horizontal:'center'}};
+  });
+
+  XLSX.utils.book_append_sheet(wb, ws2, 'Dashboard_Graficos');
+  const hoy=new Date();
+  const fecha=`${hoy.getDate().toString().padStart(2,'0')}_${(hoy.getMonth()+1).toString().padStart(2,'0')}_${hoy.getFullYear()}`;
+  XLSX.writeFile(wb,'Control_Maquinaria_Arato_'+fecha+'.xlsx');
+  showToast('✅ Excel descargado','ok');
+}
 
 async function syncMaquinaria() {
   try {
