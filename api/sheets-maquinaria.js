@@ -205,6 +205,32 @@ module.exports = async (req, res) => {
     });
 
     await sheets.spreadsheets.batchUpdate({spreadsheetId:SHEET_ID,resource:{requests:reqs2}});
+    // ── Add chart to Dashboard ──
+    try {
+      const meta4=await sheets.spreadsheets.get({spreadsheetId:SHEET_ID});
+      const s3=meta4.data.sheets.find(s=>s.properties.title==='Dashboard_Graficos');
+      const sid3=s3.properties.sheetId;
+      const cronRow=5+maqNames.length+3;
+      const dataRows=fechas.length;
+      // Delete existing charts first
+      const existCharts=s3.charts||[];
+      const delReqs=existCharts.map(c=>({deleteEmbeddedObject:{objectId:c.chartId}}));
+      if(delReqs.length){
+        await sheets.spreadsheets.batchUpdate({spreadsheetId:SHEET_ID,resource:{requests:delReqs}});
+      }
+      // Create line chart
+      const series=maqNames.map((m,i)=>({
+        series:{sourceRange:{sources:[{sheetId:sid3,startRowIndex:cronRow+1,endRowIndex:cronRow+1+dataRows,startColumnIndex:i+1,endColumnIndex:i+2}]}},
+        targetAxis:'LEFT_AXIS'
+      }));
+      // Add META line
+      series.push({
+        series:{sourceRange:{sources:[{sheetId:sid3,startRowIndex:cronRow+1,endRowIndex:cronRow+1+dataRows,startColumnIndex:maqNames.length+1,endColumnIndex:maqNames.length+2}]}},
+        targetAxis:'LEFT_AXIS'
+      });
+      await sheets.spreadsheets.batchUpdate({spreadsheetId:SHEET_ID,resource:{requests:[{addChart:{chart:{spec:{title:'Rendimiento TN/Hr por Maquina',basicChart:{chartType:'LINE',legendPosition:'BOTTOM_LEGEND',axis:[{position:'BOTTOM_AXIS',title:'Fecha'},{position:'LEFT_AXIS',title:'TN/Hr'}],domains:[{domain:{sourceRange:{sources:[{sheetId:sid3,startRowIndex:cronRow+1,endRowIndex:cronRow+1+dataRows,startColumnIndex:0,endColumnIndex:1}]}}}],series,headerCount:0}},position:{overlayPosition:{anchorCell:{sheetId:sid3,rowIndex:0,columnIndex:7},widthPixels:500,heightPixels:300}}}}}]}});
+    } catch(eChart){console.error('Chart error:',eChart.message);}
+
     res.status(200).json({ok:true,registros:rows.length,maquinas:maqNames.length,fechas:fechas.length});
   } catch(e) {
     console.error(e.message);
