@@ -6,6 +6,7 @@
 <title>Guía de Bins — Arato</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
@@ -126,7 +127,7 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--txt);min-heig
       <button class="hdr-btn no-print" onclick="syncAll()">🔄 Sync</button>
       <button class="hdr-btn no-print" onclick="window.open('https://docs.google.com/spreadsheets/d/1wKwRNcox1Ydnqwz9CkDP1_hheaAnWO8y0xWcuq9hTlk','_blank')">📊 Sheets</button>
       <button class="hdr-btn no-print" onclick="verHistorialFecha()">📅 Historial</button>
-      <button class="hdr-btn no-print" onclick="window.print()">🖨️ Imprimir</button>
+      <button class="hdr-btn no-print" onclick="generarReporte()">📄 Reporte</button>
     </div>
   </div>
 </div>
@@ -589,13 +590,56 @@ async function verHistorialFecha(){
     flash('Cargando...','azul');
     const rows=await supaFetch('guia_registros?select=*&fecha=eq.'+fecha+'&order=grupo.asc,subgrupo.asc');
     if(!rows||!rows.length){flash('Sin datos para '+fecha,'rojo');return;}
-    let msg='📋 Historial '+fecha+'\n\n';
-    let grupo='';
+
+    // Build modal with delete options
+    let html='<div style="font-family:Inter,sans-serif;">';
+    html+='<div style="font-size:0.65rem;font-weight:800;color:#888;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Historial: '+fecha+'</div>';
     rows.forEach(r=>{
-      if(r.grupo!==grupo){msg+='Grupo '+r.grupo+':\n';grupo=r.grupo;}
-      msg+='  '+r.subgrupo+': '+r.bins+'/'+r.viaje+' llegados\n';
+      const pct=r.viaje>0?Math.round((r.bins||0)/r.viaje*100):0;
+      html+=`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid #E5E7EB;border-radius:8px;margin-bottom:6px;">
+        <div>
+          <div style="font-weight:700;font-size:0.82rem;">Grupo ${r.grupo} — ${r.subgrupo}</div>
+          <div style="font-size:0.62rem;color:#888;">${r.bins||0}/${r.viaje||0} llegados · ${pct}%</div>
+        </div>
+        <button onclick="eliminarRegistroGuia(${r.id})" style="background:#FEE2E2;border:1px solid #DC2626;color:#DC2626;border-radius:7px;padding:5px 10px;font-size:0.68rem;font-weight:700;cursor:pointer;">🗑️</button>
+      </div>`;
     });
-    alert(msg);
+    html+='<button onclick="eliminarTodosFecha(\''+fecha+'\')" style="width:100%;padding:10px;background:#DC2626;color:#fff;border:none;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;margin-top:6px;font-family:Inter,sans-serif;">🗑️ Eliminar todos de '+fecha+'</button>';
+    html+='</div>';
+
+    // Show in a modal
+    const modalBg = document.createElement('div');
+    modalBg.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:flex;align-items:flex-end;';
+    modalBg.innerHTML='<div style="background:#fff;border-radius:16px 16px 0 0;padding:20px;width:100%;max-height:80vh;overflow-y:auto;">'+
+      '<div style="display:flex;justify-content:space-between;margin-bottom:12px;">'+
+      '<div style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:1px;">Historial</div>'+
+      '<button onclick="this.closest(\'[data-hist]\').remove()" style="background:none;border:none;cursor:pointer;font-size:1rem;">✕</button>'+
+      '</div>'+html+'</div>';
+    modalBg.setAttribute('data-hist','1');
+    modalBg.addEventListener('click',function(e){if(e.target===this)this.remove();});
+    document.body.appendChild(modalBg);
+  }catch(e){flash('Error: '+e.message,'rojo');}
+}
+
+async function eliminarRegistroGuia(id){
+  if(!confirm('¿Eliminar este registro?'))return;
+  try{
+    await supaFetch('guia_registros?id=eq.'+id,'DELETE');
+    // Remove from DOM
+    const btn=document.querySelector(`[onclick="eliminarRegistroGuia(${id})"]`);
+    if(btn)btn.closest('div[style*="border"]').remove();
+    flash('Eliminado','rojo');
+  }catch(e){flash('Error: '+e.message,'rojo');}
+}
+
+async function eliminarTodosFecha(fecha){
+  if(!confirm('¿Eliminar TODOS los registros de '+fecha+'?'))return;
+  try{
+    await supaFetch('guia_registros?fecha=eq.'+fecha,'DELETE');
+    // Close modal
+    const m=document.querySelector('[data-hist]');
+    if(m)m.remove();
+    flash('✅ Eliminados todos los registros de '+fecha,'verde');
   }catch(e){flash('Error: '+e.message,'rojo');}
 }
 
@@ -632,6 +676,113 @@ flash('✅ Excel descargado','verde');
 // Enter en modal SG
 document.getElementById('mSGCantidad').addEventListener('keydown',e=>{if(e.key==='Enter')confirmarAgregarSG();});
 
+// ── REPORTE ──
+function generarReporte() {
+  const fecha = fechaHoy();
+  let totalLleg = 0;
+
+  let html = '<div id="reporte-doc" style="background:#fff;padding:16px;width:340px;font-family:Inter,sans-serif;">';
+  // Header
+  html += '<div style="background:#1A5C38;padding:12px 14px;border-radius:10px;margin-bottom:10px;">';
+  html += '<div style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;color:#fff;letter-spacing:2px;">RECEPCIÓN DE BINS</div>';
+  html += '<div style="font-size:0.6rem;color:rgba(255,255,255,0.75);">Arato Mission Produce · '+fecha+'</div>';
+  html += '</div>';
+
+  Object.keys(data).sort().forEach(g => {
+    if(!data[g] || !Object.keys(data[g]).length) return;
+    let gLleg = 0;
+    const modCount = {};
+    const sgs = Object.keys(data[g]).sort();
+
+    sgs.forEach(sg => {
+      const bins = data[g][sg]||[];
+      const lleg = bins.filter(b=>b.e==='l').length;
+      gLleg += lleg;
+      bins.forEach(b => {
+        if(b.e==='l' && b.c && colorModulos[b.c]) {
+          const mod = colorModulos[b.c];
+          modCount[mod] = (modCount[mod]||0) + 1;
+        }
+      });
+    });
+    totalLleg += gLleg;
+    if(!gLleg) return; // Skip groups with no arrivals
+
+    html += '<div style="border:1.5px solid #E5E7EB;border-radius:8px;margin-bottom:7px;overflow:hidden;">';
+    // Group header
+    html += '<div style="background:#F8FAFC;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #E5E7EB;">';
+    html += '<div style="font-family:Bebas Neue,sans-serif;font-size:1rem;letter-spacing:1px;">Grupo '+g+'</div>';
+    html += '<div style="font-size:1rem;font-weight:800;color:#1A5C38;">'+gLleg+' bins</div>';
+    html += '</div>';
+    // Subgrupos
+    sgs.forEach(sg => {
+      const bins = data[g][sg]||[];
+      const lleg = bins.filter(b=>b.e==='l').length;
+      if(!lleg) return;
+      html += '<div style="padding:5px 12px;display:flex;justify-content:space-between;border-bottom:1px solid #F9FAFB;">';
+      html += '<div style="font-family:monospace;font-size:0.75rem;font-weight:700;color:#374151;">'+sg+'</div>';
+      html += '<div style="font-size:0.75rem;font-weight:700;color:#374151;">'+lleg+' bins</div>';
+      html += '</div>';
+    });
+
+    // Module breakdown
+    const mods = Object.keys(modCount).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+    if(mods.length) {
+      html += '<div style="background:#F0FDF4;border-top:1px solid #DCFCE7;padding:4px 0;">';
+      mods.forEach(mod => {
+        const col = COLORES.find(c => colorModulos[c.id]===mod);
+        html += '<div style="padding:5px 12px;display:flex;justify-content:space-between;">';
+        html += '<div style="display:flex;align-items:center;gap:6px;">';
+        if(col) html += '<div style="width:8px;height:8px;border-radius:50%;background:'+col.hex+';flex-shrink:0;"></div>';
+        html += '<div style="font-size:0.7rem;color:#15803D;font-weight:600;">'+mod+'</div>';
+        html += '</div>';
+        html += '<div style="font-size:0.75rem;font-weight:800;color:#15803D;">'+modCount[mod]+' bins</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+    html += '</div>';
+  });
+
+  // Total
+  html += '<div style="background:#1A5C38;border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-top:4px;">';
+  html += '<div style="font-size:0.75rem;font-weight:700;color:rgba(255,255,255,0.8);">TOTAL RECEPCIONADO</div>';
+  html += '<div style="font-size:1.3rem;font-weight:800;color:#fff;">'+totalLleg+' bins</div>';
+  html += '</div>';
+  html += '</div>';
+
+  const temp = document.createElement('div');
+  temp.style.cssText = 'position:fixed;left:-9999px;top:0;z-index:-1;';
+  temp.innerHTML = html;
+  document.body.appendChild(temp);
+
+  if(typeof html2canvas === 'undefined') {
+    flash('Cargando...','azul');
+    document.body.removeChild(temp);
+    setTimeout(generarReporte, 800);
+    return;
+  }
+
+  html2canvas(temp.querySelector('#reporte-doc'), {scale:2, backgroundColor:'#fff', useCORS:true}).then(canvas => {
+    document.body.removeChild(temp);
+    const modal = document.createElement('div');
+    modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:300;display:flex;align-items:flex-end;';
+    modal.innerHTML = '<div style="background:#fff;border-radius:16px 16px 0 0;padding:20px;width:100%;max-height:85vh;overflow-y:auto;">'+
+      '<div style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:1px;margin-bottom:10px;">Reporte</div>'+
+      '<img src="'+canvas.toDataURL()+'" style="width:100%;border-radius:8px;margin-bottom:10px;">'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+
+      '<a href="'+canvas.toDataURL()+'" download="Recepcion_Arato_'+fecha+'.png" style="display:block;padding:11px;background:#16A34A;color:#fff;border-radius:9px;font-size:0.82rem;font-weight:700;text-align:center;text-decoration:none;">⬇️ Descargar</a>'+
+      '<button id="rep-cerrar" style="padding:11px;background:#F3F4F6;color:#374151;border:none;border-radius:9px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;">Cerrar</button>'+
+      '</div></div>';
+    modal.addEventListener('click',function(e){if(e.target===this)this.remove();});
+    document.body.appendChild(modal);
+    const repCerrar = document.getElementById('rep-cerrar');
+    if(repCerrar) repCerrar.addEventListener('click', function(){ modal.remove(); });
+  }).catch(e => {
+    document.body.removeChild(temp);
+    flash('Error generando reporte','rojo');
+  });
+}
 // Init
 cargar();
 cargarColores();
