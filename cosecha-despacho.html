@@ -121,22 +121,42 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--txt);min-heig
 <div id="selector-fundo" style="position:fixed;inset:0;background:linear-gradient(135deg,#1A5C38,#0D3D20);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;">
   <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:#fff;letter-spacing:3px;margin-bottom:6px;">ARATO</div>
   <div style="font-size:0.65rem;color:rgba(255,255,255,0.6);letter-spacing:2px;text-transform:uppercase;margin-bottom:40px;">Mission Produce</div>
-  <div style="font-size:0.72rem;color:rgba(255,255,255,0.7);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;">Selecciona tu fundo</div>
-  <div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:280px;">
-    <button onclick="selFundo('ARATO 1')" style="padding:18px;background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.3);border-radius:14px;color:#fff;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px;cursor:pointer;">
-      🌿 ARATO 1
-    </button>
-    <button onclick="selFundo('ARATO 2')" style="padding:18px;background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.3);border-radius:14px;color:#fff;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px;cursor:pointer;">
-      🌿 ARATO 2
-    </button>
+  
+  <!-- Selección de fundo -->
+  <div id="paso-fundo">
+    <div style="font-size:0.72rem;color:rgba(255,255,255,0.7);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;text-align:center;">Selecciona tu fundo</div>
+    <div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:280px;">
+      <button onclick="irLogin('ARATO 1')" style="padding:18px;background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.3);border-radius:14px;color:#fff;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px;cursor:pointer;">
+        🌿 ARATO 1
+      </button>
+      <button onclick="selFundo('ARATO 2')" style="padding:18px;background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.3);border-radius:14px;color:#fff;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px;cursor:pointer;">
+        🌿 ARATO 2
+      </button>
+    </div>
+  </div>
+
+  <!-- Login Arato 1 -->
+  <div id="paso-login" style="display:none;width:100%;max-width:280px;">
+    <div style="font-size:0.72rem;color:rgba(255,255,255,0.7);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;text-align:center;">🌿 ARATO 1 — Acceso</div>
+    <div style="margin-bottom:10px;">
+      <div style="font-size:0.6rem;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;">Usuario</div>
+      <input type="text" id="login-usuario" placeholder="arato1" style="width:100%;padding:12px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:#fff;font-size:0.9rem;font-family:inherit;outline:none;" onkeydown="if(event.key==='Enter')verificarLogin()">
+    </div>
+    <div style="margin-bottom:16px;">
+      <div style="font-size:0.6rem;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;">PIN</div>
+      <input type="password" id="login-pin" placeholder="••••••••" style="width:100%;padding:12px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:#fff;font-size:0.9rem;font-family:inherit;outline:none;" onkeydown="if(event.key==='Enter')verificarLogin()">
+    </div>
+    <div id="login-error" style="color:#FCA5A5;font-size:0.7rem;text-align:center;margin-bottom:10px;display:none;">Usuario o PIN incorrecto</div>
+    <button onclick="verificarLogin()" style="width:100%;padding:14px;background:#16A34A;border:none;border-radius:10px;color:#fff;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:1px;cursor:pointer;margin-bottom:8px;">Ingresar</button>
+    <button onclick="document.getElementById('paso-login').style.display='none';document.getElementById('paso-fundo').style.display='block';" style="width:100%;padding:10px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:10px;color:rgba(255,255,255,0.7);font-size:0.75rem;cursor:pointer;">← Volver</button>
   </div>
 </div>
 
 <div class="hdr">
   <div class="hdr-row">
     <div>
-      <div class="hdr-title">🌿 COSECHA & DESPACHO</div>
-      <div class="hdr-sub" id="hdr-fundo-lbl">Arato Mission Produce</div>
+      <div class="hdr-title">🌿 🥑 COSECHA & DESPACHO</div>
+      <div class="hdr-sub" id="hdr-fundo-lbl">🥑 Arato Mission Produce</div>
     </div>
     <button onclick="sessionStorage.removeItem('arato_fundo');location.reload();" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:8px;padding:6px 10px;font-size:0.62rem;font-weight:700;cursor:pointer;">🔄 Fundo</button>
     <div class="hdr-kpis">
@@ -151,6 +171,7 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--txt);min-heig
   <button class="tb" onclick="goTab('disponible',this);renderDisponible()">📦 Disponible</button>
   <button class="tb" onclick="goTab('despacho',this)">🚛 Despacho</button>
   <button class="tb" onclick="goTab('historial',this);renderHistorial()">📋 Historial</button>
+  <button class="tb" onclick="goTab('guias',this);cargarGuias()">📄 Guías</button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -235,10 +256,13 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--txt);min-heig
             <select id="d-fundo"><option value="ARATO 1">Arato 1</option><option value="ARATO 2">Arato 2</option></select>
           </div>
         </div>
-        <div class="f"><label>Cliente</label><input type="text" id="d-cliente" placeholder="Ej: LIBERATO HARVEST S.A.C" style="text-transform:uppercase;"></div>
+        <div class="f"><label>Cliente</label><input type="text" id="d-cliente" placeholder="Ej: LIBERATO HARVEST S.A.C" style="text-transform:uppercase;" list="list-clientes" autocomplete="off">
+          <datalist id="list-clientes"></datalist></div>
         <div class="g2">
-          <div class="f"><label>Placa</label><input type="text" id="d-placa" placeholder="C2N-889" style="text-transform:uppercase;font-family:'JetBrains Mono',monospace;font-weight:600;"></div>
-          <div class="f"><label>Licencia</label><input type="text" id="d-licencia" placeholder="D-72475771" style="font-family:'JetBrains Mono',monospace;"></div>
+          <div class="f"><label>Placa</label><input type="text" id="d-placa" placeholder="C2N-889" style="text-transform:uppercase;font-family:'JetBrains Mono',monospace;font-weight:600;" list="list-placas" autocomplete="off">
+            <datalist id="list-placas"></datalist></div>
+          <div class="f"><label>Licencia</label><input type="text" id="d-licencia" placeholder="D-72475771" style="font-family:'JetBrains Mono',monospace;" list="list-licencias" autocomplete="off">
+            <datalist id="list-licencias"></datalist></div>
         </div>
         <button class="btn btn-g" onclick="dsGoStep(2)">Continuar → Líneas</button>
       </div>
@@ -281,7 +305,7 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--txt);min-heig
           </div>
         </div>
         <div class="guia-footer">
-          <div><div class="guia-firma-lbl">Entregado por</div><div class="guia-firma"></div><div class="guia-firma-lbl" style="margin-top:4px;">Arato Mission Produce</div></div>
+          <div><div class="guia-firma-lbl">Entregado por</div><div class="guia-firma"></div><div class="guia-firma-lbl" style="margin-top:4px;" id="g-despachador"></div></div>
           <div><div class="guia-firma-lbl">Recibido por</div><div class="guia-firma"></div><div class="guia-firma-lbl" style="margin-top:4px;" id="g-cliente-firma"></div></div>
         </div>
       </div>
@@ -305,6 +329,14 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--txt);min-heig
       <button onclick="exportarExcel()" style="background:var(--g);border:none;border-radius:8px;padding:6px 12px;color:#fff;font-size:0.68rem;font-weight:700;cursor:pointer;">📊 Excel</button>
     </div>
     <div id="lista-historial"><div class="empty">Cargando...</div></div>
+  </div>
+
+  <!-- TAB GUÍAS -->
+  <div class="tab-c" id="tab-guias">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div style="font-size:0.65rem;font-weight:800;color:var(--txt3);letter-spacing:1px;text-transform:uppercase;">Historial de despachos</div>
+    </div>
+    <div id="lista-guias"><div class="empty">Cargando...</div></div>
   </div>
 
 </div>
@@ -520,11 +552,12 @@ window.scrollTo(0,0);
 }
 
 function dsAddLinea(){
+dsCaptureLineas();
 dsLineas.push({id:dsLinId++,fcosecha:hoy(),viaje:1,variedad:'Fuerte',modulo:'',calidad:'Ind. Exportable',envase:'Jabas',cantidad:0});
 dsRenderLineas();
 }
 
-function dsDelLinea(id){dsLineas=dsLineas.filter(l=>l.id!==id);dsRenderLineas();}
+function dsDelLinea(id){dsCaptureLineas();dsLineas=dsLineas.filter(l=>l.id!==id);dsRenderLineas();}
 
 function dsCaptureLineas(){
 dsLineas.forEach(l=>{
@@ -605,6 +638,9 @@ const nro=String(document.getElementById('d-nro').value||1).padStart(3,'0');
 document.getElementById('g-num').textContent=nro;
 document.getElementById('g-fecha-bar').textContent=fecha;
 document.getElementById('g-cliente-firma').textContent=cliente;
+const despachador=fundoActual==='ARATO 2'?'ROGER VILLANUEVA':'JERSON MUÑOZ';
+const despEl=document.getElementById('g-despachador');
+if(despEl)despEl.textContent=despachador;
 document.getElementById('g-meta').innerHTML=[
 ['Fecha despacho',fecha],['Fundo',fundo],
 ['Cliente',cliente],['Placa',placa],
@@ -630,10 +666,180 @@ return`<tr>
 </tr>`;
 }
 
+async function cargarAutocompletado(){
+try{
+const fundoFilter=fundoActual?'&fundo=eq.'+encodeURIComponent(fundoActual):'';
+const rows=await apiFetch('despachos?select=cliente,placa,licencia'+fundoFilter+'&order=created_at.desc&limit=50');
+if(!rows||!rows.length)return;
+const clientes=[...new Set(rows.map(r=>r.cliente).filter(Boolean))];
+const placas=[...new Set(rows.map(r=>r.placa).filter(Boolean))];
+const licencias=[...new Set(rows.map(r=>r.licencia).filter(Boolean))];
+const lc=document.getElementById('list-clientes');
+const lp=document.getElementById('list-placas');
+const ll=document.getElementById('list-licencias');
+if(lc)lc.innerHTML=clientes.map(c=>'<option value="'+c+'">').join('');
+if(lp)lp.innerHTML=placas.map(p=>'<option value="'+p+'">').join('');
+if(ll)ll.innerHTML=licencias.map(l=>'<option value="'+l+'">').join('');
+}catch(e){}
+}
+
+async function cargarGuias(){
+const cont=document.getElementById('lista-guias');
+if(!cont)return;
+cont.innerHTML='<div class="empty">Cargando...</div>';
+try{
+const fundoFilter=fundoActual?'&fundo=eq.'+encodeURIComponent(fundoActual):'';
+const rows=await apiFetch('despachos?select=*'+fundoFilter+'&order=created_at.desc');
+if(!rows||!rows.length){cont.innerHTML='<div class="empty">Sin guías registradas.</div>';return;}
+
+// Group by date
+const byDate={};
+rows.forEach(r=>{
+const d=r.fecha_despacho||'—';
+if(!byDate[d])byDate[d]=[];
+byDate[d].push(r);
+});
+
+cont.innerHTML=Object.keys(byDate).map(fecha=>{
+return '<div style="margin-bottom:14px;">'+
+'<div style="font-size:0.6rem;font-weight:800;color:var(--txt3);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">📅 '+fecha+'</div>'+
+byDate[fecha].map(r=>{
+const lineas=Array.isArray(r.lineas)?r.lineas:[];
+const variedades=[...new Set(lineas.map(l=>l.variedad))].join(', ');
+return '<div style="background:#fff;border:1px solid var(--bdr);border-radius:12px;padding:12px;margin-bottom:6px;">'+
+'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">'+
+'<div>'+
+'<div style="font-family:monospace;font-size:0.72rem;font-weight:800;color:var(--g);">Parte #'+String(r.nro_parte).padStart(3,'0')+'</div>'+
+'<div style="font-size:0.78rem;font-weight:700;margin-top:2px;">'+r.cliente+'</div>'+
+'<div style="font-size:0.6rem;color:var(--txt3);">'+r.placa+' · '+variedades+'</div>'+
+'</div>'+
+'<div style="text-align:right;">'+
+'<div style="font-size:0.85rem;font-weight:800;color:var(--b);">'+(r.total_cantidad||0)+' uds</div>'+
+'<div style="font-size:0.62rem;color:var(--txt3);">'+(r.total_peso||0).toLocaleString()+' kg</div>'+
+'</div>'+
+'</div>'+
+'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">'+
+'<button onclick="verGuia('+r.id+')" style="padding:8px;background:var(--bc);border:1px solid var(--b);color:var(--b);border-radius:8px;font-size:0.68rem;font-weight:700;cursor:pointer;font-family:inherit;">🖼️ Ver guía</button>'+
+'<button onclick="wspGuia('+r.id+')" style="padding:8px;background:#DCFCE7;border:1px solid #16A34A;color:#15803D;border-radius:8px;font-size:0.68rem;font-weight:700;cursor:pointer;font-family:inherit;">📲 WhatsApp</button>'+
+'</div>'+
+'</div>';
+}).join('')+
+'</div>';
+}).join('');
+}catch(e){cont.innerHTML='<div class="empty">Error: '+e.message+'</div>';}
+}
+
+function verGuia(id){
+apiFetch('despachos?id=eq.'+id).then(function(rows){
+if(!rows||!rows.length)return;
+const r=rows[0];
+const lineas=Array.isArray(r.lineas)?r.lineas:[];
+let html='<div style="background:#fff;padding:16px;font-family:Inter,sans-serif;">';
+html+='<div style="background:#0D1B0F;padding:12px 14px;border-radius:10px;margin-bottom:8px;">';
+html+='<div style="display:flex;justify-content:space-between;align-items:center;">';
+html+='<div><div style="font-family:Playfair Display,serif;font-size:0.95rem;font-weight:900;color:#fff;">Arato Mission Produce</div>';
+html+='<div style="font-size:0.55rem;color:rgba(255,255,255,0.5);">FUNDO '+r.fundo+'</div></div>';
+html+='<div style="background:#C8A84B;border-radius:6px;padding:4px 8px;text-align:right;">';
+html+='<div style="font-size:0.45rem;font-weight:700;text-transform:uppercase;">Parte N°</div>';
+html+='<div style="font-family:monospace;font-size:0.85rem;font-weight:700;">'+String(r.nro_parte).padStart(3,'0')+'</div></div>';
+html+='</div></div>';
+html+='<div style="background:#1B6B3A;padding:5px 14px;border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between;">';
+html+='<div style="font-size:0.8rem;font-weight:700;color:#fff;text-transform:uppercase;">Parte de Cosecha</div>';
+html+='<div style="font-size:0.6rem;color:rgba(255,255,255,0.8);">'+r.fecha_despacho+'</div></div>';
+html+='<div style="background:#F8FAFC;border-radius:8px;padding:10px;margin-bottom:8px;display:grid;grid-template-columns:1fr 1fr;gap:4px;">';
+[['Fecha despacho',r.fecha_despacho],['Fundo',r.fundo],['Cliente',r.cliente],['Placa',r.placa],['Licencia',r.licencia]].forEach(function(item){
+html+='<div><div style="font-size:0.45rem;color:#888;text-transform:uppercase;">'+item[0]+'</div><div style="font-size:0.7rem;font-weight:700;">'+item[1]+'</div></div>';
+});
+html+='</div>';
+html+='<table style="width:100%;border-collapse:collapse;font-size:0.62rem;margin-bottom:8px;">';
+html+='<thead><tr style="background:#1B6B3A;color:#fff;"><th style="padding:5px;">Cosecha</th><th>Variedad</th><th>Módulo</th><th>Calidad</th><th>Envase</th><th>Cant.</th><th>Peso</th></tr></thead><tbody>';
+let totC=0,totP=0;
+lineas.forEach(function(l){
+const p=l.envase==='Jabas'?l.cantidad*20:l.cantidad*435;
+totC+=l.cantidad||0;totP+=p;
+html+='<tr style="border-bottom:1px solid #E5E7EB;"><td style="padding:5px;text-align:center;">'+l.fcosecha+'</td><td style="text-align:center;">'+l.variedad+'</td><td style="text-align:center;">'+l.modulo+'</td><td style="text-align:center;font-size:0.55rem;">'+l.calidad+'</td><td style="text-align:center;">'+l.envase+'</td><td style="text-align:center;font-weight:700;">'+l.cantidad+'</td><td style="text-align:center;font-weight:700;">'+p.toLocaleString()+'</td></tr>';
+});
+html+='<tr style="background:#DCFCE7;font-weight:800;"><td colspan="5" style="padding:5px;text-align:right;color:#15803D;">TOTAL</td><td style="text-align:center;color:#15803D;">'+totC+'</td><td style="text-align:center;color:#15803D;">'+totP.toLocaleString()+'</td></tr>';
+html+='</tbody></table>';
+html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:8px;border-top:1px solid #E5E7EB;">';
+html+='<div><div style="font-size:0.5rem;color:#888;text-transform:uppercase;">Entregado por</div><div style="border-top:1px solid #333;margin-top:18px;padding-top:4px;font-size:0.6rem;">'+r.despachado_por+'</div></div>';
+html+='<div><div style="font-size:0.5rem;color:#888;text-transform:uppercase;">Recibido por</div><div style="border-top:1px solid #333;margin-top:18px;padding-top:4px;font-size:0.6rem;">'+r.cliente+'</div></div>';
+html+='</div></div>';
+
+const modal=document.createElement('div');
+modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:300;display:flex;align-items:flex-end;overflow-y:auto;';
+modal.innerHTML='<div style="background:#fff;border-radius:16px 16px 0 0;padding:16px;width:100%;max-height:90vh;overflow-y:auto;">'+
+'<div style="display:flex;justify-content:space-between;margin-bottom:10px;">'+
+'<div style="font-family:Bebas Neue,sans-serif;font-size:1rem;letter-spacing:1px;">Guía de Despacho</div>'+
+'<button id="cerrar-guia-modal" style="background:none;border:none;cursor:pointer;font-size:1rem;">✕</button>'+
+'</div>'+html+
+'<div style="display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px;">'+
+'<button onclick="wspGuia('+id+')" style="padding:11px;background:#25D366;color:#fff;border:none;border-radius:9px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;">📲 Enviar WhatsApp</button>'+
+'</div></div>';
+modal.addEventListener('click',function(e){if(e.target===this)this.remove();});
+document.body.appendChild(modal);
+document.getElementById('cerrar-guia-modal').addEventListener('click',function(){modal.remove();});
+}).catch(function(e){alert('Error: '+e.message);});
+}
+
+function wspGuia(id){
+apiFetch('despachos?id=eq.'+id).then(function(rows){
+if(!rows||!rows.length)return;
+const r=rows[0];
+const lineas=Array.isArray(r.lineas)?r.lineas:[];
+const lines=['*PARTE DE COSECHA - 🥑 ARATO MISSION PRODUCE*'];
+lines.push('Fundo: '+r.fundo+' | Parte N°: '+String(r.nro_parte).padStart(3,'0'));
+lines.push('Fecha: '+r.fecha_despacho+' | Cliente: '+r.cliente);
+lines.push('Placa: '+r.placa);
+lines.push('----------------');
+let totC=0,totP=0;
+lineas.forEach(function(l,i){
+const p=l.envase==='Jabas'?l.cantidad*20:l.cantidad*435;
+totC+=l.cantidad||0;totP+=p;
+lines.push((i+1)+'. '+l.variedad+' | '+l.modulo+' | '+l.calidad);
+lines.push('   '+l.envase+': '+l.cantidad+' = '+p.toLocaleString()+' kg');
+});
+lines.push('----------------');
+lines.push('*TOTAL: '+totC+' uds | '+totP.toLocaleString()+' kg*');
+lines.push('Despachado por: '+r.despachado_por);
+lines.push('');lines.push('_Arato Mission Produce_');
+window.open('https://wa.me/?text='+encodeURIComponent(lines.join('\n')),'_blank');
+});
+}
+
+async function eliminarDespacho(id){
+if(!confirm('¿Eliminar esta guía?'))return;
+try{
+await apiFetch('despachos?id=eq.'+id,'DELETE');
+cargarGuias();
+}catch(e){alert('Error: '+e.message);}
+}
+
 async function confirmarDespacho(){
 if(!confirm('Confirmar despacho y descontar del stock?'))return;
 dsCaptureLineas();
 try{
+// Guardar guía en tabla despachos
+const fecha=document.getElementById('d-fecha').value;
+const fundo=document.getElementById('d-fundo').value;
+const cliente=(document.getElementById('d-cliente').value||'').toUpperCase();
+const placa=document.getElementById('d-placa').value||'';
+const licencia=document.getElementById('d-licencia').value||'';
+const nroParte=parseInt(document.getElementById('d-nro').value)||1;
+const despachador=fundoActual==='ARATO 2'?'ROGER VILLANUEVA':'JERSON MUÑOZ';
+let totC=0,totP=0;
+dsLineas.forEach(l=>{totC+=l.cantidad||0;totP+=dsCalcPeso(l);});
+await apiFetch('despachos','POST',{
+nro_parte:nroParte,
+fecha_despacho:fecha,
+fundo:fundoActual||fundo,
+cliente,placa,licencia,
+lineas:dsLineas,
+total_cantidad:totC,
+total_peso:totP,
+despachado_por:despachador
+});
+// Descontar stock
 for(const l of dsLineas){
 if(!l.modulo||!l.cantidad)continue;
 const bins=l.envase==='Jabas'?Math.round(l.cantidad/JABAS_BIN):l.cantidad;
@@ -652,8 +858,8 @@ r.bins_vendidos=(r.bins_vendidos||0)+desc;
 resta-=desc;
 }
 }
-const nroParte = parseInt(document.getElementById('d-nro').value)||1;
-localStorage.setItem('arato_nro_parte_'+(fundoActual||'ARATO 1'), nroParte);
+const nroParte2 = parseInt(document.getElementById('d-nro').value)||1;
+localStorage.setItem('arato_nro_parte_'+(fundoActual||'ARATO 1'), nroParte2);
 toast('✅ Stock descontado','ok');
 updHeader();
 }catch(e){toast('Error: '+e.message,'err');}
@@ -806,6 +1012,25 @@ document.getElementById('modal-desp').addEventListener('click',function(e){if(e.
 // ── FUNDO SELECTOR ──
 let fundoActual = null;
 
+function irLogin(fundo) {
+  document.getElementById('paso-fundo').style.display = 'none';
+  document.getElementById('paso-login').style.display = 'block';
+  setTimeout(()=>document.getElementById('login-usuario').focus(), 100);
+}
+
+function verificarLogin() {
+  const usuario = document.getElementById('login-usuario').value.trim().toLowerCase();
+  const pin = document.getElementById('login-pin').value.trim();
+  const errEl = document.getElementById('login-error');
+  if(usuario === 'arato 1' && pin === '63394588') {
+    errEl.style.display = 'none';
+    selFundo('ARATO 1');
+  } else {
+    errEl.style.display = 'block';
+    document.getElementById('login-pin').value = '';
+  }
+}
+
 function selFundo(fundo) {
   fundoActual = fundo;
   sessionStorage.setItem('arato_fundo', fundo);
@@ -816,6 +1041,7 @@ function selFundo(fundo) {
   if(sel) sel.value = fundo;
   cargarRegistros();
   cargarSigNroParte();
+  cargarAutocompletado();
 }
 
 // Check if fundo already selected this session
