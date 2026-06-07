@@ -117,12 +117,28 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--txt);min-heig
 </head>
 <body>
 
+<!-- SELECTOR FUNDO -->
+<div id="selector-fundo" style="position:fixed;inset:0;background:linear-gradient(135deg,#1A5C38,#0D3D20);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;">
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:#fff;letter-spacing:3px;margin-bottom:6px;">ARATO</div>
+  <div style="font-size:0.65rem;color:rgba(255,255,255,0.6);letter-spacing:2px;text-transform:uppercase;margin-bottom:40px;">Mission Produce</div>
+  <div style="font-size:0.72rem;color:rgba(255,255,255,0.7);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;">Selecciona tu fundo</div>
+  <div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:280px;">
+    <button onclick="selFundo('ARATO 1')" style="padding:18px;background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.3);border-radius:14px;color:#fff;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px;cursor:pointer;">
+      🌿 ARATO 1
+    </button>
+    <button onclick="selFundo('ARATO 2')" style="padding:18px;background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.3);border-radius:14px;color:#fff;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px;cursor:pointer;">
+      🌿 ARATO 2
+    </button>
+  </div>
+</div>
+
 <div class="hdr">
   <div class="hdr-row">
     <div>
       <div class="hdr-title">🌿 COSECHA & DESPACHO</div>
-      <div class="hdr-sub">Arato Mission Produce</div>
+      <div class="hdr-sub" id="hdr-fundo-lbl">Arato Mission Produce</div>
     </div>
+    <button onclick="sessionStorage.removeItem('arato_fundo');location.reload();" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:8px;padding:6px 10px;font-size:0.62rem;font-weight:700;cursor:pointer;">🔄 Fundo</button>
     <div class="hdr-kpis">
       <div class="hdr-kpi"><div class="hdr-kpi-val" id="hdr-cosech">0</div><div class="hdr-kpi-lbl">Cosechados</div></div>
       <div class="hdr-kpi"><div class="hdr-kpi-val" id="hdr-pend">0</div><div class="hdr-kpi-lbl">Pendientes</div></div>
@@ -304,9 +320,20 @@ const hoy=()=>{const d=new Date(),o=d.getTimezoneOffset();return new Date(d.getT
 // Init fechas
 document.getElementById('r-fecha').value=hoy();
 document.getElementById('d-fecha').value=hoy();
-// Restaurar último correlativo usado
-const lastNro=localStorage.getItem('arato_nro_parte');
-if(lastNro)document.getElementById('d-nro').value=parseInt(lastNro)+1;
+// Cargar siguiente número de parte automático
+async function cargarSigNroParte() {
+  try {
+    const rows = await apiFetch('cosecha_modulos?select=nro_parte&order=nro_parte.desc&limit=1&fundo=eq.'+encodeURIComponent(fundoActual||'ARATO 1'));
+    const ultimo = rows && rows.length && rows[0].nro_parte ? parseInt(rows[0].nro_parte) : 0;
+    const siguiente = ultimo + 1;
+    const el = document.getElementById('d-nro');
+    if(el) el.value = siguiente;
+  } catch(e) {
+    const saved = localStorage.getItem('arato_nro_parte_'+(fundoActual||'ARATO 1'));
+    const el = document.getElementById('d-nro');
+    if(el) el.value = saved ? parseInt(saved)+1 : 1;
+  }
+}
 
 function toast(t,cl){const el=document.getElementById('toast');el.textContent=t;el.className='toast '+(cl||'');el.style.display='block';setTimeout(()=>el.style.display='none',2500);}
 
@@ -329,7 +356,8 @@ return(method==='DELETE')?null:r.json();
 
 async function cargarRegistros(){
 try{
-registros=await apiFetch('cosecha_modulos?select=*&order=fecha_cosecha.desc,created_at.desc');
+const fundoFilter=fundoActual?'&fundo=eq.'+encodeURIComponent(fundoActual):'';
+registros=await apiFetch('cosecha_modulos?select=*'+fundoFilter+'&order=fecha_cosecha.desc,created_at.desc');
 updHeader();
 }catch(e){toast('Error: '+e.message,'err');}
 }
@@ -350,7 +378,7 @@ const peso=parseInt(document.getElementById('r-peso').value)||435;
 const obs=document.getElementById('r-obs').value.trim();
 if(!fecha||!modulo||!bins){toast('Completa los campos obligatorios','err');return;}
 try{
-const data=await apiFetch('cosecha_modulos','POST',{fecha_cosecha:fecha,modulo,variedad,bins_cosechados:bins,bins_vendidos:0,jabas_vendidas:0,peso_bin:peso,obs});
+const data=await apiFetch('cosecha_modulos','POST',{fecha_cosecha:fecha,modulo,variedad,bins_cosechados:bins,bins_vendidos:0,jabas_vendidas:0,peso_bin:peso,obs,fundo:fundoActual||'ARATO 1'});
 const nuevo=Array.isArray(data)?data[0]:data;
 registros.unshift(nuevo);
 document.getElementById('r-bins').value='';
@@ -483,6 +511,7 @@ renderHistorial();
 
 // ── DESPACHO FORMAL (GUÍA) ──
 function dsGoStep(n){
+if(n===1) cargarSigNroParte();
 document.querySelectorAll('.step-view').forEach(v=>v.classList.remove('on'));
 document.getElementById('ds-'+n).classList.add('on');
 if(n===2&&dsLineas.length===0)dsAddLinea();
@@ -623,7 +652,8 @@ r.bins_vendidos=(r.bins_vendidos||0)+desc;
 resta-=desc;
 }
 }
-localStorage.setItem('arato_nro_parte', document.getElementById('d-nro').value);
+const nroParte = parseInt(document.getElementById('d-nro').value)||1;
+localStorage.setItem('arato_nro_parte_'+(fundoActual||'ARATO 1'), nroParte);
 toast('✅ Stock descontado','ok');
 updHeader();
 }catch(e){toast('Error: '+e.message,'err');}
@@ -773,7 +803,29 @@ toast('✅ Excel descargado','ok');
 
 document.getElementById('modal-desp').addEventListener('click',function(e){if(e.target===this)cerrarModal();});
 
-cargarRegistros();
+// ── FUNDO SELECTOR ──
+let fundoActual = null;
+
+function selFundo(fundo) {
+  fundoActual = fundo;
+  sessionStorage.setItem('arato_fundo', fundo);
+  document.getElementById('selector-fundo').style.display = 'none';
+  document.getElementById('hdr-fundo-lbl').textContent = fundo;
+  // Update fundo in despacho form
+  const sel = document.getElementById('d-fundo');
+  if(sel) sel.value = fundo;
+  cargarRegistros();
+  cargarSigNroParte();
+}
+
+// Check if fundo already selected this session
+const savedFundo = sessionStorage.getItem('arato_fundo');
+if(savedFundo) {
+  selFundo(savedFundo);
+} else {
+  // Show selector
+  document.getElementById('selector-fundo').style.display = 'flex';
+}
 </script>
 </body>
 </html>
