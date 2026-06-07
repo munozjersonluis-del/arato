@@ -579,8 +579,7 @@ document.getElementById('g-cliente-firma').textContent=cliente;
 document.getElementById('g-meta').innerHTML=[
 ['Fecha despacho',fecha],['Fundo',fundo],
 ['Cliente',cliente],['Placa',placa],
-['Licencia',licencia],['Fecha despacho',fecha],
-['Fecha cosecha',dsLineas.length?[...new Set(dsLineas.map(l=>l.fcosecha))].sort().join(' / '):'—'],['','']
+['Licencia',licencia],['Fecha de cosecha',dsLineas.length?[...new Set(dsLineas.map(l=>l.fcosecha))].sort().join(' / '):'—']
 ].map(([l,v])=>`<div class="guia-meta-item"><div class="guia-meta-lbl">${l}</div><div class="guia-meta-val">${v}</div></div>`).join('');
 let totC=0,totP=0;
 document.getElementById('g-tbody').innerHTML=dsLineas.map(l=>{
