@@ -487,7 +487,7 @@ function nuevoG(){
   if(gId!==null)capForm();
   // Mostrar selector de letra
   var usadas=grupos.map(function(g){return g.lt;});
-  var letras=['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
+  var letras=['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','RETEN'];
   var disponibles=letras.filter(function(l){return usadas.indexOf(l)===-1;});
   if(!disponibles.length){alert('Ya tienes todos los grupos posibles.');return;}
   // Mostrar picker
@@ -513,12 +513,23 @@ function abrirG(id){
   document.getElementById('f-lt').textContent=g.lt;
   document.getElementById('f-tit2').textContent='GRUPO '+g.lt;
   document.getElementById('gform').style.display='block';
+
+  // Ocultar auxiliares si es RETEN
+  var isReten = g.lt==='RETEN';
+  var auxWrap = document.querySelector('.aux-wrap');
+  var addAuxBtn = document.querySelector('.btn-addaux');
+  if(auxWrap) auxWrap.style.display = isReten ? 'none' : 'block';
+  if(addAuxBtn) addAuxBtn.style.display = isReten ? 'none' : 'block';
+  // Cambiar placeholder de observación para RETEN
+  var obEl = document.getElementById('f-ob');
+  if(obEl) obEl.placeholder = isReten ? 'Ej: Apoyo a grupos A, B, C' : 'Novedad (opcional)';
+
   fillSels();
   sV('f-mod',g.mod);sV('f-arato',g.arato||'Arato 1');sV('f-maq',g.mq);sV('f-prov',g.pv);
   sV('f-op',g.on);sV('f-oc',g.oc);
   sV('f-pb',g.pn);sV('f-pc',g.pc);sV('f-ob',g.ob);
-  auxs=(g.auxs||[{n:'',c:''}]).map(function(a){return {id:++auxAc,n:a.n||'',c:a.c||''};});
-  renderAuxs();
+  auxs=isReten?[]:(g.auxs||[{n:'',c:''}]).map(function(a){return {id:++auxAc,n:a.n||'',c:a.c||''};});
+  if(!isReten)renderAuxs();
   var btn=document.getElementById('btn-ag');
   btn.className='btn-ag';btn.textContent='✅ Agregar Grupo '+g.lt+' al Reporte';
   renderNav();
