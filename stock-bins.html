@@ -954,7 +954,11 @@ if(totEl)totEl.textContent=totalEnModulos;
 var stockGeneral=calcStock();
 if(vsEl)vsEl.textContent=stockGeneral;
 var aptosEl=document.getElementById('mod-cosecha');
-var cosechaStock=map['Cosecha Actual']?Math.max(0,map['Cosecha Actual'].stock):0;
+// Cosecha Actual = Stock General - Total en módulos (excluyendo Cosecha Actual)
+var totalSinCosecha=Object.keys(map).filter(function(k){return k!=='Cosecha Actual';}).reduce(function(s,k){return s+Math.max(0,map[k].stock);},0);
+var cosechaStock=Math.max(0,stockGeneral-totalSinCosecha);
+// Add Cosecha Actual module stock if exists
+if(map['Cosecha Actual'])cosechaStock=Math.max(0,cosechaStock+(map['Cosecha Actual'].stock||0));
 if(aptosEl)aptosEl.textContent=cosechaStock;
 if(alertEl){
 var diff=stockGeneral-total;
