@@ -125,6 +125,7 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--txt);min-heig
     <div class="hdr-btns">
       <button class="hdr-btn no-print" onclick="abrirColorConfig()">🎨 Módulos</button>
       <span id="act-hora" style="font-size:0.52rem;color:rgba(255,255,255,0.6);align-self:center;"></span>
+      <button class="hdr-btn no-print" onclick="cargarDeSupabase()">☁️ Cargar</button>
       <button class="hdr-btn no-print" onclick="syncAll()">🔄 Sync</button>
       <button class="hdr-btn no-print" onclick="window.open('https://docs.google.com/spreadsheets/d/1wKwRNcox1Ydnqwz9CkDP1_hheaAnWO8y0xWcuq9hTlk','_blank')">📊 Sheets</button>
       <button class="hdr-btn no-print" onclick="verHistorialFecha()">📅 Historial</button>
@@ -305,6 +306,36 @@ function toggleAddGrid() {
   const visible = wrap.style.display !== 'none';
   wrap.style.display = visible ? 'none' : 'block';
   arrow.textContent = visible ? '▼' : '▲';
+}
+
+async function cargarDeSupabase() {
+  flash('Cargando desde Supabase...','azul');
+  try {
+    const rows = await supaFetch('guia_registros?select=*&fecha=eq.'+fechaHoy()+'&order=grupo.asc,subgrupo.asc');
+    if(!rows||!rows.length){flash('Sin datos en Supabase para hoy','rojo');return;}
+    rows.forEach(function(r){
+      const g=r.grupo, sg=r.subgrupo;
+      const total=r.viaje||0;
+      const llegados=r.bins||0;
+      const obsMatch=(r.obs||'').match(/F:(\d+)/);
+      const faltantes=obsMatch?parseInt(obsMatch[1]):0;
+      if(!data[g])data[g]={};
+      if(!data[g][sg]){
+        data[g][sg]=Array.from({length:total},function(_,i){return{n:i+1,e:'',h:''};});
+      }
+      let lc=0,fc=0;
+      data[g][sg].forEach(function(b){
+        if(lc<llegados){b.e='l';lc++;}
+        else if(fc<faltantes){b.e='f';fc++;}
+        else b.e='';
+      });
+      _abiertos[g]=true;
+    });
+    guardar();render();
+    const el=document.getElementById('act-hora');
+    if(el)el.textContent='Act: '+new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'});
+    flash('✅ '+rows.length+' subgrupos cargados','verde');
+  }catch(e){flash('Error: '+e.message,'rojo');}
 }
 
 // ── RENDER PRINCIPAL ──
@@ -803,22 +834,7 @@ cargarColores();
 render();
 
 // Auto-refresh desde Supabase cada 30 segundos
-setInterval(async function(){
-  try{
-    const rows=await supaFetch('guia_registros?select=*&fecha=eq.'+fechaHoy()+'&order=grupo.asc,subgrupo.asc');
-    if(!rows||!rows.length)return;
-    // Update data without resetting local state
-    rows.forEach(function(r){
-      if(!data[r.grupo])data[r.grupo]={};
-      // Only update if subgrupo exists
-      if(data[r.grupo][r.subgrupo]){
-        // Keep local bin states, just update counts
-      }
-    });
-    const el=document.getElementById('act-hora');
-    if(el)el.textContent='Act: '+new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'});
-  }catch(e){}
-}, 30000);
+setInterval(function(){ cargarDeSupabase(); }, 30000);
 </script>
 </body>
 </html>
