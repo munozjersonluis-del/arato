@@ -102,6 +102,7 @@ input:focus,select:focus{outline:2px solid #003087}
 .rfoot td{background:linear-gradient(180deg,#001a5c,#000e3a);color:rgba(255,255,255,.7);text-align:center;font-size:8px;padding:6px;border-top:3px solid #f5c800;letter-spacing:.5px;text-shadow:0 1px 3px rgba(0,0,0,.5);box-shadow:inset 0 2px 4px rgba(0,0,0,.3)}
 @media(max-width:480px){.g2{grid-template-columns:1fr}}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
 
@@ -249,6 +250,62 @@ input:focus,select:focus{outline:2px solid #003087}
 var cats={aux:[],op:[],pb:[],maq:[],prov:[],mod:[]};
 var tels={};
 var grupos=[];
+var _fechaActual='';
+
+// ── Supabase ──
+var SURL='https://rqvcvffyynpnighzwxju.supabase.co';
+var SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdmN2ZmZ5eW5wbmlnaHp3eGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MjgyNDcsImV4cCI6MjA5MzMwNDI0N30.fFufNEdRvAzl6O6BqtTbx83O3Eg8Wd7gACNJDGQKga4';
+
+function supaFetch(path, method, body) {
+  var opts={method:method||'GET',headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json'}};
+  if(body)opts.body=JSON.stringify(body);
+  if(method==='POST')opts.headers['Prefer']='return=representation';
+  if(method==='PATCH')opts.headers['Prefer']='return=representation';
+  return fetch(SURL+'/rest/v1/'+path,opts).then(function(r){
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    return method==='DELETE'?null:r.json();
+  });
+}
+
+function syncAcopioSupabase(fecha) {
+  if(!fecha)return;
+  var gen={fecha:V('fecha'),turno:V('turno'),enc:V('enc'),cel:V('cel'),enc2:V('enc2'),cel2:V('cel2')};
+  var payload={
+    fecha:fecha,
+    grupo:'GENERAL',
+    auxiliares:0,
+    operadores:0,
+    portabineros:0,
+    maquinas:JSON.stringify(grupos),
+    proveedores:JSON.stringify(gen),
+    modulos:'',
+    obs:''
+  };
+  supaFetch('acopio_registros?fecha=eq.'+fecha+'&grupo=eq.GENERAL','GET').then(function(rows){
+    if(rows&&rows.length>0){
+      return supaFetch('acopio_registros?id=eq.'+rows[0].id,'PATCH',payload);
+    }else{
+      return supaFetch('acopio_registros','POST',payload);
+    }
+  }).catch(function(e){console.warn('Sync error:',e.message);});
+}
+
+function cargarDesdeSupabase(fecha) {
+  return supaFetch('acopio_registros?fecha=eq.'+fecha+'&grupo=eq.GENERAL').then(function(rows){
+    if(!rows||!rows.length)return false;
+    var r=rows[0];
+    try{grupos=JSON.parse(r.maquinas||'[]');}catch(e){grupos=[];}
+    try{
+      var gen=JSON.parse(r.proveedores||'{}');
+      if(gen.turno)setTimeout(function(){try{document.getElementById('turno').value=gen.turno;}catch(e){}},100);
+      if(gen.enc)setTimeout(function(){try{document.getElementById('enc').value=gen.enc;}catch(e){}},100);
+      if(gen.cel)setTimeout(function(){try{document.getElementById('cel').value=gen.cel;}catch(e){}},100);
+      if(gen.enc2)setTimeout(function(){try{document.getElementById('enc2').value=gen.enc2;}catch(e){}},100);
+      if(gen.cel2)setTimeout(function(){try{document.getElementById('cel2').value=gen.cel2;}catch(e){}},100);
+    }catch(e){}
+    return true;
+  });
+}
 var gId=null;
 var auxAc=0;
 var auxs=[];
@@ -266,8 +323,10 @@ function sv(){
     localStorage.setItem('acopio_gen', JSON.stringify({fecha:V('fecha'),turno:V('turno'),enc:V('enc'),cel:V('cel'),enc2:V('enc2'),cel2:V('cel2')}));
     localStorage.setItem('acopio_cats',JSON.stringify(cats));
     localStorage.setItem('acopio_tels',JSON.stringify(tels));
+    syncAcopioSupabase(V('fecha'));
     if(gId!==null)capForm();
     localStorage.setItem('acopio_gs',JSON.stringify(grupos));
+    syncAcopioSupabase(V('fecha')||localStorage.getItem('acopio_last_fecha'));
   }catch(e){}
 }
 
@@ -285,6 +344,13 @@ function load(){
     var t=JSON.parse(localStorage.getItem('acopio_tels')||'null');
     if(t)tels=t;
     grupos=JSON.parse(localStorage.getItem('acopio_gs')||'[]');
+    // Try load from Supabase
+    var fechaVal=localStorage.getItem('acopio_last_fecha')||'';
+    if(fechaVal){
+      cargarDesdeSupabase(fechaVal).then(function(ok){
+        if(ok){renderGrupos();}
+      });
+    }
     renderNav();rnd();
   }catch(e){rnd();}
 }
@@ -533,7 +599,7 @@ function rnd(){
     h+='<td class="rrol"><span class="rb rb-p">👷 Portabinero</span></td>';
     h+='<td class="rnom">'+pn+'</td><td class="rcel">📱 '+pc+'</td></tr>';
   });
-  h+='<tr class="rfoot"><td colspan="6">ARATO · MISSION PRODUCE PERÚ · '+ahora+' · Programa de Acopio – Cosecha de Palta</td></tr>';
+  h+='<tr class="rfoot"><td colspan="6">ARATO · MISSION PRODUCE PERÚ · '+ahora+' · 🥑 Programa de Acopio – Cosecha de Palta</td></tr>';
   document.getElementById('rb').innerHTML=h;
 }
 
