@@ -29,12 +29,12 @@ input:focus,select:focus{outline:2px solid #003087}
 .cats{display:flex;gap:8px;flex-wrap:wrap}
 .btn-cat{padding:10px 14px;background:linear-gradient(180deg,#0040a8,#003087,#001d5c);color:#f5c800;border:none;border-radius:8px;font-size:.88rem;cursor:pointer;font-weight:700;box-shadow:0 4px 8px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.2),inset 0 -2px 0 rgba(0,0,0,.2)}
 .nav-gs{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.nav-g{padding:8px 16px;border:2px solid #e2e8f0;background:#fff;color:#475569;border-radius:8px;cursor:pointer;font-weight:700;font-size:.9rem}
+.nav-g{padding:8px 12px;border:2px solid #e2e8f0;background:#fff;color:#475569;border-radius:8px;cursor:pointer;font-weight:700;font-size:.85rem;white-space:nowrap;}
 .nav-g.act{background:#003087;border-color:#003087;color:#f5c800}
 .nav-g.ok{border-color:#22c55e;color:#15803d}
 .nav-g.ok.act{background:#15803d;border-color:#15803d;color:#fff}
 .btn-nuevo{padding:8px 16px;background:transparent;border:2px dashed #93c5fd;color:#3b82f6;border-radius:8px;cursor:pointer;font-weight:700;font-size:.9rem;white-space:nowrap}
-.gc-letra{font-size:1.5rem;color:#003087;background:#f5c800;border-radius:7px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:700}
+.gc-letra{font-size:1.2rem;color:#003087;background:#f5c800;border-radius:7px;min-width:36px;height:36px;padding:0 8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:700}
 .aux-wrap{background:#f8fafd;border-radius:8px;padding:11px;border-left:3px solid #0d4aa0}
 .aux-lbl{font-size:.65rem;font-weight:700;text-transform:uppercase;color:#475569;margin-bottom:9px}
 .aux-row{display:flex;gap:7px;align-items:center;margin-bottom:7px}
@@ -208,11 +208,11 @@ input:focus,select:focus{outline:2px solid #003087}
           <option value="Arato 2">🔵 Arato 2</option>
         </select></div>
       </div>
-      <div class="divider"></div>
-      <div class="aux-wrap">
+      <div class="divider" id="div-aux"></div>
+      <div class="aux-wrap" id="aux-wrap">
         <div class="aux-lbl">📋 Auxiliar(es) de Campo</div>
         <div id="f-aux"></div>
-        <button class="btn-addaux" onclick="addAux()">➕ Agregar otro auxiliar</button>
+        <button class="btn-addaux" id="btn-addaux" onclick="addAux()">➕ Agregar otro auxiliar</button>
       </div>
       <div class="divider"></div>
       <div class="g2">
@@ -317,6 +317,11 @@ function V(id){var e=document.getElementById(id);return e?e.value.trim():'';}
 function sV(id,v){var e=document.getElementById(id);if(e&&v!=null)e.value=v;}
 function L(i){return String.fromCharCode(65+i);}
 function getCel(t,n){return tels[t+':'+n]||'';}
+function celLink(num){
+  if(!num||num==='—')return '—';
+  var clean=num.replace(/\D/g,'');
+  return '<a href="https://wa.me/51'+clean+'" target="_blank" style="color:#0f172a;text-decoration:none;font-weight:700;">📱 '+num+'</a>';
+}
 
 function sv(){
   try{
@@ -511,14 +516,17 @@ function abrirG(id){
   gId=id;
   var g=grupos.find(function(x){return x.id===id;});if(!g)return;
   document.getElementById('f-lt').textContent=g.lt;
+  document.getElementById('f-lt').style.fontSize = g.lt.length > 1 ? '0.75rem' : '1.2rem';
   document.getElementById('f-tit2').textContent='GRUPO '+g.lt;
   document.getElementById('gform').style.display='block';
 
   // Ocultar auxiliares si es RETEN
   var isReten = g.lt==='RETEN';
-  var auxWrap = document.querySelector('.aux-wrap');
-  var addAuxBtn = document.querySelector('.btn-addaux');
+  var auxWrap = document.getElementById('aux-wrap');
+  var divAux = document.getElementById('div-aux');
+  var addAuxBtn = document.getElementById('btn-addaux');
   if(auxWrap) auxWrap.style.display = isReten ? 'none' : 'block';
+  if(divAux) divAux.style.display = isReten ? 'none' : 'block';
   if(addAuxBtn) addAuxBtn.style.display = isReten ? 'none' : 'block';
   // Cambiar placeholder de observación para RETEN
   var obEl = document.getElementById('f-ob');
@@ -529,7 +537,12 @@ function abrirG(id){
   sV('f-op',g.on);sV('f-oc',g.oc);
   sV('f-pb',g.pn);sV('f-pc',g.pc);sV('f-ob',g.ob);
   auxs=isReten?[]:(g.auxs||[{n:'',c:''}]).map(function(a){return {id:++auxAc,n:a.n||'',c:a.c||''};});
-  if(!isReten)renderAuxs();
+  if(!isReten){
+    renderAuxs();
+  } else {
+    var faux=document.getElementById('f-aux');
+    if(faux)faux.innerHTML='';
+  }
   var btn=document.getElementById('btn-ag');
   btn.className='btn-ag';btn.textContent='✅ Agregar Grupo '+g.lt+' al Reporte';
   renderNav();
@@ -581,34 +594,41 @@ function rnd(){
   gShow.forEach(function(g,i){
     var mod=g.mod||'—',mq=g.mq||'—',pv=g.pv||'—',arato=g.arato||'Arato 1';
     var on=g.on||'—',oc=g.oc||'—',pn=g.pn||'—',pc=g.pc||'—',ob=g.ob||'';
-    var ga=(g.auxs&&g.auxs.length)?g.auxs:[{n:'—',c:'—'}];
-    var tr=ga.length+2;
+    var isReten = g.lt==='RETEN';
+    var ga=(g.auxs&&g.auxs.length&&!isReten)?g.auxs:[{n:'—',c:'—'}];
+    var tr=isReten?2:ga.length+2;
     if(i>0)h+='<tr class="gsep"><td colspan="6"></td></tr>';
     h+='<tr class="ghrow"><td colspan="6" style="padding:0;border:none"><div class="g-hi">';
-    h+='<div class="g-lb"><div class="g-lt">'+g.lt+'</div><div style="font-size:6px;font-weight:700;color:#001a5c;letter-spacing:.8px;line-height:1;margin-top:1px">GRUPO</div></div>';
+    h+='<div class="g-lb" style="width:'+(isReten?'60px':'38px')+'"><div class="g-lt" style="font-size:'+(isReten?'10px':'21px')+'">'+g.lt+'</div><div style="font-size:6px;font-weight:700;color:#001a5c;letter-spacing:.8px;line-height:1;margin-top:1px">GRUPO</div></div>';
     var aratoBg=arato==='Arato 1'?'#16A34A':'#D97706';
     h+='<div class="g-inf"><div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;"><div class="g-mod">📍 '+(mod!=='—'?mod:'MÓDULO')+'</div><div style="background:'+aratoBg+';color:#fff;font-size:8px;font-weight:700;padding:2px 7px;border-radius:4px;letter-spacing:.5px;">'+arato+'</div></div>';
-
-
     if(ob)h+='<div class="g-obs">📝 '+ob+'</div>';
     h+='</div></div></td></tr>';
-    ga.forEach(function(a,ai){
-      h+='<tr class="rr '+(ai%2===0?'o':'e')+'">';
-      h+='<td class="rrol"><span class="rb rb-a">📋 Auxiliar</span></td>';
-      h+='<td class="rnom">'+(a.n||'—')+'</td><td class="rcel">📱 '+(a.c||'—')+'</td>';
-      if(ai===0){
-        h+='<td class="rmaq" rowspan="'+tr+'"><b>'+mq+'</b></td>';
-        h+='<td class="rprov" rowspan="'+tr+'"><b>'+pv+'</b></td>';
-        h+='<td class="robs" rowspan="'+tr+'">'+(ob||'—')+'</td>';
-      }
-      h+='</tr>';
-    });
-    h+='<tr class="rr '+(ga.length%2===0?'o':'e')+'">';
+    if(!isReten){
+      ga.forEach(function(a,ai){
+        h+='<tr class="rr '+(ai%2===0?'o':'e')+'">';
+        h+='<td class="rrol"><span class="rb rb-a">📋 Auxiliar</span></td>';
+        h+='<td class="rnom">'+(a.n||'<span style="color:#94A3B8;font-style:italic;font-size:10px;">Sin asignar</span>')+'</td><td class="rcel">'+celLink(a.c)+'</td>';
+        if(ai===0){
+          h+='<td class="rmaq" rowspan="'+tr+'"><b>'+mq+'</b></td>';
+          h+='<td class="rprov" rowspan="'+tr+'"><b>'+pv+'</b></td>';
+          h+='<td class="robs" rowspan="'+tr+'">'+(ob||'—')+'</td>';
+        }
+        h+='</tr>';
+      });
+    }
+    h+='<tr class="rr '+(isReten?'o':ga.length%2===0?'o':'e')+'">';
     h+='<td class="rrol"><span class="rb rb-o">🧑‍✈️ Operador</span></td>';
-    h+='<td class="rnom">'+on+'</td><td class="rcel">📱 '+oc+'</td></tr>';
-    h+='<tr class="rr '+((ga.length+1)%2===0?'o':'e')+'">';
+    h+='<td class="rnom">'+(on&&on!=='—'?on:'<span style="color:#94A3B8;font-style:italic;font-size:10px;">Sin asignar</span>')+'</td><td class="rcel">'+celLink(oc)+'</td>';
+    if(isReten){
+      h+='<td class="rmaq" rowspan="2"><b>'+mq+'</b></td>';
+      h+='<td class="rprov" rowspan="2"><b>'+pv+'</b></td>';
+      h+='<td class="robs" rowspan="2">'+(ob||'—')+'</td>';
+    }
+    h+='</tr>';
+    h+='<tr class="rr '+(isReten?'e':(ga.length+1)%2===0?'o':'e')+'">';
     h+='<td class="rrol"><span class="rb rb-p">👷 Portabinero</span></td>';
-    h+='<td class="rnom">'+pn+'</td><td class="rcel">📱 '+pc+'</td></tr>';
+    h+='<td class="rnom">'+(pn&&pn!=='—'?pn:'<span style="color:#94A3B8;font-style:italic;font-size:10px;">Sin asignar</span>')+'</td><td class="rcel">'+celLink(pc)+'</td></tr>';
   });
   h+='<tr class="rfoot"><td colspan="6">ARATO · MISSION PRODUCE PERÚ · '+ahora+' · 🥑 Programa de Acopio – Cosecha de Palta</td></tr>';
   document.getElementById('rb').innerHTML=h;
