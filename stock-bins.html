@@ -916,12 +916,12 @@ var aptosEl=document.getElementById('mod-cosecha');
 var cosechaStock=Math.max(0,stockGeneral-totalEnModulos);
 if(aptosEl)aptosEl.textContent=cosechaStock;
 if(alertEl){
-var diff=stockGeneral-total;
+var diff=stockGeneral-totalEnModulos;
 if(diff===0){
 alertEl.style.display='block';
 alertEl.style.background='var(--g-dim)';
 alertEl.style.color='var(--g)';
-alertEl.textContent='✅ Stock cuadrado — '+total+' bins en modulos = '+stockGeneral+' stock general';
+alertEl.textContent='✅ Stock cuadrado — '+totalEnModulos+' bins en modulos = '+stockGeneral+' stock general';
 }else{
 alertEl.style.display='block';
 alertEl.style.background='var(--r-dim)';
