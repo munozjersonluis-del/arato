@@ -64,10 +64,10 @@ module.exports = async (req, res) => {
       ['REGISTRO CONTINUO DE MAQUINARIA Y CAMPO','','','','','','','','','',''],
       ['','','','','','','','','','',''],
       ['','','','','','','','','','',''],
-      ['Maquina','Operador','Fecha','Hora Inicio','Hora Fin','Hrs Ejec','Bins','Toneladas','TN/Hr Real','Meta','Estado','Modulos']
+      ['Maquina','Operador','Fecha','Hrs Ejec','Bins','Toneladas','TN/Hr Real','Meta','Estado','Modulos']
     ];
     rows.forEach(r=>{
-      bd.push([r.maquina||'',r.operador||'',r.fecha||'',r.hora_inicio||'',r.hora_fin||'',
+      bd.push([r.maquina||'',r.operador||'',r.fecha||'',
         r1(r.hrs_ejec),r1(r.bins),r1(r.toneladas),r1(r.tn_hr),
         r.meta||META,r.estado||'',r.modulos||'']);
     });
@@ -85,7 +85,7 @@ module.exports = async (req, res) => {
       cell(sid1,0,0,1,1,VERDE,BLANCO,true,13),rowH(sid1,0,32),
       rowH(sid1,1,6),rowH(sid1,2,6),
       cell(sid1,3,0,4,11,VERDE2,BLANCO,true,10),rowH(sid1,3,26),
-      [100,100,90,90,80,70,60,90,90,60,70,140].map((w,i)=>colW(sid1,i,w)),
+      [100,100,90,70,60,90,90,60,70,140].map((w,i)=>colW(sid1,i,w)),
     ].flat();
 
     rows.forEach((r,i)=>{
@@ -93,7 +93,7 @@ module.exports = async (req, res) => {
       const bg=i%2===0?GRIS:BLANCO;
       const tnhr=r.tn_hr||0;
       const isBien=tnhr>=META,isReg=tnhr>=META*0.7;
-      reqs1.push(cell(sid1,row,0,row+1,12,bg,NEGRO,false,9));
+      reqs1.push(cell(sid1,row,0,row+1,10,bg,NEGRO,false,9));
       reqs1.push(cell(sid1,row,8,row+1,9,bg,isBien?VERDE_T:isReg?AMARILLO:ROJO,true,10));
       reqs1.push(cell(sid1,row,10,row+1,11,isBien?VERDE_C:isReg?AMARILLO_C:ROJO_C,isBien?VERDE_T:isReg?AMARILLO:ROJO,true,9));
       reqs1.push(rowH(sid1,row,20));
