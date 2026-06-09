@@ -528,6 +528,9 @@ function eliminarSG(g, sg) {
   delete data[g][sg];
   if(Object.keys(data[g]).length===0) delete data[g];
   guardar(); render();
+  // Also delete from Supabase
+  const fecha = fechaHoy();
+  supaFetch('guia_registros?grupo=eq.'+g+'&subgrupo=eq.'+sg+'&fecha=eq.'+fecha,'DELETE').catch(()=>{});
   flash('Eliminado','rojo');
 }
 
