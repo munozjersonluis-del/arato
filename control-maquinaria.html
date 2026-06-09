@@ -292,6 +292,27 @@ tr:nth-child(even) td{background:rgba(255,255,255,0.015)}
   </div>
 </div>
 
+<!-- MODAL EDITAR -->
+<div id="modal-edit" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;align-items:flex-end;">
+  <div style="background:#0f1729;border-radius:16px 16px 0 0;padding:20px;width:100%;max-height:85vh;overflow-y:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:800;color:#fff;letter-spacing:1px;">✏️ EDITAR REGISTRO</div>
+      <button onclick="cerrarEdit()" style="background:none;border:none;color:#888;font-size:1.2rem;cursor:pointer;">✕</button>
+    </div>
+    <input type="hidden" id="edit-id">
+    <div class="field"><label>Máquina</label><input id="edit-maquina" type="text" style="text-transform:uppercase;"></div>
+    <div class="field"><label>Fecha</label><input id="edit-fecha" type="text" placeholder="DD/MM/AAAA"></div>
+    <div class="field"><label>Horas Efectivas</label><input id="edit-hrs" type="number" step="0.1" min="0"></div>
+    <div class="field"><label>Bins</label><input id="edit-bins" type="number" step="0.1" min="0"></div>
+    <div class="field"><label>Operador</label><input id="edit-operador" type="text"></div>
+    <div class="field"><label>Módulos</label><input id="edit-modulos" type="text"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;">
+      <button onclick="guardarEdit()" style="padding:12px;background:#f97316;color:#fff;border:none;border-radius:10px;font-weight:700;font-size:0.85rem;cursor:pointer;font-family:inherit;">✅ Guardar</button>
+      <button onclick="cerrarEdit()" style="padding:12px;background:#1e293b;color:#888;border:none;border-radius:10px;font-weight:700;font-size:0.85rem;cursor:pointer;font-family:inherit;">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ── Constants ──────────────────────────────────────────────
 const META = 2.3;
@@ -468,6 +489,58 @@ async function cargarRegistros() {
     updHora();
   } catch(e) {
     showToast('Error cargando: '+e.message,'err');
+  }
+}
+
+function editarRegistro(id) {
+  const r = records.find(x=>x.id===id);
+  if(!r) return;
+  document.getElementById('edit-id').value = id;
+  document.getElementById('edit-maquina').value = r.maquina||'';
+  document.getElementById('edit-fecha').value = r.fecha||'';
+  document.getElementById('edit-hrs').value = r.hrsEjec||'';
+  document.getElementById('edit-bins').value = r.bins||'';
+  document.getElementById('edit-operador').value = r.operador||'';
+  document.getElementById('edit-modulos').value = r.modulos||'';
+  const modal = document.getElementById('modal-edit');
+  modal.style.display = 'flex';
+}
+
+function cerrarEdit() {
+  document.getElementById('modal-edit').style.display = 'none';
+}
+
+async function guardarEdit() {
+  const id = parseInt(document.getElementById('edit-id').value);
+  const maquina = document.getElementById('edit-maquina').value.trim().toUpperCase();
+  const fecha = document.getElementById('edit-fecha').value.trim();
+  const hrsEjec = parseFloat(document.getElementById('edit-hrs').value)||0;
+  const bins = parseFloat(document.getElementById('edit-bins').value)||0;
+  const operador = document.getElementById('edit-operador').value.trim();
+  const modulos = document.getElementById('edit-modulos').value.trim();
+  if(!maquina||!fecha||!hrsEjec||!bins){showToast('Completa los campos','err');return;}
+  const tons = +(bins*KG_BIN/1000).toFixed(1);
+  const tnhr = hrsEjec>0 ? +(tons/hrsEjec).toFixed(1) : 0;
+  const estado = calcEstado(tnhr);
+  try {
+    await supaFetch('maquinaria_registros?id=eq.'+id,'PATCH',{
+      maquina, operador, fecha,
+      hrs_ejec: +hrsEjec.toFixed(1),
+      bins: +bins.toFixed(1),
+      toneladas: tons,
+      tn_hr: tnhr,
+      meta: META,
+      estado, modulos
+    });
+    // Update local records
+    const idx = records.findIndex(r=>r.id===id);
+    if(idx>=0) records[idx] = {...records[idx], maquina, operador, fecha, hrsEjec:+hrsEjec.toFixed(1), bins:+bins.toFixed(1), toneladas:tons, tnhr, estado, modulos};
+    cerrarEdit();
+    renderDashboard();
+    renderTabla();
+    showToast('✓ Registro actualizado','ok');
+  } catch(e) {
+    showToast('Error: '+e.message,'err');
   }
 }
 
@@ -805,7 +878,10 @@ function renderTabla() {
       <td class="${r.tnhr>=META?'td-tnhr-ok':'td-tnhr-bad'}">${r.tnhr}</td>
       <td>${badge(r.estado)}</td>
       <td class="td-modulos">${r.modulos||"—"}</td>
-      <td><button onclick="eliminarRegistro(${r.id})" style="background:none;border:1px solid #DC2626;color:#DC2626;border-radius:5px;padding:3px 7px;font-size:0.65rem;cursor:pointer;">🗑️</button></td>
+      <td style="white-space:nowrap;">
+        <button onclick="editarRegistro(${r.id})" style="background:none;border:1px solid #2563EB;color:#2563EB;border-radius:5px;padding:3px 7px;font-size:0.65rem;cursor:pointer;margin-right:3px;">✏️</button>
+        <button onclick="eliminarRegistro(${r.id})" style="background:none;border:1px solid #DC2626;color:#DC2626;border-radius:5px;padding:3px 7px;font-size:0.65rem;cursor:pointer;">🗑️</button>
+      </td>
     </tr>`).join("");
 }
 
