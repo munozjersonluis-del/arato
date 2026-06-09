@@ -189,6 +189,7 @@ tr:nth-child(even) td{background:rgba(255,255,255,0.015)}
     <button class="tab-btn active" onclick="setTab('dashboard')">📊 Dashboard</button>
     <button class="tab-btn" onclick="setTab('registro')">➕ Registrar</button>
     <button class="tab-btn" onclick="setTab('tabla')">📋 Tabla</button>
+    <span id="ultima-act" style="font-size:0.6rem;color:rgba(255,255,255,0.6);align-self:center;"></span>
     <button class="import-btn" onclick="cargarRegistros()" style="background:#2563EB;">☁️ Cargar</button>
     <button class="import-btn" onclick="syncMaquinaria()" style="background:#16A34A;">🔄 Sync</button>
     <button class="import-btn" onclick="exportarExcelCompleto()" style="background:#D97706;">📊 Excel</button>
@@ -235,22 +236,16 @@ tr:nth-child(even) td{background:rgba(255,255,255,0.015)}
         <label>Fecha *</label>
         <input id="f-fecha" type="text" placeholder="DD/MM/AAAA" oninput="updatePreview()"/>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div class="field">
-          <label>Hora Inicio *</label>
-          <input id="f-inicio" type="time" oninput="updatePreview()"/>
-        </div>
-        <div class="field">
-          <label>Hora Fin *</label>
-          <input id="f-fin" type="time" oninput="updatePreview()"/>
-        </div>
+      <div class="field">
+        <label>Horas Efectivas *</label>
+        <input id="f-hrsejec" type="number" step="0.1" min="0" placeholder="Ej: 8.5" oninput="updatePreview()"/>
       </div>
       <div class="field">
         <label>Bins cosechados *</label>
-        <input id="f-bins" type="number" step="0.01" placeholder="Ej: 28.5" oninput="updatePreview()"/>
+        <input id="f-bins" type="number" step="0.1" placeholder="Ej: 28.5" oninput="updatePreview()"/>
       </div>
       <div class="field" style="position:relative">
-        <label>Operador *</label>
+        <label>Operador</label>
         <input id="f-operador" type="text" placeholder="Nombre del operador" autocomplete="off"
           oninput="onOperadorInput()" onblur="hideSug('sug-operador')"/>
         <div id="sug-operador" class="sug-list"></div>
@@ -470,6 +465,7 @@ async function cargarRegistros() {
     updateMaquinaFilter();
     renderDashboard();
     showToast('✓ '+records.length+' registros cargados','ok');
+    updHora();
   } catch(e) {
     showToast('Error cargando: '+e.message,'err');
   }
@@ -532,16 +528,14 @@ function buildRecord(maquina,operador,fecha,ini,fin,bins,modulos) {
 
 // ── Form ───────────────────────────────────────────────────
 function updatePreview() {
-  const ini = document.getElementById("f-inicio").value;
-  const fin = document.getElementById("f-fin").value;
+  const hrs = parseFloat(document.getElementById("f-hrsejec")?.value)||0;
   const bins = document.getElementById("f-bins").value;
-  if (!ini||!fin||!bins) { document.getElementById("preview").style.display="none"; return; }
-  const hrs = horasEntre(ini,fin);
+  if (!hrs||!bins) { document.getElementById("preview").style.display="none"; return; }
   const b = parseFloat(bins)||0;
   const tons = +(b*KG_BIN/1000).toFixed(1);
   const tnhr = hrs>0 ? +(tons/hrs).toFixed(1) : 0;
   const estado = calcEstado(tnhr);
-  document.getElementById("p-hrs").textContent = hrs;
+  document.getElementById("p-hrs").textContent = hrs.toFixed(1);
   document.getElementById("p-tons").textContent = tons+" t";
   document.getElementById("p-tnhr").innerHTML = `<span style="color:${tnhr>=META?'var(--green)':'var(--red)'}">${tnhr}</span>`;
   document.getElementById("p-estado").innerHTML = badge(estado);
@@ -551,19 +545,26 @@ async function guardarRegistro() {
   const maquina  = document.getElementById("f-maquina").value.trim().toUpperCase();
   const operador = document.getElementById("f-operador").value.trim();
   const fecha    = document.getElementById("f-fecha").value.trim();
-  const ini      = document.getElementById("f-inicio").value;
-  const fin      = document.getElementById("f-fin").value;
-  const bins     = document.getElementById("f-bins").value;
+  const hrsEjec  = parseFloat(document.getElementById("f-hrsejec").value)||0;
+  const bins     = parseFloat(document.getElementById("f-bins").value)||0;
   const modulos  = document.getElementById("f-modulos").value.trim();
-  if (!maquina||!fecha||!ini||!fin||!bins) { showToast("Completa los campos obligatorios","err"); return; }
-  const rec = buildRecord(maquina,operador,fecha,ini,fin,bins,modulos);
+  if (!maquina||!fecha||!hrsEjec||!bins) { showToast("Completa los campos obligatorios","err"); return; }
+  const tons = +(bins*KG_BIN/1000).toFixed(1);
+  const tnhr = hrsEjec>0 ? +(tons/hrsEjec).toFixed(1) : 0;
+  const estado = tnhr>=META?"BIEN":"MAL";
+  const rec = {
+    maquina, operador, fecha,
+    horaInicio:'—', horaFin:'—',
+    hrsEjec:+hrsEjec.toFixed(1),
+    bins:+bins.toFixed(1), toneladas:tons, tnhr, estado, modulos
+  };
   try {
     const saved = await supaFetch('maquinaria_registros','POST',{
       maquina: rec.maquina,
       operador: rec.operador||'',
       fecha: rec.fecha,
-      hora_inicio: rec.horaInicio,
-      hora_fin: rec.horaFin,
+      hora_inicio: '—',
+      hora_fin: '—',
       hrs_ejec: rec.hrsEjec,
       bins: rec.bins,
       toneladas: rec.toneladas,
@@ -575,9 +576,8 @@ async function guardarRegistro() {
     rec.id = Array.isArray(saved)?saved[0].id:saved.id;
     records.unshift(rec);
     document.getElementById("f-bins").value="";
+    document.getElementById("f-hrsejec").value="";
     document.getElementById("f-modulos").value="";
-    document.getElementById("f-inicio").value="";
-    document.getElementById("f-fin").value="";
     document.getElementById("preview").style.display="none";
     showToast("✓ Registro guardado","ok");
     updateMaquinaFilter();
@@ -832,6 +832,16 @@ function onOperadorInput() {
 
 // init
 document.getElementById("f-fecha").value = new Date().toLocaleDateString("es-PE",{day:"2-digit",month:"2-digit",year:"numeric"}).replace(/\//g,"/");
+updateMaquinaFilter();
+cargarRegistros();
+
+// Auto-refresh cada 30 segundos
+setInterval(function(){ cargarRegistros(); }, 30000);
+
+function updHora(){
+  var el=document.getElementById('ultima-act');
+  if(el)el.textContent='Act: '+new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'});
+}
 </script>
 </body>
 </html>
