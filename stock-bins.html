@@ -665,45 +665,6 @@ localStorage.setItem('arato_stk',JSON.stringify(movs));
 render();updKPIs();toast('Eliminado','err');
 }
 
-async function cargarModulos(){
-const cont=document.getElementById('mod-content');
-cont.innerHTML='<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-txt">Cargando...</div></div>';
-try{
-const res=await db.from('viajes').select('modulo,bins,retornos').eq('fecha',hoy());
-if(res.error||!res.data?.length){
-cont.innerHTML='<div class="empty-state"><div class="empty-icon">🗺️</div><div class="empty-txt">Sin viajes hoy</div></div>';
-return;
-}
-const map={};
-res.data.forEach(v=>{
-const mod='M'+String(v.modulo||'—').padStart(2,'0');
-if(!map[mod])map[mod]={env:0,ret:0};
-try{
-const bins=JSON.parse(v.bins||'[]');
-const rets=JSON.parse(v.retornos||'[]').filter(r=>r.tipo!=='vacio').flatMap(r=>r.bins||[]);
-map[mod].env+=bins.length;
-map[mod].ret+=rets.length;
-}catch(e){}
-});
-const mods=Object.keys(map).sort();
-const maxEnv=Math.max(...mods.map(m=>map[m].env),1);
-cont.innerHTML='<div class="mod-grid">'+mods.map(m=>{
-const d=map[m];
-const campo=Math.max(0,d.env-d.ret);
-const pct=d.env>0?Math.round(d.ret/d.env*100):0;
-return`<div class="mod-card">
-<div class="mod-name">📍 ${m}</div>
-<div class="mod-stats">
-<div><div class="mod-stat-val" style="color:var(--g);">${d.ret}</div><div class="mod-stat-lbl">Ret.</div></div>
-<div><div class="mod-stat-val" style="color:var(--gold);">${campo}</div><div class="mod-stat-lbl">Campo</div></div>
-<div><div class="mod-stat-val" style="color:var(--b);">${pct}%</div><div class="mod-stat-lbl">Retorno</div></div>
-</div>
-<div class="mod-progress"><div class="mod-progress-fill" style="width:${pct}%"></div></div>
-</div>`;
-}).join('')+'</div>';
-}catch(e){cont.innerHTML='<div class="empty-state"><div class="empty-txt">Error: '+e.message+'</div></div>';}
-}
-
 async function descargarExcel(){
 if(typeof XLSX==='undefined'){toast('Cargando...');setTimeout(descargarExcel,800);return;}
 if(!movs.length){toast('Sin datos','err');return;}
