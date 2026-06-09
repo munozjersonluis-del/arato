@@ -312,30 +312,48 @@ function toggleAddGrid() {
 async function cargarDeSupabase() {
   flash('Cargando desde Supabase...','azul');
   try {
-    const rows = await supaFetch('guia_registros?select=*&fecha=eq.'+fechaHoy()+'&order=grupo.asc,subgrupo.asc');
-    if(!rows||!rows.length){flash('Sin datos en Supabase para hoy','rojo');return;}
-    rows.forEach(function(r){
-      const g=r.grupo, sg=r.subgrupo;
-      const total=r.viaje||0;
-      const llegados=r.bins||0;
-      const obsMatch=(r.obs||'').match(/F:(\d+)/);
-      const faltantes=obsMatch?parseInt(obsMatch[1]):0;
-      if(!data[g])data[g]={};
-      if(!data[g][sg]){
-        data[g][sg]=Array.from({length:total},function(_,i){return{n:i+1,e:'',h:''};});
-      }
-      let lc=0,fc=0;
-      data[g][sg].forEach(function(b){
-        if(lc<llegados){b.e='l';lc++;}
-        else if(fc<faltantes){b.e='f';fc++;}
-        else b.e='';
+    const fecha=fechaHoy();
+    // Load bin states (individual)
+    const binStates = await supaFetch('guia_bins_estado?select=*&fecha=eq.'+fecha+'&order=grupo.asc,subgrupo.asc,bin_num.asc');
+    
+    if(binStates && binStates.length){
+      // Rebuild data from individual bin states
+      const newData={};
+      binStates.forEach(function(b){
+        const g=b.grupo, sg=b.subgrupo;
+        if(!newData[g])newData[g]={};
+        if(!newData[g][sg])newData[g][sg]=[];
+        newData[g][sg].push({n:b.bin_num,e:b.estado||'',h:b.hora||'',c:b.color_mod||''});
+        _abiertos[g]=true;
       });
-      _abiertos[g]=true;
-    });
+      // Sort bins by number
+      Object.keys(newData).forEach(g=>{
+        Object.keys(newData[g]).forEach(sg=>{
+          newData[g][sg].sort((a,b)=>a.n-b.n);
+        });
+      });
+      data=newData;
+    } else {
+      // Fallback to summary
+      const rows = await supaFetch('guia_registros?select=*&fecha=eq.'+fecha+'&order=grupo.asc,subgrupo.asc');
+      if(!rows||!rows.length){flash('Sin datos para hoy','rojo');return;}
+      rows.forEach(function(r){
+        const g=r.grupo, sg=r.subgrupo;
+        const total=r.viaje||0;
+        const llegados=r.bins||0;
+        if(!data[g])data[g]={};
+        if(!data[g][sg]){
+          data[g][sg]=Array.from({length:total},function(_,i){return{n:i+1,e:'',h:''};});
+        }
+        let lc=0;
+        data[g][sg].forEach(function(b){if(lc<llegados){b.e='l';lc++;}else b.e='';});
+        _abiertos[g]=true;
+      });
+    }
     guardar();render();
     const el=document.getElementById('act-hora');
     if(el)el.textContent='Act: '+new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'});
-    flash('✅ '+rows.length+' subgrupos cargados','verde');
+    flash('✅ Cargado correctamente','verde');
   }catch(e){flash('Error: '+e.message,'rojo');}
 }
 
@@ -613,20 +631,30 @@ async function syncAll(){
   for(const g of Object.keys(data)){
     for(const sg of Object.keys(data[g]||{})){
       const bins=data[g][sg]||[];
-      const llegados=bins.filter(b=>b.e==='l').length;
-      const total=bins.length;
-      const faltantes=bins.filter(b=>b.e==='f').length;
-      if(!total)continue;
+      if(!bins.length)continue;
       try{
+        // 1. Sync summary to guia_registros
+        const llegados=bins.filter(b=>b.e==='l').length;
+        const total=bins.length;
         const ex=await supaFetch('guia_registros?select=id&grupo=eq.'+g+'&subgrupo=eq.'+sg+'&fecha=eq.'+fecha);
-        const payload={grupo:g,subgrupo:sg,viaje:total,bins:llegados,fecha,obs:'Total:'+total+' L:'+llegados+' F:'+faltantes};
+        const payload={grupo:g,subgrupo:sg,viaje:total,bins:llegados,fecha,obs:'Total:'+total+' L:'+llegados};
         if(ex&&ex.length)await supaFetch('guia_registros?id=eq.'+ex[0].id,'PATCH',payload);
         else await supaFetch('guia_registros','POST',payload);
+
+        // 2. Sync each bin state to guia_bins_estado
+        // Delete existing for this sg/fecha and re-insert
+        await supaFetch('guia_bins_estado?fecha=eq.'+fecha+'&grupo=eq.'+g+'&subgrupo=eq.'+sg,'DELETE');
+        const binsPayload=bins.map(b=>({
+          fecha,grupo:g,subgrupo:sg,
+          bin_num:b.n,estado:b.e||'',hora:b.h||'',color_mod:b.c||''
+        }));
+        if(binsPayload.length){
+          await supaFetch('guia_bins_estado','POST',binsPayload);
+        }
         count++;
-      }catch(e){}
+      }catch(e){console.warn(e);}
     }
   }
-  // Also sync to Google Sheets
   try {
     await fetch('/api/sheets-guia', {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'});
   } catch(e) {}
