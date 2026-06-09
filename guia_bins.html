@@ -30,7 +30,7 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--txt);min-heig
 .hdr-btn{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:7px;padding:5px 9px;font-size:0.62rem;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;}
 
 /* KPIs */
-.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:10px 12px;background:#fff;border-bottom:1px solid var(--bdr);}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:8px 10px;background:#fff;border-bottom:1px solid var(--bdr);}
 .kpi{text-align:center;padding:6px 4px;}
 .kpi-val{font-size:1.1rem;font-weight:800;}
 .kpi-lbl{font-size:0.48rem;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;}
@@ -139,6 +139,7 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--txt);min-heig
   <div class="kpi"><div class="kpi-val" id="kpi-llegados" style="color:var(--g);">0</div><div class="kpi-lbl">Llegados</div></div>
   <div class="kpi"><div class="kpi-val" id="kpi-faltantes" style="color:var(--r);">0</div><div class="kpi-lbl">Faltantes</div></div>
   <div class="kpi"><div class="kpi-val" id="kpi-pend" style="color:var(--y);">0</div><div class="kpi-lbl">Pendientes</div></div>
+  <div class="kpi"><div class="kpi-val" id="kpi-tons" style="color:var(--b);font-size:0.9rem;">0 t</div><div class="kpi-lbl">Toneladas</div></div>
 </div>
 
 <div class="flash" id="flash"></div>
@@ -371,7 +372,7 @@ function renderGrupos() {
         </div>
         <div style="display:flex;align-items:center;gap:10px;">
           <div style="text-align:right;">
-            <div style="font-size:0.65rem;font-weight:700;color:var(--g);">✓ ${totLleg}</div>
+            <div style="font-size:0.72rem;font-weight:800;color:var(--g);">${totLleg} bins · ${(totLleg*435/1000).toFixed(1)} t</div>
             <div style="font-size:0.55rem;color:var(--txt3);">${pend} pend · ${totFalt} falt</div>
           </div>
           <span class="grupo-arrow">▼</span>
@@ -391,16 +392,15 @@ function renderSG(g, sg) {
   const faltantes=bins.filter(b=>b.e==='f').length;
   const total=bins.length;
   const pend=total-llegados-faltantes;
-  const pct=total>0?Math.round(llegados/total*100):0;
   const isOpen=_abiertos[g+'_'+sg];
   return `<div class="sg-card" id="sgc-${g}-${sg}">
     <div class="sg-hdr ${isOpen?'open':''}" onclick="toggleSG('${g}','${sg}')">
       <div>
         <span class="sg-nombre">${sg}</span>
-        <span class="sg-stats"> — ${llegados}✓ ${faltantes}⚠ ${pend}⬜</span>
+        <span class="sg-stats"> — ${llegados} llegados · ${faltantes} faltantes · ${pend} pendientes</span>
       </div>
       <div style="display:flex;align-items:center;gap:6px;">
-        <span class="sg-pct" style="color:${pct===100?'var(--g)':pct>0?'var(--y)':'var(--txt3)'};">${pct}%</span>
+        <span style="font-size:0.72rem;font-weight:800;color:var(--g);">${llegados} bins · ${(llegados*435/1000).toFixed(1)} t</span>
         <span class="sg-arrow">▼</span>
       </div>
     </div>
@@ -462,6 +462,8 @@ function updKPIs() {
   document.getElementById('kpi-llegados').textContent=lleg;
   document.getElementById('kpi-faltantes').textContent=falt;
   document.getElementById('kpi-pend').textContent=tot-lleg-falt;
+  const tonsEl=document.getElementById('kpi-tons');
+  if(tonsEl)tonsEl.textContent=(lleg*435/1000).toFixed(1)+' t';
 }
 
 // ── TOGGLE ──
@@ -795,7 +797,7 @@ function generarReporte() {
   // Total
   html += '<div style="background:#1A5C38;border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-top:4px;">';
   html += '<div style="font-size:0.75rem;font-weight:700;color:rgba(255,255,255,0.8);">TOTAL RECEPCIONADO</div>';
-  html += '<div style="font-size:1.3rem;font-weight:800;color:#fff;">'+totalLleg+' bins</div>';
+  html += '<div style="font-size:1.3rem;font-weight:800;color:#fff;">'+totalLleg+' bins</div><div style="font-size:0.75rem;color:rgba(255,255,255,0.8);font-weight:700;">'+(totalLleg*435/1000).toFixed(1)+' toneladas</div>';
   html += '</div>';
   html += '</div>';
 
