@@ -8,6 +8,7 @@
     { "source": "/stock", "destination": "/stock-bins.html" },
     { "source": "/despacho", "destination": "/cosecha-despacho.html" },
     { "source": "/maquinaria", "destination": "/control-maquinaria.html" },
+    { "source": "/fichas", "destination": "/fichas-medicas-110.html" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
