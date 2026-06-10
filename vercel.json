@@ -9,6 +9,6 @@
     { "source": "/stock", "destination": "/stock-bins.html" },
     { "source": "/despacho", "destination": "/cosecha-despacho.html" },
     { "source": "/maquinaria", "destination": "/control-maquinaria.html" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    { "source": "/((?!api/|fichas|menu|guia|reporte|acopio|cosecha|stock|despacho|maquinaria).*)", "destination": "/index.html" }
   ]
 }
