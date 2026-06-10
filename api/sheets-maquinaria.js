@@ -72,7 +72,7 @@ module.exports = async (req, res) => {
         r.meta||META,r.estado||'',r.modulos||'']);
     });
     // 30 filas vacías
-    for(let i=0;i<30;i++) bd.push(['','','','','','','','',META,'','']);
+    for(let i=0;i<30;i++) bd.push(['','','','','','','',META,'','']);
 
     await sheets.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:'Base_Datos!A1',valueInputOption:'RAW',resource:{values:bd}});
 
