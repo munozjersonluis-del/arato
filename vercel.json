@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/fichas", "destination": "/fichas-medicas-110.html" },
     { "source": "/menu", "destination": "/menu.html" },
     { "source": "/guia", "destination": "/guia_bins.html" },
     { "source": "/reporte", "destination": "/Reporte_Diario_WSP.html" },
@@ -8,7 +9,6 @@
     { "source": "/stock", "destination": "/stock-bins.html" },
     { "source": "/despacho", "destination": "/cosecha-despacho.html" },
     { "source": "/maquinaria", "destination": "/control-maquinaria.html" },
-    { "source": "/fichas", "destination": "/fichas-medicas-110.html" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
