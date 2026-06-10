@@ -1,0 +1,1630 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Fichas Médicas — Grupo Rocío</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;font-family:'Plus Jakarta Sans',sans-serif;background:#f1f3f7;color:#111827;}
+#root{height:100%;}
+
+/* ── PRINT ── */
+#print-frame { display: none; }
+@media print {
+  #print-frame { display: block !important; }
+  #root        { display: none !important; }
+  @page        { size: A4; margin: 10mm 12mm; }
+}
+
+/* ── TOPBAR ── */
+.top{height:54px;background:#0f172a;display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.3);}
+.top-left{display:flex;align-items:center;gap:12px;}
+.logo{background:#c8102e;color:#fff;font-weight:800;font-size:12px;padding:4px 10px;border-radius:3px;}
+.top-title{font-size:13px;font-weight:700;color:#fff;}
+.top-sub{font-size:9px;color:rgba(255,255,255,.35);margin-top:1px;}
+.top-right{display:flex;gap:8px;}
+
+/* ── BUTTONS ── */
+.btn{padding:8px 15px;border-radius:5px;font-size:12px;font-weight:700;cursor:pointer;border:none;font-family:inherit;transition:all .15s;display:inline-flex;align-items:center;gap:5px;}
+.btn-red{background:#c8102e;color:#fff;} .btn-red:hover{background:#a80d26;}
+.btn-dark{background:rgba(255,255,255,.1);color:#fff;border:1.5px solid rgba(255,255,255,.2);}
+.btn-white{background:#fff;color:#111827;border:1.5px solid #e5e7eb;}
+.btn-green{background:#15803d;color:#fff;}
+.btn-ghost{background:#f3f4f6;color:#374151;border:1.5px solid #e5e7eb;}
+.btn-sm{padding:6px 12px;font-size:11px;}
+
+/* ── LISTA ── */
+.list-screen{max-width:980px;margin:0 auto;padding:28px 20px;}
+.list-header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:14px;}
+.list-header h1{font-size:24px;font-weight:800;color:#0f172a;}
+.list-header p{font-size:12px;color:#9ca3af;margin-top:3px;}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
+.stat{background:#fff;border-radius:8px;padding:14px 18px;box-shadow:0 1px 4px rgba(0,0,0,.07);}
+.stat-n{font-size:26px;font-weight:800;line-height:1;}
+.stat-l{font-size:10px;color:#9ca3af;margin-top:3px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
+.s-green .stat-n{color:#16a34a;} .s-red .stat-n{color:#c8102e;} .s-orange .stat-n{color:#d97706;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;}
+.rcard{background:#fff;border-radius:8px;padding:16px 18px;box-shadow:0 1px 4px rgba(0,0,0,.07);border:2px solid transparent;cursor:pointer;transition:all .18s;}
+.rcard:hover{border-color:#c8102e;box-shadow:0 4px 14px rgba(200,16,46,.12);transform:translateY(-2px);}
+.av{width:40px;height:40px;border-radius:50%;background:#f1f3f7;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#0f172a;margin-bottom:4px;border:2px solid #e5e7eb;}
+.rname{font-size:14px;font-weight:700;color:#0f172a;margin-bottom:2px;}
+.rdni{font-size:10px;color:#9ca3af;margin-bottom:3px;}
+.rtags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px;}
+.rtag{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;background:#f1f3f7;color:#6b7280;}
+.apill{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;color:#fff;}
+.rfooter{display:flex;justify-content:space-between;padding-top:8px;border-top:1px solid #f3f4f6;}
+.redit{font-size:11px;font-weight:700;color:#c8102e;background:none;border:none;cursor:pointer;font-family:inherit;}
+.rdel{font-size:11px;font-weight:700;color:#9ca3af;background:none;border:none;cursor:pointer;font-family:inherit;}
+.rdel:hover{color:#dc2626;}
+.addcard{background:rgba(200,16,46,.04);border:2px dashed rgba(200,16,46,.3);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;cursor:pointer;padding:24px 16px;min-height:150px;transition:all .18s;}
+.addcard:hover{background:rgba(200,16,46,.08);border-color:#c8102e;}
+.addicon{width:38px;height:38px;border-radius:50%;background:#c8102e;color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;}
+.addlbl{font-size:13px;font-weight:700;color:#c8102e;}
+.addsub{font-size:11px;color:#9ca3af;}
+
+/* ── FORMULARIO ── */
+.form-screen{display:flex;flex-direction:column;height:calc(100vh - 54px);}
+.form-bar{background:#fff;padding:10px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e5e7eb;flex-shrink:0;flex-wrap:wrap;gap:8px;}
+.back-btn{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:#6b7280;background:none;border:none;cursor:pointer;font-family:inherit;padding:6px 10px;border-radius:4px;}
+.back-btn:hover{background:#f3f4f6;color:#111827;}
+.ftitle h2{font-size:15px;font-weight:800;color:#0f172a;}
+.ftitle p{font-size:10px;color:#9ca3af;margin-top:1px;}
+.tabs{display:flex;background:#f8fafc;border-bottom:2px solid #e5e7eb;padding:0 24px;flex-shrink:0;}
+.tab{padding:12px 20px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border:none;background:none;cursor:pointer;color:#9ca3af;border-bottom:3px solid transparent;margin-bottom:-2px;font-family:inherit;transition:all .15s;}
+.tab:hover{color:#c8102e;} .tab.on{color:#c8102e;border-bottom-color:#c8102e;}
+.fscroll{flex:1;overflow-y:auto;padding:20px 24px 50px;}
+.fcard{background:#fff;border-radius:8px;box-shadow:0 1px 6px rgba(0,0,0,.07);overflow:hidden;max-width:880px;margin:0 auto;}
+.fcard-head{background:#0f172a;color:#fff;padding:11px 20px;display:flex;align-items:center;justify-content:space-between;}
+.fcard-title{font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;}
+.fcard-code{font-size:9px;opacity:.4;}
+.fcard-foot{padding:14px 20px;background:#fafafa;border-top:1px solid #f3f4f6;display:flex;justify-content:flex-end;gap:8px;}
+
+/* ── CAMPOS ── */
+.fw{padding:18px 20px 26px;}
+.sc{background:#0f172a;color:#fff;padding:5px 11px;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin:18px -20px 11px;border-left:4px solid #c8102e;}
+.sl{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9ca3af;margin:10px 0 7px;}
+.fg{display:grid;gap:11px;margin-bottom:2px;}
+.fg1{grid-template-columns:1fr;}
+.fg2{grid-template-columns:repeat(2,1fr);}
+.fg3{grid-template-columns:repeat(3,1fr);}
+.fg4{grid-template-columns:repeat(4,1fr);}
+@media(max-width:620px){.fg2,.fg3,.fg4{grid-template-columns:1fr 1fr;}}
+@media(max-width:380px){.fg2,.fg3,.fg4{grid-template-columns:1fr;}}
+.ff{display:flex;flex-direction:column;gap:3px;margin-bottom:2px;}
+.fl{font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#4b5563;}
+.fi{padding:8px 10px;border:1.5px solid #d1d5db;border-radius:5px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:#0f172a;background:#fafafa;width:100%;transition:all .15s;}
+.fi:focus{outline:none;border-color:#c8102e;box-shadow:0 0 0 3px rgba(200,16,46,.09);background:#fff;}
+.lab{display:flex;gap:10px;padding:12px;background:#f8fafc;border:1.5px solid #e5e7eb;border-radius:6px;margin-bottom:3px;}
+.labn{font-size:18px;font-weight:900;color:#d1d5db;padding-top:2px;min-width:20px;}
+.aptbox{background:#f8fafc;border:1.5px solid #e5e7eb;border-radius:6px;padding:13px;margin:13px 0 9px;}
+.apttitle{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#374151;margin-bottom:9px;}
+.aptrow{display:flex;gap:7px;flex-wrap:wrap;}
+.aptopt{display:flex;align-items:center;gap:5px;padding:7px 12px;border:2px solid #d1d5db;border-radius:5px;cursor:pointer;font-size:10.5px;font-weight:700;text-transform:uppercase;color:#6b7280;transition:all .15s;background:#fff;}
+.aptopt input{display:none;} .aptopt:hover{border-color:#c8102e;color:#c8102e;}
+.aptopt.on{border-color:#c8102e;background:#c8102e;color:#fff;}
+.cgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:5px;margin-bottom:4px;}
+@media(max-width:500px){.cgrid{grid-template-columns:1fr;}}
+.ck{display:flex;align-items:flex-start;gap:7px;padding:8px 10px;border:1.5px solid #e5e7eb;border-radius:5px;cursor:pointer;font-size:11.5px;color:#374151;background:#fafafa;transition:all .15s;line-height:1.4;}
+.ck:hover{border-color:#c8102e;background:#fef2f4;} .ck input{margin-top:3px;accent-color:#c8102e;flex-shrink:0;}
+.medrow{display:flex;align-items:center;gap:12px;margin-bottom:9px;flex-wrap:wrap;}
+.rl{display:flex;align-items:center;gap:4px;font-size:13px;font-weight:700;cursor:pointer;}
+.rl input{accent-color:#c8102e;}
+.dopt{display:flex;align-items:center;gap:9px;padding:12px 14px;border:2px solid #d1d5db;border-radius:5px;cursor:pointer;font-size:13px;color:#374151;background:#fff;transition:all .15s;}
+.dopt input{accent-color:#c8102e;} .dopt:hover{border-color:#c8102e;}
+.dopt.on{border-color:#c8102e;background:#fef2f4;font-weight:700;color:#c8102e;}
+.legal{font-size:11px;line-height:1.7;color:#6b7280;padding:11px;background:#f3f4f6;border-radius:5px;border:1px solid #e5e7eb;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:22px;right:22px;padding:11px 18px;border-radius:6px;font-size:12px;font-weight:600;color:#fff;z-index:9999;box-shadow:0 4px 18px rgba(0,0,0,.2);}
+.t-ok{background:#15803d;} .t-err{background:#dc2626;}
+
+/* ── MODAL ── */
+.ov{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9000;display:flex;align-items:flex-start;justify-content:center;padding-top:20px;overflow-y:auto;}
+.modal{background:#fff;border-radius:10px;padding:24px;max-width:340px;width:90%;box-shadow:0 8px 30px rgba(0,0,0,.5);position:relative;z-index:9001;}
+.modal h3{font-size:15px;font-weight:800;margin-bottom:7px;}
+.modal p{font-size:12px;color:#6b7280;margin-bottom:18px;line-height:1.6;}
+.mbtns{display:flex;gap:8px;justify-content:flex-end;}
+
+/* ── ESTILOS DE IMPRESION EN TABLA ── */
+.ptd{border:1px solid #bbb;padding:3px 5px;font-size:9px;vertical-align:top;}
+.pth{border:1px solid #999;padding:3px 5px;font-size:9px;vertical-align:top;background:#1a2332;color:#fff;font-weight:700;text-align:center;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<!-- CONTENEDOR DE IMPRESION SEPARADO DEL APP -->
+<div id="print-frame"></div>
+
+<script type="text/babel">
+const { useState } = React;
+
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const EF = () => ({
+  fechaExamen:"",area:"",empresa:"",apellidosNombres:"",genero:"",edad:"",dni:"",
+  alergias:"",bronquitis:"",hepatitis:"",salmonelosis:"",tbc:"",fiebreTifoidea:"",asma:"",colera:"",otros:"",
+  padre:"",madre:"",hermanos:"",abuelos:"",fur:"",aco:"",gestas:"",paridad:"",observaciones:"",
+  empresa1:"",areaTrabajo1:"",ocupacion1:"",accidentes1:"",fechaI1:"",fechaF1:"",exposicion1:"",
+  empresa2:"",areaTrabajo2:"",ocupacion2:"",accidentes2:"",fechaI2:"",fechaF2:"",exposicion2:"",
+  frecuenciaCardiaca:"",frecuenciaRespiratoria:"",saturacion:"",presionArterial:"",
+  talla:"",peso:"",imc:"",anamnesis:"",columna:"",miembrosSuperiores:"",miembrosInferiores:"",marcha:"",
+  aptitudMedica:"",restricciones:""
+});
+const ED = () => ({
+  fecha:"",edad:"",apellidosNombres:"",genero:"",fechaNacimiento:"",area:"",sede:"",puesto:"",
+  corazon:false,hipertension:false,diabetes:false,convulsiones:false,inmunoDepresora:false,
+  conadis:false,cerebrovascular:false,cancer:false,rinones:false,respiratorias:false,
+  diarreas:false,coloracionPiel:false,trasplante:false,operaciones60:false,fiebre:false,
+  lesioniesPiel:false,golpes:false,saludMental:false,otraEnfermedad:false,otraEnfermedadDetalle:"",
+  usaMedicamentos:"",detalleMedicamentos:"",declaracion:""
+});
+const NR = () => ({ id: Date.now()+Math.random(), ficha: EF(), decl: ED() });
+
+const CONDS = [
+  ["corazon","Enfermedades al corazón"],["hipertension","Hipertensión arterial"],
+  ["diabetes","Diabetes Mellitus tipo 1 o 2"],["convulsiones","Convulsiones y/o epilepsia"],
+  ["inmunoDepresora","Enfermedades inmunodepresoras (VIH, Artritis, Lupus)"],
+  ["conadis","Portador carné CONADIS / discapacidad física"],
+  ["cerebrovascular","Enfermedad cerebrovascular"],["cancer","Cáncer"],
+  ["rinones","Enfermedades de los riñones"],["respiratorias","Enfermedades respiratorias"],
+  ["diarreas","Diarreas y/o vómitos (últimos 2 días)"],
+  ["coloracionPiel","Cambio de coloración en la piel (amarilla)"],
+  ["trasplante","Operado por trasplante de órganos"],
+  ["operaciones60","Operaciones en los últimos 60 días"],
+  ["fiebre","Fiebre en los últimos 2 días (T >37.5°C)"],
+  ["lesioniesPiel","Lesiones en piel y/o uñas"],
+  ["golpes","Golpes, caídas y/o lesiones en el último año"],
+  ["saludMental","Tratamiento médico por depresión, ansiedad u otro problema mental"],
+  ["otraEnfermedad","Otra enfermedad no detallada en la lista"]
+];
+
+const AC = a => ({APTO:"#16a34a","NO APTO":"#dc2626",OBSERVADO:"#d97706","APTO CON RESTRICCIONES":"#2563eb"}[a]||"#9ca3af");
+const GN = r => r.ficha.apellidosNombres || r.decl.apellidosNombres || "Nuevo colaborador";
+const V  = x => x||"";
+
+// ── GENERADOR HTML DE IMPRESION ───────────────────────────────────────────────
+function buildFichaHTML(d) {
+  var v = function(x){ return x||""; };
+
+  // Header igual al original: logo izq | titulo centro | codigo der
+  var HDR = function(pag){
+    return '<table style="width:100%;border-collapse:collapse;margin-bottom:6px;">'
+      +'<tr>'
+      +'<td style="border:2px solid #000;padding:8px;width:120px;text-align:center;vertical-align:middle;">'
+      +'<img src="data:image/jpeg;base64,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" style="width:75px;height:75px;object-fit:contain;display:block;margin:0 auto;"/>'
+      +'</td>'
+      +'<td style="border:2px solid #000;padding:8px 12px;text-align:center;vertical-align:middle;">'
+      +'<span style="font-size:16px;font-weight:900;letter-spacing:0.5px;">FICHA M&#201;DICA PARA COLABORADOR CAPTADO</span>'
+      +'</td>'
+      +'<td style="border:2px solid #000;padding:6px 10px;width:150px;vertical-align:top;font-size:9.5px;line-height:1.9;">'
+      +'<b>C&#243;digo: F-GSS-25-06</b><br>'
+      +'<b>Fecha de Emisi&#243;n:</b><br>01/10/2025<br>'
+      +'<b>P&#225;gina: '+pag+' de 2</b>'
+      +'</td>'
+      +'</tr></table>';
+  };
+
+  var FOOT = '<p style="font-size:8px;text-align:center;color:#444;border-top:1px solid #aaa;padding-top:5px;margin-top:8px;">'
+    +'El presente documento es propiedad del Grupo Roc&#237;o; por lo tanto, queda prohibida su reproducci&#243;n total o parcial sin autorizaci&#243;n expresa del &#193;rea SIG.'
+    +'</p>';
+
+  var B = 'border:1.5px solid #000;'; // borde fuerte
+  var b = 'border:1px solid #999;';   // borde suave interior
+  var P = 'padding:5px 8px;';
+  var F = 'font-size:10.5px;';
+  var TD  = B+P+F+'vertical-align:top;';
+  var TDi = b+P+F+'vertical-align:top;';
+
+  /* ══════════════════ PÁGINA 1 ══════════════════ */
+  var p1 = '<div style="font-family:Arial,sans-serif;font-size:10.5px;color:#000;background:white;width:210mm;height:297mm;padding:12mm 14mm;page-break-after:always;box-sizing:border-box;display:flex;flex-direction:column;">'
+    + HDR('1')
+
+    // Fecha / Área / Empresa
+    +'<table style="width:100%;border-collapse:collapse;margin-bottom:0;">'
+    +'<tr>'
+    +'<td style="'+TD+'width:50%;"><b>FECHA DE EXAMEN DE PRE-INGRESO:</b><br>&nbsp;&nbsp;'+v(d.fechaExamen)+'&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;/</td>'
+    +'<td style="'+TD+'"><b>&#193;REA A LA QUE POSTULA:</b><br>'+v(d.area)+'</td>'
+    +'</tr>'
+    +'<tr><td colspan="2" style="'+TD+'"><b>EMPRESA:</b> '+v(d.empresa)+'</td></tr>'
+    +'</table>'
+
+    // 1. Filiación
+    +'<table style="width:100%;border-collapse:collapse;margin-bottom:0;">'
+    +'<tr><td colspan="6" style="'+TD+'font-weight:700;">1.&nbsp; FILIACI&#211;N:</td></tr>'
+    +'</table>'
+    +'<table style="width:100%;border-collapse:collapse;margin-bottom:0;">'
+    +'<tr>'
+    // Apellidos - celda grande izquierda, rowspan 2
+    +'<td style="'+TD+'width:40%;height:52px;" rowspan="2"><b>APELLIDOS Y NOMBRES:</b><br>'+v(d.apellidosNombres)+'</td>'
+    // Género label
+    +'<td style="'+TD+'width:55px;text-align:center;font-weight:700;" rowspan="2">G&#233;nero</td>'
+    // Femenino y No binario en primera fila
+    +'<td style="'+TDi+'">'+v(d.genero==='Femenino'?'&#10003;':'')+' Femenino</td>'
+    +'<td style="'+TDi+'">'+v(d.genero==='No binario / Otro'?'&#10003;':'')+' No binario /<br>Otro</td>'
+    +'</tr>'
+    +'<tr>'
+    +'<td style="'+TDi+'">'+v(d.genero==='Masculino'?'&#10003;':'')+' Masculino</td>'
+    +'<td style="'+TDi+'">'+v(d.genero==='Prefiero no responder'?'&#10003;':'')+' Prefiero no<br>responder</td>'
+    +'</tr>'
+    +'<tr style="height:28px;">'
+    +'<td colspan="2" style="'+TD+'"><b>EDAD:</b> '+v(d.edad)+'</td>'
+    +'<td colspan="2" style="'+TD+'"><b>DNI:</b> '+v(d.dni)+'</td>'
+    +'</tr>'
+    +'</table>'
+
+    // 2. Antecedentes patológicos
+    +'<table style="width:100%;border-collapse:collapse;margin-bottom:0;">'
+    +'<tr><td colspan="5" style="'+TD+'font-weight:700;">2.&nbsp; ANTECEDENTES PATOLOGICOS</td></tr>'
+    // Personales con etiqueta vertical
+    +'<tr>'
+    +'<td rowspan="4" style="'+B+'padding:4px 3px;width:18px;font-size:8px;font-weight:700;writing-mode:vertical-lr;transform:rotate(180deg);text-align:center;letter-spacing:2px;background:#f5f5f5;">PERSONALES</td>'
+    +'<td style="'+TDi+'font-weight:700;width:22%;">ALERGIAS</td>'
+    +'<td style="'+TDi+'width:6%;min-height:26px;">'+v(d.alergias)+'</td>'
+    +'<td style="'+TDi+'font-weight:700;width:22%;">BRONQUITIS AGUDA</td>'
+    +'<td style="'+TDi+'width:6%;">'+v(d.bronquitis)+'</td>'
+    +'</tr>'
+    +'<tr>'
+    +'<td style="'+TDi+'font-weight:700;">HEPATITIS</td>'
+    +'<td style="'+TDi+'">'+v(d.hepatitis)+'</td>'
+    +'<td style="'+TDi+'font-weight:700;">SALMONELOSIS</td>'
+    +'<td style="'+TDi+'">'+v(d.salmonelosis)+'</td>'
+    +'</tr>'
+    +'<tr>'
+    +'<td style="'+TDi+'font-weight:700;">TBC</td>'
+    +'<td style="'+TDi+'">'+v(d.tbc)+'</td>'
+    +'<td style="'+TDi+'font-weight:700;">FIEBRE TIFOIDEA</td>'
+    +'<td style="'+TDi+'">'+v(d.fiebreTifoidea)+'</td>'
+    +'</tr>'
+    +'<tr>'
+    +'<td style="'+TDi+'font-weight:700;">ASMA</td>'
+    +'<td style="'+TDi+'">'+v(d.asma)+'</td>'
+    +'<td style="'+TDi+'font-weight:700;">COLERA</td>'
+    +'<td style="'+TDi+'">'+v(d.colera)+'</td>'
+    +'<td style="'+TDi+'font-weight:700;width:9%;">OTROS</td>'
+    +'<td style="'+TDi+'">'+v(d.otros)+'</td>'
+    +'</tr>'
+    +'<tr>'
+    +'<td rowspan="2" style="'+B+'padding:4px 3px;width:18px;font-size:8px;font-weight:700;writing-mode:vertical-lr;transform:rotate(180deg);text-align:center;letter-spacing:2px;background:#f5f5f5;">FAMILIARES</td>'
+    +'<td style="'+TDi+'font-weight:700;">PADRE</td>'
+    +'<td style="'+TDi+'">'+v(d.padre)+'</td>'
+    +'<td style="'+TDi+'font-weight:700;width:22%;">HERMANOS</td>'
+    +'<td style="'+TDi+'">'+v(d.hermanos)+'</td>'
+    +'</tr>'
+    +'<tr>'
+    +'<td style="'+TDi+'font-weight:700;">MADRE</td>'
+    +'<td style="'+TDi+'">'+v(d.madre)+'</td>'
+    +'<td style="'+TDi+'font-weight:700;">ABUELOS</td>'
+    +'<td style="'+TDi+'">'+v(d.abuelos)+'</td>'
+    +'</tr>'
+    +'</table>'
+
+    // 3. Obstétricos — VERTICAL como el original
+    +'<table style="width:100%;border-collapse:collapse;margin-bottom:0;">'
+    +'<tr><td colspan="2" style="'+TD+'font-weight:700;">3.&nbsp; ANTECEDENTES OBSTETRICOS:</td></tr>'
+    +'<tr style="height:28px;"><td style="'+TD+'width:120px;font-weight:700;">FUR:</td><td style="'+TD+'">'+v(d.fur)+'</td></tr>'
+    +'<tr style="height:28px;"><td style="'+TD+'font-weight:700;">ACO:</td><td style="'+TD+'">'+v(d.aco)+'</td></tr>'
+    +'<tr style="height:28px;"><td style="'+TD+'font-weight:700;">GESTAS:</td><td style="'+TD+'">'+v(d.gestas)+'</td></tr>'
+    +'<tr style="height:28px;"><td style="'+TD+'font-weight:700;">PARIDAD:</td><td style="'+TD+'">'+v(d.paridad)+'</td></tr>'
+    +'<tr><td colspan="2" style="'+TD+'height:70px;"><b>OBSERVACIONES</b> (, MEDICAMENTOS QUE CONSUME HABITUALMENTE, ETC)<br>'+v(d.observaciones)+'</td></tr>'
+    +'</table>'
+
+    // 4. Laborales
+    +'<table style="width:100%;border-collapse:collapse;margin-bottom:0;">'
+    +'<tr><td colspan="7" style="'+TD+'font-weight:700;">4.&nbsp; ANTECEDENTES LABORALES</td></tr>'
+    +'<tr>'
+    +'<th style="'+TDi+'font-style:italic;text-align:center;">EMPRESA</th>'
+    +'<th style="'+TDi+'font-style:italic;text-align:center;">&#193;REA DE<br>TRABAJO</th>'
+    +'<th style="'+TDi+'font-style:italic;text-align:center;">OCUPACI&#211;N</th>'
+    +'<th style="'+TDi+'font-style:italic;text-align:center;">ACCIDENTES Y/O<br>ENFERMEDADES</th>'
+    +'<th style="'+TDi+'font-style:italic;text-align:center;" colspan="2">FECHA</th>'
+    +'<th style="'+TDi+'font-style:italic;text-align:center;">EXPOSICI&#211;N<br>OCUPACIONAL</th>'
+    +'</tr>'
+    +[1,2].map(function(i){
+      return '<tr style="height:24px;">'
+        +'<td style="'+TDi+'">'+v(d['empresa'+i])+'</td>'
+        +'<td style="'+TDi+'">'+v(d['areaTrabajo'+i])+'</td>'
+        +'<td style="'+TDi+'">'+v(d['ocupacion'+i])+'</td>'
+        +'<td style="'+TDi+'">'+v(d['accidentes'+i])+'</td>'
+        +'<td style="'+TDi+'font-size:9px;width:45px;"><b>I</b><br>'+v(d['fechaI'+i])+'</td>'
+        +'<td style="'+TDi+'font-size:9px;width:45px;"><b>F</b><br>'+v(d['fechaF'+i])+'</td>'
+        +'<td style="'+TDi+'">'+v(d['exposicion'+i])+'</td>'
+        +'</tr>';
+    }).join('')
+    +'</table>'
+    + FOOT
+    +'</div>';
+
+  /* ══════════════════ PÁGINA 2 ══════════════════ */
+  var p2 = '<div style="font-family:Arial,sans-serif;font-size:10.5px;color:#000;background:white;width:210mm;height:297mm;padding:12mm 14mm;box-sizing:border-box;display:flex;flex-direction:column;">'
+    + HDR('2')
+
+    // 5. Examen físico — igual al original: 4 celdas grandes con etiquetas multilinea
+    +'<table style="width:100%;border-collapse:collapse;margin-bottom:0;">'
+    +'<tr><td colspan="4" style="'+TD+'font-weight:700;">5.&nbsp; EXAMEN FISICO</td></tr>'
+    +'<tr>'
+    +'<td style="'+TD+'text-align:center;width:25%;padding:8px;height:65px;"><b>FRECUENCIA<br>CARDIACA<br>LATIDOS X<br>MIN</b><br><br>'+v(d.frecuenciaCardiaca)+'</td>'
+    +'<td style="'+TD+'text-align:center;width:25%;padding:8px;"><b>FRECUENCIA<br>RESPIRATORIA X<br>MIN</b><br><br>'+v(d.frecuenciaRespiratoria)+'</td>'
+    +'<td style="'+TD+'text-align:center;width:25%;padding:8px;"><b>SATURACI&#211;N DE<br>OX&#205;GENO</b><br><br>'+v(d.saturacion)+'</td>'
+    +'<td style="'+TD+'text-align:center;width:25%;padding:8px;"><b>PRESI&#211;N ARTERIAL<br>(mm Hg)</b><br><br>'+v(d.presionArterial)+'</td>'
+    +'</tr>'
+    +'<tr>'
+    +'<td style="'+TD+'"><b>TALLA (cm.)</b><br>'+v(d.talla)+'</td>'
+    +'<td style="'+TD+'"><b>PESO (Kg.)</b><br>'+v(d.peso)+'</td>'
+    +'<td style="'+TD+'"><b>IMC P/T2</b><br>'+v(d.imc)+'</td>'
+    +'<td style="'+TD+'"></td>'
+    +'</tr>'
+    +'<tr><td colspan="4" style="'+TD+'height:60px;"><b>ANAMNESIS:</b><br>'+v(d.anamnesis)+'</td></tr>'
+    +'</table>'
+
+    // Musculoesquelético
+    +'<table style="width:100%;border-collapse:collapse;margin-bottom:0;">'
+    +'<tr><td colspan="2" style="'+TD+'font-weight:700;">EXAMEN MUSCULOESQUELETICA</td></tr>'
+    +'<tr><td style="'+TD+'width:35%;font-style:italic;font-weight:700;height:36px;">COLUMNA</td><td style="'+TD+'">'+v(d.columna)+'</td></tr>'
+    +'<tr><td style="'+TD+'font-style:italic;font-weight:700;height:36px;">MIEMBROS SUPERIORES</td><td style="'+TD+'">'+v(d.miembrosSuperiores)+'</td></tr>'
+    +'<tr><td style="'+TD+'font-style:italic;font-weight:700;height:36px;">MIEMBROS INFERIORES</td><td style="'+TD+'">'+v(d.miembrosInferiores)+'</td></tr>'
+    +'<tr><td style="'+TD+'font-style:italic;font-weight:700;height:36px;">MARCHA</td><td style="'+TD+'">'+v(d.marcha)+'</td></tr>'
+    +'</table>'
+
+    // Aptitud médica — igual al original: checkbox grande cuadrado, 2x2
+    +'<table style="width:100%;border-collapse:collapse;margin-bottom:0;">'
+    +'<tr>'
+    +'<td style="'+TD+'font-weight:700;width:130px;height:40px;" rowspan="2">APTITUD MEDICA:</td>'
+    +'<td style="'+TD+'">'
+    +'<span style="display:inline-block;width:16px;height:16px;border:2px solid #000;background:'+(d.aptitudMedica==='APTO'?'#000':'#fff')+';vertical-align:middle;margin-right:8px;"></span>'
+    +'APTO'
+    +'</td>'
+    +'<td style="'+TD+'">'
+    +'<span style="display:inline-block;width:16px;height:16px;border:2px solid #000;background:'+(d.aptitudMedica==='OBSERVADO'?'#000':'#fff')+';vertical-align:middle;margin-right:8px;"></span>'
+    +'OBSERVADO'
+    +'</td>'
+    +'</tr>'
+    +'<tr>'
+    +'<td style="'+TD+'">'
+    +'<span style="display:inline-block;width:16px;height:16px;border:2px solid #000;background:'+(d.aptitudMedica==='NO APTO'?'#000':'#fff')+';vertical-align:middle;margin-right:8px;"></span>'
+    +'NO APTO'
+    +'</td>'
+    +'<td style="'+TD+'">'
+    +'<span style="display:inline-block;width:16px;height:16px;border:2px solid #000;background:'+(d.aptitudMedica==='APTO CON RESTRICCIONES'?'#000':'#fff')+';vertical-align:middle;margin-right:8px;"></span>'
+    +'APTO CON RESTRICCIONES'
+    +'</td>'
+    +'</tr>'
+    +'<tr><td style="'+TD+'font-weight:700;height:55px;">RESTRICCIONES</td><td colspan="2" style="'+TD+'">'+v(d.restricciones)+'</td></tr>'
+    +'</table>'
+
+    // Firmas — igual al original
+    +'<table style="width:100%;border-collapse:collapse;margin-top:6px;">'
+    +'<tr>'
+    +'<td style="'+B+'padding:6px;width:45%;vertical-align:bottom;text-align:center;">'
+    +(d.firmaColaborador?'<img src="'+d.firmaColaborador+'" style="height:70px;max-width:100%;display:block;margin:0 auto 5px;"/>':'<div style="height:70px;"></div>')
+    +'<div style="border-top:1px solid #555;padding-top:4px;font-size:10px;font-weight:700;">FIRMA DEL TRABAJADOR</div>'
+    +'<div style="font-size:8px;color:#444;margin-top:3px;">Declaro que esta informaci&#243;n es verdadera y asumo cualquier responsabilidad que pudiera surgir en perjuicio propio o de la empresa, por errores, omisiones o falsedad de la misma.</div>'
+    +'</td>'
+    +'<td style="'+B+'padding:6px;width:18%;vertical-align:bottom;text-align:center;">'
+    +'<div style="height:60px;"></div>'
+    +'<div style="border-top:1px solid #555;padding-top:4px;font-size:10px;font-weight:700;">HUELLA</div>'
+    +'</td>'
+    +'<td style="'+B+'padding:6px;vertical-align:bottom;text-align:center;">'
+    +(d.firmaMedico?'<img src="'+d.firmaMedico+'" style="height:60px;max-width:100%;display:block;margin:0 auto 5px;"/>':'<div style="height:60px;"></div>')
+    +'<div style="border-top:1px solid #555;padding-top:4px;font-size:10px;font-weight:700;">SELLO Y FIRMA DEL M&#201;DICO</div>'
+    +'</td>'
+    +'</tr>'
+    +'</table>'
+    + FOOT
+    +'</div>';
+
+  return p1 + p2;
+}
+
+function buildDeclHTML(d) {
+  var v = function(x){ return x||""; };
+
+  var HDR = function(pag){
+    return '<table style="width:100%;border-collapse:collapse;margin-bottom:6px;">'
+      +'<tr>'
+      +'<td style="border:2px solid #000;padding:8px;width:120px;text-align:center;vertical-align:middle;">'
+      +'<img src="data:image/jpeg;base64,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" style="width:75px;height:75px;object-fit:contain;display:block;margin:0 auto;"/>'
+      +'</td>'
+      +'<td style="border:2px solid #000;padding:8px 12px;text-align:center;vertical-align:middle;">'
+      +'<span style="font-size:16px;font-weight:900;">DECLARACI&#211;N JURADA DE SALUD</span>'
+      +'</td>'
+      +'<td style="border:2px solid #000;padding:6px 10px;width:150px;vertical-align:top;font-size:9.5px;line-height:1.9;">'
+      +'<b>C&#243;digo: F-GSS-88-02</b><br>'
+      +'<b>Fecha de Emisi&#243;n:</b><br>01/10/2025<br>'
+      +'<b>P&#225;gina: '+pag+' de 2</b>'
+      +'</td>'
+      +'</tr></table>';
+  };
+
+  var FOOT = '<p style="font-size:8px;text-align:center;color:#444;border-top:1px solid #aaa;padding-top:5px;margin-top:8px;">'
+    +'El presente documento es propiedad del Grupo Roc&#237;o; por lo tanto, queda prohibida su reproducci&#243;n total o parcial sin autorizaci&#243;n expresa del &#193;rea SIG.'
+    +'</p>';
+
+  var B = 'border:1px solid #999;';
+  var P = 'padding:4px 8px;';
+  var F = 'font-size:10.5px;';
+  var TD = B+P+F+'vertical-align:top;';
+
+  // Condiciones columna izquierda — exactamente como el PDF
+  var condL = [
+    ["corazon","Enfermedades al coraz&#243;n"],
+    ["hipertension","Hipertensi&#243;n arterial"],
+    ["diabetes","Diabetes Mellitus tipo 1 o 2"],
+    ["convulsiones","Convulsiones y/o epilepsia"],
+    ["inmunoDepresora","Enfermedades inmunodepresoras<br>(Infecci&#243;n VIH, Artritis reumatoide, Lupus,<br>entre otras)."],
+    ["conadis","Portador de carn&#233; CONADIS o presentar<br>alguna discapacidad f&#237;sica."],
+    ["cerebrovascular","Enfermedad cerebrovascular"],
+    ["cancer","C&#225;ncer"],
+    ["rinones","Enfermedades de los ri&#241;ones"],
+    ["respiratorias","Enfermedades respiratorias"],
+    ["diarreas","Diarreas y/o v&#243;mitos en los &#250;ltimos dos<br>d&#237;as"],
+    ["coloracionPiel","Cambio de coloraci&#243;n en la piel<br>(coloraci&#243;n amarilla)"],
+    ["trasplante","Operado por trasplante de &#243;rganos"],
+    ["operaciones60","Operaciones en los &#250;ltimos 60 d&#237;as"],
+    ["fiebre","Fiebre en los &#250;ltimos 2 d&#237;as T: &gt;37.5"]
+  ];
+
+  // Condiciones columna derecha
+  var condR = [
+    ["lesioniesPiel","Lesiones en piel y/o u&#241;as (verrugas,<br>hongos en u&#241;as, manchas blancas en piel,<br>heridas o)"],
+    ["golpes","Golpes, ca&#237;das y/o <i><b>lesiones (fracturas,<br>esguinces, fisuras) en el &#250;ltimo a&#241;o.</b></i>"]
+  ];
+  var condR2 = [
+    ["saludMental","<i><b>Ha recibido tratamiento m&#233;dico o est&#225;<br>en seguimiento m&#233;dico por depresi&#243;n,<br>ansiedad u otro problema de salud<br>mental</b></i>"],
+    ["otraEnfermedad","<i><b>Presenta usted alguna u otra<br>enfermedad que no se encuentra detallada<br>en la lista</b></i>"]
+  ];
+
+  function mkRow(k, label) {
+    return '<div style="display:flex;align-items:flex-start;gap:5px;margin-bottom:5px;font-size:10.5px;">'
+      +'<span style="flex-shrink:0;font-family:monospace;font-size:11px;">[ '+(d[k]?'X':' ')+' ]</span>'
+      +'<span>'+label+'</span>'
+      +'</div>';
+  }
+
+  /* ══════════════════ PÁGINA 1 ══════════════════ */
+  var p1 = '<div style="font-family:Arial,sans-serif;font-size:10.5px;color:#000;background:white;width:210mm;height:297mm;padding:12mm 14mm;page-break-after:always;box-sizing:border-box;display:flex;flex-direction:column;">'
+    + HDR('1')
+
+    // Datos personales — tabla igual al original
+    +'<table style="width:100%;border-collapse:collapse;margin-bottom:10px;">'
+    +'<tr>'
+    +'<td style="'+TD+'width:55%;"><b>Fecha:</b> '+v(d.fecha)+'</td>'
+    +'<td style="'+TD+'"><b>Edad:</b> '+v(d.edad)+'</td>'
+    +'</tr>'
+    +'<tr>'
+    +'<td style="'+TD+'"><b>Apellidos y Nombres:</b> '+v(d.apellidosNombres)+'</td>'
+    +'<td style="'+TD+'"><b>G&#233;nero:</b> M( '+(d.genero==='M'?'X':' ')+' ) F( '+(d.genero==='F'?'X':' ')+' ) Otro( '+(d.genero==='Otro'?'X':' ')+' )</td>'
+    +'</tr>'
+    +'<tr><td colspan="2" style="'+TD+'"><b>Fecha de nacimiento:</b> '+v(d.fechaNacimiento)+'</td></tr>'
+    +'<tr>'
+    +'<td style="'+TD+'"><b>&#193;rea:</b> '+v(d.area)+'</td>'
+    +'<td style="'+TD+'"><b>Sede:</b> '+v(d.sede)+'</td>'
+    +'</tr>'
+    +'<tr><td colspan="2" style="'+TD+'"><b>Puesto de trabajo:</b> '+v(d.puesto)+'</td></tr>'
+    +'</table>'
+
+    // Texto introductorio
+    +'<p style="font-size:10.5px;line-height:1.7;margin-bottom:8px;text-align:justify;">'
+    +'A trav&#233;s del presente formulario y su declaraci&#243;n en calidad de declaraci&#243;n jurada, nos permitir&#225; conocer, de manera referencial, su estado de salud y recabar los antecedentes m&#233;dicos m&#225;s importantes declarados por usted, con la finalidad de poder protegerlo a usted, a sus familiares y, la de los dem&#225;s.'
+    +'</p>'
+    +'<p style="font-size:10.5px;font-weight:700;font-style:italic;margin-bottom:10px;text-align:justify;">'
+    +'Con el fin de contar con informaci&#243;n referencial sobre su salud, le pedimos que marque con una X si presenta alguna de estas condiciones de salud, marcando con una &#8220;X&#8221; seg&#250;n corresponda.'
+    +'</p>'
+
+    // Dos columnas de condiciones — igual al original
+    +'<table style="width:100%;border-collapse:collapse;">'
+    +'<tr>'
+    +'<td style="vertical-align:top;width:50%;padding:0 14px 0 0;">'
+    + condL.map(function(c){ return mkRow(c[0],c[1]); }).join('')
+    +'</td>'
+    +'<td style="vertical-align:top;padding:0 0 0 14px;border-left:1px solid #ccc;">'
+    + condR.map(function(c){ return mkRow(c[0],c[1]); }).join('')
+    // Uso de medicamentos
+    +'<div style="font-size:10.5px;margin:6px 0;">'
+    +'[ ] Uso de medicamentos:<br>'
+    +'SI ( '+(d.usaMedicamentos==='SI'?'X':' ')+' ) NO: ( '+(d.usaMedicamentos==='NO'?'X':' ')+' )<br>'
+    +'Detallar: '+v(d.detalleMedicamentos)+'<br>'
+    +'<div style="border-bottom:1px solid #666;margin:8px 0;width:90%;"></div>'
+    +'<div style="border-bottom:1px solid #666;width:60%;"></div>'
+    +'</div>'
+    + condR2.map(function(c){ return mkRow(c[0],c[1]); }).join('')
+    +'</td>'
+    +'</tr>'
+    +'</table>'
+
+    + FOOT
+    +'</div>';
+
+  /* ══════════════════ PÁGINA 2 ══════════════════ */
+  var p2 = '<div style="font-family:Arial,sans-serif;font-size:10.5px;color:#000;background:white;width:210mm;height:297mm;padding:12mm 14mm;box-sizing:border-box;display:flex;flex-direction:column;">'
+    + HDR('2')
+
+    +'<p style="font-size:10.5px;font-style:italic;font-weight:700;margin:8px 0 8px;padding-left:20px;">Marque con una X la opci&#243;n que corresponda:</p>'
+
+    // Tabla de declaración — igual al original con casilla a la derecha
+    +'<table style="width:100%;border-collapse:collapse;margin-bottom:12px;">'
+    +'<tr>'
+    +'<td style="border:1px solid #000;padding:6px 10px;font-size:10.5px;">'
+    +'Declaro <b>NO TENER</b> ninguna de estas condiciones de Salud'
+    +'</td>'
+    +'<td style="border:1px solid #000;width:50px;text-align:center;font-size:14px;font-weight:900;">'
+    +(d.declaracion==='NO_TENER'?'X':'')
+    +'</td>'
+    +'</tr>'
+    +'<tr>'
+    +'<td style="border:1px solid #000;padding:6px 10px;font-size:10.5px;">'
+    +'Declaro <b>TENER</b> una o varias de estas condiciones de Salud'
+    +'</td>'
+    +'<td style="border:1px solid #000;width:50px;text-align:center;font-size:14px;font-weight:900;">'
+    +(d.declaracion==='TENER'?'X':'')
+    +'</td>'
+    +'</tr>'
+    +'</table>'
+
+    // Texto legal — exacto del original, sangría izquierda
+    +'<div style="margin-left:20px;margin-right:10px;">'
+    +'<p style="font-size:10.5px;line-height:1.7;text-align:justify;margin-bottom:20px;">'
+    +'<b>DECLARO QUE LA INFORMACION BRINDADA EN ESTE DOCUMENTO ES VERDAD Y ACEPTO QUE SEA UTILIZADA PARA LOS FINES PERTINENTES</b>'
+    +', asimismo, declaro que, he sido informado que, de omitir declarar informaci&#243;n, puedo perjudicar la salud de mis compa&#241;eros de trabajo y la m&#237;a propia, asumiendo las responsabilidades que correspondan. De conformidad con lo establecido con la ley N&#176;29733, Ley de protecci&#243;n de datos personales, y su reglamento aprobado por decreto supremo N&#176; 003-2013-JUS, mediante la firma del presente documento, otorgo mi consentimiento libre, previo, informado, expreso e inequ&#237;voco para que mis datos personales y datos sensibles puedan ser tratados por las empresas del Grupo Rocio.'
+    +'</p>'
+    +'</div>'
+
+    // Firmas
+    +'<table style="width:80%;border-collapse:collapse;margin:0 auto;">'
+    +'<tr>'
+    +'<td style="border:1.5px solid #000;padding:8px;width:60%;text-align:center;vertical-align:bottom;">'
+    +(d.firmaColaborador?'<img src="'+d.firmaColaborador+'" style="height:65px;max-width:100%;display:block;margin:0 auto 5px;"/>':'<div style="height:65px;"></div>')
+    +'<div style="border-top:1px solid #555;padding-top:5px;font-size:10px;font-weight:700;">FIRMA DEL TRABAJADOR</div>'
+    +'</td>'
+    +'<td style="border:1.5px solid #000;padding:8px;text-align:center;vertical-align:bottom;">'
+    +'<div style="height:65px;"></div>'
+    +'<div style="border-top:1px solid #555;padding-top:5px;font-size:10px;font-weight:700;">HUELLA<br>DIGITAL</div>'
+    +'</td>'
+    +'</tr>'
+    +'</table>'
+
+    + FOOT
+    +'</div>';
+
+  return p1 + p2;
+}
+
+// ── IMPRIMIR ──────────────────────────────────────────────────────────────────
+function doPrint(html) {
+  var win = window.open("", "_blank");
+  if(!win){ alert("Permite ventanas emergentes en tu navegador."); return; }
+
+  var css = ''
+    + '*{box-sizing:border-box;margin:0;padding:0;}'
+    + 'html{background:#888;}'
+    + 'body{font-family:Arial,sans-serif;background:#888;margin:0;padding:16px 0;}'
+    + 'table{border-collapse:collapse;}'
+    // Cada div de página se muestra como hoja A4 en pantalla
+    + '.pgwrap{'
+    +   'background:white;'
+    +   'width:210mm;'
+    +   'min-height:297mm;'
+    +   'margin:0 auto 16px;'
+    +   'padding:12mm 14mm;'
+    +   'box-shadow:0 3px 16px rgba(0,0,0,.5);'
+    +   'display:block;'
+    + '}'
+    // Barra de botones
+    + '.topbtn{'
+    +   'position:sticky;top:0;z-index:99;'
+    +   'background:#0f172a;padding:10px 20px;'
+    +   'display:flex;justify-content:center;gap:14px;margin-bottom:16px;'
+    + '}'
+    + '.topbtn button{padding:10px 28px;font-size:14px;font-weight:700;border:none;border-radius:5px;cursor:pointer;font-family:Arial;}'
+    + '.bp{background:#c8102e;color:white;font-size:15px;}'
+    + '.bc{background:#6b7280;color:white;}'
+    // Al imprimir: sin fondo gris, sin botones, cada .pgwrap = 1 hoja
+    + '@page{size:A4 portrait;margin:0;}'
+    + '@media print{'
+    +   '.topbtn{display:none!important;}'
+    +   'html,body{background:white;padding:0;margin:0;}'
+    +   '.pgwrap{'
+    +     'width:100%;min-height:auto;margin:0;'
+    +     'padding:12mm 14mm;box-shadow:none;'
+    +     'page-break-after:always;'
+    +   '}'
+    +   '.pgwrap:last-child{page-break-after:avoid;}'
+    + '}';
+
+  // Envolver cada página (div con page-break-after) en un .pgwrap
+  // Los divs de página tienen style con page-break-after:always o son el último
+  var wrapped = html
+    // Página con page-break-after → .pgwrap
+    .replace(
+      /<div style="font-family:Arial[^"]*page-break-after:always[^"]*">/g,
+      '<div class="pgwrap">'
+    )
+    // Última página (sin page-break-after) → .pgwrap también
+    .replace(
+      /<div style="font-family:Arial[^"]*min-height:297mm[^"]*padding:12mm 14mm;">/g,
+      '<div class="pgwrap">'
+    );
+
+  var fullPage = '<!DOCTYPE html>'
+    + '<html><head><meta charset="UTF-8"/>'
+    + '<meta name="viewport" content="width=device-width,initial-scale=1"/>'
+    + '<title>Grupo Roc&#237;o — Documentos</title>'
+    + '<style>'+css+'</style>'
+    + '</head><body>'
+    + '<div class="topbtn">'
+    + '<button class="bp" onclick="window.print()">&#128438;&nbsp; Imprimir / Guardar PDF</button>'
+    + '<button class="bc" onclick="window.close()">&#x2715; Cerrar</button>'
+    + '</div>'
+    + wrapped
+    + '</body></html>';
+
+  win.document.write(fullPage);
+  win.document.close();
+}
+
+// ── EXCEL ─────────────────────────────────────────────────────────────────────
+function calcIMC(peso, talla) {
+  const p = parseFloat(peso), t = parseFloat(talla);
+  if(!p || !t || t === 0) return "";
+  const imc = p / (t * t);
+  if(imc < 18.5) return "BAJO PESO";
+  if(imc < 25)   return "NORMAL";
+  if(imc < 30)   return "SOBRE PESO";
+  if(imc < 35)   return "OBESIDAD 1";
+  if(imc < 40)   return "OBESIDAD 2";
+  return "OBESIDAD 3";
+}
+
+function exportAll(records) {
+  const wb = XLSX.utils.book_new();
+
+  // Colores exactos del Excel original del cliente
+  const blue   = {rgb:"9BC2E6"};  // azul claro encabezado
+  const white  = {rgb:"FFFFFF"};
+  const dark   = {rgb:"000000"};
+  const stripe = {rgb:"DDEBF7"};  // azul muy claro filas pares
+
+  const brd = {
+    top:{style:"thin",color:{rgb:"AAAAAA"}},
+    bottom:{style:"thin",color:{rgb:"AAAAAA"}},
+    left:{style:"thin",color:{rgb:"AAAAAA"}},
+    right:{style:"thin",color:{rgb:"AAAAAA"}}
+  };
+
+  // Estilo encabezado — igual al original: fondo azul, negrita, centrado
+  const hS = {
+    font:{bold:true, sz:10, color:dark},
+    fill:{fgColor:blue},
+    alignment:{horizontal:"center", vertical:"center", wrapText:true},
+    border:brd
+  };
+  // Fila de datos normal
+  const dS = {
+    font:{sz:10, color:dark},
+    fill:{fgColor:white},
+    alignment:{horizontal:"center", vertical:"center", wrapText:true},
+    border:brd
+  };
+  // Fila de datos (nombre — alineado a la izquierda)
+  const dSL = {
+    font:{sz:10, color:dark},
+    fill:{fgColor:white},
+    alignment:{horizontal:"left", vertical:"center", wrapText:true},
+    border:brd
+  };
+  // Fila alterna
+  const dSA = {
+    font:{sz:10, color:dark},
+    fill:{fgColor:stripe},
+    alignment:{horizontal:"center", vertical:"center", wrapText:true},
+    border:brd
+  };
+  const dSAL = {
+    font:{sz:10, color:dark},
+    fill:{fgColor:stripe},
+    alignment:{horizontal:"left", vertical:"center", wrapText:true},
+    border:brd
+  };
+
+  // ── HOJA PRINCIPAL: exactamente igual al Excel del cliente ──
+  // Columnas: N° | FECHA DE EVALUACION | NOMBRES Y APELLIDOS | DNI | SEXO |
+  //           FECHA DE NACIMIENTO | AREA | SEDE | PESO | TALLA | IMC |
+  //           DIAGNOSTICO | FUR | ACO | ALERGIA | ANTECEDENTES PATOLOGICOS |
+  //           ANTECEDENTES QUIRURGICOS | DIAGNOSTICOS | APTITUD MEDICA | TELEFONO
+
+  const HEADERS = [
+    "N°","FECHA DE EVALUACION","NOMBRES Y APELLIDOS","DNI","SEXO",
+    "FECHA DE NACIMIENTO","AREA","SEDE","PESO","TALLA","IMC",
+    "DIAGNOSTICO","FUR","ACO","ALERGIA","ANTECEDENTES PATOLOGICOS",
+    "ANTECEDENTES QUIRURGICOS","DIAGNOSTICOS","APTITUD MEDICA","TELEFONO"
+  ];
+
+  const COL_WIDTHS = [7, 12, 42, 16.5, 7.5, 17, 31, 17, 11.5, 22, 14.5, 11.5, 25, 21.5, 20, 14, 15.5, 20, 14, 20];
+
+  const dataRows = records.map((r, i) => {
+    const f = r.ficha;
+    const d = r.decl;
+    // Usar datos de ficha médica; si no hay nombre buscar en declaración
+    const nombre    = f.apellidosNombres || d.apellidosNombres || "";
+    const dni       = f.dni || d.apellidosNombres || "";
+    const sexo      = f.genero ? (f.genero==="Masculino"?"M":f.genero==="Femenino"?"F":f.genero) : (d.genero||"");
+    const fechaEval = f.fechaExamen || d.fecha || "";
+    const fechaNac  = d.fechaNacimiento || "";
+    const area      = f.area || d.area || "";
+    const sede      = f.empresa || d.sede || "";
+    const peso      = f.peso || "";
+    const talla     = f.talla ? (parseFloat(f.talla) > 3 ? (parseFloat(f.talla)/100).toFixed(2) : f.talla) : "";
+    const tallaNum  = talla ? parseFloat(talla) : 0;
+    const pesoNum   = peso ? parseFloat(peso) : 0;
+    const imcVal    = (pesoNum && tallaNum) ? (pesoNum/(tallaNum*tallaNum)).toFixed(2) : "";
+    const diagImc   = calcIMC(pesoNum, tallaNum);
+    const fur       = f.fur || "NA";
+    const aco       = f.aco || "NA";
+    const alergia   = f.alergias || "NIEGA";
+    const antecPat  = [f.tbc&&"TBC",f.asma&&"ASMA",f.hepatitis&&"HEPATITIS",f.otros].filter(Boolean).join(", ")||"NIEGA";
+    const antecQuir = f.observaciones || "NIEGA";
+    const diagClin  = f.anamnesis || "CLINICAMENTE SANO";
+    const aptitud   = f.aptitudMedica || "";
+    const telefono  = "";
+
+    return [
+      i+1, fechaEval, nombre, f.dni||d.apellidosNombres||"", sexo,
+      fechaNac, area, sede, peso, talla, imcVal,
+      diagImc, fur, aco, alergia, antecPat,
+      antecQuir, diagClin, aptitud, telefono
+    ];
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet([HEADERS, ...dataRows]);
+
+  // Anchos de columna exactos del original
+  ws["!cols"] = COL_WIDTHS.map(w => ({wch: w}));
+
+  // Altura de filas
+  ws["!rows"] = [{hpx:30}, ...dataRows.map(()=>({hpx:18}))];
+
+  // Aplicar estilos al encabezado
+  HEADERS.forEach((_, c) => {
+    const ref = XLSX.utils.encode_cell({r:0, c});
+    if(ws[ref]) ws[ref].s = hS;
+  });
+
+  // Aplicar estilos a las filas de datos
+  dataRows.forEach((_, i) => {
+    const isOdd = i % 2 === 1;
+    HEADERS.forEach((_, c) => {
+      const ref = XLSX.utils.encode_cell({r: 1+i, c});
+      if(ws[ref]) {
+        if(c === 2) ws[ref].s = isOdd ? dSAL : dSL;      // Nombre: alineado izquierda
+        else if(c === 6) ws[ref].s = isOdd ? dSAL : dSL;  // Área: alineado izquierda
+        else ws[ref].s = isOdd ? dSA : dS;
+      }
+    });
+  });
+
+  XLSX.utils.book_append_sheet(wb, ws, "Hoja1");
+
+  // ── HOJA 2: Declaración Jurada (complemento) ──
+  const dH2 = ["N°","NOMBRES Y APELLIDOS","FECHA","SEXO","F. NACIMIENTO","ÁREA","SEDE","PUESTO",
+    ...CONDS.map(([,l])=>l.toUpperCase()),
+    "USA MEDICAMENTOS","DETALLE MEDICAMENTOS","DECLARACIÓN FINAL"];
+
+  const dR2 = records.map((r,i)=>{
+    const d=r.decl;
+    return [i+1, d.apellidosNombres||r.ficha.apellidosNombres, d.fecha, d.genero, d.fechaNacimiento,
+      d.area||r.ficha.area, d.sede||r.ficha.empresa, d.puesto,
+      ...CONDS.map(([k])=>d[k]?"SÍ":"No"),
+      d.usaMedicamentos, d.detalleMedicamentos,
+      d.declaracion==="NO_TENER"?"NO TIENE condiciones":d.declaracion==="TENER"?"TIENE condiciones":""];
+  });
+
+  const ws2 = XLSX.utils.aoa_to_sheet([dH2, ...dR2]);
+  ws2["!cols"] = dH2.map((_,i)=>({wch: i===1?42:i===0?7:16}));
+  ws2["!rows"] = [{hpx:30}, ...dR2.map(()=>({hpx:18}))];
+  dH2.forEach((_,c)=>{ const ref=XLSX.utils.encode_cell({r:0,c}); if(ws2[ref]) ws2[ref].s=hS; });
+  dR2.forEach((_,i)=>{
+    const isOdd=i%2===1;
+    dH2.forEach((_,c)=>{
+      const ref=XLSX.utils.encode_cell({r:1+i,c});
+      if(ws2[ref]) ws2[ref].s = c===1?(isOdd?dSAL:dSL):(isOdd?dSA:dS);
+    });
+  });
+  XLSX.utils.book_append_sheet(wb, ws2, "Declaración Jurada");
+
+  XLSX.writeFile(wb, `FICHAS_MEDICAS_COLABORADORES_CAPTADOS_${new Date().getFullYear()}.xlsx`);
+}
+
+// ── FORM ATOMS ────────────────────────────────────────────────────────────────
+const I=({value,onChange,placeholder,type="text"})=><input className="fi" type={type} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder||""}/>;
+const Se=({value,onChange,opts,ph})=><select className="fi" value={value} onChange={e=>onChange(e.target.value)}><option value="">{ph||"Seleccionar..."}</option>{opts.map(o=><option key={o.v} value={o.v}>{o.l}</option>)}</select>;
+const T=({value,onChange,placeholder,rows})=><textarea className="fi" rows={rows||2} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder||""} style={{resize:"vertical"}}/>;
+const F=({label,children})=><div className="ff"><label className="fl">{label}</label>{children}</div>;
+const G=({cols,children})=><div className={"fg fg"+(cols||2)}>{children}</div>;
+const Sc=({children})=><div className="sc">{children}</div>;
+const Sl=({children})=><div className="sl">{children}</div>;
+const Ck=({label,checked,onChange})=><label className="ck"><input type="checkbox" checked={checked} onChange={e=>onChange(e.target.checked)}/><span>{label}</span></label>;
+
+function FichaForm({data,onChange}){
+  const s=k=>vl=>onChange({...data,[k]:vl});
+  const yn=[{v:"Sí",l:"Sí"},{v:"No",l:"No"}];
+  return(
+    <div className="fw">
+      <G cols={3}>
+        <F label="Fecha de Examen"><I type="date" value={data.fechaExamen} onChange={s("fechaExamen")}/></F>
+        <F label="Área a la que Postula"><I value={data.area} onChange={s("area")} placeholder="Área"/></F>
+        <F label="Empresa"><Se value={data.empresa} onChange={s("empresa")} opts={[{v:"EL ROCIO",l:"EL ROCIO"},{v:"AVIAGEN",l:"AVIAGEN"}]} ph="— Seleccionar —"/></F>
+      </G>
+      <Sc>1. Filiación</Sc>
+      <G cols={3}>
+        <F label="Apellidos y Nombres"><I value={data.apellidosNombres} onChange={s("apellidosNombres")} placeholder="Apellidos y nombres completos"/></F>
+        <F label="Género"><Se value={data.genero} onChange={s("genero")} opts={[{v:"Femenino",l:"Femenino"},{v:"Masculino",l:"Masculino"},{v:"No binario / Otro",l:"No binario / Otro"},{v:"Prefiero no responder",l:"Prefiero no responder"}]}/></F>
+        <G cols={2}>
+          <F label="Edad"><I type="number" value={data.edad} onChange={s("edad")} placeholder="Años"/></F>
+          <F label="DNI"><I value={data.dni} onChange={s("dni")} placeholder="DNI"/></F>
+        </G>
+      </G>
+      <Sc>2. Antecedentes Patológicos — Personales</Sc>
+      <G cols={4}>
+        {[["alergias","Alergias"],["bronquitis","Bronquitis Aguda"],["hepatitis","Hepatitis"],["salmonelosis","Salmonelosis"],["tbc","TBC"],["fiebreTifoidea","Fiebre Tifoidea"],["asma","Asma"],["colera","Cólera"]].map(([k,l])=>(
+          <F key={k} label={l}><Se value={data[k]} onChange={s(k)} opts={yn} ph="—"/></F>
+        ))}
+      </G>
+      <F label="Otros antecedentes"><I value={data.otros} onChange={s("otros")} placeholder="Especificar otros"/></F>
+      <Sl>Familiares</Sl>
+      <G cols={4}>
+        {[["padre","Padre"],["madre","Madre"],["hermanos","Hermanos"],["abuelos","Abuelos"]].map(([k,l])=>(
+          <F key={k} label={l}><I value={data[k]} onChange={s(k)} placeholder="Antecedentes"/></F>
+        ))}
+      </G>
+      <Sc>3. Antecedentes Obstétricos</Sc>
+      <G cols={4}>
+        <F label="FUR"><I value={data.fur} onChange={s("fur")} placeholder="FUR"/></F>
+        <F label="ACO"><I value={data.aco} onChange={s("aco")} placeholder="ACO"/></F>
+        <F label="Gestas"><I type="number" value={data.gestas} onChange={s("gestas")} placeholder="Gestas"/></F>
+        <F label="Paridad"><I value={data.paridad} onChange={s("paridad")} placeholder="Paridad"/></F>
+      </G>
+      <F label="Observaciones / Medicamentos habituales"><T value={data.observaciones} onChange={s("observaciones")} placeholder="Observaciones, medicamentos que consume habitualmente, etc." rows={3}/></F>
+      <Sc>4. Antecedentes Laborales</Sc>
+      {[1,2].map(i=>(
+        <div key={i} className="lab">
+          <div className="labn">#{i}</div>
+          <div style={{flex:1}}>
+            <G cols={3}>
+              <F label="Empresa"><I value={data[`empresa${i}`]} onChange={s(`empresa${i}`)} placeholder="Nombre empresa"/></F>
+              <F label="Área de Trabajo"><I value={data[`areaTrabajo${i}`]} onChange={s(`areaTrabajo${i}`)} placeholder="Área"/></F>
+              <F label="Ocupación"><I value={data[`ocupacion${i}`]} onChange={s(`ocupacion${i}`)} placeholder="Ocupación"/></F>
+            </G>
+            <G cols={4}>
+              <F label="Accidentes / Enfermedades"><I value={data[`accidentes${i}`]} onChange={s(`accidentes${i}`)} placeholder="Descripción"/></F>
+              <F label="Fecha Inicio"><I type="date" value={data[`fechaI${i}`]} onChange={s(`fechaI${i}`)}/></F>
+              <F label="Fecha Fin"><I type="date" value={data[`fechaF${i}`]} onChange={s(`fechaF${i}`)}/></F>
+              <F label="Exposición Ocupacional"><I value={data[`exposicion${i}`]} onChange={s(`exposicion${i}`)} placeholder="Tipo de exposición"/></F>
+            </G>
+          </div>
+        </div>
+      ))}
+      <Sc>5. Examen Físico</Sc>
+      <G cols={4}>
+        <F label="Frec. Cardíaca (lat/min)"><I type="number" value={data.frecuenciaCardiaca} onChange={s("frecuenciaCardiaca")} placeholder="lat/min"/></F>
+        <F label="Frec. Respiratoria (x/min)"><I type="number" value={data.frecuenciaRespiratoria} onChange={s("frecuenciaRespiratoria")} placeholder="x/min"/></F>
+        <F label="Saturación O₂ (%)"><I type="number" value={data.saturacion} onChange={s("saturacion")} placeholder="%"/></F>
+        <F label="Presión Arterial (mmHg)"><I value={data.presionArterial} onChange={s("presionArterial")} placeholder="ej. 120/80"/></F>
+      </G>
+      <G cols={3}>
+        <F label="Talla (cm)"><I type="number" value={data.talla} onChange={v=>{const t=parseFloat(v),p=parseFloat(data.peso);const imc=(t&&p&&t>0)?(t>3?p/((t/100)*(t/100)):p/(t*t)).toFixed(1):"";onChange({...data,talla:v,imc});}} placeholder="ej. 1.65 o 165"/></F>
+        <F label="Peso (kg)"><I type="number" value={data.peso} onChange={v=>{const p=parseFloat(v),t=parseFloat(data.talla);const imc=(t&&p&&t>0)?(t>3?p/((t/100)*(t/100)):p/(t*t)).toFixed(1):"";onChange({...data,peso:v,imc});}} placeholder="kg"/></F>
+        <F label="IMC (automático)">
+          <div style={{position:"relative"}}>
+            <input className="fi" type="text" readOnly value={data.imc||""} placeholder="Se calcula solo" style={{background:"#f0fdf4",borderColor:data.imc?"#16a34a":"#d1d5db",fontWeight:"700",color:"#15803d",cursor:"default"}}/>
+            {data.imc&&<span style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",fontSize:10,fontWeight:700,color:"#15803d"}}>
+              {parseFloat(data.imc)<18.5?"BAJO PESO":parseFloat(data.imc)<25?"NORMAL":parseFloat(data.imc)<30?"SOBREPESO":parseFloat(data.imc)<35?"OBESIDAD 1":parseFloat(data.imc)<40?"OBESIDAD 2":"OBESIDAD 3"}
+            </span>}
+          </div>
+        </F>
+      </G>
+      <F label="Anamnesis"><T value={data.anamnesis} onChange={s("anamnesis")} placeholder="Descripción de la anamnesis..." rows={3}/></F>
+      <Sl>Examen Musculoesquelético</Sl>
+      <G cols={2}>
+        <F label="Columna"><I value={data.columna} onChange={s("columna")} placeholder="Hallazgos"/></F>
+        <F label="Miembros Superiores"><I value={data.miembrosSuperiores} onChange={s("miembrosSuperiores")} placeholder="Hallazgos"/></F>
+        <F label="Miembros Inferiores"><I value={data.miembrosInferiores} onChange={s("miembrosInferiores")} placeholder="Hallazgos"/></F>
+        <F label="Marcha"><I value={data.marcha} onChange={s("marcha")} placeholder="Descripción"/></F>
+      </G>
+      <div className="aptbox">
+        <div className="apttitle">Aptitud Médica</div>
+        <div className="aptrow">
+          {["APTO","NO APTO","OBSERVADO","APTO CON RESTRICCIONES"].map(opt=>(
+            <label key={opt} className={"aptopt"+(data.aptitudMedica===opt?" on":"")}>
+              <input type="radio" name={"apt_"+data.id} checked={data.aptitudMedica===opt} onChange={()=>s("aptitudMedica")(opt)}/>
+              {opt}
+            </label>
+          ))}
+        </div>
+      </div>
+      <F label="Restricciones"><T value={data.restricciones} onChange={s("restricciones")} placeholder="Detallar restricciones si aplica..." rows={2}/></F>
+      <Sc>Firmas</Sc>
+      <G cols={2}>
+        <SignaturePad label="Firma del Trabajador" value={data.firmaColaborador||""} onChange={v=>onChange({...data,firmaColaborador:v})}/>
+        <SignaturePad label="Huella / Firma del Médico" value={data.firmaMedico||""} onChange={v=>onChange({...data,firmaMedico:v})}/>
+      </G>
+    </div>
+  );
+}
+
+function DeclForm({data,onChange}){
+  const s=k=>vl=>onChange({...data,[k]:vl});
+  return(
+    <div className="fw">
+      <G cols={3}>
+        <F label="Fecha"><I type="date" value={data.fecha} onChange={s("fecha")}/></F>
+        <F label="Edad"><I type="number" value={data.edad} onChange={s("edad")} placeholder="Edad"/></F>
+        <F label="Género"><Se value={data.genero} onChange={s("genero")} opts={[{v:"M",l:"Masculino"},{v:"F",l:"Femenino"},{v:"Otro",l:"Otro"}]}/></F>
+      </G>
+      <G cols={2}>
+        <F label="Apellidos y Nombres"><I value={data.apellidosNombres} onChange={s("apellidosNombres")} placeholder="Apellidos y nombres completos"/></F>
+        <F label="Fecha de Nacimiento"><I type="date" value={data.fechaNacimiento} onChange={s("fechaNacimiento")}/></F>
+      </G>
+      <G cols={3}>
+        <F label="Área"><I value={data.area} onChange={s("area")} placeholder="Área"/></F>
+        <F label="Sede"><I value={data.sede} onChange={s("sede")} placeholder="Sede"/></F>
+        <F label="Puesto de Trabajo"><I value={data.puesto} onChange={s("puesto")} placeholder="Puesto"/></F>
+      </G>
+      <Sc>Condiciones de Salud</Sc>
+      <p style={{fontSize:12,color:"#6b7280",marginBottom:10,lineHeight:1.5}}>Marque las condiciones que presenta actualmente:</p>
+      <div className="cgrid">
+        {CONDS.map(([k,label])=><Ck key={k} label={label} checked={data[k]} onChange={s(k)}/>)}
+      </div>
+      <Sc>Medicamentos</Sc>
+      <div className="medrow">
+        <span className="fl">¿Usa medicamentos?</span>
+        {["SI","NO"].map(o=>(
+          <label key={o} className="rl">
+            <input type="radio" name={"med_"+data.id} value={o} checked={data.usaMedicamentos===o} onChange={()=>s("usaMedicamentos")(o)}/>{o}
+          </label>
+        ))}
+      </div>
+      {data.usaMedicamentos==="SI" && <F label="Detallar medicamentos"><T value={data.detalleMedicamentos} onChange={s("detalleMedicamentos")} placeholder="Liste los medicamentos que consume regularmente..."/></F>}
+      {data.otraEnfermedad && <F label="Detalle de otra enfermedad"><T value={data.otraEnfermedadDetalle} onChange={s("otraEnfermedadDetalle")} placeholder="Describa la enfermedad..."/></F>}
+      <Sc>Declaración Final</Sc>
+      <div style={{display:"flex",flexDirection:"column",gap:9,marginBottom:14}}>
+        {[["NO_TENER","Declaro NO TENER ninguna de estas condiciones de Salud"],["TENER","Declaro TENER una o varias de estas condiciones de Salud"]].map(([v2,label])=>(
+          <label key={v2} className={"dopt"+(data.declaracion===v2?" on":"")}>
+            <input type="radio" name={"decl_"+data.id} value={v2} checked={data.declaracion===v2} onChange={()=>s("declaracion")(v2)}/>{label}
+          </label>
+        ))}
+      </div>
+      <div className="legal">
+        <b>DECLARO QUE LA INFORMACIÓN BRINDADA ES VERDAD Y ACEPTO QUE SEA UTILIZADA PARA LOS FINES PERTINENTES.</b>{" "}
+        De conformidad con la Ley N°29733, otorgo mi consentimiento para que mis datos personales y sensibles sean tratados por las empresas del Grupo Rocío.
+      </div>
+      <Sc>Firma</Sc>
+      <G cols={2}>
+        <SignaturePad label="Firma del Trabajador" value={data.firmaColaborador||""} onChange={v=>onChange({...data,firmaColaborador:v})}/>
+        <div style={{border:"1.5px solid #e5e7eb",borderRadius:5,padding:10,background:"#fafafa"}}>
+          <div style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:".05em",color:"#374151",marginBottom:6}}>Huella Digital</div>
+          {data.huellaColaborador
+            ?<div>
+               <img src={data.huellaColaborador} style={{width:"100%",maxHeight:100,objectFit:"contain",borderRadius:4}}/>
+               <button className="btn btn-ghost btn-sm" style={{marginTop:6,width:"100%"}} onClick={()=>onChange({...data,huellaColaborador:""})}>Quitar</button>
+             </div>
+            :<div>
+               <input type="file" accept="image/*" capture style={{display:"none"}} onChange={e=>{
+                 const file=e.target.files[0]; if(!file)return;
+                 const reader=new FileReader();
+                 reader.onload=ev=>onChange({...data,huellaColaborador:ev.target.result});
+                 reader.readAsDataURL(file); e.target.value="";
+               }} ref={el=>{if(el)el._h=true;}}/>
+               <div onClick={e=>e.currentTarget.previousSibling.click()} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6,cursor:"pointer",minHeight:80,border:"1.5px dashed #d1d5db",borderRadius:5,padding:10,justifyContent:"center"}}>
+                 <span style={{fontSize:24}}>📷</span>
+                 <span style={{fontSize:11,color:"#6b7280",textAlign:"center"}}>Fotografiar huella</span>
+               </div>
+             </div>
+          }
+        </div>
+      </G>
+    </div>
+  );
+}
+
+// ── APP ───────────────────────────────────────────────────────────────────────
+
+// ── FIRMA DIGITAL ─────────────────────────────────────────────────────────────
+function SignaturePad({ label, value, onChange }) {
+  const canvasRef  = React.useRef(null);
+  const drawing    = React.useRef(false);
+  const lastPos    = React.useRef(null);
+
+  // Sync canvas internal size to its display size
+  const syncSize = () => {
+    const canvas = canvasRef.current;
+    if(!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const dpr  = window.devicePixelRatio || 1;
+    if(canvas.width !== Math.round(rect.width * dpr) || canvas.height !== Math.round(rect.height * dpr)) {
+      // Save current drawing
+      const imgData = canvas.toDataURL();
+      canvas.width  = Math.round(rect.width  * dpr);
+      canvas.height = Math.round(rect.height * dpr);
+      const ctx = canvas.getContext("2d");
+      ctx.scale(dpr, dpr);
+      // Restore drawing
+      if(value) {
+        const img = new Image();
+        img.onload = () => ctx.drawImage(img, 0, 0, rect.width, rect.height);
+        img.src = imgData;
+      }
+    }
+  };
+
+  React.useEffect(() => {
+    syncSize();
+    if(value) {
+      const canvas = canvasRef.current;
+      if(!canvas) return;
+      const ctx  = canvas.getContext("2d");
+      const rect = canvas.getBoundingClientRect();
+      const img  = new Image();
+      img.onload = () => ctx.drawImage(img, 0, 0, rect.width, rect.height);
+      img.src = value;
+    }
+    window.addEventListener("resize", syncSize);
+    return () => window.removeEventListener("resize", syncSize);
+  }, []);
+
+  // Get position scaled to canvas internal resolution
+  const getPos = (e) => {
+    const canvas = canvasRef.current;
+    const rect   = canvas.getBoundingClientRect();
+    const dpr    = window.devicePixelRatio || 1;
+    const src    = e.touches ? e.touches[0] : e;
+    return {
+      x: (src.clientX - rect.left),
+      y: (src.clientY - rect.top)
+    };
+  };
+
+  const startDraw = (e) => {
+    e.preventDefault();
+    syncSize();
+    drawing.current  = true;
+    lastPos.current  = getPos(e);
+  };
+
+  const draw = (e) => {
+    e.preventDefault();
+    if(!drawing.current) return;
+    const canvas = canvasRef.current;
+    const ctx    = canvas.getContext("2d");
+    const pos    = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(lastPos.current.x, lastPos.current.y);
+    ctx.lineTo(pos.x, pos.y);
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth   = 2.5;
+    ctx.lineCap     = "round";
+    ctx.lineJoin    = "round";
+    ctx.stroke();
+    lastPos.current = pos;
+  };
+
+  const endDraw = () => {
+    if(!drawing.current) return;
+    drawing.current = false;
+    onChange(canvasRef.current.toDataURL("image/png"));
+  };
+
+  const clear = () => {
+    const canvas = canvasRef.current;
+    const rect   = canvas.getBoundingClientRect();
+    canvas.getContext("2d").clearRect(0, 0, rect.width, rect.height);
+    onChange("");
+  };
+
+  return (
+    <div style={{marginBottom:10}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:5}}>
+        <label className="fl">{label}</label>
+        <button onClick={clear} type="button"
+          style={{fontSize:10,color:"#dc2626",background:"none",border:"1px solid #fca5a5",
+                  borderRadius:3,padding:"2px 8px",cursor:"pointer",fontFamily:"inherit"}}>
+          ✕ Borrar
+        </button>
+      </div>
+      <div style={{
+        border:"1.5px solid "+(value?"#16a34a":"#d1d5db"),
+        borderRadius:6,
+        background:value?"#f0fdf4":"#fafafa",
+        touchAction:"none",
+        overflow:"hidden",
+        width:"100%"
+      }}>
+        <canvas
+          ref={canvasRef}
+          style={{
+            width:"100%",
+            height:100,
+            display:"block",
+            cursor:"crosshair",
+            touchAction:"none"
+          }}
+          onMouseDown={startDraw} onMouseMove={draw} onMouseUp={endDraw} onMouseLeave={endDraw}
+          onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={endDraw}
+        />
+      </div>
+      <p style={{fontSize:10,color:value?"#16a34a":"#9ca3af",marginTop:4,fontWeight:value?600:400}}>
+        {value ? "✓ Firma guardada correctamente" : "✍ Dibuja tu firma con el dedo o el mouse en todo el recuadro"}
+      </p>
+    </div>
+  );
+}
+
+function App(){
+  // ── CARGAR desde localStorage al iniciar ──
+  const [records,setRecords]=useState(()=>{
+    try{
+      const saved=localStorage.getItem("fichas_gr_records");
+      if(saved){const parsed=JSON.parse(saved);if(Array.isArray(parsed)&&parsed.length>0)return parsed;}
+    }catch(e){}
+    return [NR()];
+  });
+  const [screen,setScreen]=useState("list");
+  const [activeId,setActiveId]=useState(()=>{
+    try{const saved=localStorage.getItem("fichas_gr_records");if(saved){const p=JSON.parse(saved);if(Array.isArray(p)&&p.length>0)return p[0].id;}}catch(e){}
+    return null;
+  });
+  const [formTab,setFormTab]=useState(0);
+  const [toast,setToast]=useState(null);
+  const [confirmDel,setConfirmDel]=useState(null);
+  const [search,setSearch]=useState("");
+  const [showSync,setShowSync]=useState(false);
+  const [syncTab,setSyncTab]=useState("gs"); // "gs" | "qr"
+  const [gsUrl,setGsUrl]=useState(()=>localStorage.getItem("fichas_gs_url")||"");
+  const [gsStatus,setGsStatus]=useState("");
+
+  // ── GUARDAR en localStorage cada vez que cambien los registros ──
+  React.useEffect(()=>{
+    try{ localStorage.setItem("fichas_gr_records", JSON.stringify(records)); }
+    catch(e){ console.warn("No se pudo guardar en localStorage",e); }
+    // Auto-sync a Google Sheets si hay URL configurada
+    const url = localStorage.getItem("fichas_gs_url");
+    if(url && url.startsWith("https://")) {
+      clearTimeout(window._syncTimer);
+      window._syncTimer = setTimeout(()=>{
+        fetch(url, {
+          method:"POST",
+          mode:"no-cors",
+          body: JSON.stringify({records})
+        }).catch(()=>{});
+      }, 3000); // Espera 3 segundos después del último cambio
+    }
+  },[records]);
+
+  const showToast=(msg,ok=true)=>{setToast({msg,ok});setTimeout(()=>setToast(null),2800);};
+
+  // ── EXPORTAR datos para pasar a otro dispositivo
+  const exportarDatos = () => {
+    const data = JSON.stringify(records, null, 2);
+    const blob = new Blob([data], {type:"application/json"});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href = url;
+    a.download = "fichas_gruporocio_backup_" + new Date().toISOString().slice(0,10) + ".json";
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast("✓ Datos exportados — comparte el archivo .json con otro dispositivo");
+  };
+
+  // ── IMPORTAR datos desde otro dispositivo
+  const importarDatos = () => {
+    const input = document.createElement("input");
+    input.type  = "file";
+    input.accept = ".json";
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const parsed = JSON.parse(ev.target.result);
+          if(!Array.isArray(parsed)) throw new Error("Formato inválido");
+          if(window.confirm("¿Importar " + parsed.length + " registros? Se agregarán a los que ya tienes.")) {
+            setRecords(prev => {
+              // Merge avoiding duplicates by id
+              const existingIds = new Set(prev.map(r=>r.id));
+              const newRecs = parsed.filter(r=>!existingIds.has(r.id));
+              return [...prev, ...newRecs];
+            });
+            showToast("✓ Se importaron " + parsed.length + " registros");
+          }
+        } catch(err) {
+          showToast("Error al importar: archivo inválido", false);
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  };
+  const active=records.find(r=>r.id===activeId)||records[0];
+  const upd=(field,val)=>setRecords(rs=>rs.map(r=>r.id===activeId?{...r,[field]:val}:r));
+  const open=id=>{setActiveId(id);setFormTab(0);setScreen("form");};
+  const addNew=()=>{const r=NR();setRecords(rs=>[...rs,r]);setActiveId(r.id);setFormTab(0);setScreen("form");};
+  const saveBack=()=>{
+    const name=GN(active);
+    if(name==="Nuevo colaborador"){showToast("Ingresa al menos el nombre del colaborador",false);return;}
+    showToast('✓ Registro de "'+name+'" guardado');
+    setScreen("list");
+  };
+  const delRec=id=>{
+    setRecords(rs=>{const nx=rs.filter(r=>r.id!==id);if(activeId===id)setActiveId(nx.length?nx[nx.length-1].id:null);return nx.length?nx:[NR()];});
+    setConfirmDel(null);showToast("Registro eliminado");if(screen==="form")setScreen("list");
+  };
+  const print=type=>{
+    const html=type==="ficha"?buildFichaHTML(active.ficha):buildDeclHTML(active.decl);
+    doPrint(html);
+  };
+
+  const printAll=()=>{
+    // Une las 4 páginas en un solo PDF
+    const html = buildFichaHTML(active.ficha) + buildDeclHTML(active.decl);
+    doPrint(html);
+  };
+
+
+  // ── GOOGLE SHEETS SYNC ──────────────────────────────────────────────
+  const saveGsUrl = (url) => {
+    setGsUrl(url);
+    localStorage.setItem("fichas_gs_url", url);
+  };
+
+  // ── SINCRONIZAR RÁPIDO (subir + descargar en 1 botón) ──
+  const quickSync = async () => {
+    if(!gsUrl.trim()){ setGsStatus("error:Primero ingresa la URL de Google Sheets"); return; }
+    setGsStatus("loading");
+    // Paso 1: Subir datos locales
+    try {
+      await fetch(gsUrl, { method:"POST", mode:"no-cors", body: JSON.stringify({records}) });
+    } catch(e) {}
+    // Paso 2: Descargar datos de Sheets
+    try {
+      const url = gsUrl + "?t=" + Date.now();
+      const res = await fetch(url, { mode:"cors" });
+      const data = await res.json();
+      if(data.records && Array.isArray(data.records) && data.records.length > 0) {
+        setRecords(data.records);
+        localStorage.setItem("fichas_gr_records", JSON.stringify(data.records));
+        setGsStatus("ok:✓ Sincronizado — " + data.records.length + " registros");
+        showToast("✓ Sincronizado con Google Sheets");
+      } else {
+        setGsStatus("ok:✓ Datos subidos correctamente");
+        showToast("✓ Datos subidos");
+      }
+    } catch(e) {
+      setGsStatus("ok:✓ Datos subidos (sin descarga por CORS)");
+      showToast("✓ Datos subidos a Google Sheets");
+    }
+  };
+
+  const syncToSheets = async () => {
+    if(!gsUrl.trim()){ setGsStatus("error:Ingresa la URL del Apps Script"); return; }
+    setGsStatus("loading");
+    try {
+      await fetch(gsUrl, { method:"POST", mode:"no-cors", body: JSON.stringify({records}) });
+      setGsStatus("ok:✓ Datos subidos a Google Sheets");
+      showToast("✓ Subido a Google Sheets");
+    } catch(e) {
+      setGsStatus("error:Error al subir");
+    }
+  };
+
+  const syncFromSheets = async () => {
+    if(!gsUrl.trim()){ setGsStatus("error:Ingresa la URL del Apps Script"); return; }
+    setGsStatus("loading");
+    try {
+      const url = gsUrl + "?t=" + Date.now();
+      const res = await fetch(url, { mode:"cors" });
+      const data = await res.json();
+      if(data.records && Array.isArray(data.records)) {
+        if(window.confirm("¿Cargar " + data.records.length + " registros desde Google Sheets?")) {
+          setRecords(data.records);
+          localStorage.setItem("fichas_gr_records", JSON.stringify(data.records));
+          showToast("✓ " + data.records.length + " registros cargados");
+          setGsStatus("ok:✓ Datos cargados correctamente");
+        }
+      } else {
+        setGsStatus("error:No se encontraron datos");
+      }
+    } catch(e) {
+      setGsStatus("error:Error al descargar. Verifica la URL.");
+    }
+  };
+
+  // ── QR SYNC ──────────────────────────────────────────────────────────
+  const generarQR = () => {
+    // Remove signatures (base64 images are too large for QR)
+    const rec = JSON.parse(JSON.stringify(active));
+    if(rec.ficha) { delete rec.ficha.firmaColaborador; delete rec.ficha.firmaMedico; }
+    if(rec.decl) { delete rec.decl.firmaColaborador; }
+    const dataStr = JSON.stringify([rec]);
+    if(dataStr.length > 1800) {
+      // Still too large - only send basic info
+      const mini = {
+        id: rec.id,
+        ficha: {
+          apellidosNombres: rec.ficha.apellidosNombres,
+          dni: rec.ficha.dni,
+          edad: rec.ficha.edad,
+          genero: rec.ficha.genero,
+          fechaExamen: rec.ficha.fechaExamen,
+          empresa: rec.ficha.empresa,
+          area: rec.ficha.area,
+          aptitudMedica: rec.ficha.aptitudMedica
+        },
+        decl: {
+          apellidosNombres: rec.decl.apellidosNombres,
+          fecha: rec.decl.fecha,
+          declaracion: rec.decl.declaracion
+        }
+      };
+      setQrData({ data: JSON.stringify([mini]), tipo:"mini", nombre: getName(active) });
+    } else {
+      setQrData({ data: dataStr, tipo:"registro", nombre: getName(active) });
+    }
+  };
+
+  const total=records.length;
+  const aptos=records.filter(r=>r.ficha.aptitudMedica==="APTO").length;
+  const noApto=records.filter(r=>r.ficha.aptitudMedica==="NO APTO").length;
+  const obs=records.filter(r=>["OBSERVADO","APTO CON RESTRICCIONES"].includes(r.ficha.aptitudMedica)).length;
+
+
+  return(
+    <>
+      {toast&&<div className={"toast "+(toast.ok?"t-ok":"t-err")}>{toast.msg}</div>}
+
+      {/* ── SYNC MODAL ── */}
+      {showSync&&(
+        <div className="ov" onClick={()=>setShowSync(false)}>
+          <div className="sync-modal" style={{background:"#fff",borderRadius:12,padding:24,maxWidth:400,width:"94%",boxShadow:"0 8px 40px rgba(0,0,0,.6)",position:"relative",zIndex:9001}} onClick={e=>e.stopPropagation()}>
+            <h2 style={{marginBottom:8}}>Sincronizar</h2>
+            <p style={{fontSize:13,color:"#666",marginBottom:16}}>Guarda y comparte tus fichas entre dispositivos.</p>
+            <button className="sync-btn" style={{width:"100%",marginBottom:8,background:"#16A34A",color:"#fff"}} onClick={()=>{
+              const SK="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdmN2ZmZ5eW5wbmlnaHp3eGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MjgyNDcsImV4cCI6MjA5MzMwNDI0N30.fFufNEdRvAzl6O6BqtTbx83O3Eg8Wd7gACNJDGQKga4";
+              const SU="https://rqvcvffyynpnighzwxju.supabase.co";
+              const recs=records;
+              if(!recs.length){showToast("Sin fichas");return;}
+              let n=0;
+              recs.forEach(r=>{
+                const p={record_id:String(r.id),ficha:r.ficha||{},decl:r.decl||{},empresa:(r.ficha&&r.ficha.empresa)||""};
+                fetch(SU+"/rest/v1/fichas_medicas?record_id=eq."+r.id,{headers:{"apikey":SK,"Authorization":"Bearer "+SK}})
+                .then(res=>res.json()).then(ex=>{
+                  const method=ex&&ex.length?"PATCH":"POST";
+                  const url=ex&&ex.length?SU+"/rest/v1/fichas_medicas?record_id=eq."+r.id:SU+"/rest/v1/fichas_medicas";
+                  return fetch(url,{method,headers:{"apikey":SK,"Authorization":"Bearer "+SK,"Content-Type":"application/json","Prefer":"return=minimal"},body:JSON.stringify(p)});
+                }).then(()=>{n++;if(n===recs.length)showToast("Guardadas "+n+" fichas en la nube");})
+                .catch(e=>console.warn(e));
+              });
+            }}>Guardar en Nube ({records.length} fichas)</button>
+            <button className="sync-btn" style={{width:"100%",marginBottom:8,background:"#2563EB",color:"#fff"}} onClick={()=>{
+              const SK="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdmN2ZmZ5eW5wbmlnaHp3eGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MjgyNDcsImV4cCI6MjA5MzMwNDI0N30.fFufNEdRvAzl6O6BqtTbx83O3Eg8Wd7gACNJDGQKga4";
+              const SU="https://rqvcvffyynpnighzwxju.supabase.co";
+              fetch(SU+"/rest/v1/fichas_medicas?select=*&order=created_at.asc",{headers:{"apikey":SK,"Authorization":"Bearer "+SK}})
+              .then(r=>r.json()).then(rows=>{
+                if(!rows||!rows.length){showToast("Sin fichas en la nube");return;}
+                const rs=rows.map(r=>({id:r.record_id,ficha:r.ficha||{},decl:r.decl||{}}));
+                setRecords(rs);
+                showToast("Cargadas "+rs.length+" fichas");
+                setShowSync(false);
+              }).catch(e=>showToast("Error: "+e.message));
+            }}>Cargar desde Nube</button>
+            <button className="sync-btn" style={{width:"100%",marginBottom:8,background:"#0F9D58",color:"#fff"}} onClick={()=>window.open("https://docs.google.com/spreadsheets/d/1a1MGpVTZOeB6YHoP9pVzSUuYABpAru-wlfqc-Uuck7g","_blank")}>Abrir Google Sheets</button>
+            <button className="sync-btn sync-btn-gray" style={{width:"100%"}} onClick={()=>setShowSync(false)}>Cerrar</button>
+          </div>
+        </div>
+      )}
+
+      {confirmDel&&(
+        <div className="ov">
+          <div className="modal">
+            <h3>¿Eliminar registro?</h3>
+            <p>Se eliminará el registro de <b>"{GN(confirmDel)}"</b>. No se puede deshacer.</p>
+            <div className="mbtns">
+              <button className="btn btn-ghost" onClick={()=>setConfirmDel(null)}>Cancelar</button>
+              <button className="btn btn-red" onClick={()=>delRec(confirmDel.id)}>Eliminar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TOPBAR */}
+      <div className="top">
+        <div className="top-left">
+          <div className="logo">Grupo Rocío</div>
+          <div>
+            <div className="top-title">Sistema de Fichas Médicas</div>
+            <div className="top-sub">Área SIG · Salud Ocupacional</div>
+          </div>
+        </div>
+        <div className="top-right">
+          {screen==="list"?(
+            <button className="btn btn-red btn-sm" onClick={()=>exportAll(records)}>⬇ Exportar Excel ({total})</button>
+          ):(
+            <>
+              <button className="btn btn-dark btn-sm" onClick={()=>print("ficha")}>🖨 Ficha</button>
+              <button className="btn btn-dark btn-sm" onClick={()=>print("decl")}>🖨 Declaración</button>
+              <button className="btn btn-red btn-sm" onClick={printAll}>🖨 Todo (4 hojas)</button>
+              <button className="btn btn-dark btn-sm" onClick={()=>exportAll(records)}>⬇ Excel</button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* PANTALLA 1: LISTA */}
+      {screen==="list"&&(
+        <div className="list-screen">
+          <div className="list-header">
+            <div>
+              <h1>Colaboradores Registrados</h1>
+              <p style={{display:"flex",alignItems:"center",gap:6}}>
+                <span style={{display:"inline-block",width:8,height:8,borderRadius:"50%",background:"#16a34a"}}></span>
+                Guardado automáticamente · {records.length} colaborador{records.length!==1?"es":""} en historial
+              </p>
+            </div>
+            <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+              <button className="btn btn-white" style={{fontSize:11,color:"#dc2626",borderColor:"#fecaca"}} onClick={()=>{if(window.confirm("¿Borrar TODO el historial? Esta acción no se puede deshacer.")){localStorage.removeItem("fichas_gr_records");setRecords([NR()]);showToast("Historial borrado");}}}>🗑 Borrar</button>
+                <button className="btn btn-white" style={{fontSize:11,color:"#0369a1",borderColor:"#bae6fd"}} onClick={()=>{
+                const url=localStorage.getItem("fichas_gs_url");
+                if(url&&url.startsWith("https://")){
+                  showToast("⏳ Sincronizando...");
+                  fetch(url,{method:"POST",mode:"no-cors",body:JSON.stringify({records})})
+                    .then(()=>showToast("✓ Sincronizado con Google Sheets"))
+                    .catch(()=>showToast("✓ Datos enviados"));
+                } else {
+                  setShowSync(true);
+                }
+              }}>🔄 Sync</button>
+
+              <button className="btn btn-white" onClick={()=>exportAll(records)}>⬇ Excel</button>
+              <button className="btn btn-red" onClick={addNew}>+ Nuevo</button>
+            </div>
+          </div>
+          {/* BUSCADOR */}
+          <div style={{marginBottom:18,position:"relative"}}>
+            <input
+              className="fi"
+              style={{paddingLeft:38,fontSize:13,borderRadius:7,border:"1.5px solid #d1d5db",background:"#fff",boxShadow:"0 1px 4px rgba(0,0,0,.06)"}}
+              placeholder="🔍  Buscar por nombre o DNI..."
+              value={search}
+              onChange={e=>setSearch(e.target.value)}
+            />
+            {search && (
+              <button onClick={()=>setSearch("")}
+                style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#9ca3af"}}>
+                ✕
+              </button>
+            )}
+          </div>
+          <div className="stats-row">
+            <div className="stat"><div className="stat-n">{total}</div><div className="stat-l">Total registros</div></div>
+            <div className="stat s-green"><div className="stat-n">{aptos}</div><div className="stat-l">Aptos</div></div>
+            <div className="stat s-red"><div className="stat-n">{noApto}</div><div className="stat-l">No aptos</div></div>
+            <div className="stat s-orange"><div className="stat-n">{obs}</div><div className="stat-l">Con obs./restr.</div></div>
+          </div>
+          <div className="grid">
+            {records.filter(r=>{
+              if(!search.trim()) return true;
+              const q = search.toLowerCase().trim();
+              const name = GN(r).toLowerCase();
+              const dni  = (r.ficha.dni||r.decl.apellidosNombres||"").toLowerCase();
+              return name.includes(q) || dni.includes(q);
+            }).map(r=>{
+              const name=GN(r);
+              const ini=name.split(" ").filter(Boolean).slice(0,2).map(w=>w[0]).join("").toUpperCase()||"?";
+              return(
+                <div key={r.id} className="rcard" onClick={()=>open(r.id)}>
+                  <div className="av">{ini}</div>
+                  <div className="rname">{name}</div>
+                  <div className="rdni">DNI: {r.ficha.dni||"—"}</div>
+                  <div className="rtags">
+                    {r.ficha.empresa&&<span className="rtag">{r.ficha.empresa}</span>}
+                    {r.ficha.area&&<span className="rtag">{r.ficha.area}</span>}
+                    {r.ficha.aptitudMedica&&<span className="apill" style={{background:AC(r.ficha.aptitudMedica)}}>{r.ficha.aptitudMedica}</span>}
+                  </div>
+                  <div className="rfooter">
+                    <button className="redit" onClick={e=>{e.stopPropagation();open(r.id);}}>✏ Editar</button>
+                    <button className="rdel" onClick={e=>{e.stopPropagation();setConfirmDel(r);}}>🗑 Eliminar</button>
+                  </div>
+                </div>
+              );
+            })}
+            {!search && <div className="addcard" onClick={addNew}>
+              <div className="addicon">+</div>
+              <div className="addlbl">Nuevo colaborador</div>
+              <div className="addsub">Agregar ficha médica</div>
+            </div>}
+          </div>
+        </div>
+      )}
+
+      {/* PANTALLA 2: FORMULARIO */}
+      {screen==="form"&&(
+        <div className="form-screen">
+          <div className="form-bar">
+            <div className="form-topbar-left" style={{display:"flex",alignItems:"center",gap:12}}>
+              <button className="back-btn" onClick={()=>setScreen("list")}>← Volver a la lista</button>
+              <div style={{width:1,height:26,background:"#e5e7eb"}}/>
+              <div className="ftitle">
+                <h2>{GN(active)}</h2>
+                <p>DNI: {active.ficha.dni||"—"} · {active.ficha.empresa||"Sin empresa"}</p>
+              </div>
+            </div>
+            <div style={{display:"flex",gap:8}}>
+              <button className="btn btn-ghost btn-sm" onClick={()=>print(formTab===0?"ficha":"decl")}>
+                🖨 {formTab===0?"Ficha":"Declaración"}
+              </button>
+              <button className="btn btn-red btn-sm" onClick={printAll}>🖨 Todo (4 hojas)</button>
+              <button className="btn btn-green btn-sm" onClick={saveBack}>✓ Guardar y volver</button>
+            </div>
+          </div>
+          <div className="tabs">
+            {["Ficha Médica  ·  F-GSS-25-06","Declaración Jurada  ·  F-GSS-88-02"].map((t,i)=>(
+              <button key={i} className={"tab"+(formTab===i?" on":"")} onClick={()=>setFormTab(i)}>{t}</button>
+            ))}
+          </div>
+          <div className="fscroll">
+            <div className="fcard">
+              <div className="fcard-head">
+                <span className="fcard-title">{formTab===0?"Ficha Médica para Colaborador Captado":"Declaración Jurada de Salud"}</span>
+                <span className="fcard-code">{formTab===0?"F-GSS-25-06":"F-GSS-88-02"} · Emisión 01/10/2025</span>
+              </div>
+              {formTab===0
+                ?<FichaForm data={active.ficha} onChange={v=>{
+  upd("ficha",v);
+  const gMap={"Femenino":"F","Masculino":"M","No binario / Otro":"Otro","Prefiero no responder":"Otro"};
+  setRecords(rs=>rs.map(r=>r.id===activeId?{...r,decl:{...r.decl,
+    apellidosNombres:v.apellidosNombres!==undefined?v.apellidosNombres:r.decl.apellidosNombres,
+    dni:v.dni!==undefined?v.dni:r.decl.dni,
+    genero:v.genero?gMap[v.genero]||r.decl.genero:r.decl.genero,
+    edad:v.edad!==undefined?v.edad:r.decl.edad,
+    fechaNacimiento:v.fechaNacimiento!==undefined?v.fechaNacimiento:r.decl.fechaNacimiento,
+    area:v.area!==undefined?v.area:r.decl.area,
+    sede:v.sede!==undefined?v.sede:r.decl.sede,
+    puesto:v.puesto!==undefined?v.puesto:r.decl.puesto,
+    fecha:v.fechaExamen!==undefined?v.fechaExamen:r.decl.fecha,
+  }}:r));
+}}/>
+                :<DeclForm  data={active.decl}  onChange={v=>{
+  upd("decl",v);
+  const gRevMap={"F":"Femenino","M":"Masculino","Otro":"No binario / Otro"};
+  setRecords(rs=>rs.map(r=>r.id===activeId?{...r,ficha:{...r.ficha,
+    apellidosNombres:v.apellidosNombres!==undefined?v.apellidosNombres:r.ficha.apellidosNombres,
+    genero:v.genero?gRevMap[v.genero]||r.ficha.genero:r.ficha.genero,
+    edad:v.edad!==undefined?v.edad:r.ficha.edad,
+    fechaNacimiento:v.fechaNacimiento!==undefined?v.fechaNacimiento:r.ficha.fechaNacimiento,
+    area:v.area!==undefined?v.area:r.ficha.area,
+    sede:v.sede!==undefined?v.sede:r.ficha.sede,
+    puesto:v.puesto!==undefined?v.puesto:r.ficha.puesto,
+    fechaExamen:v.fecha!==undefined?v.fecha:r.ficha.fechaExamen,
+  }}:r));
+}}/>
+              }
+              <div className="fcard-foot">
+                <button className="btn btn-ghost btn-sm" onClick={()=>print(formTab===0?"ficha":"decl")}>🖨 {formTab===0?"Ficha":"Declaración"}</button>
+                <button className="btn btn-red btn-sm" onClick={printAll}>🖨 Imprimir Todo (4 hojas PDF)</button>
+                <button className="btn btn-green" onClick={saveBack}>✓ Guardar y volver</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+ReactDOM.render(React.createElement(App), document.getElementById("root"));
+</script>
+</body>
+</html>
