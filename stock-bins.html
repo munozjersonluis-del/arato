@@ -338,7 +338,8 @@ padding:12px;
         </div>
         <div class="field-grp">
           <label>Observación</label>
-          <input type="text" id="f-obs" placeholder="Placa, módulo, prestado a Arato 2...">
+          <input type="text" id="f-obs" placeholder="Placa, módulo, prestado a Arato 2..." list="obs-sugs" autocomplete="off">
+          <datalist id="obs-sugs"></datalist>
         </div>
         <button class="btn-reg btn-g-fill" id="btn-reg" onclick="guardar()">Registrar Ingreso</button>
       </div>
@@ -425,7 +426,7 @@ padding:12px;
           </div>
           <div class="field-grp">
             <label>Observación</label>
-            <input type="text" id="m-obs" placeholder="Ej: dejado para cosecha tarde...">
+            <input type="text" id="m-obs" placeholder="Ej: dejado para cosecha tarde..." list="obs-sugs" autocomplete="off">
           </div>
           <button class="btn-reg btn-g-fill" onclick="guardarModulo()" style="background:var(--gold);box-shadow:0 4px 14px rgba(184,150,46,0.3);">📍 Registrar en Módulo</button>
         </div>
@@ -480,7 +481,7 @@ padding:12px;
           </div>
           <div class="field-grp">
             <label>Observación</label>
-            <input type="text" id="t-obs" placeholder="Motivo del traslado...">
+            <input type="text" id="t-obs" placeholder="Motivo del traslado..." list="obs-sugs" autocomplete="off">
           </div>
           <button class="btn-reg btn-g-fill" onclick="trasladar()" style="background:var(--b);box-shadow:0 4px 14px rgba(26,74,122,0.3);">🔄 Trasladar</button>
         </div>
@@ -879,6 +880,13 @@ document.getElementById('t-obs').value='';
 }catch(e){toast('Error: '+e.message,'err');}
 }
 
+function actualizarObsSugerencias(movimientos) {
+  if(!movimientos) return;
+  const obs = [...new Set(movimientos.map(m=>m.obs).filter(Boolean))];
+  const dl = document.getElementById('obs-sugs');
+  if(dl) dl.innerHTML = obs.map(o=>'<option value="'+o+'">').join('');
+}
+
 async function cargarModulos(){
 var cont=document.getElementById('mod-content');
 var totEl=document.getElementById('mod-total');
@@ -1033,6 +1041,20 @@ if(btn){btn.textContent='📋 Sheets';btn.disabled=false;}
 }
 
 cargar();
+
+// Cargar sugerencias de observaciones
+(async function(){
+  try{
+    const r=await fetch(SURL+'/rest/v1/stock_movimientos?select=obs&order=created_at.desc&limit=200',{
+      headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY}
+    });
+    const rows=await r.json();
+    if(!rows||!rows.length)return;
+    const obs=[...new Set(rows.map(m=>m.obs).filter(Boolean))];
+    const dl=document.getElementById('obs-sugs');
+    if(dl)dl.innerHTML=obs.map(o=>'<option value="'+o+'">').join('');
+  }catch(e){}
+})();
 </script>
 </body>
 </html>
