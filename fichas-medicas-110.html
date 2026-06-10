@@ -1404,7 +1404,11 @@ function App(){
                   const method=ex&&ex.length?"PATCH":"POST";
                   const url=ex&&ex.length?SU+"/rest/v1/fichas_medicas?record_id=eq."+r.id:SU+"/rest/v1/fichas_medicas";
                   return fetch(url,{method,headers:{"apikey":SK,"Authorization":"Bearer "+SK,"Content-Type":"application/json","Prefer":"return=minimal"},body:JSON.stringify(p)});
-                }).then(()=>{n++;if(n===recs.length)showToast("Guardadas "+n+" fichas en la nube");})
+                }).then(()=>{n++;if(n===recs.length){
+                  showToast("Guardadas "+n+" fichas en la nube");
+                  // Also sync to Google Sheets
+                  fetch("/api/sheets-fichas",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({records:recs})}).catch(()=>{});
+                }})
                 .catch(e=>console.warn(e));
               });
             }}>Guardar en Nube ({records.length} fichas)</button>
