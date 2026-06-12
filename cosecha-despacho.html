@@ -253,7 +253,7 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--txt);min-heig
         <div class="f"><label>Cliente</label><input type="text" id="d-cliente" placeholder="Ej: LIBERATO HARVEST" style="text-transform:uppercase;" list="list-clientes" autocomplete="off">
           <datalist id="list-clientes"></datalist></div>
         <div class="g2">
-          <div class="f"><label>Placa</label><input type="text" id="d-placa" placeholder="C2N-889" style="text-transform:uppercase;font-family:'JetBrains Mono',monospace;font-weight:600;" list="list-placas" autocomplete="off">
+          <div class="f"><label>Placa</label><input type="text" id="d-placa" placeholder="C2N-889" oninput="buscarDespachoActivo(this.value)" style="text-transform:uppercase;font-family:'JetBrains Mono',monospace;font-weight:600;" list="list-placas" autocomplete="off">
             <datalist id="list-placas"></datalist></div>
           <div class="f"><label>Licencia</label><input type="text" id="d-licencia" placeholder="D-72475771" style="font-family:'JetBrains Mono',monospace;" list="list-licencias" autocomplete="off">
             <datalist id="list-licencias"></datalist></div>
@@ -263,6 +263,7 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--txt);min-heig
         <input type="hidden" id="d-fundo">
       </div>
       <!-- Líneas de fruta -->
+      <div id="despacho-activo-banner" style="display:none;"></div>
       <div class="card">
         <div class="ctitle">Fruta a despachar</div>
         <div id="ds-lineas-cont"></div>
@@ -744,6 +745,8 @@ document.getElementById('g-num').textContent=nro;
 document.getElementById('g-fecha-bar').textContent=fecha;
 document.getElementById('g-cliente-firma').textContent=cliente;
 const despachador=fundoActual==='ARATO 2'?'ROGER VILLANUEVA':'JERSON MUÑOZ';
+    // Save combined dispatch info
+    const otrosDespachos=window._despachoActivo||[];
 const despEl=document.getElementById('g-despachador');
 if(despEl)despEl.textContent=despachador;
 document.getElementById('g-meta').innerHTML=[
@@ -769,6 +772,32 @@ return`<tr>
 <td>${totC.toLocaleString()}</td>
 <td>${totP.toLocaleString()}</td>
 </tr>`;
+}
+
+async function buscarDespachoActivo(placa){
+  if(!placa||placa.length<4)return;
+  try{
+    const hoy=new Date().toISOString().slice(0,10);
+    const rows=await apiFetch('despachos?select=id,nro_parte,fundo,cliente,placa,licencia,lineas,total_cantidad,total_peso,despachado_por&placa_camion=eq.'+encodeURIComponent(placa.toUpperCase())+'&fecha_despacho=eq.'+hoy+'&order=created_at.desc&limit=5');
+    if(!rows||!rows.length)return;
+    // Filter out same fundo
+    const otros=rows.filter(r=>r.fundo!==fundoActual);
+    if(!otros.length)return;
+    // Show notification
+    const total=otros.reduce((s,r)=>s+(r.total_cantidad||0),0);
+    const weight=otros.reduce((s,r)=>s+(r.total_peso||0),0);
+    const fondos=[...new Set(otros.map(r=>r.fundo))].join(', ');
+    const banner=document.getElementById('despacho-activo-banner');
+    if(banner){
+      banner.style.display='block';
+      banner.innerHTML='<div style="background:#DCFCE7;border:1px solid #16A34A;border-radius:8px;padding:8px 12px;font-size:0.72rem;margin-bottom:8px;">'
+        +'<div style="font-weight:700;color:#15803D;">🚛 Camión activo hoy de '+fondos+'</div>'
+        +'<div style="color:#374151;margin-top:2px;">'+total+' uds · '+weight.toLocaleString()+' kg ya cargados</div>'
+        +'<div style="color:#6B7280;font-size:0.6rem;margin-top:2px;">Al confirmar tu despacho se combinará en la guía final</div>'
+        +'</div>';
+    }
+    window._despachoActivo=otros;
+  }catch(e){}
 }
 
 async function cargarAutocompletado(){
@@ -835,40 +864,70 @@ return '<div style="background:#fff;border:1px solid var(--bdr);border-radius:12
 }
 
 function verGuia(id){
-apiFetch('despachos?id=eq.'+id).then(function(rows){
+apiFetch('despachos?id=eq.'+id).then(async function(rows){
 if(!rows||!rows.length)return;
 const r=rows[0];
+
+// Load other fundos for same truck today
+let otrosDesp=[];
+try{
+const hoy=r.fecha_despacho||new Date().toISOString().slice(0,10);
+const otros=await apiFetch('despachos?select=*&placa_camion=eq.'+encodeURIComponent(r.placa)+'&fecha_despacho=eq.'+hoy+'&id=neq.'+r.id);
+if(otros&&otros.length)otrosDesp=otros;
+}catch(e){}
+
+const todosDesp=[r,...otrosDesp];
 const lineas=Array.isArray(r.lineas)?r.lineas:[];
+
 let html='<div style="background:#fff;padding:16px;font-family:Inter,sans-serif;">';
 html+='<div style="background:#0D1B0F;padding:12px 14px;border-radius:10px;margin-bottom:8px;">';
 html+='<div style="display:flex;justify-content:space-between;align-items:center;">';
 html+='<div><div style="font-family:Playfair Display,serif;font-size:0.95rem;font-weight:900;color:#fff;">Arato Mission Produce</div>';
-html+='<div style="font-size:0.55rem;color:rgba(255,255,255,0.5);">FUNDO '+r.fundo+'</div></div>';
+html+='<div style="font-size:0.55rem;color:rgba(255,255,255,0.5);">'+(otrosDesp.length>0?'COMBINADO ARATO 1 + 2':'FUNDO '+r.fundo)+'</div></div>';
 html+='<div style="background:#C8A84B;border-radius:6px;padding:4px 8px;text-align:right;">';
 html+='<div style="font-size:0.45rem;font-weight:700;text-transform:uppercase;">Parte N°</div>';
 html+='<div style="font-family:monospace;font-size:0.85rem;font-weight:700;">'+String(r.nro_parte).padStart(3,'0')+'</div></div>';
 html+='</div></div>';
-html+='<div style="background:#1B6B3A;padding:5px 14px;border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between;">';
-html+='<div style="font-size:0.8rem;font-weight:700;color:#fff;text-transform:uppercase;">Parte de Cosecha</div>';
-html+='<div style="font-size:0.6rem;color:rgba(255,255,255,0.8);">'+r.fecha_despacho+'</div></div>';
 html+='<div style="background:#F8FAFC;border-radius:8px;padding:10px;margin-bottom:8px;display:grid;grid-template-columns:1fr 1fr;gap:4px;">';
-[['Fecha despacho',r.fecha_despacho],['Fundo',r.fundo],['Cliente',r.cliente],['Placa',r.placa],['Licencia',r.licencia]].forEach(function(item){
+[['Cliente',r.cliente],['Placa',r.placa],['Licencia',r.licencia],['Fecha',r.fecha_despacho]].forEach(function(item){
 html+='<div><div style="font-size:0.45rem;color:#888;text-transform:uppercase;">'+item[0]+'</div><div style="font-size:0.7rem;font-weight:700;">'+item[1]+'</div></div>';
 });
 html+='</div>';
+
+// Show each fundo section
+let totalGenC=0,totalGenP=0;
+todosDesp.forEach(function(desp){
+const dLineas=Array.isArray(desp.lineas)?desp.lineas:[];
+if(!dLineas.length)return;
+let subtotC=0,subtotP=0;
+html+='<div style="background:#1B6B3A;padding:4px 10px;border-radius:6px;margin-bottom:4px;">';
+html+='<span style="font-size:0.72rem;font-weight:700;color:#fff;">'+desp.fundo+'</span>';
+html+='</div>';
 html+='<table style="width:100%;border-collapse:collapse;font-size:0.62rem;margin-bottom:8px;">';
-html+='<thead><tr style="background:#1B6B3A;color:#fff;"><th style="padding:5px;">Cosecha</th><th>Variedad</th><th>Módulo</th><th>Calidad</th><th>Envase</th><th>Cant.</th><th>Peso</th></tr></thead><tbody>';
-let totC=0,totP=0;
-lineas.forEach(function(l){
+html+='<thead><tr style="background:#2D6A4F;color:#fff;"><th style="padding:4px;">Cosecha</th><th>Variedad</th><th>Módulo</th><th>Envase</th><th>Cant.</th><th>Peso</th></tr></thead><tbody>';
+dLineas.forEach(function(l){
 const p=l.envase==='Jabas'?l.cantidad*20:l.cantidad*435;
-totC+=l.cantidad||0;totP+=p;
-html+='<tr style="border-bottom:1px solid #E5E7EB;"><td style="padding:5px;text-align:center;">'+l.fcosecha+'</td><td style="text-align:center;">'+l.variedad+'</td><td style="text-align:center;">'+l.modulo+'</td><td style="text-align:center;font-size:0.55rem;">'+l.calidad+'</td><td style="text-align:center;">'+l.envase+'</td><td style="text-align:center;font-weight:700;">'+l.cantidad+'</td><td style="text-align:center;font-weight:700;">'+p.toLocaleString()+'</td></tr>';
+subtotC+=l.cantidad||0;subtotP+=p;
+html+='<tr style="border-bottom:1px solid #E5E7EB;"><td style="padding:4px;text-align:center;">'+l.fcosecha+'</td><td style="text-align:center;">'+l.variedad+'</td><td style="text-align:center;font-weight:700;">'+l.modulo+'</td><td style="text-align:center;">'+l.envase+'</td><td style="text-align:center;font-weight:700;">'+l.cantidad+'</td><td style="text-align:center;font-weight:700;">'+p.toLocaleString()+'</td></tr>';
 });
-html+='<tr style="background:#DCFCE7;font-weight:800;"><td colspan="5" style="padding:5px;text-align:right;color:#15803D;">TOTAL</td><td style="text-align:center;color:#15803D;">'+totC+'</td><td style="text-align:center;color:#15803D;">'+totP.toLocaleString()+'</td></tr>';
+html+='<tr style="background:#DCFCE7;font-weight:800;"><td colspan="4" style="padding:4px;text-align:right;color:#15803D;">Subtotal '+desp.fundo+'</td><td style="text-align:center;color:#15803D;">'+subtotC+'</td><td style="text-align:center;color:#15803D;">'+subtotP.toLocaleString()+'</td></tr>';
 html+='</tbody></table>';
+totalGenC+=subtotC;totalGenP+=subtotP;
+});
+
+// Grand total
+if(otrosDesp.length>0){
+html+='<div style="background:#1A5C38;border-radius:8px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">';
+html+='<div style="font-size:0.72rem;font-weight:700;color:rgba(255,255,255,0.8);">TOTAL CAMIÓN</div>';
+html+='<div style="text-align:right;"><div style="font-size:1rem;font-weight:800;color:#fff;">'+totalGenC+' uds</div>';
+html+='<div style="font-size:0.65rem;color:rgba(255,255,255,0.7);">'+totalGenP.toLocaleString()+' kg</div></div>';
+html+='</div>';
+}
+
 html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:8px;border-top:1px solid #E5E7EB;">';
-html+='<div><div style="font-size:0.65rem;font-weight:700;color:#111;margin-bottom:2px;">'+r.despachado_por+'</div><div style="border-top:1.5px solid #333;padding-top:4px;font-size:0.5rem;color:#888;text-transform:uppercase;">Entregado por</div></div>';
-html+='<div><div style="font-size:0.65rem;font-weight:700;color:#111;margin-bottom:2px;">'+r.cliente+'</div><div style="border-top:1.5px solid #333;padding-top:4px;font-size:0.5rem;color:#888;text-transform:uppercase;">Recibido por</div></div>';
+todosDesp.forEach(function(desp){
+html+='<div><div style="font-size:0.65rem;font-weight:700;color:#111;margin-bottom:2px;">'+desp.despachado_por+'</div><div style="border-top:1.5px solid #333;padding-top:4px;font-size:0.5rem;color:#888;text-transform:uppercase;">Entregado por<br>'+desp.fundo+'</div></div>';
+});
 html+='</div></div>';
 
 const modal=document.createElement('div');
@@ -932,6 +991,8 @@ const placa=document.getElementById('d-placa').value||'';
 const licencia=document.getElementById('d-licencia').value||'';
 const nroParte=parseInt(document.getElementById('d-nro').value)||1;
 const despachador=fundoActual==='ARATO 2'?'ROGER VILLANUEVA':'JERSON MUÑOZ';
+    // Save combined dispatch info
+    const otrosDespachos=window._despachoActivo||[];
 let totC=0,totP=0;
 dsLineas.forEach(l=>{totC+=l.cantidad||0;totP+=dsCalcPeso(l);});
 await apiFetch('despachos','POST',{
