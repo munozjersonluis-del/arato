@@ -657,6 +657,27 @@ function marcarBin(estado) {
   data[g][sg][idx].h=estado==='l'?hora:'';
   guardar(); cerrarModal('modalBin'); render();
   flash(estado==='l'?'✅ Llegado':estado==='f'?'⚠️ Faltante':'↩️ Quitado', estado==='l'?'verde':estado==='f'?'rojo':'azul');
+  // Auto-save this bin to Supabase immediately
+  const b=data[g][sg][idx];
+  const fecha=fechaHoy();
+  const payload={fecha,grupo:g,subgrupo:sg,bin_num:b.n,estado:b.e||'',hora:b.h||'',color_mod:b.c||''};
+  supaFetch('guia_bins_estado?fecha=eq.'+fecha+'&grupo=eq.'+g+'&subgrupo=eq.'+sg+'&bin_num=eq.'+b.n)
+    .then(function(ex){
+      if(ex&&ex.length){
+        return supaFetch('guia_bins_estado?id=eq.'+ex[0].id,'PATCH',payload);
+      } else {
+        return supaFetch('guia_bins_estado','POST',payload);
+      }
+    }).catch(function(){});
+  // Update summary
+  const bins=data[g][sg]||[];
+  const llegados=bins.filter(b=>b.e==='l').length;
+  supaFetch('guia_registros?fecha=eq.'+fecha+'&grupo=eq.'+g+'&subgrupo=eq.'+sg)
+    .then(function(ex){
+      const p={fecha,grupo:g,subgrupo:sg,viaje:bins.length,bins:llegados,obs:'L:'+llegados};
+      if(ex&&ex.length)return supaFetch('guia_registros?id=eq.'+ex[0].id,'PATCH',p);
+      else return supaFetch('guia_registros','POST',p);
+    }).catch(function(){});
 }
 
 // ── SUPABASE SYNC ──
