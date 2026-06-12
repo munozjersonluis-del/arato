@@ -821,9 +821,32 @@ async function cargarGuias(){
 const cont=document.getElementById('lista-guias');
 if(!cont)return;
 cont.innerHTML='<div class="empty">Cargando...</div>';
+
+// Check for pending derivations for Arato 2
+if(fundoActual==='ARATO 2'){
+try{
+const derivados=await apiFetch('despachos?fundo=eq.ARATO 2&estado=eq.DERIVADO&order=created_at.desc&limit=5');
+if(derivados&&derivados.length){
+const banner=document.createElement('div');
+banner.style.cssText='margin-bottom:12px;';
+banner.innerHTML=derivados.map(d=>`
+<div style="background:#EFF6FF;border:1px solid #2563EB;border-radius:10px;padding:10px 12px;margin-bottom:6px;">
+<div style="font-weight:700;color:#1D4ED8;font-size:0.75rem;">📥 Despacho derivado de Arato 1</div>
+<div style="font-size:0.65rem;color:#374151;margin-top:2px;">Parte N°${String(d.nro_parte).padStart(3,'0')} · ${d.total_cantidad} uds · ${(d.total_peso||0).toLocaleString()} kg</div>
+<div style="font-size:0.6rem;color:#6B7280;">${d.obs||''}</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;">
+<button onclick="aceptarDerivacion(${d.id})" style="padding:8px;background:#2563EB;color:#fff;border:none;border-radius:7px;font-size:0.7rem;font-weight:700;cursor:pointer;font-family:inherit;">✅ Aceptar y completar</button>
+<button onclick="rechazarDerivacion(${d.id})" style="padding:8px;background:#FEE2E2;color:#DC2626;border:none;border-radius:7px;font-size:0.7rem;font-weight:700;cursor:pointer;font-family:inherit;">✕ Rechazar</button>
+</div>
+</div>`).join('');
+cont.before(banner);
+}
+}catch(e){}
+}
+
 try{
 const fundoFilter=fundoActual?'&fundo=eq.'+encodeURIComponent(fundoActual):'';
-const rows=await apiFetch('despachos?select=*'+fundoFilter+'&order=created_at.desc');
+const rows=await apiFetch('despachos?select=*'+fundoFilter+'&estado=neq.DERIVADO&order=created_at.desc');
 if(!rows||!rows.length){cont.innerHTML='<div class="empty">Sin guías registradas.</div>';return;}
 
 // Group by date
@@ -939,11 +962,69 @@ modal.innerHTML='<div style="background:#fff;border-radius:16px 16px 0 0;padding
 '</div>'+html+
 '<div style="display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px;">'+
 '<button onclick="wspGuia('+id+')" style="padding:11px;background:#25D366;color:#fff;border:none;border-radius:9px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;">📲 Enviar WhatsApp</button>'+
+(fundoActual==='ARATO 1'?'<button onclick="derivarArato2('+id+')" style="padding:11px;background:#2563EB;color:#fff;border:none;border-radius:9px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;">📤 Derivar a Arato 2</button>':'')+
 '</div></div>';
 modal.addEventListener('click',function(e){if(e.target===this)this.remove();});
 document.body.appendChild(modal);
 document.getElementById('cerrar-guia-modal').addEventListener('click',function(){modal.remove();});
 }).catch(function(e){alert('Error: '+e.message);});
+}
+
+async function aceptarDerivacion(id){
+try{
+const rows=await apiFetch('despachos?id=eq.'+id);
+if(!rows||!rows.length)return;
+const d=rows[0];
+// Load lineas into despacho form
+dsLineas=[];dsLinId=1;
+const lineas=Array.isArray(d.lineas)?d.lineas:[];
+lineas.forEach(l=>{dsLineas.push({...l,id:dsLinId++});});
+if(!dsLineas.length)dsLineas=[{id:dsLinId++,fcosecha:hoy(),viaje:1,variedad:'Fuerte',modulo:'',calidad:'Ind. Exportable',envase:'Jabas',cantidad:0}];
+// Mark as accepted
+await apiFetch('despachos?id=eq.'+id,'PATCH',{estado:'ACEPTADO'});
+// Switch to despacho tab
+setTab('tab-despacho');
+dsGoStep(1);
+setTimeout(()=>{
+dsRenderLineas();
+flash('✅ Despacho cargado — completa los datos del camión','verde');
+},200);
+}catch(e){alert('Error: '+e.message);}
+}
+
+async function rechazarDerivacion(id){
+try{
+await apiFetch('despachos?id=eq.'+id,'PATCH',{estado:'RECHAZADO'});
+flash('Derivación rechazada','rojo');
+cargarGuias();
+}catch(e){}
+}
+
+async function derivarArato2(id){
+try{
+const rows=await apiFetch('despachos?id=eq.'+id);
+if(!rows||!rows.length)return;
+const r=rows[0];
+const lineas=Array.isArray(r.lineas)?r.lineas:[];
+// Create a pending derivation in Supabase
+const payload={
+  nro_parte:r.nro_parte,
+  fecha_despacho:r.fecha_despacho,
+  fundo:'ARATO 2',
+  cliente:'',
+  placa:r.placa,
+  placa_camion:r.placa,
+  licencia:'',
+  lineas:lineas,
+  despachado_por:'ROGER VILLANUEVA',
+  total_cantidad:r.total_cantidad,
+  total_peso:r.total_peso,
+  estado:'DERIVADO',
+  obs:'Derivado desde Arato 1 — Parte N°'+String(r.nro_parte).padStart(3,'0')
+};
+await apiFetch('despachos','POST',payload);
+flash('✅ Derivado a Arato 2 — Parte N°'+String(r.nro_parte).padStart(3,'0'),'verde');
+}catch(e){alert('Error: '+e.message);}
 }
 
 function wspGuia(id){
