@@ -444,6 +444,7 @@ function renderSG(g, sg) {
       </div>
       <div class="sg-actions no-print">
         <button class="sg-btn" style="background:var(--gc);color:var(--g2);" onclick="marcarTodos('${g}','${sg}','l')">✅ Todos llegaron</button>
+        <button class="sg-btn" style="background:var(--yc,#FEF3C7);color:var(--y);flex:0.5;" onclick="editarBins('${g}','${sg}')">✏️</button>
         <button class="sg-btn" style="background:var(--rc);color:var(--r);flex:0.5;" onclick="eliminarSG('${g}','${sg}')">🗑️</button>
       </div>
       ${(()=>{
@@ -550,6 +551,40 @@ function confirmarAgregarSG() {
   cerrarModal('modalSG');
   render();
   flash('✅ Subgrupo '+nombre+' creado con '+cantidad+' bins','verde');
+}
+
+function editarBins(g, sg) {
+  const bins = data[g][sg]||[];
+  const actual = bins.length;
+  // Use modal instead of prompt
+  const modal = document.createElement('div');
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:flex;align-items:flex-end;';
+  modal.innerHTML='<div style="background:#fff;border-radius:16px 16px 0 0;padding:20px;width:100%;">'
+    +'<div style="font-family:Bebas Neue,sans-serif;font-size:1rem;letter-spacing:1px;margin-bottom:10px;">Editar bins — '+sg+'</div>'
+    +'<div style="font-size:0.7rem;color:#888;margin-bottom:6px;">Cantidad actual: '+actual+' bins</div>'
+    +'<input id="edit-bins-input" type="number" min="1" max="200" value="'+actual+'" style="width:100%;padding:10px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:1rem;font-family:inherit;outline:none;margin-bottom:10px;">'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'
+    +'<button id="edit-bins-ok" style="padding:11px;background:#16A34A;color:#fff;border:none;border-radius:9px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;">✅ Guardar</button>'
+    +'<button id="edit-bins-cancel" style="padding:11px;background:#F3F4F6;color:#374151;border:none;border-radius:9px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;">Cancelar</button>'
+    +'</div></div>';
+  document.body.appendChild(modal);
+  setTimeout(()=>document.getElementById('edit-bins-input').focus(),100);
+  document.getElementById('edit-bins-cancel').addEventListener('click',()=>modal.remove());
+  modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
+  document.getElementById('edit-bins-ok').addEventListener('click',()=>{
+    const nueva = parseInt(document.getElementById('edit-bins-input').value)||0;
+    if(!nueva||nueva<1){flash('Ingresa una cantidad válida','rojo');return;}
+    if(nueva===actual){modal.remove();return;}
+    if(nueva>actual){
+      for(let i=actual+1;i<=nueva;i++) data[g][sg].push({n:i,e:'',h:''});
+    } else {
+      const llegados=data[g][sg].filter(b=>b.e==='l');
+      data[g][sg]=Array.from({length:nueva},(_,i)=>llegados[i]||{n:i+1,e:'',h:''});
+      data[g][sg].forEach((b,i)=>b.n=i+1);
+    }
+    guardar();render();modal.remove();
+    flash('✅ Actualizado a '+nueva+' bins','verde');
+  });
 }
 
 function eliminarSG(g, sg) {
