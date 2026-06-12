@@ -66,7 +66,7 @@ module.exports = async (req, res) => {
       ['ARATO MISSION PRODUCE — CONTROL DE GUIA DE BINS', '', '', '', '', '', '', '', ''],
       ['Actualizado: ' + new Date().toLocaleString('es-PE'), '', '', '', '', '', '', '', ''],
       ['', '', '', '', '', '', '', '', ''],
-      ['FECHA', 'GRUPO', 'SUBGRUPO', 'TOTAL BINS', 'LLEGADOS', 'FALTANTES', 'PENDIENTES', '% LLEGADO', 'OBSERVACION']
+      ['FECHA', 'GRUPO', 'SUBGRUPO', 'TOTAL BINS', 'LLEGADOS', 'FALTANTES', 'PENDIENTES', 'TONELADAS (435kg)', 'OBSERVACION']
     ];
 
     rows.forEach(r => {
@@ -76,8 +76,8 @@ module.exports = async (req, res) => {
       const faltMatch = obs.match(/F:(\d+)/);
       const faltantes = faltMatch ? parseInt(faltMatch[1]) : 0;
       const pend = Math.max(0, total - llegados - faltantes);
-      const pct = total > 0 ? Math.round(llegados / total * 100) : 0;
-      data.push([r.fecha||'', r.grupo||'', r.subgrupo||'', total, llegados, faltantes, pend, pct + '%', obs]);
+      const tons = parseFloat((llegados*435/1000).toFixed(1));
+      data.push([r.fecha||'', r.grupo||'', r.subgrupo||'', total, llegados, faltantes, pend, tons, obs]);
     });
 
     await sheets.spreadsheets.values.update({
@@ -128,9 +128,8 @@ module.exports = async (req, res) => {
       reqs.push(cell(row,0,row+1,9,bg,NEGRO,false,9));
       reqs.push(rowH(row,18));
       // Color % column
-      const pctBg = pct===100 ? VERDE_C : pct>0 ? AMARILLO_C : ROJO_C;
-      const pctTxt = pct===100 ? VERDE_TXT : pct>0 ? AMARILLO : ROJO;
-      reqs.push(cell(row,7,row+1,8,pctBg,pctTxt,true,9));
+      const isBien = llegados > 0;
+      reqs.push(cell(row,7,row+1,8,isBien?VERDE_C:bg,isBien?VERDE_TXT:NEGRO,true,9));
     });
 
     await sheets.spreadsheets.batchUpdate({ spreadsheetId: SHEET_ID, resource: { requests: reqs } });
