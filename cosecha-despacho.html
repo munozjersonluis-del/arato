@@ -245,18 +245,12 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--txt);min-heig
 
   <!-- TAB DESPACHO -->
   <div class="tab-c" id="tab-despacho">
-    <!-- Step 1: Cabecera -->
+    <!-- Step 1: Todo en una pantalla -->
     <div class="step-view on" id="ds-1">
-      <div class="card">
-        <div class="ctitle">Datos del despacho</div>
-        <div class="g3">
-          <div class="f"><label>N° Parte</label><input type="number" id="d-nro" value="1" min="1" style="font-family:'JetBrains Mono',monospace;font-weight:800;font-size:1.1rem;"></div>
-          <div class="f"><label>Fecha despacho</label><input type="date" id="d-fecha"></div>
-          <div class="f"><label>Fundo</label>
-            <select id="d-fundo"><option value="ARATO 1">Arato 1</option><option value="ARATO 2">Arato 2</option></select>
-          </div>
-        </div>
-        <div class="f"><label>Cliente</label><input type="text" id="d-cliente" placeholder="Ej: LIBERATO HARVEST S.A.C" style="text-transform:uppercase;" list="list-clientes" autocomplete="off">
+      <!-- Datos del camión -->
+      <div class="card" style="margin-bottom:8px;">
+        <div class="ctitle">Datos del camión</div>
+        <div class="f"><label>Cliente</label><input type="text" id="d-cliente" placeholder="Ej: LIBERATO HARVEST" style="text-transform:uppercase;" list="list-clientes" autocomplete="off">
           <datalist id="list-clientes"></datalist></div>
         <div class="g2">
           <div class="f"><label>Placa</label><input type="text" id="d-placa" placeholder="C2N-889" style="text-transform:uppercase;font-family:'JetBrains Mono',monospace;font-weight:600;" list="list-placas" autocomplete="off">
@@ -264,18 +258,22 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--txt);min-heig
           <div class="f"><label>Licencia</label><input type="text" id="d-licencia" placeholder="D-72475771" style="font-family:'JetBrains Mono',monospace;" list="list-licencias" autocomplete="off">
             <datalist id="list-licencias"></datalist></div>
         </div>
-        <button class="btn btn-g" onclick="dsGoStep(2)">Continuar → Líneas</button>
+        <input type="hidden" id="d-nro" value="1">
+        <input type="hidden" id="d-fecha">
+        <input type="hidden" id="d-fundo">
+      </div>
+      <!-- Líneas de fruta -->
+      <div class="card">
+        <div class="ctitle">Fruta a despachar</div>
+        <div id="ds-lineas-cont"></div>
+        <button onclick="dsAddLinea()" style="background:var(--gc);border:1.5px dashed var(--g);color:var(--g);border-radius:10px;padding:10px;width:100%;font-size:0.78rem;font-weight:700;cursor:pointer;margin-bottom:10px;font-family:Inter,sans-serif;">+ Agregar línea</button>
+        <button class="btn btn-g" onclick="dsGoStep(3)">📄 Generar Guía</button>
       </div>
     </div>
 
-    <!-- Step 2: Líneas -->
-    <div class="step-view" id="ds-2">
-      <div id="ds-lineas-cont"></div>
-      <button onclick="dsAddLinea()" style="background:var(--gc);border:1.5px dashed var(--g);color:var(--g);border-radius:10px;padding:10px;width:100%;font-size:0.78rem;font-weight:700;cursor:pointer;margin-bottom:10px;font-family:Inter,sans-serif;">+ Agregar línea</button>
-      <div class="g2">
-        <button class="btn btn-ghost" onclick="dsGoStep(1)">← Volver</button>
-        <button class="btn btn-g" onclick="dsGoStep(3)">Ver guía →</button>
-      </div>
+    <!-- Step 2 ya no se usa pero se mantiene para compatibilidad -->
+    <div class="step-view" id="ds-2" style="display:none!important;">
+      <input type="hidden" id="d-nro-old">
     </div>
 
     <!-- Step 3: Guía -->
@@ -305,8 +303,8 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--txt);min-heig
           </div>
         </div>
         <div class="guia-footer">
-          <div><div class="guia-firma-lbl">Entregado por</div><div class="guia-firma"></div><div class="guia-firma-lbl" style="margin-top:4px;" id="g-despachador"></div></div>
-          <div><div class="guia-firma-lbl">Recibido por</div><div class="guia-firma"></div><div class="guia-firma-lbl" style="margin-top:4px;" id="g-cliente-firma"></div></div>
+          <div><div class="guia-firma-lbl" id="g-despachador" style="font-weight:700;color:var(--txt);font-size:0.65rem;margin-bottom:2px;"></div><div class="guia-firma"></div><div class="guia-firma-lbl">Entregado por</div></div>
+          <div><div class="guia-firma-lbl" id="g-cliente-firma" style="font-weight:700;color:var(--txt);font-size:0.65rem;margin-bottom:2px;"></div><div class="guia-firma"></div><div class="guia-firma-lbl">Recibido por</div></div>
         </div>
       </div>
       <div class="g2" style="margin-bottom:8px;">
@@ -546,18 +544,120 @@ function dsGoStep(n){
 if(n===1) cargarSigNroParte();
 document.querySelectorAll('.step-view').forEach(v=>v.classList.remove('on'));
 document.getElementById('ds-'+n).classList.add('on');
-if(n===2&&dsLineas.length===0)dsAddLinea();
+if(n===1&&dsLineas.length===0)dsAddLinea();
 if(n===3)dsRenderGuia();
 window.scrollTo(0,0);
 }
 
 function dsAddLinea(){
 dsCaptureLineas();
+// Copy cliente/placa/licencia from header to new line
+const cliente=document.getElementById('d-cliente')?.value||'';
+const placa=document.getElementById('d-placa')?.value||'';
+const licencia=document.getElementById('d-licencia')?.value||'';
 dsLineas.push({id:dsLinId++,fcosecha:hoy(),viaje:1,variedad:'Fuerte',modulo:'',calidad:'Ind. Exportable',envase:'Jabas',cantidad:0});
 dsRenderLineas();
 }
 
+async function dsCargarModulos(lineaId){
+const varEl=document.getElementById('lva-'+lineaId);
+const moEl=document.getElementById('lmo-'+lineaId);
+if(!varEl||!moEl)return;
+const variedad=varEl.value;
+try{
+const fundoFilter=fundoActual?'&fundo=eq.'+encodeURIComponent(fundoActual):'';
+const rows=await apiFetch('cosecha_modulos?select=modulo,bins_cosechados,bins_vendidos&variedad=eq.'+encodeURIComponent(variedad)+fundoFilter+'&order=modulo.asc');
+if(!rows||!rows.length){moEl.innerHTML='<option value="">Sin stock</option>';return;}
+// Group by modulo and calculate available
+const map={};
+rows.forEach(r=>{
+if(!map[r.modulo])map[r.modulo]=0;
+map[r.modulo]+=Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0));
+});
+const modulos=Object.keys(map).filter(m=>map[m]>0).sort();
+const currentVal=moEl.value;
+moEl.innerHTML='<option value="">— Seleccionar —</option>'+
+modulos.map(m=>`<option value="${m}" ${m===currentVal?'selected':''}>${m} — ${map[m]} bins</option>`).join('');
+// Auto-load fechas if only one option
+if(modulos.length===1){moEl.value=modulos[0];dsCargarFechas(lineaId);}
+}catch(e){console.warn(e);}
+}
+
+async function dsCargarFechas(lineaId){
+const varEl=document.getElementById('lva-'+lineaId);
+const modEl=document.getElementById('lmo-'+lineaId);
+const fcEl=document.getElementById('lfc-'+lineaId);
+if(!varEl||!fcEl)return;
+const variedad=varEl.value;
+const modulo=modEl?modEl.value.trim().toUpperCase():'';
+if(!modulo||modulo==='— SELECCIONAR —')return;
+try{
+const fundoFilter=fundoActual?'&fundo=eq.'+encodeURIComponent(fundoActual):'';
+let query='cosecha_modulos?select=fecha_cosecha,bins_cosechados,bins_vendidos'+fundoFilter+'&order=fecha_cosecha.desc';
+if(variedad)query+='&variedad=eq.'+encodeURIComponent(variedad);
+if(modulo)query+='&modulo=eq.'+encodeURIComponent(modulo);
+const rows=await apiFetch(query);
+if(!rows||!rows.length){flash('Sin cosechas para ese módulo','rojo');return;}
+const currentVal=fcEl.value;
+fcEl.innerHTML=rows.map(r=>{
+const disp=Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0));
+return `<option value="${r.fecha_cosecha}" ${r.fecha_cosecha===currentVal?'selected':''}>${r.fecha_cosecha} — ${disp} bins</option>`;
+}).join('');
+// Show available bins count
+const firstDisp=Math.max(0,(rows[0].bins_cosechados||0)-(rows[0].bins_vendidos||0));
+const dispEl=document.getElementById('ldisp-'+lineaId);
+if(dispEl){dispEl.textContent='✅ Disponibles: '+firstDisp+' bins';dispEl.style.color='var(--g)';}
+fcEl.onchange=function(){
+const sel=fcEl.selectedOptions[0];
+const m=sel&&sel.text.match(/(\d+)\s*bins/);
+const d=m?parseInt(m[1]):0;
+if(dispEl){dispEl.textContent='✅ Disponibles: '+d+' bins';dispEl.style.color='var(--g)';}
+};
+}catch(e){flash('Error: '+e.message,'rojo');}
+}
+
+async function dsBuscarFechaCosecha(lineaId){
+const varEl=document.getElementById('lva-'+lineaId);
+const modEl=document.getElementById('lmo-'+lineaId);
+const fechaEl=document.getElementById('lfc-'+lineaId);
+if(!varEl||!modEl||!fechaEl)return;
+const variedad=varEl.value;
+const modulo=modEl.value.trim().toUpperCase();
+if(!modulo||modulo.length<2)return;
+try{
+const fundoFilter=fundoActual?'&fundo=eq.'+encodeURIComponent(fundoActual):'';
+const rows=await apiFetch('cosecha_modulos?select=fecha_cosecha&variedad=eq.'+encodeURIComponent(variedad)+'&modulo=eq.'+encodeURIComponent(modulo)+fundoFilter+'&order=fecha_cosecha.desc&limit=1');
+if(rows&&rows.length&&rows[0].fecha_cosecha){
+fechaEl.value=rows[0].fecha_cosecha;
+}
+}catch(e){}
+}
+
 function dsDelLinea(id){dsCaptureLineas();dsLineas=dsLineas.filter(l=>l.id!==id);dsRenderLineas();}
+
+function dsValidarCantidad(lineaId){
+  const fcEl=document.getElementById('lfc-'+lineaId);
+  const cnEl=document.getElementById('lcn-'+lineaId);
+  const dispEl=document.getElementById('ldisp-'+lineaId);
+  if(!fcEl||!cnEl)return;
+  const opt=fcEl.selectedOptions[0];
+  if(!opt)return;
+  // Extract available bins from option text "YYYY-MM-DD — X bins disp."
+  const match=opt.text.match(/(\d+)\s*bins\s*disp/);
+  if(!match)return;
+  const disp=parseInt(match[1]);
+  const cant=parseInt(cnEl.value)||0;
+  if(dispEl){
+    if(cant>disp){
+      dispEl.textContent='⚠️ Solo hay '+disp+' bins disponibles';
+      dispEl.style.color='var(--r)';
+      cnEl.value=disp; // cap to available
+    } else {
+      dispEl.textContent='✅ Disponibles: '+disp+' bins';
+      dispEl.style.color='var(--g)';
+    }
+  }
+}
 
 function dsCaptureLineas(){
 dsLineas.forEach(l=>{
@@ -565,7 +665,7 @@ const get=id=>document.getElementById(id);
 if(get('lfc-'+l.id))l.fcosecha=get('lfc-'+l.id).value;
 if(get('lvi-'+l.id))l.viaje=parseInt(get('lvi-'+l.id).value)||1;
 if(get('lva-'+l.id))l.variedad=get('lva-'+l.id).value;
-if(get('lmo-'+l.id))l.modulo=get('lmo-'+l.id).value.toUpperCase();
+if(get('lmo-'+l.id))l.modulo=get('lmo-'+l.id).value;
 if(get('lca-'+l.id))l.calidad=get('lca-'+l.id).value;
 if(get('len-'+l.id))l.envase=get('len-'+l.id).value;
 if(get('lcn-'+l.id))l.cantidad=parseInt(get('lcn-'+l.id).value)||0;
@@ -577,42 +677,47 @@ function dsCalcPeso(l){return l.envase==='Jabas'?l.cantidad*20:l.cantidad*435;}
 function dsRenderLineas(){
 const cont=document.getElementById('ds-lineas-cont');
 cont.innerHTML=dsLineas.map((l,i)=>`
-<div class="desp-linea">
-<div class="desp-linea-num">Línea ${i+1}</div>
-${dsLineas.length>1?`<button class="desp-linea-del" onclick="dsDelLinea(${l.id})">✕</button>`:''}
-<div class="g2" style="margin-top:8px;">
-<div class="f"><label>Fecha cosecha</label><input type="date" id="lfc-${l.id}" value="${l.fcosecha}"></div>
-<div class="f"><label>Viaje #</label><input type="number" id="lvi-${l.id}" value="${l.viaje}" min="1" style="font-family:'JetBrains Mono',monospace;font-weight:600;"></div>
+<div class="desp-linea" style="padding:10px;margin-bottom:8px;border:1px solid var(--bdr,#E5E7EB);border-radius:10px;">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+<div style="font-size:0.7rem;font-weight:700;color:var(--txt3);">Línea ${i+1}</div>
+${dsLineas.length>1?`<button onclick="dsCaptureLineas();dsLineas=dsLineas.filter(l=>l.id!==${l.id});dsRenderLineas()" style="background:none;border:none;color:var(--r,#DC2626);cursor:pointer;font-size:0.75rem;">✕ Quitar</button>`:''}
 </div>
 <div class="g2">
 <div class="f"><label>Variedad</label>
-<select id="lva-${l.id}">
+<select id="lva-${l.id}" onchange="dsCargarModulos(${l.id})">
 <option ${l.variedad==='Fuerte'?'selected':''}>Fuerte</option>
 <option ${l.variedad==='Zutano'?'selected':''}>Zutano</option>
 <option ${l.variedad==='Hass'?'selected':''}>Hass</option>
-<option ${l.variedad==='Otra'?'selected':''}>Otra</option>
 </select>
 </div>
-<div class="f"><label>Módulo</label><input type="text" id="lmo-${l.id}" value="${l.modulo}" placeholder="M24" style="text-transform:uppercase;font-family:'JetBrains Mono',monospace;font-weight:700;"></div>
-</div>
-<div class="g3">
-<div class="f"><label>Calidad</label>
-<select id="lca-${l.id}">
-<option ${l.calidad==='Ind. Exportable'?'selected':''}>Ind. Exportable</option>
-<option ${l.calidad==='Descarte'?'selected':''}>Descarte</option>
-<option ${l.calidad==='Industrial'?'selected':''}>Industrial</option>
+<div class="f"><label>Módulo</label>
+<select id="lmo-${l.id}" onchange="dsCargarFechas(${l.id})" style="font-family:'JetBrains Mono',monospace;font-weight:700;">
+<option value="${l.modulo}">${l.modulo||'— Seleccionar —'}</option>
 </select>
 </div>
+</div>
+<div class="f"><label>Fecha cosecha</label>
+<select id="lfc-${l.id}" style="font-family:'JetBrains Mono',monospace;">
+<option value="${l.fcosecha}">${l.fcosecha}${l.binsDisp?' — '+l.binsDisp+' bins':''}</option>
+</select>
+</div>
+<div class="g2">
 <div class="f"><label>Envase</label>
 <select id="len-${l.id}" onchange="dsUpdPeso(${l.id})">
 <option ${l.envase==='Jabas'?'selected':''}>Jabas</option>
 <option ${l.envase==='Bins'?'selected':''}>Bins</option>
 </select>
 </div>
-<div class="f"><label>Cantidad</label><input type="number" id="lcn-${l.id}" value="${l.cantidad}" min="0" oninput="dsUpdPeso(${l.id})" style="font-family:'JetBrains Mono',monospace;font-weight:800;font-size:1rem;"></div>
+<div class="f"><label>Cantidad</label>
+<input type="number" id="lcn-${l.id}" value="${l.cantidad||''}" min="0"
+placeholder="0"
+style="font-family:'JetBrains Mono',monospace;font-weight:800;font-size:1.1rem;"
+oninput="dsValidarCantidad(${l.id});dsUpdPeso(${l.id})">
+<div id="ldisp-${l.id}" style="font-size:0.6rem;color:var(--g);margin-top:2px;"></div>
 </div>
-<div style="background:var(--bg3);border-radius:7px;padding:7px 10px;font-size:0.72rem;display:flex;justify-content:space-between;">
-<span style="color:var(--txt3);">Peso total</span>
+</div>
+<div style="background:var(--bg3,#F8FAFC);border-radius:6px;padding:6px 10px;font-size:0.72rem;display:flex;justify-content:space-between;margin-top:4px;">
+<span style="color:var(--txt3);">Peso</span>
 <span style="font-weight:800;color:var(--g);font-family:'JetBrains Mono',monospace;" id="lpeso-${l.id}">${dsCalcPeso(l).toLocaleString()} kg</span>
 </div>
 </div>`).join('');
@@ -762,8 +867,8 @@ html+='<tr style="border-bottom:1px solid #E5E7EB;"><td style="padding:5px;text-
 html+='<tr style="background:#DCFCE7;font-weight:800;"><td colspan="5" style="padding:5px;text-align:right;color:#15803D;">TOTAL</td><td style="text-align:center;color:#15803D;">'+totC+'</td><td style="text-align:center;color:#15803D;">'+totP.toLocaleString()+'</td></tr>';
 html+='</tbody></table>';
 html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:8px;border-top:1px solid #E5E7EB;">';
-html+='<div><div style="font-size:0.5rem;color:#888;text-transform:uppercase;">Entregado por</div><div style="border-top:1px solid #333;margin-top:18px;padding-top:4px;font-size:0.6rem;">'+r.despachado_por+'</div></div>';
-html+='<div><div style="font-size:0.5rem;color:#888;text-transform:uppercase;">Recibido por</div><div style="border-top:1px solid #333;margin-top:18px;padding-top:4px;font-size:0.6rem;">'+r.cliente+'</div></div>';
+html+='<div><div style="font-size:0.65rem;font-weight:700;color:#111;margin-bottom:2px;">'+r.despachado_por+'</div><div style="border-top:1.5px solid #333;padding-top:4px;font-size:0.5rem;color:#888;text-transform:uppercase;">Entregado por</div></div>';
+html+='<div><div style="font-size:0.65rem;font-weight:700;color:#111;margin-bottom:2px;">'+r.cliente+'</div><div style="border-top:1.5px solid #333;padding-top:4px;font-size:0.5rem;color:#888;text-transform:uppercase;">Recibido por</div></div>';
 html+='</div></div>';
 
 const modal=document.createElement('div');
