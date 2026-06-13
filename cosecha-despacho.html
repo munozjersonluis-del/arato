@@ -354,15 +354,14 @@ document.getElementById('d-fecha').value=hoy();
 // Cargar siguiente número de parte automático
 async function cargarSigNroParte() {
   try {
-    const rows = await apiFetch('cosecha_modulos?select=nro_parte&order=nro_parte.desc&limit=1&fundo=eq.'+encodeURIComponent(fundoActual||'ARATO 1'));
+    const fundoFilter=fundoActual?'&fundo=eq.'+encodeURIComponent(fundoActual):'';
+    const rows = await apiFetch('despachos?select=nro_parte&order=nro_parte.desc&limit=1'+fundoFilter+'&or=(estado.is.null,estado.neq.DERIVADO)');
     const ultimo = rows && rows.length && rows[0].nro_parte ? parseInt(rows[0].nro_parte) : 0;
-    const siguiente = ultimo + 1;
     const el = document.getElementById('d-nro');
-    if(el) el.value = siguiente;
+    if(el) el.value = ultimo + 1;
   } catch(e) {
-    const saved = localStorage.getItem('arato_nro_parte_'+(fundoActual||'ARATO 1'));
     const el = document.getElementById('d-nro');
-    if(el) el.value = saved ? parseInt(saved)+1 : 1;
+    if(el) el.value = 1;
   }
 }
 
@@ -821,6 +820,21 @@ if(ll)ll.innerHTML=licencias.map(l=>'<option value="'+l+'">').join('');
 }catch(e){}
 }
 
+async function eliminarGuia(id){
+try{
+const rows=await apiFetch('despachos?id=eq.'+id+'&select=nro_parte,cliente');
+if(!rows||!rows.length)return;
+const r=rows[0];
+const parte='Parte N°'+String(r.nro_parte).padStart(3,'0');
+const cliente=r.cliente||'Sin cliente';
+if(!confirm('¿Eliminar '+parte+' — '+cliente+'?\n\nEsta acción NO se puede deshacer.'))return;
+if(!confirm('⚠️ CONFIRMACIÓN FINAL\n\n¿Seguro que quieres eliminar '+parte+'?'))return;
+await apiFetch('despachos?id=eq.'+id,'DELETE');
+toast('Guía eliminada','ok');
+cargarGuias();
+}catch(e){toast('Error: '+e.message,'err');}
+}
+
 async function cargarGuias(){
 const cont=document.getElementById('lista-guias');
 if(!cont)return;
@@ -879,9 +893,10 @@ return '<div style="background:#fff;border:1px solid var(--bdr);border-radius:12
 '<div style="font-size:0.62rem;color:var(--txt3);">'+(r.total_peso||0).toLocaleString()+' kg</div>'+
 '</div>'+
 '</div>'+
-'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">'+
-'<button onclick="verGuia('+r.id+')" style="padding:8px;background:var(--bc);border:1px solid var(--b);color:var(--b);border-radius:8px;font-size:0.68rem;font-weight:700;cursor:pointer;font-family:inherit;">🖼️ Ver guía</button>'+
-'<button onclick="wspGuia('+r.id+')" style="padding:8px;background:#DCFCE7;border:1px solid #16A34A;color:#15803D;border-radius:8px;font-size:0.68rem;font-weight:700;cursor:pointer;font-family:inherit;">📲 WhatsApp</button>'+
+'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">'+
+'<button onclick="verGuia('+r.id+')" style="padding:8px;background:var(--bc);border:1px solid var(--b);color:var(--b);border-radius:8px;font-size:0.68rem;font-weight:700;cursor:pointer;font-family:inherit;">🖼️ Ver</button>'+
+'<button onclick="wspGuia('+r.id+')" style="padding:8px;background:#DCFCE7;border:1px solid #16A34A;color:#15803D;border-radius:8px;font-size:0.68rem;font-weight:700;cursor:pointer;font-family:inherit;">📲 WSP</button>'+
+'<button onclick="eliminarGuia('+r.id+')" style="padding:8px;background:#FEE2E2;border:1px solid #DC2626;color:#DC2626;border-radius:8px;font-size:0.68rem;font-weight:700;cursor:pointer;font-family:inherit;">🗑️</button>'+
 '</div>'+
 '</div>';
 }).join('')+
@@ -987,7 +1002,13 @@ if(!dsLineas.length)dsLineas=[{id:dsLinId++,fcosecha:hoy(),viaje:1,variedad:'Fue
 // Mark as accepted - Arato 2 will update this same record when confirming
 window._derivadoId=id;
 // Switch to despacho tab
-setTab('tab-despacho');
+// Switch to despacho tab
+document.querySelectorAll('.tab-c').forEach(t=>t.classList.remove('on'));
+document.querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
+const tabEl=document.getElementById('tab-despacho');
+if(tabEl)tabEl.classList.add('on');
+const btnEl=document.querySelector('.tb[onclick*="despacho"]');
+if(btnEl)btnEl.classList.add('on');
 dsGoStep(1);
 setTimeout(()=>{
 dsRenderLineas();
