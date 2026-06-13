@@ -846,7 +846,7 @@ cont.before(banner);
 
 try{
 const fundoFilter=fundoActual?'&fundo=eq.'+encodeURIComponent(fundoActual):'';
-const rows=await apiFetch('despachos?select=*'+fundoFilter+'&estado=neq.DERIVADO&order=created_at.desc');
+const rows=await apiFetch('despachos?select=*'+fundoFilter+'&or=(estado.is.null,estado.neq.DERIVADO)&order=created_at.desc');
 if(!rows||!rows.length){cont.innerHTML='<div class="empty">Sin guías registradas.</div>';return;}
 
 // Group by date
@@ -1012,15 +1012,14 @@ const payload={
   fecha_despacho:r.fecha_despacho,
   fundo:'ARATO 2',
   cliente:'',
-  placa:r.placa,
-  placa_camion:r.placa,
+  placa:'',
+  placa_camion:'',
   licencia:'',
   lineas:lineas,
   despachado_por:'ROGER VILLANUEVA',
   total_cantidad:r.total_cantidad,
   total_peso:r.total_peso,
-  estado:'DERIVADO',
-  obs:'Derivado desde Arato 1 — Parte N°'+String(r.nro_parte).padStart(3,'0')
+  estado:'DERIVADO'
 };
 await apiFetch('despachos','POST',payload);
 flash('✅ Derivado a Arato 2 — Parte N°'+String(r.nro_parte).padStart(3,'0'),'verde');
