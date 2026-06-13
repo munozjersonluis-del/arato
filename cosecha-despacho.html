@@ -602,7 +602,7 @@ let query='cosecha_modulos?select=fecha_cosecha,bins_cosechados,bins_vendidos'+f
 if(variedad)query+='&variedad=eq.'+encodeURIComponent(variedad);
 if(modulo)query+='&modulo=eq.'+encodeURIComponent(modulo);
 const rows=await apiFetch(query);
-if(!rows||!rows.length){flash('Sin cosechas para ese módulo','rojo');return;}
+if(!rows||!rows.length){toast('Sin cosechas para ese módulo','err');return;}
 const currentVal=fcEl.value;
 fcEl.innerHTML=rows.map(r=>{
 const disp=Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0));
@@ -618,7 +618,7 @@ const m=sel&&sel.text.match(/(\d+)\s*bins/);
 const d=m?parseInt(m[1]):0;
 if(dispEl){dispEl.textContent='✅ Disponibles: '+d+' bins';dispEl.style.color='var(--g)';}
 };
-}catch(e){flash('Error: '+e.message,'rojo');}
+}catch(e){toast('Error: '+e.message,'err');}
 }
 
 async function dsBuscarFechaCosecha(lineaId){
@@ -984,14 +984,14 @@ dsLineas=[];dsLinId=1;
 const lineas=Array.isArray(d.lineas)?d.lineas:[];
 lineas.forEach(l=>{dsLineas.push({...l,id:dsLinId++});});
 if(!dsLineas.length)dsLineas=[{id:dsLinId++,fcosecha:hoy(),viaje:1,variedad:'Fuerte',modulo:'',calidad:'Ind. Exportable',envase:'Jabas',cantidad:0}];
-// Mark as accepted
-await apiFetch('despachos?id=eq.'+id,'PATCH',{estado:'ACEPTADO'});
+// Mark as accepted - Arato 2 will update this same record when confirming
+window._derivadoId=id;
 // Switch to despacho tab
 setTab('tab-despacho');
 dsGoStep(1);
 setTimeout(()=>{
 dsRenderLineas();
-flash('✅ Despacho cargado — completa los datos del camión','verde');
+toast('✅ Despacho cargado — completa datos del camión','ok');
 },200);
 }catch(e){alert('Error: '+e.message);}
 }
@@ -999,7 +999,7 @@ flash('✅ Despacho cargado — completa los datos del camión','verde');
 async function rechazarDerivacion(id){
 try{
 await apiFetch('despachos?id=eq.'+id,'PATCH',{estado:'RECHAZADO'});
-flash('Derivación rechazada','rojo');
+toast('Derivación rechazada','err');
 cargarGuias();
 }catch(e){}
 }
@@ -1026,7 +1026,7 @@ const payload={
   estado:'DERIVADO'
 };
 await apiFetch('despachos','POST',payload);
-flash('✅ Derivado a Arato 2','verde');
+toast('✅ Derivado a Arato 2','ok');
 }catch(e){
 const msg=e.message||'';
 alert('Error al derivar: '+msg);
@@ -1082,16 +1082,32 @@ const despachador=fundoActual==='ARATO 2'?'ROGER VILLANUEVA':'JERSON MUÑOZ';
     const otrosDespachos=window._despachoActivo||[];
 let totC=0,totP=0;
 dsLineas.forEach(l=>{totC+=l.cantidad||0;totP+=dsCalcPeso(l);});
+// If accepting a derivation, update existing record instead of creating new
+if(window._derivadoId){
+await apiFetch('despachos?id=eq.'+window._derivadoId,'PATCH',{
+cliente,placa,licencia,
+placa_camion:placa,
+lineas:dsLineas,
+total_cantidad:totC,
+total_peso:totP,
+despachado_por:despachador,
+estado:'ACTIVO'
+});
+window._derivadoId=null;
+} else {
 await apiFetch('despachos','POST',{
 nro_parte:nroParte,
 fecha_despacho:fecha,
 fundo:fundoActual||fundo,
 cliente,placa,licencia,
+placa_camion:placa,
 lineas:dsLineas,
 total_cantidad:totC,
 total_peso:totP,
-despachado_por:despachador
+despachado_por:despachador,
+estado:'ACTIVO'
 });
+}
 // Descontar stock
 for(const l of dsLineas){
 if(!l.modulo||!l.cantidad)continue;
