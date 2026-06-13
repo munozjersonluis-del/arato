@@ -962,7 +962,7 @@ modal.innerHTML='<div style="background:#fff;border-radius:16px 16px 0 0;padding
 '</div>'+html+
 '<div style="display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px;">'+
 '<button onclick="wspGuia('+id+')" style="padding:11px;background:#25D366;color:#fff;border:none;border-radius:9px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;">📲 Enviar WhatsApp</button>'+
-(fundoActual==='ARATO 1'?'<button onclick="derivarArato2('+id+')" style="padding:11px;background:#2563EB;color:#fff;border:none;border-radius:9px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;">📤 Derivar a Arato 2</button>':'')+
+(r.fundo==='ARATO 1'?'<button onclick="derivarArato2('+id+')" style="padding:11px;background:#2563EB;color:#fff;border:none;border-radius:9px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;">📤 Derivar a Arato 2</button>':'')+
 '</div></div>';
 modal.addEventListener('click',function(e){if(e.target===this)this.remove();});
 document.body.appendChild(modal);
