@@ -381,7 +381,11 @@ if(body)opts.body=JSON.stringify(body);
 if(method==='POST')opts.headers['Prefer']='return=representation';
 if(method==='PATCH')opts.headers['Prefer']='return=representation';
 const r=await fetch(SURL+'/rest/v1/'+path,opts);
-if(!r.ok)throw new Error('Error '+r.status);
+if(!r.ok){
+  let errBody='';
+  try{const j=await r.json();errBody=JSON.stringify(j);}catch(e){}
+  throw new Error('Error '+r.status+': '+errBody);
+}
 return(method==='DELETE')?null:r.json();
 }
 
@@ -1022,8 +1026,10 @@ const payload={
   estado:'DERIVADO'
 };
 await apiFetch('despachos','POST',payload);
-flash('✅ Derivado a Arato 2 — Parte N°'+String(r.nro_parte).padStart(3,'0'),'verde');
-}catch(e){alert('Error: '+e.message);}
+flash('✅ Derivado a Arato 2','verde');
+}catch(e){
+const msg=e.message||'';
+alert('Error al derivar: '+msg);
 }
 
 function wspGuia(id){
