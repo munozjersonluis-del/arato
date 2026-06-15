@@ -142,8 +142,9 @@ module.exports = async (req, res) => {
         if (!modMap[r.modulo]) modMap[r.modulo] = 0;
         modMap[r.modulo] += r.cantidad||0;
       });
-      const totalMod = Object.values(modMap).reduce((s,v)=>s+Math.max(0,v),0);
-      const modsActivos = Object.keys(modMap).filter(m=>modMap[m]>0).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+      const totalMod = Object.keys(modMap).filter(k=>k!=='Cosecha Actual').reduce((s,k)=>s+Math.max(0,modMap[k]),0);
+      const cosechaActual = Math.max(0, stk - totalMod);
+      const modsActivos = Object.keys(modMap).filter(m=>m!=='Cosecha Actual'&&modMap[m]>0).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
 
       await sheets.spreadsheets.values.clear({ spreadsheetId: SHEET_ID, range: 'Stock Modulos!A:Z' });
       await sheets.spreadsheets.values.update({
@@ -152,12 +153,86 @@ module.exports = async (req, res) => {
           ['ARATO MISSION PRODUCE — STOCK DE BINS POR MODULO'],
           ['Actualizado:', new Date().toLocaleString('es-PE')],
           [],
+          ['🌿 COSECHA ACTUAL (disponibles para cosecha)', cosechaActual,'',''],
+          [],
           ['MODULO','STOCK ACTUAL','',''],
           ...modsActivos.map(m=>[m, modMap[m],'','']),
           [],
-          ['TOTAL MODULOS', totalMod,'',''],
+          ['TOTAL EN MODULOS', totalMod,'',''],
           ['STOCK GENERAL', stk,'',''],
-          ['DIFERENCIA', stk-totalMod,'',''],
+          ['DIFERENCIA', stk-totalMod-cosechaActual,'',''],
+        ]}
+      });
+    }
+
+    // ── Hoja 3: Stock Campo (bins vacíos en campo por grupo/portabinero) ──
+    const campo = await fetchSupa('stock_campo?select=grupo,modulo,portabinero,cantidad,tipo,fecha&order=created_at.asc');
+    if (campo.length > 0) {
+      if (!existing.includes('Stock Campo')) {
+        await sheets.spreadsheets.batchUpdate({
+          spreadsheetId: SHEET_ID,
+          resource: { requests: [{ addSheet: { properties: { title: 'Stock Campo' } } }] }
+        });
+      }
+      // Resumen por grupo
+      const grupoMap = {};
+      campo.forEach(r => {
+        if (!grupoMap[r.grupo]) grupoMap[r.grupo] = {enviados:0, regresados:0, modulos:{}, portabineros:new Set()};
+        if (r.tipo === 'salida') {
+          grupoMap[r.grupo].enviados += r.cantidad||0;
+          if (r.modulo) grupoMap[r.grupo].modulos[r.modulo] = (grupoMap[r.grupo].modulos[r.modulo]||0) + (r.cantidad||0);
+          if (r.portabinero) grupoMap[r.grupo].portabineros.add(r.portabinero);
+        } else {
+          grupoMap[r.grupo].regresados += r.cantidad||0;
+        }
+      });
+      const gruposOrdenados = Object.keys(grupoMap).sort();
+      const totalPendCampo = gruposOrdenados.reduce((s,g)=>s+Math.max(0, grupoMap[g].enviados-grupoMap[g].regresados),0);
+
+      // Resumen por portabinero
+      const portMap = {};
+      campo.forEach(r => {
+        if (!r.portabinero) return;
+        if (!portMap[r.portabinero]) portMap[r.portabinero] = {enviados:0, regresados:0, grupos:new Set()};
+        if (r.tipo === 'salida') {
+          portMap[r.portabinero].enviados += r.cantidad||0;
+          portMap[r.portabinero].grupos.add(r.grupo);
+        } else {
+          portMap[r.portabinero].regresados += r.cantidad||0;
+        }
+      });
+      const portOrdenados = Object.keys(portMap).sort((a,b)=>{
+        const pa = Math.max(0, portMap[a].enviados-portMap[a].regresados);
+        const pb = Math.max(0, portMap[b].enviados-portMap[b].regresados);
+        return pb-pa;
+      });
+
+      // Detalle de viajes (todos los movimientos)
+      const detalleViajes = campo.slice().reverse().map(r => [
+        r.fecha||'', r.tipo==='salida'?'SALIDA A CAMPO':'REGRESO CON FRUTA', r.grupo||'', r.modulo||'', r.portabinero||'', r.cantidad||0
+      ]);
+
+      await sheets.spreadsheets.values.clear({ spreadsheetId: SHEET_ID, range: 'Stock Campo!A:Z' });
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: SHEET_ID, range: 'Stock Campo!A1', valueInputOption: 'RAW',
+        resource: { values: [
+          ['ARATO MISSION PRODUCE — BINS EN CAMPO (pendientes de regresar)'],
+          ['Actualizado:', new Date().toLocaleString('es-PE')],
+          ['Nota: estos bins ya fueron descontados de Cosecha Actual (ver hoja Stock Modulos)'],
+          [],
+          ['TOTAL PENDIENTE EN CAMPO', totalPendCampo,'',''],
+          [],
+          ['RESUMEN POR GRUPO','','',''],
+          ['GRUPO','ENVIADOS','REGRESADOS','PENDIENTE'],
+          ...gruposOrdenados.map(g => [g, grupoMap[g].enviados, grupoMap[g].regresados, Math.max(0,grupoMap[g].enviados-grupoMap[g].regresados)]),
+          [],
+          ['RESUMEN POR PORTABINERO','','',''],
+          ['PORTABINERO','ENVIADOS','REGRESADOS','PENDIENTE'],
+          ...portOrdenados.map(p => [p, portMap[p].enviados, portMap[p].regresados, Math.max(0,portMap[p].enviados-portMap[p].regresados)]),
+          [],
+          ['DETALLE DE VIAJES','','','',''],
+          ['FECHA','TIPO','GRUPO','MODULO','PORTABINERO','CANTIDAD'],
+          ...detalleViajes,
         ]}
       });
     }
