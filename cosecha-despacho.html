@@ -407,55 +407,43 @@ async function registrarCosecha(){
 async function cargarStock(){
   const cont=document.getElementById('stock-list');
   try{
-    const rows=await api('cosecha_modulos?select=*&order=fundo.asc,modulo.asc,fecha_cosecha.desc');
+    const rows=await api('cosecha_modulos?select=*&fundo=eq.'+encodeURIComponent(fundoActual)+'&order=modulo.asc,fecha_cosecha.desc');
     if(!rows||!rows.length){cont.innerHTML='<div class="empty">Sin cosechas registradas</div>';return;}
-    // Update header stats — only current fundo
-    const miRows=rows.filter(r=>r.fundo===fundoActual);
-    const totalBins=miRows.reduce((s,r)=>s+(r.bins_cosechados||0),0);
-    const vendBins=miRows.reduce((s,r)=>s+(r.bins_vendidos||0),0);
-    const vendJabasBins=miRows.reduce((s,r)=>s+((r.jabas_vendidas||0)/JABAS_BIN),0);
+    // Update header stats
+    const totalBins=rows.reduce((s,r)=>s+(r.bins_cosechados||0),0);
+    const vendBins=rows.reduce((s,r)=>s+(r.bins_vendidos||0),0);
+    const vendJabasBins=rows.reduce((s,r)=>s+((r.jabas_vendidas||0)/JABAS_BIN),0);
     document.getElementById('hdr-total').textContent=totalBins;
     document.getElementById('hdr-disp').textContent=Math.floor(Math.max(0,totalBins-vendBins-vendJabasBins));
-    // Group by fundo then modulo
-    const byFundo={};
+    // Group by modulo
+    const modMap={};
     rows.forEach(r=>{
-      const f=r.fundo||'?';
-      if(!byFundo[f])byFundo[f]={};
       const m=r.modulo||'?';
-      if(!byFundo[f][m])byFundo[f][m]=[];
-      byFundo[f][m].push({...r,disp:Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0)-((r.jabas_vendidas||0)/JABAS_BIN))});
+      if(!modMap[m])modMap[m]=[];
+      modMap[m].push({...r,disp:Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0)-((r.jabas_vendidas||0)/JABAS_BIN))});
     });
     let html='';
-    Object.keys(byFundo).sort().forEach(fundo=>{
-      const modMap=byFundo[fundo];
-      const totalF=Object.values(modMap).flat().reduce((s,r)=>s+(r.bins_cosechados||0),0);
-      const dispF=Object.values(modMap).flat().reduce((s,r)=>s+r.disp,0);
-      html+='<div style="font-size:0.62rem;font-weight:800;color:var(--txt3);text-transform:uppercase;letter-spacing:1px;margin:12px 0 6px;display:flex;justify-content:space-between;">'
-        +'<span>'+fundo+'</span>'
-        +'<span style="color:var(--g);">'+Math.floor(dispF)+' disp / '+totalF+' total</span>'
-        +'</div>';
-      Object.keys(modMap).sort().forEach(mod=>{
-        const items=modMap[mod];
-        const dispMod=items.reduce((s,r)=>s+r.disp,0);
-        const cosMod=items.reduce((s,r)=>s+(r.bins_cosechados||0),0);
-        const vendMod=items.reduce((s,r)=>s+(r.bins_vendidos||0),0);
-        if(dispMod<=0&&vendMod<=0)return;
-        html+='<div class="mod-card">'
-          +'<div class="mod-hdr">'
-          +'<div class="mod-name">'+mod+'</div>'
+    Object.keys(modMap).sort().forEach(mod=>{
+      const items=modMap[mod];
+      const dispMod=items.reduce((s,r)=>s+r.disp,0);
+      const cosMod=items.reduce((s,r)=>s+(r.bins_cosechados||0),0);
+      const vendMod=items.reduce((s,r)=>s+(r.bins_vendidos||0),0);
+      if(dispMod<=0&&vendMod<=0)return;
+      html+='<div class="mod-card">'
+        +'<div class="mod-hdr">'
+        +'<div class="mod-name">'+mod+'</div>'
+        +'<div style="text-align:right;">'
+        +'<div class="mod-total">'+Math.floor(dispMod)+' bins disp.</div>'
+        +'<div style="font-size:0.55rem;color:var(--txt3);">'+vendMod+' despachados · '+cosMod+' cosechados</div>'
+        +'</div></div>'
+        +'<div class="mod-body">'
+        +items.filter(i=>i.bins_cosechados>0).map(i=>'<div class="mod-row">'
+          +'<div><span style="font-weight:700;">'+i.variedad+'</span> <span style="color:var(--txt3);font-size:0.62rem;">cosecha: '+i.fecha_cosecha+'</span></div>'
           +'<div style="text-align:right;">'
-          +'<div class="mod-total">'+Math.floor(dispMod)+' bins disp.</div>'
-          +'<div style="font-size:0.55rem;color:var(--txt3);">'+vendMod+' despachados · '+cosMod+' cosechados</div>'
-          +'</div></div>'
-          +'<div class="mod-body">'
-          +items.filter(i=>i.bins_cosechados>0).map(i=>'<div class="mod-row">'
-            +'<div><span style="font-weight:700;">'+i.variedad+'</span> <span style="color:var(--txt3);font-size:0.62rem;">cosecha: '+i.fecha_cosecha+'</span></div>'
-            +'<div style="text-align:right;">'
-            +'<div style="font-weight:800;font-family:\'JetBrains Mono\',monospace;color:'+(i.disp>0?'var(--g)':'var(--txt3)')+';">'+Math.floor(i.disp)+' disp</div>'
-            +'<div style="font-size:0.55rem;color:var(--txt3);">de '+i.bins_cosechados+' · despach. '+i.bins_vendidos+'</div>'
-            +'</div></div>').join('')
-          +'</div></div>';
-      });
+          +'<div style="font-weight:800;font-family:\'JetBrains Mono\',monospace;color:'+(i.disp>0?'var(--g)':'var(--txt3)')+';">'+Math.floor(i.disp)+' disp</div>'
+          +'<div style="font-size:0.55rem;color:var(--txt3);">de '+i.bins_cosechados+' · despach. '+i.bins_vendidos+'</div>'
+          +'</div></div>').join('')
+        +'</div></div>';
     });
     cont.innerHTML=html||'<div class="empty">Sin stock disponible</div>';
   }catch(e){cont.innerHTML='<div class="empty">Error cargando stock</div>';}
@@ -823,7 +811,7 @@ async function cargarGuias(){
   const cont=document.getElementById('guias-list');
   cont.innerHTML='<div class="empty">Cargando...</div>';
   try{
-    const rows=await api('despachos?select=*&or=(estado.is.null,estado.neq.DERIVADO)&order=created_at.desc');
+    const rows=await api('despachos?select=*&fundo=eq.'+encodeURIComponent(fundoActual)+'&or=(estado.is.null,estado.neq.DERIVADO)&order=created_at.desc');
     if(!rows||!rows.length){cont.innerHTML='<div class="empty">Sin guías registradas</div>';return;}
     const byDate={};
     rows.forEach(r=>{const d=r.fecha_despacho||'—';if(!byDate[d])byDate[d]=[];byDate[d].push(r);});
