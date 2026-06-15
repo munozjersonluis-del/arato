@@ -130,6 +130,14 @@ module.exports = async (req, res) => {
 
     // ── Hoja 2: Stock por Módulo ──
     const modulos = await fetchSupa('stock_modulos?select=modulo,cantidad,fecha,obs,tipo&order=created_at.asc');
+    const campoForCalc = await fetchSupa('stock_campo?select=cantidad,tipo');
+    let pendCampo = 0;
+    campoForCalc.forEach(r => {
+      if (r.tipo === 'salida') pendCampo += r.cantidad||0;
+      else if (r.tipo === 'regreso') pendCampo -= r.cantidad||0;
+    });
+    pendCampo = Math.max(0, pendCampo);
+
     if (modulos.length > 0) {
       if (!existing.includes('Stock Modulos')) {
         await sheets.spreadsheets.batchUpdate({
@@ -143,7 +151,7 @@ module.exports = async (req, res) => {
         modMap[r.modulo] += r.cantidad||0;
       });
       const totalMod = Object.keys(modMap).filter(k=>k!=='Cosecha Actual').reduce((s,k)=>s+Math.max(0,modMap[k]),0);
-      const cosechaActual = Math.max(0, stk - totalMod);
+      const cosechaActual = Math.max(0, stk - totalMod - pendCampo);
       const modsActivos = Object.keys(modMap).filter(m=>m!=='Cosecha Actual'&&modMap[m]>0).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
 
       await sheets.spreadsheets.values.clear({ spreadsheetId: SHEET_ID, range: 'Stock Modulos!A:Z' });
@@ -154,13 +162,14 @@ module.exports = async (req, res) => {
           ['Actualizado:', new Date().toLocaleString('es-PE')],
           [],
           ['🌿 COSECHA ACTUAL (disponibles para cosecha)', cosechaActual,'',''],
+          ['🌾 PENDIENTE EN CAMPO (bins vacíos sin regresar)', pendCampo,'',''],
           [],
           ['MODULO','STOCK ACTUAL','',''],
           ...modsActivos.map(m=>[m, modMap[m],'','']),
           [],
           ['TOTAL EN MODULOS', totalMod,'',''],
           ['STOCK GENERAL', stk,'',''],
-          ['DIFERENCIA', stk-totalMod-cosechaActual,'',''],
+          ['DIFERENCIA', stk-totalMod-cosechaActual-pendCampo,'',''],
         ]}
       });
     }
@@ -174,9 +183,9 @@ module.exports = async (req, res) => {
           resource: { requests: [{ addSheet: { properties: { title: 'Stock Campo' } } }] }
         });
       }
-      // Resumen por grupo
+      // Resumen por grupo (excluye registros tipo 'planta', que son a nivel acopio)
       const grupoMap = {};
-      campo.forEach(r => {
+      campo.filter(r=>r.tipo!=='planta').forEach(r => {
         if (!grupoMap[r.grupo]) grupoMap[r.grupo] = {enviados:0, regresados:0, modulos:{}, portabineros:new Set()};
         if (r.tipo === 'salida') {
           grupoMap[r.grupo].enviados += r.cantidad||0;
@@ -189,9 +198,9 @@ module.exports = async (req, res) => {
       const gruposOrdenados = Object.keys(grupoMap).sort();
       const totalPendCampo = gruposOrdenados.reduce((s,g)=>s+Math.max(0, grupoMap[g].enviados-grupoMap[g].regresados),0);
 
-      // Resumen por portabinero
+      // Resumen por portabinero (excluye registros tipo 'planta')
       const portMap = {};
-      campo.forEach(r => {
+      campo.filter(r=>r.tipo!=='planta').forEach(r => {
         if (!r.portabinero) return;
         if (!portMap[r.portabinero]) portMap[r.portabinero] = {enviados:0, regresados:0, grupos:new Set()};
         if (r.tipo === 'salida') {
@@ -207,10 +216,21 @@ module.exports = async (req, res) => {
         return pb-pa;
       });
 
+      // Acopio Lleno = bins regresados con fruta - bins enviados a planta
+      let regresadosTotal = 0, plantaTotal = 0;
+      campo.forEach(r => {
+        if (r.tipo === 'regreso') regresadosTotal += r.cantidad||0;
+        else if (r.tipo === 'planta') plantaTotal += r.cantidad||0;
+      });
+      const acopioLleno = Math.max(0, regresadosTotal - plantaTotal);
+
       // Detalle de viajes (todos los movimientos)
-      const detalleViajes = campo.slice().reverse().map(r => [
-        r.fecha||'', r.tipo==='salida'?'SALIDA A CAMPO':'REGRESO CON FRUTA', r.grupo||'', r.modulo||'', r.portabinero||'', r.cantidad||0
-      ]);
+      const detalleViajes = campo.slice().reverse().map(r => {
+        let tipoLabel = 'REGRESO CON FRUTA';
+        if (r.tipo === 'salida') tipoLabel = 'SALIDA A CAMPO';
+        else if (r.tipo === 'planta') tipoLabel = 'SALIDA A PLANTA';
+        return [r.fecha||'', tipoLabel, r.grupo||'', r.modulo||'', r.portabinero||'', r.cantidad||0];
+      });
 
       await sheets.spreadsheets.values.clear({ spreadsheetId: SHEET_ID, range: 'Stock Campo!A:Z' });
       await sheets.spreadsheets.values.update({
@@ -220,7 +240,8 @@ module.exports = async (req, res) => {
           ['Actualizado:', new Date().toLocaleString('es-PE')],
           ['Nota: estos bins ya fueron descontados de Cosecha Actual (ver hoja Stock Modulos)'],
           [],
-          ['TOTAL PENDIENTE EN CAMPO', totalPendCampo,'',''],
+          ['TOTAL PENDIENTE EN CAMPO (bins vacíos)', totalPendCampo,'',''],
+          ['ACOPIO LLENO (bins con fruta esperando ir a planta)', acopioLleno,'',''],
           [],
           ['RESUMEN POR GRUPO','','',''],
           ['GRUPO','ENVIADOS','REGRESADOS','PENDIENTE'],
