@@ -597,31 +597,6 @@ padding:12px;
         </div>
       </div>
 
-      <!-- Salida a Planta -->
-      <div class="form-card" style="margin-bottom:14px;">
-        <div class="form-header">
-          <div class="form-header-dot" style="background:#B45309;"></div>
-          <div class="form-header-title">Salida a Planta (bins llenos)</div>
-        </div>
-        <div class="form-body">
-          <div class="row2">
-            <div class="field-grp">
-              <label>Bins enviados a planta</label>
-              <input type="number" id="cp-cantidad" min="1" placeholder="0">
-            </div>
-            <div class="field-grp">
-              <label>Fecha</label>
-              <input type="date" id="cp-fecha">
-            </div>
-          </div>
-          <div class="field-grp">
-            <label>Observación</label>
-            <input type="text" id="cp-obs" placeholder="Ej: Camión placa ABC-123" autocomplete="off">
-          </div>
-          <button class="btn-reg btn-g-fill" onclick="salidaAPlanta()" style="background:#B45309;box-shadow:0 4px 14px rgba(180,83,9,0.3);">🚚 Registrar Salida a Planta</button>
-        </div>
-      </div>
-
       <!-- Filtro de fechas para resumen -->
       <div class="hist-card" style="margin-bottom:10px;">
         <div class="hist-header">
@@ -705,7 +680,6 @@ document.getElementById('f-fecha').value=hoy();
 if(document.getElementById('m-fecha'))document.getElementById('m-fecha').value=hoy();
 if(document.getElementById('cs-fecha'))document.getElementById('cs-fecha').value=hoy();
 if(document.getElementById('cr-fecha'))document.getElementById('cr-fecha').value=hoy();
-if(document.getElementById('cp-fecha'))document.getElementById('cp-fecha').value=hoy();
 
 function toast(msg,t){
 const el=document.getElementById('toast');
@@ -751,6 +725,17 @@ movs.push(r.data[0]);
 }catch(e){
 mov.id=Date.now();movs.push(mov);
 localStorage.setItem('arato_stk',JSON.stringify(movs));
+}
+// Si es salida (camión sale con bins llenos a planta), descontar también de "Acopio Lleno"
+if(tipo==='salida'){
+try{
+await fetch(SURL+'/rest/v1/stock_campo',{
+method:'POST',
+headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+body:JSON.stringify({grupo:'',subgrupo:'',modulo:'',portabinero:obs,cantidad:qty,tipo:'planta',fecha:fecha})
+});
+actualizarStockCampo();
+}catch(e){}
 }
 document.getElementById('f-cantidad').value='';
 document.getElementById('f-obs').value='';
@@ -1095,27 +1080,6 @@ body:JSON.stringify({grupo:grupo,subgrupo:'',modulo:'',portabinero:portabinero,c
 if(!r.ok)throw new Error('Error '+r.status);
 toast('✅ '+qty+' bins regresaron con fruta del Grupo '+grupo,'ok');
 document.getElementById('cr-cantidad').value='';
-cargarCampo();
-actualizarStockCampo();
-}catch(e){toast('Error: '+e.message,'err');}
-}
-
-// ── CAMPO: Salida a Planta (descuenta Acopio Lleno, NO toca stock general) ──
-async function salidaAPlanta(){
-var qty=parseInt(document.getElementById('cp-cantidad').value)||0;
-var fecha=document.getElementById('cp-fecha').value||hoy();
-var obs=document.getElementById('cp-obs').value.trim();
-if(!qty||qty<=0){toast('Ingresa la cantidad','err');return;}
-try{
-var r=await fetch(SURL+'/rest/v1/stock_campo',{
-method:'POST',
-headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'return=minimal'},
-body:JSON.stringify({grupo:'',subgrupo:'',modulo:'',portabinero:obs,cantidad:qty,tipo:'planta',fecha:fecha})
-});
-if(!r.ok)throw new Error('Error '+r.status);
-toast('✅ '+qty+' bins enviados a planta','ok');
-document.getElementById('cp-cantidad').value='';
-document.getElementById('cp-obs').value='';
 cargarCampo();
 actualizarStockCampo();
 }catch(e){toast('Error: '+e.message,'err');}
