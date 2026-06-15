@@ -1129,7 +1129,7 @@ var rMod=await fetch(SURL+'/rest/v1/stock_modulos?select=modulo,cantidad',{heade
 var rMovs=await fetch(SURL+'/rest/v1/stock_movimientos?select=tipo,cantidad',{headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY}});
 var rCampo=await fetch(SURL+'/rest/v1/stock_campo?select=cantidad,tipo',{headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY}});
 
-var pendCampo=0,acopioLleno=0,totalEnviadoCampo=0;
+var pendCampo=0,acopioLleno=0,totalEnviadoCampo=0,totalPlanta=0;
 if(rCampo.ok){
 var campoRows=await rCampo.json();
 var env=0,reg=0,planta=0;
@@ -1141,6 +1141,7 @@ else if(r.tipo==='planta')planta+=r.cantidad||0;
 pendCampo=Math.max(0,env-reg);
 acopioLleno=Math.max(0,reg-planta);
 totalEnviadoCampo=env;
+totalPlanta=planta;
 if(elPend)elPend.textContent=pendCampo;
 if(elAcopio)elAcopio.textContent=acopioLleno;
 }
@@ -1153,8 +1154,8 @@ modRows.forEach(function(r){if(!modMap[r.modulo])modMap[r.modulo]=0;modMap[r.mod
 // Excluir Cosecha Actual del cálculo de módulos físicos (los movimientos campo_salida que se hayan guardado ahí ya no se usan)
 var totalEnModulos=Object.keys(modMap).filter(function(k){return k!=='Cosecha Actual';}).reduce(function(s,k){return s+Math.max(0,modMap[k]);},0);
 var stockGeneral=movRows.reduce(function(s,m){return m.tipo==='ingreso'?s+(m.cantidad||0):s-(m.cantidad||0);},0);
-// Cosecha Actual = Stock General - bins en módulos físicos - TOTAL bins enviados a campo (los regresos NO suman de vuelta, porque vuelven LLENOS, no vacíos)
-var cosechaActual=Math.max(0,stockGeneral-totalEnModulos-totalEnviadoCampo);
+// Cosecha Actual = Stock General - bins en módulos físicos - TOTAL enviado a campo + TOTAL despachado a planta (estos ya estaban restados al enviar a campo, no se restan dos veces)
+var cosechaActual=Math.max(0,stockGeneral-totalEnModulos-totalEnviadoCampo+totalPlanta);
 if(elCosecha)elCosecha.textContent=cosechaActual;
 }
 }catch(e){}
@@ -1230,6 +1231,7 @@ var pb=Math.max(0,map[b].enviados-map[b].regresados);
 return pb-pa;
 });
 var html='';
+var totalPlantaPeriodo=rows.filter(function(r){return r.tipo==='planta';}).reduce(function(s,r){return s+(r.cantidad||0);},0);
 var totalPend=0;
 keys.forEach(function(k){
 var m=map[k];
@@ -1309,10 +1311,14 @@ modMap[r.modulo]+=r.cantidad||0;
 });
 var totalEnModulos=Object.keys(modMap).filter(function(k){return k!=='Cosecha Actual';}).reduce(function(s,k){return s+Math.max(0,modMap[k]);},0);
 var stockGeneral=movRows.reduce(function(s,m){return m.tipo==='ingreso'?s+(m.cantidad||0):s-(m.cantidad||0);},0);
-// Total enviado a campo (sin filtro de fecha) — los regresos NO se suman de vuelta porque vuelven LLENOS
-var envGlobal=0;
-allRows.forEach(function(r){if(r.tipo==='salida')envGlobal+=r.cantidad||0;});
-cosechaActual=Math.max(0,stockGeneral-totalEnModulos-envGlobal);
+// Total enviado a campo y total despachado a planta (sin filtro de fecha)
+var envGlobal=0,plantaGlobal=0;
+allRows.forEach(function(r){
+if(r.tipo==='salida')envGlobal+=r.cantidad||0;
+else if(r.tipo==='planta')plantaGlobal+=r.cantidad||0;
+});
+// Cosecha Actual = Stock General - módulos físicos - enviado a campo + despachado a planta (ya estaba restado al enviar)
+cosechaActual=Math.max(0,stockGeneral-totalEnModulos-envGlobal+plantaGlobal);
 }
 }catch(e){}
 
@@ -1404,25 +1410,28 @@ if(totEl)totEl.textContent=totalEnModulos;
 var stockGeneral=calcStock();
 if(vsEl)vsEl.textContent=stockGeneral;
 var aptosEl=document.getElementById('mod-cosecha');
-// Total enviado a campo (bins vacíos enviados, sin restar regresos — esos vuelven LLENOS)
-var envCampoGlobal=0;
+// Total enviado a campo y total despachado a planta (bins vacíos enviados, sin restar regresos — esos vuelven LLENOS)
+var envCampoGlobal=0,plantaCampoGlobal=0;
 try{
 var rCampo2=await fetch(SURL+'/rest/v1/stock_campo?select=cantidad,tipo',{headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY}});
 if(rCampo2.ok){
 var campoRows2=await rCampo2.json();
-campoRows2.forEach(function(r){if(r.tipo==='salida')envCampoGlobal+=r.cantidad||0;});
+campoRows2.forEach(function(r){
+if(r.tipo==='salida')envCampoGlobal+=r.cantidad||0;
+else if(r.tipo==='planta')plantaCampoGlobal+=r.cantidad||0;
+});
 }
 }catch(e){}
-// Cosecha Actual = Stock General - Total en módulos físicos - Total enviado a campo
-var cosechaStock=Math.max(0,stockGeneral-totalEnModulos-envCampoGlobal);
+// Cosecha Actual = Stock General - Total en módulos físicos - enviado a campo + despachado a planta (ya restado al enviar)
+var cosechaStock=Math.max(0,stockGeneral-totalEnModulos-envCampoGlobal+plantaCampoGlobal);
 if(aptosEl)aptosEl.textContent=cosechaStock;
 if(alertEl){
-var diff=stockGeneral-totalEnModulos-envCampoGlobal-cosechaStock;
+var diff=stockGeneral-totalEnModulos-envCampoGlobal+plantaCampoGlobal-cosechaStock;
 if(diff===0){
 alertEl.style.display='block';
 alertEl.style.background='var(--g-dim)';
 alertEl.style.color='var(--g)';
-alertEl.textContent='✅ Stock cuadrado — '+totalEnModulos+' en modulos + '+envCampoGlobal+' en campo + '+cosechaStock+' cosecha actual = '+stockGeneral+' stock general';
+alertEl.textContent='✅ Stock cuadrado — '+totalEnModulos+' en modulos + '+envCampoGlobal+' enviado a campo − '+plantaCampoGlobal+' regresó vía planta + '+cosechaStock+' cosecha actual = '+stockGeneral+' stock general';
 }else{
 alertEl.style.display='block';
 alertEl.style.background='var(--r-dim)';
