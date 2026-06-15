@@ -492,7 +492,7 @@ padding:12px;
     <!-- SUB: CAMPO -->
     <div id="subtab-campo" style="display:none;">
       <!-- Stock en vivo -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
         <div style="background:#DCFCE7;border-radius:10px;padding:10px;text-align:center;">
           <div style="font-size:0.58rem;color:#15803D;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">🌿 Disponible para Cosecha</div>
           <div style="font-family:Syne,sans-serif;font-size:1.6rem;font-weight:800;color:#15803D;" id="campo-cosecha-actual">—</div>
@@ -501,6 +501,10 @@ padding:12px;
           <div style="font-size:0.58rem;color:#7C3AED;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">🌾 Pendiente en Campo</div>
           <div style="font-family:Syne,sans-serif;font-size:1.6rem;font-weight:800;color:#7C3AED;" id="campo-pendiente-total">—</div>
         </div>
+      </div>
+      <div style="background:#FEF3C7;border-radius:10px;padding:10px;text-align:center;margin-bottom:14px;">
+        <div style="font-size:0.58rem;color:#B45309;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">📦 Acopio Lleno (esperando ir a planta)</div>
+        <div style="font-family:Syne,sans-serif;font-size:1.6rem;font-weight:800;color:#B45309;" id="campo-acopio-lleno">—</div>
       </div>
       <div class="form-card" style="margin-bottom:14px;">
         <div class="form-header">
@@ -593,6 +597,31 @@ padding:12px;
         </div>
       </div>
 
+      <!-- Salida a Planta -->
+      <div class="form-card" style="margin-bottom:14px;">
+        <div class="form-header">
+          <div class="form-header-dot" style="background:#B45309;"></div>
+          <div class="form-header-title">Salida a Planta (bins llenos)</div>
+        </div>
+        <div class="form-body">
+          <div class="row2">
+            <div class="field-grp">
+              <label>Bins enviados a planta</label>
+              <input type="number" id="cp-cantidad" min="1" placeholder="0">
+            </div>
+            <div class="field-grp">
+              <label>Fecha</label>
+              <input type="date" id="cp-fecha">
+            </div>
+          </div>
+          <div class="field-grp">
+            <label>Observación</label>
+            <input type="text" id="cp-obs" placeholder="Ej: Camión placa ABC-123" autocomplete="off">
+          </div>
+          <button class="btn-reg btn-g-fill" onclick="salidaAPlanta()" style="background:#B45309;box-shadow:0 4px 14px rgba(180,83,9,0.3);">🚚 Registrar Salida a Planta</button>
+        </div>
+      </div>
+
       <!-- Filtro de fechas para resumen -->
       <div class="hist-card" style="margin-bottom:10px;">
         <div class="hist-header">
@@ -676,6 +705,7 @@ document.getElementById('f-fecha').value=hoy();
 if(document.getElementById('m-fecha'))document.getElementById('m-fecha').value=hoy();
 if(document.getElementById('cs-fecha'))document.getElementById('cs-fecha').value=hoy();
 if(document.getElementById('cr-fecha'))document.getElementById('cr-fecha').value=hoy();
+if(document.getElementById('cp-fecha'))document.getElementById('cp-fecha').value=hoy();
 
 function toast(msg,t){
 const el=document.getElementById('toast');
@@ -1070,6 +1100,27 @@ actualizarStockCampo();
 }catch(e){toast('Error: '+e.message,'err');}
 }
 
+// ── CAMPO: Salida a Planta (descuenta Acopio Lleno, NO toca stock general) ──
+async function salidaAPlanta(){
+var qty=parseInt(document.getElementById('cp-cantidad').value)||0;
+var fecha=document.getElementById('cp-fecha').value||hoy();
+var obs=document.getElementById('cp-obs').value.trim();
+if(!qty||qty<=0){toast('Ingresa la cantidad','err');return;}
+try{
+var r=await fetch(SURL+'/rest/v1/stock_campo',{
+method:'POST',
+headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+body:JSON.stringify({grupo:'',subgrupo:'',modulo:'',portabinero:obs,cantidad:qty,tipo:'planta',fecha:fecha})
+});
+if(!r.ok)throw new Error('Error '+r.status);
+toast('✅ '+qty+' bins enviados a planta','ok');
+document.getElementById('cp-cantidad').value='';
+document.getElementById('cp-obs').value='';
+cargarCampo();
+actualizarStockCampo();
+}catch(e){toast('Error: '+e.message,'err');}
+}
+
 // ── CAMPO: Ver resumen ──
 var campoFiltro={modo:'hoy'};
 
@@ -1103,23 +1154,30 @@ return true;
 return rows; // todos
 }
 
-// ── Actualiza los 2 indicadores en vivo (Cosecha Actual / Pendiente Campo) ──
+// ── Actualiza los 3 indicadores en vivo (Cosecha Actual / Pendiente Campo / Acopio Lleno) ──
 async function actualizarStockCampo(){
 var elCosecha=document.getElementById('campo-cosecha-actual');
 var elPend=document.getElementById('campo-pendiente-total');
-if(!elCosecha&&!elPend)return;
+var elAcopio=document.getElementById('campo-acopio-lleno');
+if(!elCosecha&&!elPend&&!elAcopio)return;
 try{
 var rMod=await fetch(SURL+'/rest/v1/stock_modulos?select=modulo,cantidad',{headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY}});
 var rMovs=await fetch(SURL+'/rest/v1/stock_movimientos?select=tipo,cantidad',{headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY}});
 var rCampo=await fetch(SURL+'/rest/v1/stock_campo?select=cantidad,tipo',{headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY}});
 
-var pendCampo=0;
+var pendCampo=0,acopioLleno=0;
 if(rCampo.ok){
 var campoRows=await rCampo.json();
-var env=0,reg=0;
-campoRows.forEach(function(r){if(r.tipo==='salida')env+=r.cantidad||0;else reg+=r.cantidad||0;});
+var env=0,reg=0,planta=0;
+campoRows.forEach(function(r){
+if(r.tipo==='salida')env+=r.cantidad||0;
+else if(r.tipo==='regreso')reg+=r.cantidad||0;
+else if(r.tipo==='planta')planta+=r.cantidad||0;
+});
 pendCampo=Math.max(0,env-reg);
+acopioLleno=Math.max(0,reg-planta);
 if(elPend)elPend.textContent=pendCampo;
+if(elAcopio)elAcopio.textContent=acopioLleno;
 }
 
 if(rMod.ok&&rMovs.ok){
@@ -1167,9 +1225,9 @@ if(contViajes)contViajes.innerHTML='<div class="empty-state"><div class="empty-t
 return;
 }
 
-// Group by grupo
+// Group by grupo (excluye registros de tipo 'planta', que son a nivel acopio, no campo)
 var map={};
-rows.forEach(function(r){
+rows.filter(function(r){return r.tipo!=='planta';}).forEach(function(r){
 var k=r.grupo;
 if(!map[k])map[k]={grupo:r.grupo,enviados:0,regresados:0,modulos:{},portabineros:new Set(),ultimaFecha:''};
 if(r.tipo==='salida'){
@@ -1182,9 +1240,9 @@ map[k].regresados+=r.cantidad||0;
 if(r.fecha&&r.fecha>map[k].ultimaFecha)map[k].ultimaFecha=r.fecha;
 });
 
-// Group by portabinero -> modulo breakdown
+// Group by portabinero -> modulo breakdown (excluye registros de tipo 'planta')
 var mapPort={};
-rows.forEach(function(r){
+rows.filter(function(r){return r.tipo!=='planta';}).forEach(function(r){
 if(!r.portabinero)return;
 if(!mapPort[r.portabinero])mapPort[r.portabinero]={enviados:0,regresados:0,grupos:new Set(),modulos:{},ultimaFecha:''};
 if(r.tipo==='salida'){
@@ -1288,7 +1346,7 @@ var totalEnModulos=Object.keys(modMap).filter(function(k){return k!=='Cosecha Ac
 var stockGeneral=movRows.reduce(function(s,m){return m.tipo==='ingreso'?s+(m.cantidad||0):s-(m.cantidad||0);},0);
 // Pendiente en campo GLOBAL (sin filtro de fecha) para el cálculo de Cosecha Actual
 var envGlobal=0,regGlobal=0;
-allRows.forEach(function(r){if(r.tipo==='salida')envGlobal+=r.cantidad||0;else regGlobal+=r.cantidad||0;});
+allRows.forEach(function(r){if(r.tipo==='salida')envGlobal+=r.cantidad||0;else if(r.tipo==='regreso')regGlobal+=r.cantidad||0;});
 var pendCampoGlobal=Math.max(0,envGlobal-regGlobal);
 cosechaActual=Math.max(0,stockGeneral-totalEnModulos-pendCampoGlobal);
 }
@@ -1309,14 +1367,17 @@ cont.innerHTML=html;
 // ── Lista de viajes individuales (con eliminar) ──
 if(contViajes){
 var htmlViajes=rows.map(function(r){
-var isSalida=r.tipo==='salida';
+var label,color,titulo;
+if(r.tipo==='salida'){label='📤 Salida';color='#8B5CF6';titulo='Grupo '+r.grupo;}
+else if(r.tipo==='planta'){label='🚚 Salida a Planta';color='#B45309';titulo='Acopio → Planta';}
+else{label='📥 Regreso';color='var(--g)';titulo='Grupo '+r.grupo;}
 return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--field);font-size:0.68rem;">'
 +'<div>'
-+'<div><b>'+(isSalida?'📤 Salida':'📥 Regreso')+' — Grupo '+r.grupo+'</b></div>'
++'<div><b>'+label+' — '+titulo+'</b></div>'
 +'<div style="color:#888;font-size:0.6rem;">'+r.fecha+(r.modulo?' · '+r.modulo:'')+(r.portabinero?' · '+r.portabinero:'')+'</div>'
 +'</div>'
 +'<div style="text-align:right;display:flex;align-items:center;gap:8px;">'
-+'<span style="font-weight:800;color:'+(isSalida?'#8B5CF6':'var(--g)')+';">'+r.cantidad+'</span>'
++'<span style="font-weight:800;color:'+color+';">'+r.cantidad+'</span>'
 +'<button onclick="eliminarViajeCampo('+r.id+')" style="background:var(--r-dim);border:1px solid var(--r);border-radius:7px;padding:4px 8px;font-size:0.6rem;font-weight:700;color:var(--r);cursor:pointer;">🗑️</button>'
 +'</div></div>';
 }).join('');
@@ -1386,7 +1447,7 @@ var rCampo2=await fetch(SURL+'/rest/v1/stock_campo?select=cantidad,tipo',{header
 if(rCampo2.ok){
 var campoRows2=await rCampo2.json();
 var env2=0,reg2=0;
-campoRows2.forEach(function(r){if(r.tipo==='salida')env2+=r.cantidad||0;else reg2+=r.cantidad||0;});
+campoRows2.forEach(function(r){if(r.tipo==='salida')env2+=r.cantidad||0;else if(r.tipo==='regreso')reg2+=r.cantidad||0;});
 pendCampoGlobal=Math.max(0,env2-reg2);
 }
 }catch(e){}
