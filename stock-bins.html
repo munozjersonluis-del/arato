@@ -1034,19 +1034,13 @@ if(!grupo){toast('Selecciona el grupo','err');return;}
 if(!modulo){toast('Selecciona módulo destino','err');return;}
 if(!qty||qty<=0){toast('Ingresa la cantidad','err');return;}
 try{
-// Descontar de Cosecha Actual (stock_modulos con cantidad negativa)
-var r1=await fetch(SURL+'/rest/v1/stock_modulos',{
-method:'POST',
-headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'return=minimal'},
-body:JSON.stringify({modulo:'Cosecha Actual',cantidad:-qty,fecha:fecha,obs:'Salida a campo '+grupo+' ('+modulo+(portabinero?' · '+portabinero:'')+')',tipo:'campo_salida'})
-});
-// Registrar en stock_campo
+// Registrar en stock_campo (esto es lo único necesario; el cálculo de "Cosecha Actual" descuenta automáticamente lo pendiente en campo)
 var r2=await fetch(SURL+'/rest/v1/stock_campo',{
 method:'POST',
 headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'return=minimal'},
 body:JSON.stringify({grupo:grupo,subgrupo:'',modulo:modulo,portabinero:portabinero,cantidad:qty,tipo:'salida',fecha:fecha})
 });
-if(!r1.ok||!r2.ok)throw new Error('Error guardando');
+if(!r2.ok)throw new Error('Error guardando');
 toast('✅ '+qty+' bins enviados al Grupo '+grupo,'ok');
 document.getElementById('cs-cantidad').value='';
 cargarCampo();
@@ -1118,21 +1112,27 @@ try{
 var rMod=await fetch(SURL+'/rest/v1/stock_modulos?select=modulo,cantidad',{headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY}});
 var rMovs=await fetch(SURL+'/rest/v1/stock_movimientos?select=tipo,cantidad',{headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY}});
 var rCampo=await fetch(SURL+'/rest/v1/stock_campo?select=cantidad,tipo',{headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY}});
+
+var pendCampo=0;
+if(rCampo.ok){
+var campoRows=await rCampo.json();
+var env=0,reg=0;
+campoRows.forEach(function(r){if(r.tipo==='salida')env+=r.cantidad||0;else reg+=r.cantidad||0;});
+pendCampo=Math.max(0,env-reg);
+if(elPend)elPend.textContent=pendCampo;
+}
+
 if(rMod.ok&&rMovs.ok){
 var modRows=await rMod.json();
 var movRows=await rMovs.json();
 var modMap={};
 modRows.forEach(function(r){if(!modMap[r.modulo])modMap[r.modulo]=0;modMap[r.modulo]+=r.cantidad||0;});
+// Excluir Cosecha Actual del cálculo de módulos físicos (los movimientos campo_salida que se hayan guardado ahí ya no se usan)
 var totalEnModulos=Object.keys(modMap).filter(function(k){return k!=='Cosecha Actual';}).reduce(function(s,k){return s+Math.max(0,modMap[k]);},0);
 var stockGeneral=movRows.reduce(function(s,m){return m.tipo==='ingreso'?s+(m.cantidad||0):s-(m.cantidad||0);},0);
-var cosechaActual=Math.max(0,stockGeneral-totalEnModulos);
+// Cosecha Actual = Stock General - bins en módulos físicos - bins pendientes en campo
+var cosechaActual=Math.max(0,stockGeneral-totalEnModulos-pendCampo);
 if(elCosecha)elCosecha.textContent=cosechaActual;
-}
-if(rCampo.ok){
-var campoRows=await rCampo.json();
-var env=0,reg=0;
-campoRows.forEach(function(r){if(r.tipo==='salida')env+=r.cantidad||0;else reg+=r.cantidad||0;});
-if(elPend)elPend.textContent=Math.max(0,env-reg);
 }
 }catch(e){}
 }
@@ -1286,17 +1286,21 @@ modMap[r.modulo]+=r.cantidad||0;
 });
 var totalEnModulos=Object.keys(modMap).filter(function(k){return k!=='Cosecha Actual';}).reduce(function(s,k){return s+Math.max(0,modMap[k]);},0);
 var stockGeneral=movRows.reduce(function(s,m){return m.tipo==='ingreso'?s+(m.cantidad||0):s-(m.cantidad||0);},0);
-cosechaActual=Math.max(0,stockGeneral-totalEnModulos);
+// Pendiente en campo GLOBAL (sin filtro de fecha) para el cálculo de Cosecha Actual
+var envGlobal=0,regGlobal=0;
+allRows.forEach(function(r){if(r.tipo==='salida')envGlobal+=r.cantidad||0;else regGlobal+=r.cantidad||0;});
+var pendCampoGlobal=Math.max(0,envGlobal-regGlobal);
+cosechaActual=Math.max(0,stockGeneral-totalEnModulos-pendCampoGlobal);
 }
 }catch(e){}
 
 html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">'
 +'<div style="background:#DCFCE7;border-radius:10px;padding:10px;text-align:center;">'
-+'<div style="font-size:0.58rem;color:#15803D;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">🌿 Disponible para Cosecha</div>'
++'<div style="font-size:0.58rem;color:#15803D;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">🌿 Disponible para Cosecha (actual)</div>'
 +'<div style="font-family:Syne,sans-serif;font-size:1.6rem;font-weight:800;color:#15803D;">'+cosechaActual+'</div>'
 +'</div>'
 +'<div style="background:#F5F3FF;border-radius:10px;padding:10px;text-align:center;">'
-+'<div style="font-size:0.58rem;color:#7C3AED;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">🌾 Pendiente en Campo</div>'
++'<div style="font-size:0.58rem;color:#7C3AED;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">🌾 Pendiente (periodo filtrado)</div>'
 +'<div style="font-family:Syne,sans-serif;font-size:1.6rem;font-weight:800;color:#7C3AED;">'+totalPend+'</div>'
 +'</div>'
 +'</div>'+htmlPort+(html||'<div class="empty-state"><div class="empty-txt">Sin grupos en el periodo</div></div>');
@@ -1375,28 +1379,50 @@ if(totEl)totEl.textContent=totalEnModulos;
 var stockGeneral=calcStock();
 if(vsEl)vsEl.textContent=stockGeneral;
 var aptosEl=document.getElementById('mod-cosecha');
-// Cosecha Actual = Stock General - Total en módulos físicos
-var cosechaStock=Math.max(0,stockGeneral-totalEnModulos);
+// Pendiente en campo (bins vacíos enviados y no regresados)
+var pendCampoGlobal=0;
+try{
+var rCampo2=await fetch(SURL+'/rest/v1/stock_campo?select=cantidad,tipo',{headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY}});
+if(rCampo2.ok){
+var campoRows2=await rCampo2.json();
+var env2=0,reg2=0;
+campoRows2.forEach(function(r){if(r.tipo==='salida')env2+=r.cantidad||0;else reg2+=r.cantidad||0;});
+pendCampoGlobal=Math.max(0,env2-reg2);
+}
+}catch(e){}
+// Cosecha Actual = Stock General - Total en módulos físicos - Pendiente en campo
+var cosechaStock=Math.max(0,stockGeneral-totalEnModulos-pendCampoGlobal);
 if(aptosEl)aptosEl.textContent=cosechaStock;
 if(alertEl){
-var diff=stockGeneral-totalEnModulos;
+var diff=stockGeneral-totalEnModulos-pendCampoGlobal-cosechaStock;
 if(diff===0){
 alertEl.style.display='block';
 alertEl.style.background='var(--g-dim)';
 alertEl.style.color='var(--g)';
-alertEl.textContent='✅ Stock cuadrado — '+totalEnModulos+' bins en modulos = '+stockGeneral+' stock general';
+alertEl.textContent='✅ Stock cuadrado — '+totalEnModulos+' en modulos + '+pendCampoGlobal+' en campo + '+cosechaStock+' cosecha actual = '+stockGeneral+' stock general';
 }else{
 alertEl.style.display='block';
 alertEl.style.background='var(--r-dim)';
 alertEl.style.color='var(--r)';
-alertEl.textContent='⚠️ Diferencia: '+Math.abs(diff)+' bins '+(diff>0?'sin asignar a modulos':'asignados de mas');
+alertEl.textContent='⚠️ Diferencia: '+Math.abs(diff)+' bins '+(diff>0?'sin asignar':'asignados de mas');
 }
 }
 
-var mods=Object.keys(map).filter(function(m){return map[m].stock>0;}).sort(function(a,b){return a.localeCompare(b,undefined,{numeric:true});});
-var maxVal=Math.max.apply(null,mods.map(function(m){return map[m].stock;}),1);
+var mods=Object.keys(map).filter(function(m){return m!=='Cosecha Actual'&&map[m].stock>0;}).sort(function(a,b){return a.localeCompare(b,undefined,{numeric:true});});
+var maxVal=Math.max.apply(null,mods.map(function(m){return map[m].stock;}).concat([cosechaStock]),1);
 
-cont.innerHTML='<div style="padding:10px;">'+mods.map(function(m){
+// Card especial de Cosecha Actual (valor derivado, no de stock_modulos directo)
+var cosechaPct=Math.round(cosechaStock/maxVal*100);
+var cosechaCard='<div style="background:#DCFCE7;border:1.5px solid #16A34A;border-radius:12px;padding:12px;margin-bottom:8px;">'
++'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">'
++'<div><div style="font-family:Syne,sans-serif;font-size:0.82rem;font-weight:800;color:#15803D;">🌿 Cosecha Actual</div>'
++'<div style="font-size:0.6rem;color:#15803D;font-weight:700;">Disponibles para cosecha (descuenta lo enviado a campo)</div></div>'
++'<span style="font-family:Syne,sans-serif;font-size:1.3rem;font-weight:800;color:#15803D;">'+cosechaStock+'</span>'
++'</div>'
++'<div style="height:4px;background:#BBF7D0;border-radius:2px;"><div style="height:100%;border-radius:2px;background:#16A34A;width:'+cosechaPct+'%;"></div></div>'
++'</div>';
+
+cont.innerHTML='<div style="padding:10px;">'+cosechaCard+mods.map(function(m){
 var d=map[m];
 var pct=Math.round(d.stock/maxVal*100);
 // Historial de movimientos
@@ -1411,20 +1437,19 @@ return '<div style="display:flex;justify-content:space-between;padding:3px 0;bor
 // Get unique variedades for this module
 var variedades=[...new Set(d.movs.filter(function(mv){return mv.variedad&&mv.cantidad>0;}).map(function(mv){return mv.variedad;}))];
 var varStr=variedades.length?variedades.join(' · '):'';
-var isCosecha=m==='Cosecha Actual';
 
-return '<div style="background:'+(isCosecha?'#DCFCE7':'var(--paper)')+';border:1.5px solid '+(isCosecha?'#16A34A':'var(--field)')+';border-radius:12px;padding:12px;margin-bottom:8px;">'+
+return '<div style="background:var(--paper);border:1.5px solid var(--field);border-radius:12px;padding:12px;margin-bottom:8px;">'+
 '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">'+
 '<div>'+
-'<div style="font-family:Syne,sans-serif;font-size:0.82rem;font-weight:800;color:'+(isCosecha?'#15803D':'inherit')+'">'+(isCosecha?'🌿 ':'')+m+'</div>'+
-(isCosecha?'<div style="font-size:0.6rem;color:#15803D;font-weight:700;">Disponibles para cosecha</div>':(varStr?'<div style="font-size:0.6rem;color:var(--g);font-weight:600;">'+varStr+' · Con fruta</div>':''))+
+'<div style="font-family:Syne,sans-serif;font-size:0.82rem;font-weight:800;">'+m+'</div>'+
+(varStr?'<div style="font-size:0.6rem;color:var(--g);font-weight:600;">'+varStr+' · Con fruta</div>':'')+
 '</div>'+
 '<div style="display:flex;align-items:center;gap:8px;">'+
-'<span style="font-family:Syne,sans-serif;font-size:1.3rem;font-weight:800;color:'+(isCosecha?'#15803D':'var(--gold)')+';">'+d.stock+'</span>'+
+'<span style="font-family:Syne,sans-serif;font-size:1.3rem;font-weight:800;color:var(--gold);">'+d.stock+'</span>'+
 '<button onclick="eliminarModulo(\''+d.movs.map(function(r){return r.id;}).join(',')+'\',\''+m+'\')" style="background:var(--r-dim);border:1px solid var(--r);border-radius:7px;padding:4px 8px;font-size:0.62rem;font-weight:700;color:var(--r);cursor:pointer;">🗑️</button>'+
 '</div>'+
 '</div>'+
-'<div style="height:4px;background:'+(isCosecha?'#BBF7D0':'var(--field)')+';border-radius:2px;margin-bottom:8px;"><div style="height:100%;border-radius:2px;background:'+(isCosecha?'#16A34A':'var(--gold)')+';width:'+pct+'%;"></div></div>'+
+'<div style="height:4px;background:var(--field);border-radius:2px;margin-bottom:8px;"><div style="height:100%;border-radius:2px;background:var(--gold);width:'+pct+'%;"></div></div>'+
 '<details style="font-size:0.62rem;">'+
 '<summary style="color:var(--b);cursor:pointer;font-weight:600;">Ver historial ('+d.movs.length+' movimientos)</summary>'+
 '<div style="margin-top:6px;">'+histHTML+'</div>'+
