@@ -1129,7 +1129,7 @@ var rMod=await fetch(SURL+'/rest/v1/stock_modulos?select=modulo,cantidad',{heade
 var rMovs=await fetch(SURL+'/rest/v1/stock_movimientos?select=tipo,cantidad',{headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY}});
 var rCampo=await fetch(SURL+'/rest/v1/stock_campo?select=cantidad,tipo',{headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY}});
 
-var pendCampo=0,acopioLleno=0;
+var pendCampo=0,acopioLleno=0,totalEnviadoCampo=0;
 if(rCampo.ok){
 var campoRows=await rCampo.json();
 var env=0,reg=0,planta=0;
@@ -1140,6 +1140,7 @@ else if(r.tipo==='planta')planta+=r.cantidad||0;
 });
 pendCampo=Math.max(0,env-reg);
 acopioLleno=Math.max(0,reg-planta);
+totalEnviadoCampo=env;
 if(elPend)elPend.textContent=pendCampo;
 if(elAcopio)elAcopio.textContent=acopioLleno;
 }
@@ -1152,8 +1153,8 @@ modRows.forEach(function(r){if(!modMap[r.modulo])modMap[r.modulo]=0;modMap[r.mod
 // Excluir Cosecha Actual del cálculo de módulos físicos (los movimientos campo_salida que se hayan guardado ahí ya no se usan)
 var totalEnModulos=Object.keys(modMap).filter(function(k){return k!=='Cosecha Actual';}).reduce(function(s,k){return s+Math.max(0,modMap[k]);},0);
 var stockGeneral=movRows.reduce(function(s,m){return m.tipo==='ingreso'?s+(m.cantidad||0):s-(m.cantidad||0);},0);
-// Cosecha Actual = Stock General - bins en módulos físicos - bins pendientes en campo
-var cosechaActual=Math.max(0,stockGeneral-totalEnModulos-pendCampo);
+// Cosecha Actual = Stock General - bins en módulos físicos - TOTAL bins enviados a campo (los regresos NO suman de vuelta, porque vuelven LLENOS, no vacíos)
+var cosechaActual=Math.max(0,stockGeneral-totalEnModulos-totalEnviadoCampo);
 if(elCosecha)elCosecha.textContent=cosechaActual;
 }
 }catch(e){}
@@ -1308,11 +1309,10 @@ modMap[r.modulo]+=r.cantidad||0;
 });
 var totalEnModulos=Object.keys(modMap).filter(function(k){return k!=='Cosecha Actual';}).reduce(function(s,k){return s+Math.max(0,modMap[k]);},0);
 var stockGeneral=movRows.reduce(function(s,m){return m.tipo==='ingreso'?s+(m.cantidad||0):s-(m.cantidad||0);},0);
-// Pendiente en campo GLOBAL (sin filtro de fecha) para el cálculo de Cosecha Actual
-var envGlobal=0,regGlobal=0;
-allRows.forEach(function(r){if(r.tipo==='salida')envGlobal+=r.cantidad||0;else if(r.tipo==='regreso')regGlobal+=r.cantidad||0;});
-var pendCampoGlobal=Math.max(0,envGlobal-regGlobal);
-cosechaActual=Math.max(0,stockGeneral-totalEnModulos-pendCampoGlobal);
+// Total enviado a campo (sin filtro de fecha) — los regresos NO se suman de vuelta porque vuelven LLENOS
+var envGlobal=0;
+allRows.forEach(function(r){if(r.tipo==='salida')envGlobal+=r.cantidad||0;});
+cosechaActual=Math.max(0,stockGeneral-totalEnModulos-envGlobal);
 }
 }catch(e){}
 
@@ -1404,27 +1404,25 @@ if(totEl)totEl.textContent=totalEnModulos;
 var stockGeneral=calcStock();
 if(vsEl)vsEl.textContent=stockGeneral;
 var aptosEl=document.getElementById('mod-cosecha');
-// Pendiente en campo (bins vacíos enviados y no regresados)
-var pendCampoGlobal=0;
+// Total enviado a campo (bins vacíos enviados, sin restar regresos — esos vuelven LLENOS)
+var envCampoGlobal=0;
 try{
 var rCampo2=await fetch(SURL+'/rest/v1/stock_campo?select=cantidad,tipo',{headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY}});
 if(rCampo2.ok){
 var campoRows2=await rCampo2.json();
-var env2=0,reg2=0;
-campoRows2.forEach(function(r){if(r.tipo==='salida')env2+=r.cantidad||0;else if(r.tipo==='regreso')reg2+=r.cantidad||0;});
-pendCampoGlobal=Math.max(0,env2-reg2);
+campoRows2.forEach(function(r){if(r.tipo==='salida')envCampoGlobal+=r.cantidad||0;});
 }
 }catch(e){}
-// Cosecha Actual = Stock General - Total en módulos físicos - Pendiente en campo
-var cosechaStock=Math.max(0,stockGeneral-totalEnModulos-pendCampoGlobal);
+// Cosecha Actual = Stock General - Total en módulos físicos - Total enviado a campo
+var cosechaStock=Math.max(0,stockGeneral-totalEnModulos-envCampoGlobal);
 if(aptosEl)aptosEl.textContent=cosechaStock;
 if(alertEl){
-var diff=stockGeneral-totalEnModulos-pendCampoGlobal-cosechaStock;
+var diff=stockGeneral-totalEnModulos-envCampoGlobal-cosechaStock;
 if(diff===0){
 alertEl.style.display='block';
 alertEl.style.background='var(--g-dim)';
 alertEl.style.color='var(--g)';
-alertEl.textContent='✅ Stock cuadrado — '+totalEnModulos+' en modulos + '+pendCampoGlobal+' en campo + '+cosechaStock+' cosecha actual = '+stockGeneral+' stock general';
+alertEl.textContent='✅ Stock cuadrado — '+totalEnModulos+' en modulos + '+envCampoGlobal+' en campo + '+cosechaStock+' cosecha actual = '+stockGeneral+' stock general';
 }else{
 alertEl.style.display='block';
 alertEl.style.background='var(--r-dim)';
