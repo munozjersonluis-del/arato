@@ -375,6 +375,7 @@ padding:12px;
     <div style="display:flex;gap:0;margin-bottom:12px;background:var(--field);border-radius:12px;padding:3px;">
       <button class="tab-btn on" id="stab-reg" onclick="goSubTab('registro',this)" style="flex:1;padding:8px;border:none;background:#fff;border-radius:10px;font-family:Syne,sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--ink);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.08);">Registrar</button>
       <button class="tab-btn" id="stab-traslado" onclick="goSubTab('traslado',this)" style="flex:1;padding:8px;border:none;background:none;border-radius:10px;font-family:Syne,sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#999;cursor:pointer;">Traslado</button>
+      <button class="tab-btn" id="stab-campo" onclick="goSubTab('campo',this)" style="flex:1;padding:8px;border:none;background:none;border-radius:10px;font-family:Syne,sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#999;cursor:pointer;">Campo</button>
       <button class="tab-btn" id="stab-resumen" onclick="goSubTab('resumen',this)" style="flex:1;padding:8px;border:none;background:none;border-radius:10px;font-family:Syne,sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#999;cursor:pointer;">Ver Stock</button>
     </div>
 
@@ -488,6 +489,134 @@ padding:12px;
       </div>
     </div>
 
+    <!-- SUB: CAMPO -->
+    <div id="subtab-campo" style="display:none;">
+      <div class="form-card" style="margin-bottom:14px;">
+        <div class="form-header">
+          <div class="form-header-dot" style="background:#8B5CF6;"></div>
+          <div class="form-header-title">Salida a Campo (bins vacíos)</div>
+        </div>
+        <div class="form-body">
+          <div class="row2">
+            <div class="field-grp">
+              <label>Grupo</label>
+              <select id="cs-grupo">
+                <option value="">— Grupo —</option>
+                <option>A</option><option>B</option><option>C</option><option>D</option>
+                <option>E</option><option>F</option><option>G</option><option>H</option>
+                <option>I</option><option>J</option><option>K</option><option>L</option>
+                <option>M</option><option>N</option><option>O</option><option>P</option>
+                <option>Q</option><option>R</option><option>S</option><option>T</option>
+                <option>U</option><option>V</option><option>W</option><option>X</option>
+                <option>Y</option><option>Z</option>
+              </select>
+            </div>
+            <div class="field-grp">
+              <label>Módulo destino</label>
+              <select id="cs-modulo">
+                <option value="">— Módulo —</option>
+                <option>Módulo 1</option><option>Módulo 2</option><option>Módulo 3</option>
+                <option>Módulo 4</option><option>Módulo 5</option><option>Módulo 6</option>
+                <option>Módulo 7</option><option>Módulo 8</option><option>Módulo 9</option>
+                <option>Módulo 10</option><option>Módulo 11</option><option>Módulo 12</option>
+                <option>Módulo 13</option><option>Módulo 14</option><option>Módulo 15</option>
+                <option>Módulo 16</option><option>Módulo 17</option><option>Módulo 18</option>
+                <option>Módulo 19</option><option>Módulo 20</option><option>Módulo 21</option>
+                <option>Módulo 22</option><option>Módulo 23</option><option>Módulo 24</option>
+              </select>
+            </div>
+          </div>
+          <div class="row2">
+            <div class="field-grp">
+              <label>Bins enviados</label>
+              <input type="number" id="cs-cantidad" min="1" placeholder="0">
+            </div>
+            <div class="field-grp">
+              <label>Fecha</label>
+              <input type="date" id="cs-fecha">
+            </div>
+          </div>
+          <div class="field-grp">
+            <label>Portabinero</label>
+            <input type="text" id="cs-portabinero" placeholder="Nombre del portabinero" list="portabinero-sugs" autocomplete="off">
+            <datalist id="portabinero-sugs"></datalist>
+          </div>
+          <button class="btn-reg btn-g-fill" onclick="enviarACampo()" style="background:#8B5CF6;box-shadow:0 4px 14px rgba(139,92,246,0.3);">📤 Enviar a Campo</button>
+        </div>
+      </div>
+
+      <div class="form-card" style="margin-bottom:14px;">
+        <div class="form-header">
+          <div class="form-header-dot" style="background:var(--g);"></div>
+          <div class="form-header-title">Regreso con Fruta (bins llenos)</div>
+        </div>
+        <div class="form-body">
+          <div class="field-grp">
+            <label>Grupo</label>
+            <select id="cr-grupo">
+              <option value="">— Grupo —</option>
+              <option>A</option><option>B</option><option>C</option><option>D</option>
+              <option>E</option><option>F</option><option>G</option><option>H</option>
+              <option>I</option><option>J</option><option>K</option><option>L</option>
+              <option>M</option><option>N</option><option>O</option><option>P</option>
+              <option>Q</option><option>R</option><option>S</option><option>T</option>
+              <option>U</option><option>V</option><option>W</option><option>X</option>
+              <option>Y</option><option>Z</option>
+            </select>
+          </div>
+          <div class="row2">
+            <div class="field-grp">
+              <label>Bins regresados con fruta</label>
+              <input type="number" id="cr-cantidad" min="1" placeholder="0">
+            </div>
+            <div class="field-grp">
+              <label>Fecha</label>
+              <input type="date" id="cr-fecha">
+            </div>
+          </div>
+          <div class="field-grp">
+            <label>Portabinero</label>
+            <input type="text" id="cr-portabinero" placeholder="Nombre del portabinero" list="portabinero-sugs" autocomplete="off">
+          </div>
+          <button class="btn-reg btn-g-fill" onclick="regresarDeCampo()">📥 Registrar Regreso</button>
+        </div>
+      </div>
+
+      <!-- Filtro de fechas para resumen -->
+      <div class="hist-card" style="margin-bottom:10px;">
+        <div class="hist-header">
+          <div class="hist-title">🔎 Filtrar resumen</div>
+        </div>
+        <div style="display:flex;gap:6px;padding:8px 10px;flex-wrap:wrap;align-items:center;">
+          <button onclick="setFiltroCampo('hoy')" id="cf-hoy" style="padding:5px 12px;border-radius:8px;border:1.5px solid #8B5CF6;background:#8B5CF6;color:#fff;font-size:0.68rem;font-weight:700;cursor:pointer;">Hoy</button>
+          <button onclick="setFiltroCampo('todos')" id="cf-todos" style="padding:5px 12px;border-radius:8px;border:1.5px solid var(--field);background:none;color:#888;font-size:0.68rem;font-weight:700;cursor:pointer;">Todos</button>
+          <input type="date" id="cf-desde" onchange="setFiltroCampo('rango')" style="padding:5px 8px;border:1.5px solid var(--field);border-radius:8px;font-size:0.65rem;font-family:inherit;">
+          <span style="font-size:0.65rem;color:#888;">hasta</span>
+          <input type="date" id="cf-hasta" onchange="setFiltroCampo('rango')" style="padding:5px 8px;border:1.5px solid var(--field);border-radius:8px;font-size:0.65rem;font-family:inherit;">
+        </div>
+      </div>
+
+      <!-- Resumen Campo -->
+      <div class="hist-card">
+        <div class="hist-header">
+          <div class="hist-title">🌾 Bins en Campo (pendientes)</div>
+        </div>
+        <div id="campo-list" style="padding:10px;">
+          <div class="empty-state"><div class="empty-icon">🌾</div><div class="empty-txt">Sin movimientos de campo</div></div>
+        </div>
+      </div>
+
+      <!-- Lista de viajes (editar/eliminar) -->
+      <div class="hist-card" style="margin-top:10px;">
+        <div class="hist-header">
+          <div class="hist-title">🚜 Viajes registrados</div>
+        </div>
+        <div id="campo-viajes" style="padding:10px;">
+          <div class="empty-state"><div class="empty-txt">Sin viajes</div></div>
+        </div>
+      </div>
+    </div>
+
     <!-- SUB: VER STOCK -->
     <div id="subtab-resumen" style="display:none;">
       <div class="hist-card">
@@ -534,6 +663,8 @@ let movs=[], tipo='ingreso';
 const hoy=()=>{const d=new Date(),o=d.getTimezoneOffset();return new Date(d.getTime()-o*60000).toISOString().slice(0,10);};
 document.getElementById('f-fecha').value=hoy();
 if(document.getElementById('m-fecha'))document.getElementById('m-fecha').value=hoy();
+if(document.getElementById('cs-fecha'))document.getElementById('cs-fecha').value=hoy();
+if(document.getElementById('cr-fecha'))document.getElementById('cr-fecha').value=hoy();
 
 function toast(msg,t){
 const el=document.getElementById('toast');
@@ -814,7 +945,7 @@ window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
 }
 
 function goSubTab(name, btn){
-var tabs=['registro','traslado','resumen'];
+var tabs=['registro','traslado','campo','resumen'];
 tabs.forEach(function(t){
 var el=document.getElementById('subtab-'+t);
 if(el)el.style.display=t===name?'block':'none';
@@ -824,6 +955,7 @@ b.style.background='none';b.style.color='#999';b.style.boxShadow='none';
 });
 if(btn){btn.style.background='#fff';btn.style.color='var(--ink)';btn.style.boxShadow='0 2px 8px rgba(0,0,0,0.08)';}
 if(name==='resumen')cargarModulos();
+if(name==='campo')cargarCampo();
 }
 
 async function guardarModulo(){
@@ -877,6 +1009,258 @@ if(!r1.ok||!r2.ok)throw new Error('Error guardando');
 toast('Traslado realizado','ok');
 document.getElementById('t-cantidad').value='';
 document.getElementById('t-obs').value='';
+}catch(e){toast('Error: '+e.message,'err');}
+}
+
+// ── CAMPO: Salida (bins vacíos a campo) ──
+async function enviarACampo(){
+var grupo=document.getElementById('cs-grupo').value;
+var modulo=document.getElementById('cs-modulo').value;
+var qty=parseInt(document.getElementById('cs-cantidad').value)||0;
+var portabinero=document.getElementById('cs-portabinero').value.trim();
+var fecha=document.getElementById('cs-fecha').value||hoy();
+if(!grupo){toast('Selecciona el grupo','err');return;}
+if(!modulo){toast('Selecciona módulo destino','err');return;}
+if(!qty||qty<=0){toast('Ingresa la cantidad','err');return;}
+try{
+// Descontar de Cosecha Actual (stock_modulos con cantidad negativa)
+var r1=await fetch(SURL+'/rest/v1/stock_modulos',{
+method:'POST',
+headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+body:JSON.stringify({modulo:'Cosecha Actual',cantidad:-qty,fecha:fecha,obs:'Salida a campo '+grupo+' ('+modulo+(portabinero?' · '+portabinero:'')+')',tipo:'campo_salida'})
+});
+// Registrar en stock_campo
+var r2=await fetch(SURL+'/rest/v1/stock_campo',{
+method:'POST',
+headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+body:JSON.stringify({grupo:grupo,subgrupo:'',modulo:modulo,portabinero:portabinero,cantidad:qty,tipo:'salida',fecha:fecha})
+});
+if(!r1.ok||!r2.ok)throw new Error('Error guardando');
+toast('✅ '+qty+' bins enviados al Grupo '+grupo,'ok');
+document.getElementById('cs-cantidad').value='';
+cargarCampo();
+}catch(e){toast('Error: '+e.message,'err');}
+}
+
+// ── CAMPO: Regreso (bins llenos con fruta) ──
+async function regresarDeCampo(){
+var grupo=document.getElementById('cr-grupo').value;
+var qty=parseInt(document.getElementById('cr-cantidad').value)||0;
+var portabinero=document.getElementById('cr-portabinero').value.trim();
+var fecha=document.getElementById('cr-fecha').value||hoy();
+if(!grupo){toast('Selecciona el grupo','err');return;}
+if(!qty||qty<=0){toast('Ingresa la cantidad','err');return;}
+try{
+var r=await fetch(SURL+'/rest/v1/stock_campo',{
+method:'POST',
+headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+body:JSON.stringify({grupo:grupo,subgrupo:'',modulo:'',portabinero:portabinero,cantidad:qty,tipo:'regreso',fecha:fecha})
+});
+if(!r.ok)throw new Error('Error '+r.status);
+toast('✅ '+qty+' bins regresaron con fruta del Grupo '+grupo,'ok');
+document.getElementById('cr-cantidad').value='';
+cargarCampo();
+}catch(e){toast('Error: '+e.message,'err');}
+}
+
+// ── CAMPO: Ver resumen ──
+var campoFiltro={modo:'hoy'};
+
+function setFiltroCampo(modo){
+campoFiltro.modo=modo;
+['cf-hoy','cf-todos'].forEach(function(id){
+var b=document.getElementById(id);
+if(!b)return;
+var active=(id==='cf-hoy'&&modo==='hoy')||(id==='cf-todos'&&modo==='todos');
+b.style.background=active?'#8B5CF6':'none';
+b.style.color=active?'#fff':'#888';
+b.style.borderColor=active?'#8B5CF6':'var(--field)';
+});
+cargarCampo();
+}
+
+function filtrarFilasCampo(rows){
+if(campoFiltro.modo==='hoy'){
+var h=hoy();
+return rows.filter(function(r){return r.fecha===h;});
+}
+if(campoFiltro.modo==='rango'){
+var desde=document.getElementById('cf-desde').value;
+var hasta=document.getElementById('cf-hasta').value;
+return rows.filter(function(r){
+if(desde&&r.fecha<desde)return false;
+if(hasta&&r.fecha>hasta)return false;
+return true;
+});
+}
+return rows; // todos
+}
+
+async function cargarCampo(){
+var cont=document.getElementById('campo-list');
+var contViajes=document.getElementById('campo-viajes');
+if(!cont)return;
+cont.innerHTML='<div class="empty-state"><div style="font-size:1.5rem;">⏳</div><div class="empty-txt">Cargando...</div></div>';
+try{
+var r=await fetch(SURL+'/rest/v1/stock_campo?select=*&order=created_at.desc',{
+headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY}
+});
+if(!r.ok)throw new Error('Error '+r.status);
+var allRows=await r.json();
+if(!allRows.length){
+cont.innerHTML='<div class="empty-state"><div class="empty-icon">🌾</div><div class="empty-txt">Sin movimientos de campo</div></div>';
+if(contViajes)contViajes.innerHTML='<div class="empty-state"><div class="empty-txt">Sin viajes</div></div>';
+return;
+}
+// Populate portabinero suggestions (datalist) — siempre con TODOS los registros
+var portas=[...new Set(allRows.map(function(r){return r.portabinero;}).filter(Boolean))].sort();
+var dl=document.getElementById('portabinero-sugs');
+if(dl)dl.innerHTML=portas.map(function(p){return '<option value="'+p+'">';}).join('');
+
+// Filtrar según selección de fecha
+var rows=filtrarFilasCampo(allRows);
+
+if(!rows.length){
+cont.innerHTML='<div class="empty-state"><div class="empty-icon">🌾</div><div class="empty-txt">Sin movimientos en el periodo seleccionado</div></div>';
+if(contViajes)contViajes.innerHTML='<div class="empty-state"><div class="empty-txt">Sin viajes en el periodo</div></div>';
+return;
+}
+
+// Group by grupo
+var map={};
+rows.forEach(function(r){
+var k=r.grupo;
+if(!map[k])map[k]={grupo:r.grupo,enviados:0,regresados:0,modulos:{},portabineros:new Set(),ultimaFecha:''};
+if(r.tipo==='salida'){
+map[k].enviados+=r.cantidad||0;
+if(r.modulo)map[k].modulos[r.modulo]=(map[k].modulos[r.modulo]||0)+(r.cantidad||0);
+if(r.portabinero)map[k].portabineros.add(r.portabinero);
+}else{
+map[k].regresados+=r.cantidad||0;
+}
+if(r.fecha&&r.fecha>map[k].ultimaFecha)map[k].ultimaFecha=r.fecha;
+});
+
+// Group by portabinero -> modulo breakdown
+var mapPort={};
+rows.forEach(function(r){
+if(!r.portabinero)return;
+if(!mapPort[r.portabinero])mapPort[r.portabinero]={enviados:0,regresados:0,grupos:new Set(),modulos:{},ultimaFecha:''};
+if(r.tipo==='salida'){
+mapPort[r.portabinero].enviados+=r.cantidad||0;
+mapPort[r.portabinero].grupos.add(r.grupo);
+if(r.modulo){
+if(!mapPort[r.portabinero].modulos[r.modulo])mapPort[r.portabinero].modulos[r.modulo]={enviados:0,regresados:0};
+mapPort[r.portabinero].modulos[r.modulo].enviados+=r.cantidad||0;
+}
+}else{
+mapPort[r.portabinero].regresados+=r.cantidad||0;
+}
+if(r.fecha&&r.fecha>mapPort[r.portabinero].ultimaFecha)mapPort[r.portabinero].ultimaFecha=r.fecha;
+});
+
+// ── Resumen por Grupo (ordenado de mayor a menor pendiente) ──
+var keys=Object.keys(map).sort(function(a,b){
+var pa=Math.max(0,map[a].enviados-map[a].regresados);
+var pb=Math.max(0,map[b].enviados-map[b].regresados);
+return pb-pa;
+});
+var html='';
+var totalPend=0;
+keys.forEach(function(k){
+var m=map[k];
+var pend=Math.max(0,m.enviados-m.regresados);
+totalPend+=pend;
+if(m.enviados===0&&m.regresados===0)return;
+var modsStr=Object.keys(m.modulos).map(function(mo){return mo+' ('+m.modulos[mo]+')';}).join(', ');
+var portasStr=[...m.portabineros].join(', ');
+html+='<div style="background:'+(pend>0?'#F5F3FF':'var(--paper)')+';border:1.5px solid '+(pend>0?'#8B5CF6':'var(--field)')+';border-radius:12px;padding:12px;margin-bottom:8px;">'
++'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'
++'<div><div style="font-family:Syne,sans-serif;font-size:0.9rem;font-weight:800;">Grupo '+m.grupo+'</div>'
++(portasStr?'<div style="font-size:0.6rem;color:#888;">👤 '+portasStr+'</div>':'')
++'</div>'
++'<div style="text-align:right;"><span style="font-family:Syne,sans-serif;font-size:1.3rem;font-weight:800;color:'+(pend>0?'#8B5CF6':'var(--g)')+';">'+pend+'</span>'
++'<div style="font-size:0.55rem;color:#888;text-transform:uppercase;">pendiente</div></div>'
++'</div>'
++'<div style="display:flex;justify-content:space-between;font-size:0.65rem;color:#666;border-top:1px solid var(--field);padding-top:6px;">'
++'<span>📤 Enviados: <b>'+m.enviados+'</b></span>'
++'<span>📥 Regresados: <b>'+m.regresados+'</b></span>'
++'</div>'
++(modsStr?'<div style="font-size:0.6rem;color:#888;margin-top:4px;">Módulos: '+modsStr+'</div>':'')
++(m.ultimaFecha?'<div style="font-size:0.6rem;color:#888;margin-top:2px;">📅 Último movimiento: '+m.ultimaFecha+'</div>':'')
++'</div>';
+});
+
+// ── Resumen por Portabinero con desglose por módulo ──
+var portKeys=Object.keys(mapPort).sort(function(a,b){
+var pa=Math.max(0,mapPort[a].enviados-mapPort[a].regresados);
+var pb=Math.max(0,mapPort[b].enviados-mapPort[b].regresados);
+return pb-pa;
+});
+var htmlPort='';
+portKeys.forEach(function(p){
+var d=mapPort[p];
+var pend=Math.max(0,d.enviados-d.regresados);
+var gruposStr=[...d.grupos].sort().join(', ');
+var modsHTML=Object.keys(d.modulos).sort().map(function(mo){
+return '<div style="display:flex;justify-content:space-between;font-size:0.6rem;color:#888;padding:2px 0;"><span>'+mo+'</span><span>'+d.modulos[mo].enviados+' bins llevados</span></div>';
+}).join('');
+htmlPort+='<div style="border-bottom:1px solid var(--field);padding:8px 0;">'
++'<div style="display:flex;justify-content:space-between;align-items:center;font-size:0.7rem;">'
++'<div><b>'+p+'</b>'
++(gruposStr?'<div style="font-size:0.58rem;color:#888;">Grupos: '+gruposStr+'</div>':'')
++(d.ultimaFecha?'<div style="font-size:0.58rem;color:#888;">📅 Último: '+d.ultimaFecha+'</div>':'')
++'</div>'
++'<div style="text-align:right;">'
++'<span style="font-family:Syne,sans-serif;font-weight:800;font-size:1rem;color:'+(pend>0?'#8B5CF6':'var(--g)')+';">'+pend+'</span>'
++'<div style="font-size:0.55rem;color:#888;">pendiente</div>'
++'<div style="font-size:0.55rem;color:#888;">📤'+d.enviados+' · 📥'+d.regresados+'</div>'
++'</div></div>'
++(modsHTML?'<div style="margin-top:4px;padding-left:4px;">'+modsHTML+'</div>':'')
++'</div>';
+});
+if(portKeys.length){
+htmlPort='<div class="hist-card" style="margin-bottom:10px;">'
++'<div class="hist-header"><div class="hist-title">👤 Resumen por Portabinero</div></div>'
++'<div style="padding:10px;">'+htmlPort+'</div>'
++'</div>';
+}
+
+html='<div style="background:var(--g-dim,#DCFCE7);border-radius:10px;padding:10px;margin-bottom:10px;text-align:center;">'
++'<div style="font-size:0.6rem;color:#15803D;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Total bins pendientes en campo</div>'
++'<div style="font-family:Syne,sans-serif;font-size:1.8rem;font-weight:800;color:#15803D;">'+totalPend+'</div>'
++'</div>'+htmlPort+(html||'<div class="empty-state"><div class="empty-txt">Sin grupos en el periodo</div></div>');
+cont.innerHTML=html;
+
+// ── Lista de viajes individuales (con eliminar) ──
+if(contViajes){
+var htmlViajes=rows.map(function(r){
+var isSalida=r.tipo==='salida';
+return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--field);font-size:0.68rem;">'
++'<div>'
++'<div><b>'+(isSalida?'📤 Salida':'📥 Regreso')+' — Grupo '+r.grupo+'</b></div>'
++'<div style="color:#888;font-size:0.6rem;">'+r.fecha+(r.modulo?' · '+r.modulo:'')+(r.portabinero?' · '+r.portabinero:'')+'</div>'
++'</div>'
++'<div style="text-align:right;display:flex;align-items:center;gap:8px;">'
++'<span style="font-weight:800;color:'+(isSalida?'#8B5CF6':'var(--g)')+';">'+r.cantidad+'</span>'
++'<button onclick="eliminarViajeCampo('+r.id+')" style="background:var(--r-dim);border:1px solid var(--r);border-radius:7px;padding:4px 8px;font-size:0.6rem;font-weight:700;color:var(--r);cursor:pointer;">🗑️</button>'
++'</div></div>';
+}).join('');
+contViajes.innerHTML=htmlViajes||'<div class="empty-state"><div class="empty-txt">Sin viajes en el periodo</div></div>';
+}
+}catch(e){cont.innerHTML='<div class="empty-state"><div class="empty-txt">Error: '+e.message+'</div></div>';}
+}
+
+async function eliminarViajeCampo(id){
+if(!confirm('¿Eliminar este viaje? Esta acción no se puede deshacer.'))return;
+try{
+var r=await fetch(SURL+'/rest/v1/stock_campo?id=eq.'+id,{
+method:'DELETE',
+headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY}
+});
+if(!r.ok)throw new Error('Error '+r.status);
+toast('Viaje eliminado','ok');
+cargarCampo();
 }catch(e){toast('Error: '+e.message,'err');}
 }
 
@@ -1041,6 +1425,7 @@ if(btn){btn.textContent='📋 Sheets';btn.disabled=false;}
 }
 
 cargar();
+cargarCampo();
 
 // Cargar sugerencias de observaciones
 (async function(){
