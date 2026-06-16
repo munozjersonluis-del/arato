@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>Cosecha & Despacho — Arato</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
@@ -111,6 +112,21 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--txt);min-heig
 .firma-nombre{font-family:'Playfair Display',Georgia,serif;font-size:0.85rem;font-weight:700;color:var(--ink);text-align:center;margin-bottom:6px;letter-spacing:.5px;}
 .firma-line{border-top:1.5px solid #555;padding-top:5px;font-size:0.48rem;color:var(--txt3);text-transform:uppercase;letter-spacing:1px;text-align:center;}
 
+/* REPORTE TABLA */
+.rep-section{margin-bottom:16px;background:#fff;border:1px solid var(--bdr);border-radius:12px;overflow:hidden;box-shadow:var(--shadow);}
+.rep-hdr{padding:10px 14px;display:flex;justify-content:space-between;align-items:center;color:#fff;}
+.rep-hdr-title{font-family:'Bebas Neue',sans-serif;font-size:0.95rem;letter-spacing:1px;}
+.rep-hdr-total{font-family:'JetBrains Mono',monospace;font-size:1rem;font-weight:800;}
+.rep-scroll{overflow-x:auto;}
+.rep-table{width:100%;border-collapse:collapse;font-size:0.68rem;min-width:480px;}
+.rep-table th{background:var(--bg3);color:var(--txt2);padding:7px 6px;text-align:center;font-size:0.58rem;text-transform:uppercase;letter-spacing:.3px;font-weight:800;border-bottom:2px solid var(--bdr);white-space:nowrap;}
+.rep-table td{padding:7px 6px;text-align:center;border-bottom:1px solid var(--bdr);white-space:nowrap;}
+.rep-table tr:nth-child(even) td{background:var(--bg3);}
+.rep-table .rep-mod{font-family:'JetBrains Mono',monospace;font-weight:700;}
+.rep-table .rep-disp{font-weight:800;}
+.rep-table tfoot td{background:var(--bg3);font-weight:800;border-top:2px solid var(--bdr);}
+
+
 /* GUIAS LIST */
 .guia-item{background:#fff;border:1px solid var(--bdr);border-radius:10px;padding:11px;margin-bottom:8px;box-shadow:var(--shadow);border-left:4px solid var(--g2);}
 .guia-item-top{display:flex;justify-content:space-between;margin-bottom:4px;}
@@ -171,6 +187,7 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--txt);min-heig
     <button class="tb" id="tb-stock" onclick="goTab('stock',this);cargarStock()">📦 Stock</button>
     <button class="tb" id="tb-despacho" onclick="goTab('despacho',this)">🚛 Despacho</button>
     <button class="tb" id="tb-guias" onclick="goTab('guias',this);cargarGuias()">📋 Guías</button>
+    <button class="tb" id="tb-reporte" onclick="goTab('reporte',this);cargarReporte()">📊 Reporte</button>
   </div>
 
   <div id="toast" class="toast"></div>
@@ -216,7 +233,10 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--txt);min-heig
     <div class="tab" id="tab-stock">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
         <div style="font-size:0.62rem;font-weight:800;color:var(--txt3);text-transform:uppercase;letter-spacing:1px;">Disponible para venta</div>
-        <button onclick="wspStock()" style="background:#25D366;border:none;border-radius:8px;padding:6px 12px;color:#fff;font-size:0.65rem;font-weight:700;cursor:pointer;">📲 WSP</button>
+        <div style="display:flex;gap:6px;">
+          <button onclick="descargarReporteStock()" style="background:#1A5C38;border:none;border-radius:8px;padding:6px 12px;color:#fff;font-size:0.65rem;font-weight:700;cursor:pointer;">📊 Excel</button>
+          <button onclick="wspStock()" style="background:#25D366;border:none;border-radius:8px;padding:6px 12px;color:#fff;font-size:0.65rem;font-weight:700;cursor:pointer;">📲 WSP</button>
+        </div>
       </div>
       <div id="stock-list"><div class="empty">Cargando...</div></div>
     </div>
@@ -270,6 +290,11 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--txt);min-heig
     <!-- TAB GUÍAS -->
     <div class="tab" id="tab-guias">
       <div id="guias-list"><div class="empty">Cargando...</div></div>
+    </div>
+
+    <!-- TAB REPORTE -->
+    <div class="tab" id="tab-reporte">
+      <div id="reporte-cont"><div class="empty">Cargando...</div></div>
     </div>
 
   </div>
@@ -447,6 +472,243 @@ async function cargarStock(){
     });
     cont.innerHTML=html||'<div class="empty">Sin stock disponible</div>';
   }catch(e){cont.innerHTML='<div class="empty">Error cargando stock</div>';}
+}
+
+// ── REPORTE VISUAL (tipo Excel en pantalla) ──
+async function cargarReporte(){
+  const cont=document.getElementById('reporte-cont');
+  cont.innerHTML='<div class="empty">Cargando...</div>';
+  try{
+    const rows=await api('cosecha_modulos?select=*&order=fundo.asc,modulo.asc,fecha_cosecha.desc');
+    if(!rows||!rows.length){cont.innerHTML='<div class="empty">Sin datos de cosecha</div>';return;}
+
+    function filaTabla(r){
+      const disp=Math.floor(Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0)-((r.jabas_vendidas||0)/JABAS_BIN)));
+      const despEquiv=Math.round((r.bins_vendidos||0)+(r.jabas_vendidas||0)/JABAS_BIN);
+      return '<tr>'
+        +'<td class="rep-mod">'+r.modulo+'</td>'
+        +'<td>'+r.variedad+'</td>'
+        +'<td>'+r.fecha_cosecha+'</td>'
+        +'<td>'+(r.bins_cosechados||0)+'</td>'
+        +'<td>'+despEquiv+'</td>'
+        +'<td class="rep-disp" style="color:'+(disp>0?'var(--g)':'var(--txt3)')+';">'+disp+'</td>'
+        +'</tr>';
+    }
+
+    function construirSeccion(titulo,color,rowsFundo){
+      if(!rowsFundo.length)return '';
+      let totC=0,totDesp=0,totD=0;
+      rowsFundo.forEach(r=>{
+        totC+=r.bins_cosechados||0;
+        totDesp+=Math.round((r.bins_vendidos||0)+(r.jabas_vendidas||0)/JABAS_BIN);
+        totD+=Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0)-((r.jabas_vendidas||0)/JABAS_BIN));
+      });
+      const totDFloor=Math.floor(totD);
+      return '<div class="rep-section">'
+        +'<div class="rep-hdr" style="background:'+color+';">'
+        +'<div class="rep-hdr-title">'+titulo+'</div>'
+        +'<div style="text-align:right;"><div class="rep-hdr-total">'+totDFloor+' bins</div><div style="font-size:0.55rem;opacity:0.8;">'+(totDFloor*KG_BIN).toLocaleString()+' kg disp.</div></div>'
+        +'</div>'
+        +'<div class="rep-scroll"><table class="rep-table">'
+        +'<thead><tr><th>Módulo</th><th>Variedad</th><th>F. Cosecha</th><th>Cosechado</th><th>Despachado</th><th>Disponible</th></tr></thead>'
+        +'<tbody>'+rowsFundo.map(filaTabla).join('')+'</tbody>'
+        +'<tfoot><tr><td colspan="3">TOTAL</td><td>'+totC+'</td><td>'+totDesp+'</td><td style="color:var(--g);">'+totDFloor+'</td></tr></tfoot>'
+        +'</table></div></div>';
+    }
+
+    const rowsA1=rows.filter(r=>r.fundo==='ARATO 1');
+    const rowsA2=rows.filter(r=>r.fundo==='ARATO 2');
+
+    // Resumen general combinado arriba
+    let gC=0,gDespEq=0,gD=0;
+    rows.forEach(r=>{
+      gC+=r.bins_cosechados||0;
+      gDespEq+=Math.round((r.bins_vendidos||0)+(r.jabas_vendidas||0)/JABAS_BIN);
+      gD+=Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0)-((r.jabas_vendidas||0)/JABAS_BIN));
+    });
+    const gDFloor=Math.floor(gD);
+    const d1=Math.floor(rowsA1.reduce((s,r)=>s+Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0)-((r.jabas_vendidas||0)/JABAS_BIN)),0));
+    const d2=Math.floor(rowsA2.reduce((s,r)=>s+Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0)-((r.jabas_vendidas||0)/JABAS_BIN)),0));
+
+    let html='<div class="rep-section">'
+      +'<div class="rep-hdr" style="background:var(--ink);">'
+      +'<div class="rep-hdr-title">📊 STOCK GENERAL (Arato 1 + Arato 2)</div>'
+      +'<div style="text-align:right;"><div class="rep-hdr-total">'+gDFloor+' bins</div><div style="font-size:0.55rem;opacity:0.8;">'+(gDFloor*KG_BIN).toLocaleString()+' kg disp.</div></div>'
+      +'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--bdr);">'
+      +'<div style="background:#EFF6FF;padding:12px;text-align:center;"><div style="font-size:0.6rem;color:var(--b);font-weight:700;text-transform:uppercase;">Arato 1</div><div style="font-family:\'JetBrains Mono\',monospace;font-size:1.3rem;font-weight:800;color:var(--b);">'+d1+'</div><div style="font-size:0.55rem;color:var(--txt3);">bins disponibles</div></div>'
+      +'<div style="background:#FEF3C7;padding:12px;text-align:center;"><div style="font-size:0.6rem;color:var(--y);font-weight:700;text-transform:uppercase;">Arato 2</div><div style="font-family:\'JetBrains Mono\',monospace;font-size:1.3rem;font-weight:800;color:var(--y);">'+d2+'</div><div style="font-size:0.55rem;color:var(--txt3);">bins disponibles</div></div>'
+      +'</div>'
+      +'<div style="padding:10px 14px;display:flex;justify-content:space-between;font-size:0.65rem;color:var(--txt2);border-top:1px solid var(--bdr);">'
+      +'<span>Total cosechado: <b>'+gC+' bins</b></span><span>Despachado: <b>'+gDespEq+' bins</b></span>'
+      +'</div>'
+      +'</div>';
+
+    html+=construirSeccionSimple(rowsA1,rowsA2);
+    html+=construirSeccion('🌿 ARATO 1','var(--b)',rowsA1);
+    html+=construirSeccion('🌿 ARATO 2','var(--y)',rowsA2);
+
+    cont.innerHTML=html;
+  }catch(e){cont.innerHTML='<div class="empty">Error: '+e.message+'</div>';}
+}
+
+function construirSeccionSimple(rowsA1,rowsA2){
+  function filaSimple(r){
+    const disp=Math.floor(Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0)-((r.jabas_vendidas||0)/JABAS_BIN)));
+    if(disp<=0)return null;
+    return {modulo:r.modulo,variedad:r.variedad,fecha:r.fecha_cosecha,disp};
+  }
+  const pendA1=rowsA1.map(filaSimple).filter(Boolean);
+  const pendA2=rowsA2.map(filaSimple).filter(Boolean);
+  const totA1=pendA1.reduce((s,r)=>s+r.disp,0);
+  const totA2=pendA2.reduce((s,r)=>s+r.disp,0);
+
+  function tablaSimple(titulo,color,items,total){
+    if(!items.length)return '<div style="padding:14px;text-align:center;color:var(--txt3);font-size:0.75rem;">Sin pendientes en '+titulo+'</div>';
+    const totalTon=(total*KG_BIN/1000);
+    return '<div style="margin-bottom:14px;">'
+      +'<div style="padding:8px 14px;background:'+color+';color:#fff;font-family:\'Bebas Neue\',sans-serif;font-size:1rem;letter-spacing:1px;display:flex;justify-content:space-between;align-items:center;">'
+      +'<span>'+titulo+'</span><span style="text-align:right;"><span style="font-family:\'JetBrains Mono\',monospace;font-size:1.1rem;font-weight:800;">'+total+' bins</span><br><span style="font-size:0.6rem;opacity:0.85;">'+totalTon.toFixed(1)+' TN</span></span>'
+      +'</div>'
+      +'<table class="rep-table" style="min-width:0;">'
+      +'<thead><tr><th>Módulo</th><th>Variedad</th><th>F. Cosecha</th><th>Disp.</th><th>TN</th></tr></thead>'
+      +'<tbody>'+items.map(r=>'<tr><td class="rep-mod">'+r.modulo+'</td><td>'+r.variedad+'</td><td>'+r.fecha+'</td><td class="rep-disp" style="color:var(--g);font-size:0.85rem;">'+r.disp+'</td><td style="font-weight:700;">'+(r.disp*KG_BIN/1000).toFixed(1)+'</td></tr>').join('')
+      +'</tbody></table></div>';
+  }
+
+  return '<div class="rep-section" id="reporte-pendientes-screenshot" style="border:2px solid var(--ink);">'
+    +'<div class="rep-hdr" style="background:var(--ink);justify-content:center;">'
+    +'<div class="rep-hdr-title">🥑 PENDIENTE PARA VENDER / DESPACHAR — '+new Date().toLocaleDateString('es-PE')+'</div>'
+    +'</div>'
+    +'<div style="padding:10px;">'
+    +tablaSimple('ARATO 1','var(--b)',pendA1,totA1)
+    +tablaSimple('ARATO 2','var(--y)',pendA2,totA2)
+    +'<div style="background:var(--gc);border-radius:8px;padding:10px;text-align:center;margin-top:4px;">'
+    +'<div style="font-size:0.65rem;color:var(--g);font-weight:700;text-transform:uppercase;">TOTAL DISPONIBLE</div>'
+    +'<div style="font-family:\'JetBrains Mono\',monospace;font-size:1.6rem;font-weight:800;color:var(--g);">'+(totA1+totA2)+' bins</div>'
+    +'<div style="font-size:0.7rem;color:var(--g);font-weight:700;">'+((totA1+totA2)*KG_BIN/1000).toFixed(1)+' toneladas</div>'
+    +'</div>'
+    +'</div></div>';
+}
+
+async function descargarReporteStock(){
+  if(typeof XLSX==='undefined'){toast('Cargando librería...','ok');setTimeout(descargarReporteStock,800);return;}
+  try{
+    const rows=await api('cosecha_modulos?select=*&order=fundo.asc,modulo.asc,fecha_cosecha.desc');
+    if(!rows||!rows.length){toast('Sin datos de cosecha','err');return;}
+
+    const wb=XLSX.utils.book_new();
+    const hoyStr=hoy();
+
+    function construirHoja(rowsFundo,titulo){
+      const data=[
+        ['ARATO MISSION PRODUCE'],
+        ['REPORTE DE STOCK DISPONIBLE — '+titulo],
+        ['Fecha de reporte: '+new Date().toLocaleDateString('es-PE')],
+        [],
+        ['MÓDULO','VARIEDAD','FECHA COSECHA','BINS COSECHADOS','BINS DESPACHADOS','JABAS DESPACHADAS','BINS DISPONIBLES','KG DISPONIBLES']
+      ];
+      let totCosechado=0,totDespBins=0,totDespJabas=0,totDisp=0;
+      rowsFundo.forEach(r=>{
+        const disp=Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0)-((r.jabas_vendidas||0)/JABAS_BIN));
+        const dispFloor=Math.floor(disp);
+        totCosechado+=r.bins_cosechados||0;
+        totDespBins+=r.bins_vendidos||0;
+        totDespJabas+=r.jabas_vendidas||0;
+        totDisp+=disp;
+        data.push([r.modulo,r.variedad,r.fecha_cosecha,r.bins_cosechados||0,r.bins_vendidos||0,r.jabas_vendidas||0,dispFloor,dispFloor*KG_BIN]);
+      });
+      data.push([]);
+      data.push(['','','TOTAL',totCosechado,totDespBins,totDespJabas,Math.floor(totDisp),Math.floor(totDisp)*KG_BIN]);
+
+      const ws=XLSX.utils.aoa_to_sheet(data);
+      ws['!cols']=[{wch:12},{wch:12},{wch:14},{wch:15},{wch:15},{wch:15},{wch:14},{wch:14}];
+      ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:7}},{s:{r:1,c:0},e:{r:1,c:7}},{s:{r:2,c:0},e:{r:2,c:7}}];
+      const hS1={font:{bold:true,color:{rgb:'FFFFFF'},sz:14},fill:{fgColor:{rgb:'0D1B0F'}},alignment:{horizontal:'center',vertical:'center'}};
+      const hS2={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'1A5C38'}},alignment:{horizontal:'center'}};
+      const hS3={font:{italic:true,color:{rgb:'FFFFFF'},sz:9},fill:{fgColor:{rgb:'2D6A4F'}},alignment:{horizontal:'center'}};
+      if(ws['A1'])ws['A1'].s=hS1;
+      if(ws['A2'])ws['A2'].s=hS2;
+      if(ws['A3'])ws['A3'].s=hS3;
+      const colH={font:{bold:true,color:{rgb:'FFFFFF'},sz:10},fill:{fgColor:{rgb:'16A34A'}},alignment:{horizontal:'center'}};
+      ['A5','B5','C5','D5','E5','F5','G5','H5'].forEach(c=>{if(ws[c])ws[c].s=colH;});
+      for(let i=0;i<rowsFundo.length;i++){
+        const row=i+6;
+        const bg=i%2===0?'F8FAFC':'FFFFFF';
+        const disp=Math.floor(Math.max(0,(rowsFundo[i].bins_cosechados||0)-(rowsFundo[i].bins_vendidos||0)-((rowsFundo[i].jabas_vendidas||0)/JABAS_BIN)));
+        ['A','B','C'].forEach(c=>{if(ws[c+row])ws[c+row].s={fill:{fgColor:{rgb:bg}},font:{sz:10},alignment:{horizontal:'center'}};});
+        ['D','E','F'].forEach(c=>{if(ws[c+row])ws[c+row].s={fill:{fgColor:{rgb:bg}},font:{sz:10},alignment:{horizontal:'center'}};});
+        if(ws['G'+row])ws['G'+row].s={font:{bold:true,color:{rgb:disp>0?'15803D':'94A3B8'},sz:11},fill:{fgColor:{rgb:disp>0?'DCFCE7':'F1F5F9'}},alignment:{horizontal:'center'}};
+        if(ws['H'+row])ws['H'+row].s={font:{bold:true,color:{rgb:'1D4ED8'},sz:10},fill:{fgColor:{rgb:'DBEAFE'}},alignment:{horizontal:'center'}};
+      }
+      const totRow=rowsFundo.length+7;
+      ['C','D','E','F'].forEach(c=>{if(ws[c+totRow])ws[c+totRow].s={font:{bold:true,sz:10},alignment:{horizontal:'center'}};});
+      if(ws['G'+totRow])ws['G'+totRow].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:12},fill:{fgColor:{rgb:'15803D'}},alignment:{horizontal:'center'}};
+      if(ws['H'+totRow])ws['H'+totRow].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:12},fill:{fgColor:{rgb:'1D4ED8'}},alignment:{horizontal:'center'}};
+      return ws;
+    }
+
+    const rowsA1=rows.filter(r=>r.fundo==='ARATO 1');
+    const rowsA2=rows.filter(r=>r.fundo==='ARATO 2');
+
+    if(rowsA1.length)XLSX.utils.book_append_sheet(wb,construirHoja(rowsA1,'ARATO 1'),'Arato 1');
+    if(rowsA2.length)XLSX.utils.book_append_sheet(wb,construirHoja(rowsA2,'ARATO 2'),'Arato 2');
+
+    // Hoja General combinada
+    const dataGen=[
+      ['ARATO MISSION PRODUCE'],
+      ['REPORTE GENERAL DE STOCK — AMBOS FUNDOS'],
+      ['Fecha de reporte: '+new Date().toLocaleDateString('es-PE')],
+      [],
+      ['FUNDO','MÓDULO','VARIEDAD','FECHA COSECHA','BINS COSECHADOS','BINS DESPACHADOS','JABAS DESPACHADAS','BINS DISPONIBLES','KG DISPONIBLES']
+    ];
+    let gC=0,gDb=0,gDj=0,gD=0;
+    rows.forEach(r=>{
+      const disp=Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0)-((r.jabas_vendidas||0)/JABAS_BIN));
+      const dispFloor=Math.floor(disp);
+      gC+=r.bins_cosechados||0;gDb+=r.bins_vendidos||0;gDj+=r.jabas_vendidas||0;gD+=disp;
+      dataGen.push([r.fundo,r.modulo,r.variedad,r.fecha_cosecha,r.bins_cosechados||0,r.bins_vendidos||0,r.jabas_vendidas||0,dispFloor,dispFloor*KG_BIN]);
+    });
+    dataGen.push([]);
+    dataGen.push(['','','','TOTAL GENERAL',gC,gDb,gDj,Math.floor(gD),Math.floor(gD)*KG_BIN]);
+    // Subtotales por fundo
+    dataGen.push([]);
+    dataGen.push(['RESUMEN POR FUNDO','','','','','','','','']);
+    [['ARATO 1',rowsA1],['ARATO 2',rowsA2]].forEach(([nombre,rs])=>{
+      const sc=rs.reduce((s,r)=>s+(r.bins_cosechados||0),0);
+      const sd=rs.reduce((s,r)=>s+Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0)-((r.jabas_vendidas||0)/JABAS_BIN)),0);
+      dataGen.push([nombre,'','','',sc,'','',Math.floor(sd),Math.floor(sd)*KG_BIN]);
+    });
+
+    const wsGen=XLSX.utils.aoa_to_sheet(dataGen);
+    wsGen['!cols']=[{wch:11},{wch:11},{wch:11},{wch:13},{wch:14},{wch:14},{wch:14},{wch:13},{wch:13}];
+    wsGen['!merges']=[{s:{r:0,c:0},e:{r:0,c:8}},{s:{r:1,c:0},e:{r:1,c:8}},{s:{r:2,c:0},e:{r:2,c:8}}];
+    const hG1={font:{bold:true,color:{rgb:'FFFFFF'},sz:14},fill:{fgColor:{rgb:'0D1B0F'}},alignment:{horizontal:'center',vertical:'center'}};
+    const hG2={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'B8962E'}},alignment:{horizontal:'center'}};
+    const hG3={font:{italic:true,color:{rgb:'FFFFFF'},sz:9},fill:{fgColor:{rgb:'8B7022'}},alignment:{horizontal:'center'}};
+    if(wsGen['A1'])wsGen['A1'].s=hG1;
+    if(wsGen['A2'])wsGen['A2'].s=hG2;
+    if(wsGen['A3'])wsGen['A3'].s=hG3;
+    const colHG={font:{bold:true,color:{rgb:'FFFFFF'},sz:10},fill:{fgColor:{rgb:'1A5C38'}},alignment:{horizontal:'center'}};
+    ['A5','B5','C5','D5','E5','F5','G5','H5','I5'].forEach(c=>{if(wsGen[c])wsGen[c].s=colHG;});
+    for(let i=0;i<rows.length;i++){
+      const row=i+6;
+      const bg=rows[i].fundo==='ARATO 1'?'EFF6FF':'FEF3C7';
+      const disp=Math.floor(Math.max(0,(rows[i].bins_cosechados||0)-(rows[i].bins_vendidos||0)-((rows[i].jabas_vendidas||0)/JABAS_BIN)));
+      ['A','B','C','D','E','F'].forEach(c=>{if(wsGen[c+row])wsGen[c+row].s={fill:{fgColor:{rgb:bg}},font:{sz:10},alignment:{horizontal:'center'}};});
+      if(wsGen['G'+row])wsGen['G'+row].s={fill:{fgColor:{rgb:bg}},font:{sz:10},alignment:{horizontal:'center'}};
+      if(wsGen['H'+row])wsGen['H'+row].s={font:{bold:true,color:{rgb:disp>0?'15803D':'94A3B8'},sz:10},fill:{fgColor:{rgb:bg}},alignment:{horizontal:'center'}};
+      if(wsGen['I'+row])wsGen['I'+row].s={font:{bold:true,color:{rgb:'1D4ED8'},sz:10},fill:{fgColor:{rgb:bg}},alignment:{horizontal:'center'}};
+    }
+    const totRowG=rows.length+7;
+    if(wsGen['D'+totRowG])wsGen['D'+totRowG].s={font:{bold:true,sz:10},alignment:{horizontal:'right'}};
+    if(wsGen['H'+totRowG])wsGen['H'+totRowG].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:12},fill:{fgColor:{rgb:'15803D'}},alignment:{horizontal:'center'}};
+    if(wsGen['I'+totRowG])wsGen['I'+totRowG].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:12},fill:{fgColor:{rgb:'1D4ED8'}},alignment:{horizontal:'center'}};
+    XLSX.utils.book_append_sheet(wb,wsGen,'General');
+
+    XLSX.writeFile(wb,'Reporte_Stock_Arato_'+hoyStr+'.xlsx');
+    toast('✅ Reporte descargado','ok');
+  }catch(e){toast('Error: '+e.message,'err');}
 }
 
 function wspStock(){
