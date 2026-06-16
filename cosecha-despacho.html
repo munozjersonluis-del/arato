@@ -828,9 +828,11 @@ async function cargarGuias(){
           +'<div class="guia-cliente-nm">'+r.cliente+'</div>'
           +'<div class="guia-placa-nm">'+r.placa+' · '+r.licencia+'</div>'
           +'<div class="guia-total-nm">'+(r.total_cantidad||0)+' uds · '+(r.total_peso||0).toLocaleString()+' kg</div>'
-          +'<div class="guia-btns">'
+          +'<div class="guia-btns" style="grid-template-columns:1fr 1fr 1fr 1fr 1fr;">'
           +'<button class="gbtn" style="background:var(--bc);color:var(--b);" onclick="verGuiaGuardada('+r.id+')">🖼️ Ver</button>'
+          +'<button class="gbtn" style="background:#FEF3C7;color:#B45309;" onclick="editarGuiaGuardada('+r.id+')">✏️ Editar</button>'
           +'<button class="gbtn" style="background:#DCFCE7;color:#15803D;" onclick="wspGuiaGuardada('+r.id+')">📲 WSP</button>'
+          +'<button class="gbtn" style="background:#F5F3FF;color:#7C3AED;" onclick="unirGuias('+r.id+')">🔗 Unir</button>'
           +(r.fundo==='ARATO 1'?'<button class="gbtn" style="background:var(--bc);color:var(--b);" onclick="derivarA2('+r.id+')">📤 A2</button>':'<div></div>')
           +'</div>'
           +'<button onclick="eliminarGuia('+r.id+',\''+String(r.nro_parte||0).padStart(3,'0')+'\',\''+r.cliente+'\')" style="width:100%;margin-top:6px;padding:6px;background:var(--rc);color:var(--r);border:none;border-radius:7px;font-size:0.62rem;font-weight:700;cursor:pointer;font-family:inherit;">🗑️ Eliminar guía</button>'
@@ -864,6 +866,145 @@ async function verGuiaGuardada(id){
       +'</div>';
     ov.addEventListener('click',e=>{if(e.target===ov)ov.remove();});
     document.body.appendChild(ov);
+  }catch(e){toast('Error: '+e.message,'err');}
+}
+
+async function editarGuiaGuardada(id){
+  try{
+    const rows=await api('despachos?id=eq.'+id);
+    if(!rows||!rows.length)return;
+    const r=rows[0];
+    const lineas=Array.isArray(r.lineas)?r.lineas:[];
+    if(!lineas.length){toast('Esta guía no tiene líneas para editar','err');return;}
+
+    const ov=document.createElement('div');
+    ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;display:flex;align-items:flex-end;overflow-y:auto;';
+    const camposHTML=lineas.map((l,i)=>`
+<div style="background:var(--bg3);border-radius:10px;padding:11px;margin-bottom:8px;border-left:3px solid #B45309;">
+<div style="font-size:0.65rem;font-weight:800;color:var(--txt2);margin-bottom:6px;">Línea ${i+1} — ${l.fundo||''} · ${l.modulo} · ${l.variedad} · ${l.fcosecha}</div>
+<div class="g2">
+<div class="f"><label>Envase</label>
+<select id="eg-env-${i}">
+<option ${l.envase==='Jabas'?'selected':''}>Jabas</option>
+<option ${l.envase==='Bins'?'selected':''}>Bins</option>
+</select>
+</div>
+<div class="f"><label>Cantidad</label>
+<input type="number" id="eg-cant-${i}" value="${l.cantidad}" min="0" style="font-family:'JetBrains Mono',monospace;font-weight:800;">
+</div>
+</div>
+</div>`).join('');
+
+    ov.innerHTML='<div style="background:#fff;border-radius:16px 16px 0 0;padding:14px;width:100%;max-height:92vh;overflow-y:auto;">'
+      +'<div style="display:flex;justify-content:space-between;margin-bottom:10px;">'
+      +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;letter-spacing:1px;">✏️ Editar Guía — Parte N°'+String(r.nro_parte||0).padStart(3,'0')+'</div>'
+      +'<button onclick="this.closest(\'div[style]\').remove()" style="background:none;border:none;font-size:1.1rem;cursor:pointer;">✕</button>'
+      +'</div>'
+      +'<div style="font-size:0.65rem;color:var(--txt3);margin-bottom:10px;">Al guardar, el stock se ajusta automáticamente según la diferencia entre la cantidad anterior y la nueva.</div>'
+      +camposHTML
+      +'<button class="btn btn-dk" onclick="guardarEdicionGuia('+id+')">✅ Guardar cambios</button>'
+      +'</div>';
+    ov.addEventListener('click',e=>{if(e.target===ov)ov.remove();});
+    document.body.appendChild(ov);
+  }catch(e){toast('Error: '+e.message,'err');}
+}
+
+async function guardarEdicionGuia(id){
+  try{
+    const rows=await api('despachos?id=eq.'+id);
+    if(!rows||!rows.length)return;
+    const r=rows[0];
+    const lineasOriginales=Array.isArray(r.lineas)?r.lineas:[];
+    const lineasNuevas=lineasOriginales.map((l,i)=>{
+      const envEl=document.getElementById('eg-env-'+i);
+      const cantEl=document.getElementById('eg-cant-'+i);
+      return {...l,
+        envase:envEl?envEl.value:l.envase,
+        cantidad:cantEl?(parseInt(cantEl.value)||0):l.cantidad
+      };
+    });
+
+    // Ajustar stock por cada línea: revertir lo viejo, aplicar lo nuevo
+    for(let i=0;i<lineasOriginales.length;i++){
+      const lOld=lineasOriginales[i];
+      const lNew=lineasNuevas[i];
+      const cm=await api('cosecha_modulos?select=id,bins_vendidos,jabas_vendidas&modulo=eq.'+encodeURIComponent(lOld.modulo)+'&variedad=eq.'+encodeURIComponent(lOld.variedad)+'&fecha_cosecha=eq.'+lOld.fcosecha+'&fundo=eq.'+encodeURIComponent(lOld.fundo||fundoActual));
+      if(!cm||!cm.length)continue;
+      const reg=cm[0];
+      let binsVend=reg.bins_vendidos||0;
+      let jabasVend=reg.jabas_vendidas||0;
+      // Revertir cantidad vieja
+      if(lOld.envase==='Bins')binsVend=Math.max(0,binsVend-lOld.cantidad);
+      else jabasVend=Math.max(0,jabasVend-lOld.cantidad);
+      // Aplicar cantidad nueva
+      if(lNew.envase==='Bins')binsVend+=lNew.cantidad;
+      else jabasVend+=lNew.cantidad;
+      await api('cosecha_modulos?id=eq.'+reg.id,'PATCH',{bins_vendidos:binsVend,jabas_vendidas:jabasVend});
+    }
+
+    const totC=lineasNuevas.reduce((s,l)=>s+l.cantidad,0);
+    const totP=lineasNuevas.reduce((s,l)=>s+calcPeso(l),0);
+    await api('despachos?id=eq.'+id,'PATCH',{lineas:lineasNuevas,total_cantidad:totC,total_peso:totP});
+
+    toast('✅ Guía actualizada y stock ajustado','ok');
+    document.querySelectorAll('div[style*="position:fixed"]').forEach(el=>el.remove());
+    cargarGuias();
+    cargarStock();
+  }catch(e){toast('Error: '+e.message,'err');}
+}
+
+async function unirGuias(id){
+  try{
+    const rows=await api('despachos?id=eq.'+id);
+    if(!rows||!rows.length)return;
+    const r=rows[0];
+    const otroFundo=r.fundo==='ARATO 1'?'ARATO 2':'ARATO 1';
+    const candidatas=await api('despachos?select=id,nro_parte,cliente,placa,fecha_despacho,total_cantidad,total_peso&fundo=eq.'+encodeURIComponent(otroFundo)+'&fecha_despacho=eq.'+r.fecha_despacho+'&or=(estado.is.null,estado.neq.DERIVADO)&order=created_at.desc');
+    if(!candidatas||!candidatas.length){toast('No hay guías de '+otroFundo+' en esta fecha para unir','err');return;}
+
+    const ov=document.createElement('div');
+    ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;display:flex;align-items:flex-end;overflow-y:auto;';
+    const listaHTML=candidatas.map(c=>`
+<div style="background:var(--bg3);border-radius:10px;padding:11px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+<div>
+<div style="font-weight:800;font-size:0.78rem;">Parte #${String(c.nro_parte||0).padStart(3,'0')} — ${c.cliente||'(sin cliente)'}</div>
+<div style="font-size:0.65rem;color:var(--txt3);">${c.placa||'sin placa'} · ${(c.total_cantidad||0)} uds · ${(c.total_peso||0).toLocaleString()} kg</div>
+</div>
+<button onclick="confirmarUnion(${id},${c.id})" style="padding:7px 12px;background:#7C3AED;color:#fff;border:none;border-radius:7px;font-size:0.68rem;font-weight:700;cursor:pointer;">🔗 Unir</button>
+</div>`).join('');
+
+    ov.innerHTML='<div style="background:#fff;border-radius:16px 16px 0 0;padding:14px;width:100%;max-height:92vh;overflow-y:auto;">'
+      +'<div style="display:flex;justify-content:space-between;margin-bottom:10px;">'
+      +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;letter-spacing:1px;">🔗 Unir con guía de '+otroFundo+'</div>'
+      +'<button onclick="this.closest(\'div[style]\').remove()" style="background:none;border:none;font-size:1.1rem;cursor:pointer;">✕</button>'
+      +'</div>'
+      +'<div style="font-size:0.65rem;color:var(--txt3);margin-bottom:10px;">Selecciona la guía de '+otroFundo+' que viaja en el mismo camión. Ambas guías quedarán enlazadas con la misma placa y se mostrarán juntas.</div>'
+      +listaHTML
+      +'</div>';
+    ov.addEventListener('click',e=>{if(e.target===ov)ov.remove();});
+    document.body.appendChild(ov);
+  }catch(e){toast('Error: '+e.message,'err');}
+}
+
+async function confirmarUnion(idA,idB){
+  try{
+    const rows=await api('despachos?id=eq.'+idA);
+    if(!rows||!rows.length)return;
+    const guiaA=rows[0];
+    const rowsB=await api('despachos?id=eq.'+idB);
+    if(!rowsB||!rowsB.length)return;
+    const guiaB=rowsB[0];
+
+    // Usar la placa de la que ya tenga una (preferencia: guiaA, si no tiene usar la de guiaB)
+    const placaFinal=guiaA.placa||guiaB.placa||'';
+    if(!placaFinal){toast('Ninguna de las dos guías tiene placa registrada','err');return;}
+
+    await api('despachos?id=eq.'+idA,'PATCH',{placa_camion:placaFinal});
+    await api('despachos?id=eq.'+idB,'PATCH',{placa_camion:placaFinal});
+
+    toast('✅ Guías unidas — ahora se muestran juntas','ok');
+    document.querySelectorAll('div[style*="position:fixed"]').forEach(el=>el.remove());
+    cargarGuias();
   }catch(e){toast('Error: '+e.message,'err');}
 }
 
