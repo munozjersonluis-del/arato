@@ -862,7 +862,7 @@ async function cargarModulos(id){
   const mEl=document.getElementById('lm-'+id);
   if(!mEl)return;
   try{
-    const rows=await api('cosecha_modulos?select=modulo,bins_cosechados,bins_vendidos&fundo=eq.'+encodeURIComponent(fundo)+'&variedad=eq.'+encodeURIComponent(variedad)+'&order=modulo.asc');
+    const rows=await api('cosecha_modulos?select=modulo,bins_cosechados,bins_vendidos,jabas_vendidas&fundo=eq.'+encodeURIComponent(fundo)+'&variedad=eq.'+encodeURIComponent(variedad)+'&order=modulo.asc');
     const map={};
     rows.forEach(r=>{if(!map[r.modulo])map[r.modulo]=0;map[r.modulo]+=Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0)-((r.jabas_vendidas||0)/JABAS_BIN));});
     const mods=Object.keys(map).filter(m=>map[m]>0).sort();
@@ -879,7 +879,7 @@ async function cargarFechas(id){
   const fcEl=document.getElementById('lfc-'+id);
   if(!modulo||!fcEl)return;
   try{
-    const rows=await api('cosecha_modulos?select=fecha_cosecha,bins_cosechados,bins_vendidos&fundo=eq.'+encodeURIComponent(fundo)+'&variedad=eq.'+encodeURIComponent(variedad)+'&modulo=eq.'+encodeURIComponent(modulo)+'&order=fecha_cosecha.desc');
+    const rows=await api('cosecha_modulos?select=fecha_cosecha,bins_cosechados,bins_vendidos,jabas_vendidas&fundo=eq.'+encodeURIComponent(fundo)+'&variedad=eq.'+encodeURIComponent(variedad)+'&modulo=eq.'+encodeURIComponent(modulo)+'&order=fecha_cosecha.desc');
     fcEl.innerHTML='<option value="">— Seleccionar fecha —</option>'+
       rows.map(r=>{const d=Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0)-((r.jabas_vendidas||0)/JABAS_BIN));const dr=Math.floor(d);return`<option value="${r.fecha_cosecha}" data-disp="${dr}">${r.fecha_cosecha} — ${dr} bins</option>`;}).join('');
     if(rows.length===1){fcEl.value=rows[0].fecha_cosecha;onFechaSel(id);}
