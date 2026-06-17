@@ -880,9 +880,17 @@ async function cargarFechas(id){
   if(!modulo||!fcEl)return;
   try{
     const rows=await api('cosecha_modulos?select=fecha_cosecha,bins_cosechados,bins_vendidos,jabas_vendidas&fundo=eq.'+encodeURIComponent(fundo)+'&variedad=eq.'+encodeURIComponent(variedad)+'&modulo=eq.'+encodeURIComponent(modulo)+'&order=fecha_cosecha.desc');
+    // Agrupar por fecha (puede haber varios registros de la misma fecha)
+    const map={};
+    rows.forEach(r=>{
+      if(!map[r.fecha_cosecha])map[r.fecha_cosecha]=0;
+      map[r.fecha_cosecha]+=Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0)-((r.jabas_vendidas||0)/JABAS_BIN));
+    });
+    const fechasConStock=Object.keys(map).filter(f=>map[f]>0.001).sort().reverse();
     fcEl.innerHTML='<option value="">— Seleccionar fecha —</option>'+
-      rows.map(r=>{const d=Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0)-((r.jabas_vendidas||0)/JABAS_BIN));const dr=Math.floor(d);return`<option value="${r.fecha_cosecha}" data-disp="${dr}">${r.fecha_cosecha} — ${dr} bins</option>`;}).join('');
-    if(rows.length===1){fcEl.value=rows[0].fecha_cosecha;onFechaSel(id);}
+      fechasConStock.map(f=>{const dr=Math.floor(map[f]);return`<option value="${f}" data-disp="${dr}">${f} — ${dr} bins</option>`;}).join('');
+    if(fechasConStock.length===1){fcEl.value=fechasConStock[0];onFechaSel(id);}
+    else if(fechasConStock.length===0){toast('Sin stock disponible en ese módulo/variedad','err');}
   }catch(e){toast('Error cargando fechas','err');}
 }
 
@@ -1001,8 +1009,8 @@ async function confirmarDespacho(){
     try{
       const cm=await api('cosecha_modulos?select=bins_cosechados,bins_vendidos,jabas_vendidas&modulo=eq.'+encodeURIComponent(l.modulo)+'&variedad=eq.'+encodeURIComponent(l.variedad)+'&fecha_cosecha=eq.'+l.fcosecha+'&fundo=eq.'+encodeURIComponent(l.fundo||fundoActual));
       if(!cm||!cm.length){toast('⚠️ '+l.modulo+' ya no tiene stock registrado','err');return;}
-      const r=cm[0];
-      const dispBins=Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0)-((r.jabas_vendidas||0)/JABAS_BIN));
+      // Sumar TODOS los registros coincidentes (puede haber más de uno para la misma combinación)
+      const dispBins=cm.reduce((s,r)=>s+Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0)-((r.jabas_vendidas||0)/JABAS_BIN)),0);
       const requeridoBins=l.envase==='Bins'?l.cantidad:l.cantidad/JABAS_BIN;
       if(requeridoBins>dispBins+0.001){
         toast('⚠️ '+l.modulo+' ('+l.fcosecha+'): solo quedan '+Math.floor(dispBins*(l.envase==='Bins'?1:JABAS_BIN))+' '+l.envase+' disponibles. Otro usuario despachó antes.','err');
@@ -1041,7 +1049,7 @@ async function confirmarDespacho(){
     }
     // Descontar stock DESPUÉS de guardar la guía
     for(const l of _previewLineas){
-      const rows=await api('cosecha_modulos?select=id,bins_vendidos,jabas_vendidas&modulo=eq.'+encodeURIComponent(l.modulo)+'&variedad=eq.'+encodeURIComponent(l.variedad)+'&fecha_cosecha=eq.'+l.fcosecha+'&fundo=eq.'+encodeURIComponent(l.fundo||fundoActual));
+      const rows=await api('cosecha_modulos?select=id,bins_vendidos,jabas_vendidas&modulo=eq.'+encodeURIComponent(l.modulo)+'&variedad=eq.'+encodeURIComponent(l.variedad)+'&fecha_cosecha=eq.'+l.fcosecha+'&fundo=eq.'+encodeURIComponent(l.fundo||fundoActual)+'&order=id.asc');
       if(rows&&rows.length){
         const r=rows[0];
         const binsDesc=l.envase==='Bins'?l.cantidad:0;
@@ -1190,7 +1198,7 @@ async function guardarEdicionGuia(id){
     for(let i=0;i<lineasOriginales.length;i++){
       const lOld=lineasOriginales[i];
       const lNew=lineasNuevas[i];
-      const cm=await api('cosecha_modulos?select=id,bins_vendidos,jabas_vendidas&modulo=eq.'+encodeURIComponent(lOld.modulo)+'&variedad=eq.'+encodeURIComponent(lOld.variedad)+'&fecha_cosecha=eq.'+lOld.fcosecha+'&fundo=eq.'+encodeURIComponent(lOld.fundo||fundoActual));
+      const cm=await api('cosecha_modulos?select=id,bins_vendidos,jabas_vendidas&modulo=eq.'+encodeURIComponent(lOld.modulo)+'&variedad=eq.'+encodeURIComponent(lOld.variedad)+'&fecha_cosecha=eq.'+lOld.fcosecha+'&fundo=eq.'+encodeURIComponent(lOld.fundo||fundoActual)+'&order=id.asc');
       if(!cm||!cm.length)continue;
       const reg=cm[0];
       let binsVend=reg.bins_vendidos||0;
@@ -1300,8 +1308,9 @@ async function eliminarGuia(id,parte,cliente){
     if(rows&&rows.length){
       const dl=Array.isArray(rows[0].lineas)?rows[0].lineas:[];
       for(const l of dl){
-        const cm=await api('cosecha_modulos?select=id,bins_vendidos,jabas_vendidas&modulo=eq.'+encodeURIComponent(l.modulo)+'&variedad=eq.'+encodeURIComponent(l.variedad)+'&fecha_cosecha=eq.'+l.fcosecha+'&fundo=eq.'+encodeURIComponent(l.fundo||fundoActual));
+        const cm=await api('cosecha_modulos?select=id,bins_vendidos,jabas_vendidas&modulo=eq.'+encodeURIComponent(l.modulo)+'&variedad=eq.'+encodeURIComponent(l.variedad)+'&fecha_cosecha=eq.'+l.fcosecha+'&fundo=eq.'+encodeURIComponent(l.fundo||fundoActual)+'&order=id.asc');
         if(cm&&cm.length){
+          // Si hay varios registros coincidentes, devolver el stock al primero (más antiguo)
           const r=cm[0];
           const binsDevuelta=l.envase==='Bins'?l.cantidad:0;
           const jabasDevuelta=l.envase==='Jabas'?l.cantidad:0;
