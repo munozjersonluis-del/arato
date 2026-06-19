@@ -844,14 +844,16 @@ function refrescarSaldoLinea(id){
   const dispEl=document.getElementById('ldisp-'+id);
   if(!fcEl||!fcEl.value)return;
   const opt=fcEl.selectedOptions[0];
-  if(!opt||!opt.dataset.disp)return;
-  const dTotal=parseInt(opt.dataset.disp)||0;
+  if(!opt)return;
+  // dataset.dispTotal guarda el stock TOTAL de la BD (sin restar nada), guardado al cargar las fechas
+  const dTotal=opt.dataset.dispTotal?parseInt(opt.dataset.dispTotal):parseInt(opt.dataset.disp||0);
   const fundo=document.getElementById('lf-'+id)?.value||fundoActual;
   const variedad=document.getElementById('lv-'+id)?.value||'Fuerte';
   const modulo=document.getElementById('lm-'+id)?.value||'';
   const fcosecha=fcEl.value;
   const usado=yaUsadoEnOtrasLineas(id,modulo,variedad,fcosecha,fundo);
   const d=Math.max(0,Math.floor(dTotal-usado));
+  opt.dataset.disp=d; // actualizar el saldo vigente del option para que validarCant/onFechaSel lo usen correctamente
   if(dispEl){
     if(usado>0){
       dispEl.textContent=d>0?'✅ '+d+' bins disponibles (saldo, ya usaste '+Math.ceil(usado)+' en otra línea)':'⚠️ Sin saldo — ya usaste todo en otra línea';
@@ -883,20 +885,10 @@ function onFechaSel(id){
   const lcEl=document.getElementById('lc-'+id);
   if(!fcEl)return;
   const opt=fcEl.selectedOptions[0];
-  const dTotal=opt&&opt.dataset.disp?parseInt(opt.dataset.disp):0;
-  const l=lineas.find(x=>x.id===id);
-  const fundo=document.getElementById('lf-'+id)?.value||fundoActual;
-  const variedad=document.getElementById('lv-'+id)?.value||'Fuerte';
-  const modulo=document.getElementById('lm-'+id)?.value||'';
-  const fcosecha=fcEl.value;
-  const usado=yaUsadoEnOtrasLineas(id,modulo,variedad,fcosecha,fundo);
-  const d=Math.max(0,Math.floor(dTotal-usado));
+  // data-disp ya viene con el saldo correcto (cargarFechas ya restó lo usado en otras líneas)
+  const d=opt&&opt.dataset.disp?parseInt(opt.dataset.disp):0;
   if(dispEl){
-    if(usado>0){
-      dispEl.textContent=d>0?'✅ '+d+' bins disponibles (saldo, ya usaste '+Math.ceil(usado)+' en otra línea)':'⚠️ Sin saldo — ya usaste todo en otra línea';
-    }else{
-      dispEl.textContent=d>0?'✅ '+d+' bins disponibles':'⚠️ Sin stock';
-    }
+    dispEl.textContent=d>0?'✅ '+d+' bins disponibles':'⚠️ Sin stock';
     dispEl.style.color=d>0?'var(--g)':'var(--r)';
   }
   if(lcEl&&d>0){lcEl.value=d;updPeso(id);}
@@ -909,15 +901,10 @@ function validarCant(id){
   if(!fcEl||!lcEl)return;
   const opt=fcEl.selectedOptions[0];
   if(!opt||!opt.dataset.disp)return;
-  const dTotal=parseInt(opt.dataset.disp)||0;
-  const fundo=document.getElementById('lf-'+id)?.value||fundoActual;
-  const variedad=document.getElementById('lv-'+id)?.value||'Fuerte';
-  const modulo=document.getElementById('lm-'+id)?.value||'';
-  const fcosecha=fcEl.value;
-  const usado=yaUsadoEnOtrasLineas(id,modulo,variedad,fcosecha,fundo);
-  const dispBins=Math.max(0,dTotal-usado);
+  // data-disp ya viene con el saldo correcto (cargarFechas ya restó lo usado en otras líneas)
+  const dispBins=parseInt(opt.dataset.disp)||0;
   const envase=leEl?leEl.value:'Jabas';
-  const maxCant=envase==='Bins'?Math.floor(dispBins):Math.floor(dispBins*JABAS_BIN);
+  const maxCant=envase==='Bins'?dispBins:dispBins*JABAS_BIN;
   const cant=parseInt(lcEl.value)||0;
   if(maxCant>0&&cant>maxCant){lcEl.value=maxCant;toast('Máximo (saldo restante): '+maxCant+' '+envase,'err');}
   else if(maxCant<=0&&cant>0){lcEl.value=0;toast('Sin saldo — ya usaste todo el stock disponible en otra línea','err');}
@@ -958,7 +945,13 @@ async function cargarFechas(id){
     });
     const fechasConStock=Object.keys(map).filter(f=>map[f]>0.001).sort().reverse();
     fcEl.innerHTML='<option value="">— Seleccionar fecha —</option>'+
-      fechasConStock.map(f=>{const dr=Math.floor(map[f]);return`<option value="${f}" data-disp="${dr}">${f} — ${dr} bins</option>`;}).join('');
+      fechasConStock.map(f=>{
+        const dTotal=Math.floor(map[f]);
+        const usado=yaUsadoEnOtrasLineas(id,modulo,variedad,f,fundo);
+        const saldo=Math.max(0,Math.floor(map[f]-usado));
+        const label=usado>0?`${f} — ${saldo} bins (saldo, ya usaste ${Math.ceil(usado)})`:`${f} — ${saldo} bins`;
+        return`<option value="${f}" data-disp="${saldo}" data-disp-total="${dTotal}">${label}</option>`;
+      }).join('');
     if(fechasConStock.length===1){fcEl.value=fechasConStock[0];onFechaSel(id);}
     else if(fechasConStock.length===0){toast('Sin stock disponible en ese módulo/variedad','err');}
   }catch(e){toast('Error cargando fechas','err');}
