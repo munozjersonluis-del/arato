@@ -806,6 +806,7 @@ function renderLineas(){
     <option value="Exportable" ${(!l.calidad||l.calidad==='Exportable')?'selected':''}>🌟 Exportable</option>
     <option value="Industrial" ${l.calidad==='Industrial'?'selected':''}>🏭 Industrial</option>
     <option value="Descarte" ${l.calidad==='Descarte'?'selected':''}>🗑️ Descarte</option>
+    <option value="Remaduras" ${l.calidad==='Remaduras'?'selected':''}>🟡 Remaduras</option>
   </select>
 </div>
 <div class="linea-peso">
@@ -983,7 +984,7 @@ function buildGuiaHTML(camion,lineasValidas,otros){
     html+='<table class="gt"><thead><tr><th>F.Cosecha</th><th>Módulo</th><th>Variedad</th><th>Calidad</th><th>Envase</th><th>Cant.</th><th>Peso kg</th></tr></thead><tbody>';
     dl.forEach(l=>{
       const p=calcPeso(l);subC+=l.cantidad;subP+=p;
-      const calColor=l.calidad==='Descarte'?'#DC2626':l.calidad==='Industrial'?'#D97706':'#15803D';
+      const calColor=l.calidad==='Descarte'?'#DC2626':l.calidad==='Industrial'?'#D97706':l.calidad==='Remaduras'?'#7C3AED':'#15803D';
       html+='<tr><td>'+l.fcosecha+'</td><td style="font-weight:700;font-family:\'JetBrains Mono\',monospace;">'+l.modulo+'</td><td>'+l.variedad+'</td><td style="font-weight:700;color:'+calColor+';">'+(l.calidad||'Exportable')+'</td><td>'+l.envase+'</td><td style="font-weight:800;">'+l.cantidad+'</td><td style="font-weight:700;">'+p.toLocaleString()+'</td></tr>';
     });
     html+='<tr class="tot"><td colspan="5" style="text-align:right;">Subtotal '+d.fundo+'</td><td>'+subC+'</td><td>'+subP.toLocaleString()+'</td></tr>';
@@ -1239,6 +1240,7 @@ async function editarGuiaGuardada(id){
 <option value="Exportable" ${(!l.calidad||l.calidad==='Exportable')?'selected':''}>🌟 Exportable</option>
 <option value="Industrial" ${l.calidad==='Industrial'?'selected':''}>🏭 Industrial</option>
 <option value="Descarte" ${l.calidad==='Descarte'?'selected':''}>🗑️ Descarte</option>
+<option value="Remaduras" ${l.calidad==='Remaduras'?'selected':''}>🟡 Remaduras</option>
 </select>
 </div>
 </div>`).join('');
