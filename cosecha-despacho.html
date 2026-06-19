@@ -733,7 +733,7 @@ function wspStock(){
 
 // ── LINEAS DESPACHO ──
 function addLinea(){
-  lineas.push({id:linId++,fundo:fundoActual,modulo:'',variedad:'Fuerte',fcosecha:'',envase:'Jabas',cantidad:0});
+  lineas.push({id:linId++,fundo:fundoActual,modulo:'',variedad:'Fuerte',fcosecha:'',envase:'Jabas',cantidad:0,calidad:'Exportable'});
   renderLineas();
 }
 function delLinea(id){lineas=lineas.filter(l=>l.id!==id);if(!lineas.length)addLinea();else renderLineas();}
@@ -746,6 +746,7 @@ function captureLineas(){
     if(g('lfc-'+l.id))l.fcosecha=g('lfc-'+l.id).value;
     if(g('le-'+l.id))l.envase=g('le-'+l.id).value;
     if(g('lc-'+l.id))l.cantidad=parseInt(g('lc-'+l.id).value)||0;
+    if(g('lq-'+l.id))l.calidad=g('lq-'+l.id).value;
   });
 }
 
@@ -799,6 +800,13 @@ function renderLineas(){
       style="font-family:'JetBrains Mono',monospace;font-weight:800;font-size:1rem;"
       oninput="validarCant(${l.id});updPeso(${l.id})">
   </div>
+</div>
+<div class="f"><label>Calidad de fruta</label>
+  <select id="lq-${l.id}">
+    <option value="Exportable" ${(!l.calidad||l.calidad==='Exportable')?'selected':''}>🌟 Exportable</option>
+    <option value="Industrial" ${l.calidad==='Industrial'?'selected':''}>🏭 Industrial</option>
+    <option value="Descarte" ${l.calidad==='Descarte'?'selected':''}>🗑️ Descarte</option>
+  </select>
 </div>
 <div class="linea-peso">
   <span style="color:var(--txt3);">Peso estimado</span>
@@ -917,18 +925,19 @@ function buildGuiaHTML(camion,lineasValidas,otros){
     if(!dl.length)return;
     let subC=0,subP=0;
     html+='<div class="guia-section">'+d.fundo+'</div>';
-    html+='<table class="gt"><thead><tr><th>F.Cosecha</th><th>Módulo</th><th>Variedad</th><th>Envase</th><th>Cant.</th><th>Peso kg</th></tr></thead><tbody>';
+    html+='<table class="gt"><thead><tr><th>F.Cosecha</th><th>Módulo</th><th>Variedad</th><th>Calidad</th><th>Envase</th><th>Cant.</th><th>Peso kg</th></tr></thead><tbody>';
     dl.forEach(l=>{
       const p=calcPeso(l);subC+=l.cantidad;subP+=p;
-      html+='<tr><td>'+l.fcosecha+'</td><td style="font-weight:700;font-family:\'JetBrains Mono\',monospace;">'+l.modulo+'</td><td>'+l.variedad+'</td><td>'+l.envase+'</td><td style="font-weight:800;">'+l.cantidad+'</td><td style="font-weight:700;">'+p.toLocaleString()+'</td></tr>';
+      const calColor=l.calidad==='Descarte'?'#DC2626':l.calidad==='Industrial'?'#D97706':'#15803D';
+      html+='<tr><td>'+l.fcosecha+'</td><td style="font-weight:700;font-family:\'JetBrains Mono\',monospace;">'+l.modulo+'</td><td>'+l.variedad+'</td><td style="font-weight:700;color:'+calColor+';">'+(l.calidad||'Exportable')+'</td><td>'+l.envase+'</td><td style="font-weight:800;">'+l.cantidad+'</td><td style="font-weight:700;">'+p.toLocaleString()+'</td></tr>';
     });
-    html+='<tr class="tot"><td colspan="4" style="text-align:right;">Subtotal '+d.fundo+'</td><td>'+subC+'</td><td>'+subP.toLocaleString()+'</td></tr>';
+    html+='<tr class="tot"><td colspan="5" style="text-align:right;">Subtotal '+d.fundo+'</td><td>'+subC+'</td><td>'+subP.toLocaleString()+'</td></tr>';
     html+='</tbody></table>';
     grandC+=subC;grandP+=subP;
   });
 
   if(todos.length>1){
-    html+='<table class="gt" style="margin-top:4px;"><tbody><tr class="grand"><td colspan="4" style="text-align:right;">TOTAL CAMIÓN</td><td>'+grandC+'</td><td>'+grandP.toLocaleString()+'</td></tr></tbody></table>';
+    html+='<table class="gt" style="margin-top:4px;"><tbody><tr class="grand"><td colspan="5" style="text-align:right;">TOTAL CAMIÓN</td><td>'+grandC+'</td><td>'+grandP.toLocaleString()+'</td></tr></tbody></table>';
   }
   html+='</div>';
   const numFirmas=todos.length+1; // despachadores + receptor
@@ -990,7 +999,7 @@ function wspGuiaPreview(){
   txt+='──────────────────\n';
   let totC=0,totP=0;
   txt+='*'+fundoActual+'*\n';
-  _previewLineas.forEach(l=>{const p=calcPeso(l);totC+=l.cantidad;totP+=p;txt+='• '+l.modulo+' | '+l.variedad+' | '+l.fcosecha+'\n  '+l.cantidad+' '+l.envase+' — '+p.toLocaleString()+' kg\n';});
+  _previewLineas.forEach(l=>{const p=calcPeso(l);totC+=l.cantidad;totP+=p;txt+='• '+l.modulo+' | '+l.variedad+' | '+(l.calidad||'Exportable')+' | '+l.fcosecha+'\n  '+l.cantidad+' '+l.envase+' — '+p.toLocaleString()+' kg\n';});
   txt+='──────────────────\n';
   txt+='📦 TOTAL: '+totC+' uds | '+totP.toLocaleString()+' kg\n';
   txt+='✍️ '+_previewCamion.despachado_por;
@@ -1163,6 +1172,13 @@ async function editarGuiaGuardada(id){
 <input type="number" id="eg-cant-${i}" value="${l.cantidad}" min="0" style="font-family:'JetBrains Mono',monospace;font-weight:800;">
 </div>
 </div>
+<div class="f"><label>Calidad de fruta</label>
+<select id="eg-cal-${i}">
+<option value="Exportable" ${(!l.calidad||l.calidad==='Exportable')?'selected':''}>🌟 Exportable</option>
+<option value="Industrial" ${l.calidad==='Industrial'?'selected':''}>🏭 Industrial</option>
+<option value="Descarte" ${l.calidad==='Descarte'?'selected':''}>🗑️ Descarte</option>
+</select>
+</div>
 </div>`).join('');
 
     ov.innerHTML='<div style="background:#fff;border-radius:16px 16px 0 0;padding:14px;width:100%;max-height:92vh;overflow-y:auto;">'
@@ -1188,9 +1204,11 @@ async function guardarEdicionGuia(id){
     const lineasNuevas=lineasOriginales.map((l,i)=>{
       const envEl=document.getElementById('eg-env-'+i);
       const cantEl=document.getElementById('eg-cant-'+i);
+      const calEl=document.getElementById('eg-cal-'+i);
       return {...l,
         envase:envEl?envEl.value:l.envase,
-        cantidad:cantEl?(parseInt(cantEl.value)||0):l.cantidad
+        cantidad:cantEl?(parseInt(cantEl.value)||0):l.cantidad,
+        calidad:calEl?calEl.value:l.calidad
       };
     });
 
@@ -1292,7 +1310,7 @@ async function wspGuiaGuardada(id){
       const dl=Array.isArray(d.lineas)?d.lineas:[];
       if(!dl.length)return;
       txt+='*'+d.fundo+'*\n';
-      dl.forEach(l=>{const p=calcPeso(l);totC+=l.cantidad;totP+=p;txt+='• '+l.modulo+' | '+l.variedad+' | '+l.fcosecha+'\n  '+l.cantidad+' '+l.envase+' — '+p.toLocaleString()+' kg\n';});
+      dl.forEach(l=>{const p=calcPeso(l);totC+=l.cantidad;totP+=p;txt+='• '+l.modulo+' | '+l.variedad+' | '+(l.calidad||'Exportable')+' | '+l.fcosecha+'\n  '+l.cantidad+' '+l.envase+' — '+p.toLocaleString()+' kg\n';});
     });
     txt+='──────────────────\n📦 TOTAL: '+totC+' uds | '+totP.toLocaleString()+' kg\n✍️ '+r.despachado_por;
     window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
