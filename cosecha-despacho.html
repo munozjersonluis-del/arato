@@ -831,6 +831,50 @@ function updPeso(id){
   if(lc)l.cantidad=parseInt(lc.value)||0;
   const el=document.getElementById('lpeso-'+id);
   if(el)el.textContent=calcPeso(l).toLocaleString()+' kg';
+  // Refrescar el saldo mostrado en OTRAS líneas que compartan módulo/variedad/fecha
+  lineas.forEach(other=>{
+    if(other.id===id)return;
+    const fcOther=document.getElementById('lfc-'+other.id);
+    if(fcOther&&fcOther.value)refrescarSaldoLinea(other.id);
+  });
+}
+
+function refrescarSaldoLinea(id){
+  const fcEl=document.getElementById('lfc-'+id);
+  const dispEl=document.getElementById('ldisp-'+id);
+  if(!fcEl||!fcEl.value)return;
+  const opt=fcEl.selectedOptions[0];
+  if(!opt||!opt.dataset.disp)return;
+  const dTotal=parseInt(opt.dataset.disp)||0;
+  const fundo=document.getElementById('lf-'+id)?.value||fundoActual;
+  const variedad=document.getElementById('lv-'+id)?.value||'Fuerte';
+  const modulo=document.getElementById('lm-'+id)?.value||'';
+  const fcosecha=fcEl.value;
+  const usado=yaUsadoEnOtrasLineas(id,modulo,variedad,fcosecha,fundo);
+  const d=Math.max(0,Math.floor(dTotal-usado));
+  if(dispEl){
+    if(usado>0){
+      dispEl.textContent=d>0?'✅ '+d+' bins disponibles (saldo, ya usaste '+Math.ceil(usado)+' en otra línea)':'⚠️ Sin saldo — ya usaste todo en otra línea';
+    }else{
+      dispEl.textContent=d>0?'✅ '+d+' bins disponibles':'⚠️ Sin stock';
+    }
+    dispEl.style.color=d>0?'var(--g)':'var(--r)';
+  }
+}
+
+function yaUsadoEnOtrasLineas(id,modulo,variedad,fcosecha,fundo){
+  // Suma cuántos BINS equivalentes ya están asignados en otras líneas activas con la misma combinación
+  let usadoBins=0;
+  lineas.forEach(l=>{
+    if(l.id===id)return;
+    if(l.modulo!==modulo||l.variedad!==variedad||l.fcosecha!==fcosecha||(l.fundo||fundoActual)!==fundo)return;
+    const lcEl=document.getElementById('lc-'+l.id);
+    const leEl=document.getElementById('le-'+l.id);
+    const cant=lcEl?(parseInt(lcEl.value)||0):(l.cantidad||0);
+    const env=leEl?leEl.value:l.envase;
+    usadoBins+=env==='Bins'?cant:cant/JABAS_BIN;
+  });
+  return usadoBins;
 }
 
 function onFechaSel(id){
@@ -839,9 +883,20 @@ function onFechaSel(id){
   const lcEl=document.getElementById('lc-'+id);
   if(!fcEl)return;
   const opt=fcEl.selectedOptions[0];
-  const d=opt&&opt.dataset.disp?parseInt(opt.dataset.disp):0;
+  const dTotal=opt&&opt.dataset.disp?parseInt(opt.dataset.disp):0;
+  const l=lineas.find(x=>x.id===id);
+  const fundo=document.getElementById('lf-'+id)?.value||fundoActual;
+  const variedad=document.getElementById('lv-'+id)?.value||'Fuerte';
+  const modulo=document.getElementById('lm-'+id)?.value||'';
+  const fcosecha=fcEl.value;
+  const usado=yaUsadoEnOtrasLineas(id,modulo,variedad,fcosecha,fundo);
+  const d=Math.max(0,Math.floor(dTotal-usado));
   if(dispEl){
-    dispEl.textContent=d>0?'✅ '+d+' bins disponibles':'⚠️ Sin stock';
+    if(usado>0){
+      dispEl.textContent=d>0?'✅ '+d+' bins disponibles (saldo, ya usaste '+Math.ceil(usado)+' en otra línea)':'⚠️ Sin saldo — ya usaste todo en otra línea';
+    }else{
+      dispEl.textContent=d>0?'✅ '+d+' bins disponibles':'⚠️ Sin stock';
+    }
     dispEl.style.color=d>0?'var(--g)':'var(--r)';
   }
   if(lcEl&&d>0){lcEl.value=d;updPeso(id);}
@@ -854,11 +909,18 @@ function validarCant(id){
   if(!fcEl||!lcEl)return;
   const opt=fcEl.selectedOptions[0];
   if(!opt||!opt.dataset.disp)return;
-  const dispBins=parseInt(opt.dataset.disp)||0;
+  const dTotal=parseInt(opt.dataset.disp)||0;
+  const fundo=document.getElementById('lf-'+id)?.value||fundoActual;
+  const variedad=document.getElementById('lv-'+id)?.value||'Fuerte';
+  const modulo=document.getElementById('lm-'+id)?.value||'';
+  const fcosecha=fcEl.value;
+  const usado=yaUsadoEnOtrasLineas(id,modulo,variedad,fcosecha,fundo);
+  const dispBins=Math.max(0,dTotal-usado);
   const envase=leEl?leEl.value:'Jabas';
-  const maxCant=envase==='Bins'?dispBins:dispBins*JABAS_BIN;
+  const maxCant=envase==='Bins'?Math.floor(dispBins):Math.floor(dispBins*JABAS_BIN);
   const cant=parseInt(lcEl.value)||0;
-  if(maxCant>0&&cant>maxCant){lcEl.value=maxCant;toast('Máximo: '+maxCant+' '+envase,'err');}
+  if(maxCant>0&&cant>maxCant){lcEl.value=maxCant;toast('Máximo (saldo restante): '+maxCant+' '+envase,'err');}
+  else if(maxCant<=0&&cant>0){lcEl.value=0;toast('Sin saldo — ya usaste todo el stock disponible en otra línea','err');}
   updPeso(id);
 }
 
@@ -1014,15 +1076,22 @@ async function confirmarDespacho(){
 
   // ── Re-validar stock real antes de confirmar ──
   toast('Verificando stock disponible...','ok');
-  for(const l of _previewLineas){
+  // Agrupar líneas por combinación módulo+variedad+fecha+fundo para validar el TOTAL requerido, no cada línea por separado
+  const gruposValidacion={};
+  _previewLineas.forEach(l=>{
+    const key=l.modulo+'|'+l.variedad+'|'+l.fcosecha+'|'+(l.fundo||fundoActual);
+    if(!gruposValidacion[key])gruposValidacion[key]={l,requeridoBins:0};
+    gruposValidacion[key].requeridoBins+=(l.envase==='Bins'?l.cantidad:l.cantidad/JABAS_BIN);
+  });
+  for(const key in gruposValidacion){
+    const {l,requeridoBins}=gruposValidacion[key];
     try{
       const cm=await api('cosecha_modulos?select=bins_cosechados,bins_vendidos,jabas_vendidas&modulo=eq.'+encodeURIComponent(l.modulo)+'&variedad=eq.'+encodeURIComponent(l.variedad)+'&fecha_cosecha=eq.'+l.fcosecha+'&fundo=eq.'+encodeURIComponent(l.fundo||fundoActual));
       if(!cm||!cm.length){toast('⚠️ '+l.modulo+' ya no tiene stock registrado','err');return;}
       // Sumar TODOS los registros coincidentes (puede haber más de uno para la misma combinación)
       const dispBins=cm.reduce((s,r)=>s+Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0)-((r.jabas_vendidas||0)/JABAS_BIN)),0);
-      const requeridoBins=l.envase==='Bins'?l.cantidad:l.cantidad/JABAS_BIN;
       if(requeridoBins>dispBins+0.001){
-        toast('⚠️ '+l.modulo+' ('+l.fcosecha+'): solo quedan '+Math.floor(dispBins*(l.envase==='Bins'?1:JABAS_BIN))+' '+l.envase+' disponibles. Otro usuario despachó antes.','err');
+        toast('⚠️ '+l.modulo+' ('+l.fcosecha+'): solo quedan '+Math.floor(dispBins)+' bins disponibles en total entre tus líneas. Otro usuario despachó antes.','err');
         editarGuia();
         return;
       }
