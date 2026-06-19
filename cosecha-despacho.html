@@ -326,7 +326,7 @@ function goTab(name,btn){
   document.getElementById('tab-'+name).classList.add('on');
   if(btn)btn.classList.add('on');
 }
-function calcPeso(l){return l.envase==='Bins'?l.cantidad*KG_BIN:l.cantidad*20;}
+function calcPeso(l){return (l.envase==='Bins'||l.envase==='Granel')?l.cantidad*KG_BIN:l.cantidad*20;}
 
 // ── API ──
 async function api(path,method,body){
@@ -793,6 +793,7 @@ function renderLineas(){
     <select id="le-${l.id}" onchange="updPeso(${l.id})">
       <option ${l.envase==='Jabas'?'selected':''}>Jabas</option>
       <option ${l.envase==='Bins'?'selected':''}>Bins</option>
+      <option ${l.envase==='Granel'?'selected':''}>Granel</option>
     </select>
   </div>
   <div class="f"><label>Cantidad</label>
@@ -905,7 +906,7 @@ function validarCant(id){
   // data-disp ya viene con el saldo correcto (cargarFechas ya restó lo usado en otras líneas)
   const dispBins=parseInt(opt.dataset.disp)||0;
   const envase=leEl?leEl.value:'Jabas';
-  const maxCant=envase==='Bins'?dispBins:dispBins*JABAS_BIN;
+  const maxCant=(envase==='Bins'||envase==='Granel')?dispBins:dispBins*JABAS_BIN;
   const cant=parseInt(lcEl.value)||0;
   if(maxCant>0&&cant>maxCant){lcEl.value=maxCant;toast('Máximo (saldo restante): '+maxCant+' '+envase,'err');}
   else if(maxCant<=0&&cant>0){lcEl.value=0;toast('Sin saldo — ya usaste todo el stock disponible en otra línea','err');}
@@ -1075,7 +1076,7 @@ async function confirmarDespacho(){
   _previewLineas.forEach(l=>{
     const key=l.modulo+'|'+l.variedad+'|'+l.fcosecha+'|'+(l.fundo||fundoActual);
     if(!gruposValidacion[key])gruposValidacion[key]={l,requeridoBins:0};
-    gruposValidacion[key].requeridoBins+=(l.envase==='Bins'?l.cantidad:l.cantidad/JABAS_BIN);
+    gruposValidacion[key].requeridoBins+=(l.envase==='Bins'||l.envase==='Granel'?l.cantidad:l.cantidad/JABAS_BIN);
   });
   for(const key in gruposValidacion){
     const {l,requeridoBins}=gruposValidacion[key];
@@ -1124,7 +1125,7 @@ async function confirmarDespacho(){
       const rows=await api('cosecha_modulos?select=id,bins_vendidos,jabas_vendidas&modulo=eq.'+encodeURIComponent(l.modulo)+'&variedad=eq.'+encodeURIComponent(l.variedad)+'&fecha_cosecha=eq.'+l.fcosecha+'&fundo=eq.'+encodeURIComponent(l.fundo||fundoActual)+'&order=id.asc');
       if(rows&&rows.length){
         const r=rows[0];
-        const binsDesc=l.envase==='Bins'?l.cantidad:0;
+        const binsDesc=(l.envase==='Bins'||l.envase==='Granel')?l.cantidad:0;
         const jabasDesc=l.envase==='Jabas'?l.cantidad:0;
         await api('cosecha_modulos?id=eq.'+r.id,'PATCH',{
           bins_vendidos:(r.bins_vendidos||0)+binsDesc,
@@ -1229,6 +1230,7 @@ async function editarGuiaGuardada(id){
 <select id="eg-env-${i}">
 <option ${l.envase==='Jabas'?'selected':''}>Jabas</option>
 <option ${l.envase==='Bins'?'selected':''}>Bins</option>
+<option ${l.envase==='Granel'?'selected':''}>Granel</option>
 </select>
 </div>
 <div class="f"><label>Cantidad</label>
