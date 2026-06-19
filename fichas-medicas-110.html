@@ -1163,47 +1163,36 @@ function SignaturePad({ label, value, onChange }) {
 }
 
 function App(){
-  // ── CARGAR desde localStorage al iniciar ──
-  const [records,setRecords]=useState(()=>{
-    try{
-      const saved=localStorage.getItem("fichas_gr_records");
-      if(saved){const parsed=JSON.parse(saved);if(Array.isArray(parsed)&&parsed.length>0)return parsed;}
-    }catch(e){}
-    return [NR()];
-  });
+  const _SK="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdmN2ZmZ5eW5wbmlnaHp3eGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MjgyNDcsImV4cCI6MjA5MzMwNDI0N30.fFufNEdRvAzl6O6BqtTbx83O3Eg8Wd7gACNJDGQKga4";
+  const _SU="https://rqvcvffyynpnighzwxju.supabase.co";
+
+  // ── CARGAR desde Supabase al iniciar ──
+  const [records,setRecords]=useState([NR()]);
+  const [loadingInit,setLoadingInit]=useState(true);
+
+  React.useEffect(()=>{
+    fetch(_SU+"/rest/v1/fichas_medicas?select=*&order=created_at.asc",{
+      headers:{"apikey":_SK,"Authorization":"Bearer "+_SK}
+    }).then(r=>r.json()).then(rows=>{
+      if(rows&&rows.length){
+        const loaded=rows.map(r=>r.data).filter(Boolean);
+        if(loaded.length){setRecords(loaded);setActiveId(loaded[loaded.length-1].id);}
+      }
+      setLoadingInit(false);
+    }).catch(()=>setLoadingInit(false));
+  },[]);
   const [screen,setScreen]=useState("list");
-  const [activeId,setActiveId]=useState(()=>{
-    try{const saved=localStorage.getItem("fichas_gr_records");if(saved){const p=JSON.parse(saved);if(Array.isArray(p)&&p.length>0)return p[0].id;}}catch(e){}
-    return null;
-  });
+  const [activeId,setActiveId]=useState(null);
   const [formTab,setFormTab]=useState(0);
   const [toast,setToast]=useState(null);
   const [confirmDel,setConfirmDel]=useState(null);
   const [search,setSearch]=useState("");
   const [showSync,setShowSync]=useState(false);
-  const [syncTab,setSyncTab]=useState("gs"); // "gs" | "qr"
-  const [gsUrl,setGsUrl]=useState(()=>localStorage.getItem("fichas_gs_url")||"");
+  const [syncTab,setSyncTab]=useState("gs");
+  const [gsUrl,setGsUrl]=useState("");
   const [gsStatus,setGsStatus]=useState("");
 
-  // ── GUARDAR en localStorage cada vez que cambien los registros ──
-  React.useEffect(()=>{
-    try{ localStorage.setItem("fichas_gr_records", JSON.stringify(records)); }
-    catch(e){ console.warn("No se pudo guardar en localStorage",e); }
-    // Auto-sync a Google Sheets si hay URL configurada
-    const url = localStorage.getItem("fichas_gs_url");
-    if(url && url.startsWith("https://")) {
-      clearTimeout(window._syncTimer);
-      window._syncTimer = setTimeout(()=>{
-        fetch(url, {
-          method:"POST",
-          mode:"no-cors",
-          body: JSON.stringify({records})
-        }).catch(()=>{});
-      }, 3000); // Espera 3 segundos después del último cambio
-    }
-  },[records]);
-
-  const showToast=(msg,ok=true)=>{setToast({msg,ok});setTimeout(()=>setToast(null),2800);};
+  const showToast=(msg,ok=true)=>{setToast({msg,ok});setTimeout(()=>setToast(null),2800)};
 
   // ── EXPORTAR datos para pasar a otro dispositivo
   const exportarDatos = () => {
@@ -1252,15 +1241,54 @@ function App(){
   const upd=(field,val)=>setRecords(rs=>rs.map(r=>r.id===activeId?{...r,[field]:val}:r));
   const open=id=>{setActiveId(id);setFormTab(0);setScreen("form");};
   const addNew=()=>{const r=NR();setRecords(rs=>[...rs,r]);setActiveId(r.id);setFormTab(0);setScreen("form");};
-  const saveBack=()=>{
+  const SK="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdmN2ZmZ5eW5wbmlnaHp3eGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MjgyNDcsImV4cCI6MjA5MzMwNDI0N30.fFufNEdRvAzl6O6BqtTbx83O3Eg8Wd7gACNJDGQKga4";
+  const SU="https://rqvcvffyynpnighzwxju.supabase.co";
+  const sbHeaders={"apikey":SK,"Authorization":"Bearer "+SK,"Content-Type":"application/json","Prefer":"return=minimal"};
+
+  const syncSheets= async (updatedRecords)=>{
+    try{
+      await fetch('/api/sheets-fichas',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({records:updatedRecords})});
+    }catch(e){console.warn('Sheets sync error:',e);}
+  };
+
+  const saveBack= async ()=>{
     const name=GN(active);
     if(name==="Nuevo colaborador"){showToast("Ingresa al menos el nombre del colaborador",false);return;}
-    showToast('✓ Registro de "'+name+'" guardado');
+    showToast('Guardando...');
+    try{
+      // Verificar si ya existe en Supabase
+      const res=await fetch(SU+"/rest/v1/fichas_medicas?record_id=eq."+active.id,{headers:{...sbHeaders}});
+      const ex=await res.json();
+      const body=JSON.stringify({record_id:active.id,data:active});
+      if(ex&&ex.length){
+        await fetch(SU+"/rest/v1/fichas_medicas?record_id=eq."+active.id,{method:"PATCH",headers:sbHeaders,body});
+      }else{
+        await fetch(SU+"/rest/v1/fichas_medicas",{method:"POST",headers:sbHeaders,body});
+      }
+      showToast('✓ Registro de "'+name+'" guardado — sincronizando Sheets...');
+      // Sync a Google Sheets en segundo plano con todos los records actualizados
+      const allUpdated=records.map(r=>r.id===active.id?active:r);
+      syncSheets(allUpdated.filter(r=>GN(r)!=="Nuevo colaborador"));
+    }catch(e){
+      showToast('Error al guardar: '+e.message,false);
+      return;
+    }
     setScreen("list");
   };
-  const delRec=id=>{
-    setRecords(rs=>{const nx=rs.filter(r=>r.id!==id);if(activeId===id)setActiveId(nx.length?nx[nx.length-1].id:null);return nx.length?nx:[NR()];});
-    setConfirmDel(null);showToast("Registro eliminado");if(screen==="form")setScreen("list");
+
+  const delRec= async id=>{
+    try{
+      await fetch(SU+"/rest/v1/fichas_medicas?record_id=eq."+id,{method:"DELETE",headers:sbHeaders});
+    }catch(e){console.warn(e);}
+    const nx=records.filter(r=>r.id!==id);
+    const final=nx.length?nx:[NR()];
+    setRecords(final);
+    if(activeId===id)setActiveId(final.length?final[final.length-1].id:null);
+    setConfirmDel(null);
+    showToast("Registro eliminado — actualizando Sheets...");
+    if(screen==="form")setScreen("list");
+    // Sync a Google Sheets sin el registro eliminado
+    syncSheets(final.filter(r=>GN(r)!=="Nuevo colaborador"));
   };
   const print=type=>{
     const html=type==="ficha"?buildFichaHTML(active.ficha):buildDeclHTML(active.decl);
@@ -1277,7 +1305,7 @@ function App(){
   // ── GOOGLE SHEETS SYNC ──────────────────────────────────────────────
   const saveGsUrl = (url) => {
     setGsUrl(url);
-    localStorage.setItem("fichas_gs_url", url);
+    
   };
 
   // ── SINCRONIZAR RÁPIDO (subir + descargar en 1 botón) ──
@@ -1295,7 +1323,7 @@ function App(){
       const data = await res.json();
       if(data.records && Array.isArray(data.records) && data.records.length > 0) {
         setRecords(data.records);
-        localStorage.setItem("fichas_gr_records", JSON.stringify(data.records));
+        
         setGsStatus("ok:✓ Sincronizado — " + data.records.length + " registros");
         showToast("✓ Sincronizado con Google Sheets");
       } else {
@@ -1330,7 +1358,7 @@ function App(){
       if(data.records && Array.isArray(data.records)) {
         if(window.confirm("¿Cargar " + data.records.length + " registros desde Google Sheets?")) {
           setRecords(data.records);
-          localStorage.setItem("fichas_gr_records", JSON.stringify(data.records));
+          
           showToast("✓ " + data.records.length + " registros cargados");
           setGsStatus("ok:✓ Datos cargados correctamente");
         }
@@ -1473,17 +1501,15 @@ function App(){
             <div>
               <h1>Colaboradores Registrados</h1>
               <p style={{display:"flex",alignItems:"center",gap:6}}>
-                <span style={{display:"inline-block",width:8,height:8,borderRadius:"50%",background:"#16a34a"}}></span>
-                Guardado automáticamente · {records.length} colaborador{records.length!==1?"es":""} en historial
+                <span style={{display:"inline-block",width:8,height:8,borderRadius:"50%",background:loadingInit?"#f59e0b":"#16a34a"}}></span>
+                {loadingInit?"Cargando desde Supabase...":"Guardado en Supabase · "+records.filter(r=>GN(r)!=="Nuevo colaborador").length+" colaborador(es) registrados"}
               </p>
             </div>
             <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
-              <button className="btn btn-white" style={{fontSize:11,color:"#dc2626",borderColor:"#fecaca"}} onClick={()=>{if(window.confirm("¿Borrar TODO el historial? Esta acción no se puede deshacer.")){localStorage.removeItem("fichas_gr_records");setRecords([NR()]);showToast("Historial borrado");}}}>🗑 Borrar</button>
                 <button className="btn btn-white" style={{fontSize:11,color:"#0369a1",borderColor:"#bae6fd"}} onClick={()=>{
-                const url=localStorage.getItem("fichas_gs_url");
-                if(url&&url.startsWith("https://")){
+                if(gsUrl&&gsUrl.startsWith("https://")){
                   showToast("⏳ Sincronizando...");
-                  fetch(url,{method:"POST",mode:"no-cors",body:JSON.stringify({records})})
+                  fetch(gsUrl,{method:"POST",mode:"no-cors",body:JSON.stringify({records})})
                     .then(()=>showToast("✓ Sincronizado con Google Sheets"))
                     .catch(()=>showToast("✓ Datos enviados"));
                 } else {
