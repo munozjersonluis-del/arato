@@ -270,6 +270,7 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--txt);min-heig
           <div class="ctitle">Fruta a despachar</div>
           <div id="lineas-cont"></div>
           <button onclick="addLinea()" style="background:var(--gc);border:1.5px dashed var(--g);color:var(--g);border-radius:10px;padding:10px;width:100%;font-size:0.78rem;font-weight:700;cursor:pointer;margin-bottom:10px;font-family:inherit;">+ Agregar línea</button>
+          <div id="resumen-lineas" style="display:none;background:var(--bg3);border-radius:10px;padding:10px;margin-bottom:10px;border:1.5px solid var(--bdr);"></div>
           <button class="btn btn-dk" onclick="verGuia()">👁️ Vista previa guía</button>
         <button onclick="enviarFrutaA2()" style="width:100%;padding:10px;background:var(--bc);border:1.5px solid var(--b);color:var(--b);border-radius:10px;font-size:0.78rem;font-weight:700;cursor:pointer;margin-top:6px;font-family:inherit;">📤 Enviar fruta a Arato 2 (sin guía)</button>
         </div>
@@ -750,6 +751,63 @@ function captureLineas(){
   });
 }
 
+function actualizarResumen(){
+  captureLineas();
+  const el=document.getElementById('resumen-lineas');
+  if(!el)return;
+  const validas=lineas.filter(l=>l.modulo&&l.fcosecha&&l.cantidad>0);
+  if(!validas.length){el.style.display='none';return;}
+
+  // Agrupar por calidad
+  const porCalidad={};
+  // Agrupar por envase
+  const porEnvase={Bins:0,Jabas:0,Granel:0};
+  let totalKg=0;
+
+  validas.forEach(l=>{
+    const cal=l.calidad||'Exportable';
+    if(!porCalidad[cal])porCalidad[cal]={bins:0,jabas:0,granel:0,kg:0};
+    if(l.envase==='Bins'){porCalidad[cal].bins+=l.cantidad;porEnvase.Bins+=l.cantidad;}
+    else if(l.envase==='Granel'){porCalidad[cal].granel+=l.cantidad;porEnvase.Granel+=l.cantidad;}
+    else{porCalidad[cal].jabas+=l.cantidad;porEnvase.Jabas+=l.cantidad;}
+    const kg=calcPeso(l);
+    porCalidad[cal].kg+=kg;
+    totalKg+=kg;
+  });
+
+  const calIcons={Exportable:'🌟',Industrial:'🏭',Descarte:'🗑️',Remaduras:'🟡'};
+  const calColors={Exportable:'#15803D',Industrial:'#D97706',Descarte:'#DC2626',Remaduras:'#7C3AED'};
+
+  let html='<div style="font-size:0.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--txt3);margin-bottom:7px;">📋 Resumen del despacho</div>';
+
+  // Por calidad
+  Object.keys(porCalidad).forEach(cal=>{
+    const d=porCalidad[cal];
+    const partes=[];
+    if(d.bins>0)partes.push(d.bins+' Bins');
+    if(d.jabas>0)partes.push(d.jabas+' Jabas');
+    if(d.granel>0)partes.push(d.granel+' Granel');
+    html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--bdr);font-size:0.7rem;">'
+      +'<div><span style="font-weight:700;color:'+(calColors[cal]||'#15803D')+'">'+(calIcons[cal]||'•')+' '+cal+'</span>'
+      +'<span style="color:var(--txt3);font-size:0.6rem;margin-left:6px;">'+partes.join(' · ')+'</span></div>'
+      +'<span style="font-family:\'JetBrains Mono\',monospace;font-weight:800;font-size:0.75rem;">'+d.kg.toLocaleString()+' kg</span>'
+      +'</div>';
+  });
+
+  // Total general
+  html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;margin-top:4px;font-size:0.75rem;">'
+    +'<div style="font-weight:800;">TOTAL CAMIÓN</div>'
+    +'<div style="text-align:right;">'
+    +(porEnvase.Bins>0?'<span style="background:#DCFCE7;color:#15803D;padding:2px 6px;border-radius:5px;font-size:0.65rem;font-weight:700;margin-left:4px;">'+porEnvase.Bins+' Bins</span>':'')
+    +(porEnvase.Jabas>0?'<span style="background:#DBEAFE;color:#1D4ED8;padding:2px 6px;border-radius:5px;font-size:0.65rem;font-weight:700;margin-left:4px;">'+porEnvase.Jabas+' Jabas</span>':'')
+    +(porEnvase.Granel>0?'<span style="background:#FEF3C7;color:#D97706;padding:2px 6px;border-radius:5px;font-size:0.65rem;font-weight:700;margin-left:4px;">'+porEnvase.Granel+' Granel</span>':'')
+    +'<div style="font-family:\'JetBrains Mono\',monospace;font-weight:800;font-size:0.9rem;margin-top:3px;">'+totalKg.toLocaleString()+' kg</div>'
+    +'</div></div>';
+
+  el.innerHTML=html;
+  el.style.display='block';
+}
+
 function renderLineas(){
   const cont=document.getElementById('lineas-cont');
   cont.innerHTML=lineas.map((l,i)=>{
@@ -816,6 +874,7 @@ function renderLineas(){
 </div>
 </div>`;
   }).join('');
+  actualizarResumen();
 }
 
 function onFundoLinea(id){
@@ -833,6 +892,7 @@ function updPeso(id){
   if(lc)l.cantidad=parseInt(lc.value)||0;
   const el=document.getElementById('lpeso-'+id);
   if(el)el.textContent=calcPeso(l).toLocaleString()+' kg';
+  actualizarResumen();
   // Refrescar el saldo mostrado en OTRAS líneas que compartan módulo/variedad/fecha
   lineas.forEach(other=>{
     if(other.id===id)return;
@@ -911,6 +971,7 @@ function validarCant(id){
   if(maxCant>0&&cant>maxCant){lcEl.value=maxCant;toast('Máximo (saldo restante): '+maxCant+' '+envase,'err');}
   else if(maxCant<=0&&cant>0){lcEl.value=0;toast('Sin saldo — ya usaste todo el stock disponible en otra línea','err');}
   updPeso(id);
+  actualizarResumen();
 }
 
 async function cargarModulos(id){
