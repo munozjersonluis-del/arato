@@ -483,6 +483,21 @@ async function cargarReporte(){
     const rows=await api('cosecha_modulos?select=*&order=fundo.asc,fecha_cosecha.desc,modulo.asc');
     if(!rows||!rows.length){cont.innerHTML='<div class="empty">Sin datos de cosecha</div>';return;}
 
+    // Consolidar filas con mismo módulo+variedad+fecha (suman cosechado, vendido, jabas)
+    function consolidar(rowsFundo){
+      const map={};
+      rowsFundo.forEach(r=>{
+        const key=r.modulo+'|'+r.variedad+'|'+r.fecha_cosecha;
+        if(!map[key])map[key]={...r};
+        else{
+          map[key].bins_cosechados=(map[key].bins_cosechados||0)+(r.bins_cosechados||0);
+          map[key].bins_vendidos=(map[key].bins_vendidos||0)+(r.bins_vendidos||0);
+          map[key].jabas_vendidas=(map[key].jabas_vendidas||0)+(r.jabas_vendidas||0);
+        }
+      });
+      return Object.values(map);
+    }
+
     function filaTabla(r){
       const disp=Math.floor(Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0)-((r.jabas_vendidas||0)/JABAS_BIN)));
       const despEquiv=Math.round((r.bins_vendidos||0)+(r.jabas_vendidas||0)/JABAS_BIN);
@@ -498,38 +513,41 @@ async function cargarReporte(){
 
     function construirSeccion(titulo,color,rowsFundo){
       if(!rowsFundo.length)return '';
+      const cons=consolidar(rowsFundo);
       let totC=0,totDesp=0,totD=0;
-      rowsFundo.forEach(r=>{
+      cons.forEach(r=>{
         totC+=r.bins_cosechados||0;
         totDesp+=Math.round((r.bins_vendidos||0)+(r.jabas_vendidas||0)/JABAS_BIN);
-        totD+=Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0)-((r.jabas_vendidas||0)/JABAS_BIN));
+        totD+=Math.floor(Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0)-((r.jabas_vendidas||0)/JABAS_BIN)));
       });
-      const totDFloor=Math.floor(totD);
       return '<div class="rep-section">'
         +'<div class="rep-hdr" style="background:'+color+';">'
         +'<div class="rep-hdr-title">'+titulo+'</div>'
-        +'<div style="text-align:right;"><div class="rep-hdr-total">'+totDFloor+' bins</div><div style="font-size:0.55rem;opacity:0.8;">'+(totDFloor*KG_BIN).toLocaleString()+' kg disp.</div></div>'
+        +'<div style="text-align:right;"><div class="rep-hdr-total">'+totD+' bins</div><div style="font-size:0.55rem;opacity:0.8;">'+(totD*KG_BIN).toLocaleString()+' kg disp.</div></div>'
         +'</div>'
         +'<div class="rep-scroll"><table class="rep-table">'
         +'<thead><tr><th>Módulo</th><th>Variedad</th><th>F. Cosecha</th><th>Cosechado</th><th>Despachado</th><th>Disponible</th></tr></thead>'
-        +'<tbody>'+rowsFundo.map(filaTabla).join('')+'</tbody>'
-        +'<tfoot><tr><td colspan="3">TOTAL</td><td>'+totC+'</td><td>'+totDesp+'</td><td style="color:var(--g);">'+totDFloor+'</td></tr></tfoot>'
+        +'<tbody>'+cons.map(filaTabla).join('')+'</tbody>'
+        +'<tfoot><tr><td colspan="3">TOTAL</td><td>'+totC+'</td><td>'+totDesp+'</td><td style="color:var(--g);">'+totD+'</td></tr></tfoot>'
         +'</table></div></div>';
     }
 
     const rowsA1=rows.filter(r=>r.fundo==='ARATO 1');
     const rowsA2=rows.filter(r=>r.fundo==='ARATO 2');
+    const consA1=consolidar(rowsA1);
+    const consA2=consolidar(rowsA2);
+    const consAll=consolidar(rows);
 
     // Resumen general combinado arriba
     let gC=0,gDespEq=0,gD=0;
-    rows.forEach(r=>{
+    consAll.forEach(r=>{
       gC+=r.bins_cosechados||0;
       gDespEq+=Math.round((r.bins_vendidos||0)+(r.jabas_vendidas||0)/JABAS_BIN);
-      gD+=Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0)-((r.jabas_vendidas||0)/JABAS_BIN));
+      gD+=Math.floor(Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0)-((r.jabas_vendidas||0)/JABAS_BIN)));
     });
-    const gDFloor=Math.floor(gD);
-    const d1=Math.floor(rowsA1.reduce((s,r)=>s+Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0)-((r.jabas_vendidas||0)/JABAS_BIN)),0));
-    const d2=Math.floor(rowsA2.reduce((s,r)=>s+Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0)-((r.jabas_vendidas||0)/JABAS_BIN)),0));
+    const gDFloor=gD;
+    const d1=consA1.reduce((s,r)=>s+Math.floor(Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0)-((r.jabas_vendidas||0)/JABAS_BIN))),0);
+    const d2=consA2.reduce((s,r)=>s+Math.floor(Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0)-((r.jabas_vendidas||0)/JABAS_BIN))),0);
 
     let html='<div class="rep-section">'
       +'<div class="rep-hdr" style="background:var(--ink);">'
@@ -545,9 +563,9 @@ async function cargarReporte(){
       +'</div>'
       +'</div>';
 
-    html+=construirSeccionSimple(rowsA1,rowsA2);
-    html+=construirSeccion('🌿 ARATO 1','var(--b)',rowsA1);
-    html+=construirSeccion('🌿 ARATO 2','var(--y)',rowsA2);
+    html+=construirSeccionSimple(consA1,consA2);
+    html+=construirSeccion('🌿 ARATO 1','var(--b)',consA1);
+    html+=construirSeccion('🌿 ARATO 2','var(--y)',consA2);
 
     cont.innerHTML=html;
   }catch(e){cont.innerHTML='<div class="empty">Error: '+e.message+'</div>';}
