@@ -984,9 +984,9 @@ async function cargarModulos(id){
   try{
     const rows=await api('cosecha_modulos?select=modulo,bins_cosechados,bins_vendidos,jabas_vendidas&fundo=eq.'+encodeURIComponent(fundo)+'&variedad=eq.'+encodeURIComponent(variedad)+'&order=modulo.asc');
     const map={};
-    rows.forEach(r=>{if(!map[r.modulo])map[r.modulo]=0;map[r.modulo]+=Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0)-((r.jabas_vendidas||0)/JABAS_BIN));});
-    const mods=Object.keys(map).filter(m=>map[m]>0).sort();
-    mEl.innerHTML='<option value="">— Seleccionar —</option>'+mods.map(m=>`<option value="${m}" data-disp="${map[m]}">${m} — ${map[m]} bins</option>`).join('');
+    rows.forEach(r=>{if(!map[r.modulo])map[r.modulo]=0;map[r.modulo]+=Math.floor(Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0)-((r.jabas_vendidas||0)/JABAS_BIN)));});
+    const mods=Object.keys(map).filter(m=>map[m]>=1).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+    mEl.innerHTML='<option value="">— Seleccionar —</option>'+mods.map(m=>{const d=map[m];return`<option value="${m}" data-disp="${d}">${m} — ${d} bins</option>`;}).join('');
     if(mods.length===1){mEl.value=mods[0];cargarFechas(id);}
   }catch(e){toast('Error cargando módulos','err');}
 }
@@ -1004,9 +1004,9 @@ async function cargarFechas(id){
     const map={};
     rows.forEach(r=>{
       if(!map[r.fecha_cosecha])map[r.fecha_cosecha]=0;
-      map[r.fecha_cosecha]+=Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0)-((r.jabas_vendidas||0)/JABAS_BIN));
+      map[r.fecha_cosecha]+=Math.floor(Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0)-((r.jabas_vendidas||0)/JABAS_BIN)));
     });
-    const fechasConStock=Object.keys(map).filter(f=>map[f]>0.001).sort().reverse();
+    const fechasConStock=Object.keys(map).filter(f=>map[f]>=1).sort().reverse();
     fcEl.innerHTML='<option value="">— Seleccionar fecha —</option>'+
       fechasConStock.map(f=>{
         const dTotal=Math.floor(map[f]);
