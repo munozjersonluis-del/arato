@@ -876,7 +876,7 @@ function yaUsadoEnOtrasLineas(id,modulo,variedad,fcosecha,fundo){
     const leEl=document.getElementById('le-'+l.id);
     const cant=lcEl?(parseInt(lcEl.value)||0):(l.cantidad||0);
     const env=leEl?leEl.value:l.envase;
-    usadoBins+=env==='Bins'?cant:cant/JABAS_BIN;
+    usadoBins+=(env==='Bins'||env==='Granel')?cant:cant/JABAS_BIN;
   });
   return usadoBins;
 }
@@ -1288,10 +1288,10 @@ async function guardarEdicionGuia(id){
       let binsVend=reg.bins_vendidos||0;
       let jabasVend=reg.jabas_vendidas||0;
       // Revertir cantidad vieja
-      if(lOld.envase==='Bins')binsVend=Math.max(0,binsVend-lOld.cantidad);
+      if(lOld.envase==='Bins'||lOld.envase==='Granel')binsVend=Math.max(0,binsVend-lOld.cantidad);
       else jabasVend=Math.max(0,jabasVend-lOld.cantidad);
       // Aplicar cantidad nueva
-      if(lNew.envase==='Bins')binsVend+=lNew.cantidad;
+      if(lNew.envase==='Bins'||lNew.envase==='Granel')binsVend+=lNew.cantidad;
       else jabasVend+=lNew.cantidad;
       await api('cosecha_modulos?id=eq.'+reg.id,'PATCH',{bins_vendidos:binsVend,jabas_vendidas:jabasVend});
     }
@@ -1396,7 +1396,7 @@ async function eliminarGuia(id,parte,cliente){
         if(cm&&cm.length){
           // Si hay varios registros coincidentes, devolver el stock al primero (más antiguo)
           const r=cm[0];
-          const binsDevuelta=l.envase==='Bins'?l.cantidad:0;
+          const binsDevuelta=(l.envase==='Bins'||l.envase==='Granel')?l.cantidad:0;
           const jabasDevuelta=l.envase==='Jabas'?l.cantidad:0;
           await api('cosecha_modulos?id=eq.'+r.id,'PATCH',{
             bins_vendidos:Math.max(0,(r.bins_vendidos||0)-binsDevuelta),
