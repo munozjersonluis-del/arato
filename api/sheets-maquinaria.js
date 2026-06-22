@@ -61,18 +61,21 @@ module.exports = async (req, res) => {
     await sheets.spreadsheets.values.clear({spreadsheetId:SHEET_ID,range:'Base_Datos!A1:Z1000'});
 
     const bd=[
-      ['REGISTRO CONTINUO DE MAQUINARIA Y CAMPO','','','','','','','','','',''],
-      ['','','','','','','','','','',''],
-      ['','','','','','','','','','',''],
-      ['Maquina','Operador','Fecha','Hrs Ejec','Bins','Toneladas','TN/Hr Real','Meta','Estado','Modulos']
+      ['REGISTRO CONTINUO DE MAQUINARIA Y CAMPO — ARATO MISSION PRODUCE','','','','','','','','','','',''],
+      ['','','','','','','','','','','',''],
+      ['','','','','','','','','','','',''],
+      ['Tipo','Maquina','Operador','Fecha','Hrs Ejec','Bins','Toneladas','TN/Hr Real','Meta','Estado','Modulos']
     ];
     rows.forEach(r=>{
-      bd.push([r.maquina||'',r.operador||'',r.fecha||'',
+      bd.push([
+        r.tipo==='montacargas'?'🏗️ Montacargas':'🚜 Maquinaria',
+        r.maquina||'',r.operador||'',r.fecha||'',
         r1(r.hrs_ejec),r1(r.bins),r1(r.toneladas),r1(r.tn_hr),
-        r.meta||META,r.estado||'',r.modulos||'']);
+        r.meta||META,r.estado||'',r.modulos||''
+      ]);
     });
     // 30 filas vacías
-    for(let i=0;i<30;i++) bd.push(['','','','','','','',META,'','']);
+    for(let i=0;i<30;i++) bd.push(['','','','','','','',META,'','','']);
 
     await sheets.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:'Base_Datos!A1',valueInputOption:'RAW',resource:{values:bd}});
 
@@ -85,7 +88,7 @@ module.exports = async (req, res) => {
       cell(sid1,0,0,1,1,VERDE,BLANCO,true,13),rowH(sid1,0,32),
       rowH(sid1,1,6),rowH(sid1,2,6),
       cell(sid1,3,0,4,11,VERDE2,BLANCO,true,10),rowH(sid1,3,26),
-      [100,100,90,70,60,90,90,60,70,140].map((w,i)=>colW(sid1,i,w)),
+      [80,100,100,90,70,60,90,90,60,70,140].map((w,i)=>colW(sid1,i,w)),
     ].flat();
 
     rows.forEach((r,i)=>{
@@ -93,9 +96,11 @@ module.exports = async (req, res) => {
       const bg=i%2===0?GRIS:BLANCO;
       const tnhr=r.tn_hr||0;
       const isBien=tnhr>=META,isReg=tnhr>=META*0.7;
-      reqs1.push(cell(sid1,row,0,row+1,10,bg,NEGRO,false,9));
-      reqs1.push(cell(sid1,row,8,row+1,9,bg,isBien?VERDE_T:isReg?AMARILLO:ROJO,true,10));
-      reqs1.push(cell(sid1,row,10,row+1,11,isBien?VERDE_C:isReg?AMARILLO_C:ROJO_C,isBien?VERDE_T:isReg?AMARILLO:ROJO,true,9));
+      const isMonta=r.tipo==='montacargas';
+      // Tipo column — color diferente para montacargas
+      reqs1.push(cell(sid1,row,0,row+1,1,isMonta?rgb('FEF3C7'):rgb('DCFCE7'),isMonta?rgb('B45309'):VERDE_T,true,9));
+      reqs1.push(cell(sid1,row,1,row+1,11,bg,NEGRO,false,9));
+      reqs1.push(cell(sid1,row,9,row+1,10,bg,isBien?VERDE_T:isReg?AMARILLO:ROJO,true,10));
       reqs1.push(rowH(sid1,row,20));
     });
     // Filas vacías
@@ -112,38 +117,55 @@ module.exports = async (req, res) => {
     }
     await sheets.spreadsheets.values.clear({spreadsheetId:SHEET_ID,range:'Dashboard_Graficos!A1:Z1000'});
 
-    // Calcular resumen
+    // Calcular resumen — separar maquinaria de montacargas
     const maqMap={};
+    const montaMap={};
     rows.forEach(r=>{
-      if(!maqMap[r.maquina])maqMap[r.maquina]={hrs:0,bins:0,tons:0};
-      maqMap[r.maquina].hrs+=r.hrs_ejec||0;
-      maqMap[r.maquina].bins+=r.bins||0;
-      maqMap[r.maquina].tons+=r.toneladas||0;
+      const isMonta=r.tipo==='montacargas';
+      const map=isMonta?montaMap:maqMap;
+      if(!map[r.maquina])map[r.maquina]={hrs:0,bins:0,tons:0,tipo:r.tipo||'maquinaria'};
+      map[r.maquina].hrs+=r.hrs_ejec||0;
+      map[r.maquina].bins+=r.bins||0;
+      map[r.maquina].tons+=r.toneladas||0;
     });
     const maqNames=Object.keys(maqMap).sort();
+    const montaNames=Object.keys(montaMap).sort();
     const fechas=[...new Set(rows.map(r=>r.fecha))].sort();
 
     const dash=[
-      ['PANEL DE CONTROL GENERAL Y FILTRADO POR FECHAS','','','','',''],
+      ['PANEL DE CONTROL — ARATO MISSION PRODUCE','','','','',''],
       ['','','','','',''],['','','','','',''],
-      ['Resumen General por Maquina (Consolidado Histórico)','','','','',''],
-      ['Maquina','Total Horas','Total Bins','Total Toneladas','TN/Hr Promedio','Estado Global'],
+      ['🚜 RESUMEN MAQUINARIA (Consolidado Histórico)','','','','',''],
+      ['Máquina','Total Horas','Total Bins','Total Toneladas','TN/Hr Promedio','Estado Global'],
     ];
     maqNames.forEach(m=>{
       const d=maqMap[m];
       const prom=d.hrs>0?r1(d.tons/d.hrs):0;
-      const estado=prom>=META?'BIEN':prom>=META*0.7?'REGULAR':'MAL';
+      const estado=prom>=META?'✅ BIEN':prom>=META*0.7?'⚠️ REGULAR':'❌ MAL';
       dash.push([m,r1(d.hrs),r1(d.bins),r1(d.tons),prom,estado]);
     });
     dash.push(['','','','','','']);
+
+    // Montacargas section
+    if(montaNames.length){
+      dash.push(['🏗️ RESUMEN MONTACARGAS (Consolidado Histórico)','','','','','']);
+      dash.push(['Equipo','Total Horas','Total Bins','Total Toneladas','TN/Hr Promedio','']);
+      montaNames.forEach(m=>{
+        const d=montaMap[m];
+        const prom=d.hrs>0?r1(d.tons/d.hrs):0;
+        dash.push([m,r1(d.hrs),r1(d.bins),r1(d.tons),prom,'(meta pendiente)']);
+      });
+      dash.push(['','','','','','']);
+    }
+
     dash.push(['','','','','','']);
     const cronRow=dash.length;
-    dash.push(['Rendimiento Cronologico Diario (Evolucion por Fechas)','','','','','']);
-    dash.push(['Fecha',...maqNames.map(m=>'TN/Hr '+m),'Meta Minima']);
+    dash.push(['📅 RENDIMIENTO CRONOLÓGICO DIARIO — MAQUINARIA','','','','','']);
+    dash.push(['Fecha',...maqNames.map(m=>'TN/Hr '+m),'Meta Mínima']);
     fechas.forEach(f=>{
       const row=[f];
       maqNames.forEach(m=>{
-        const rec=rows.find(r=>r.fecha===f&&r.maquina===m);
+        const rec=rows.find(r=>r.fecha===f&&r.maquina===m&&(r.tipo!=='montacargas'));
         row.push(rec?r1(rec.tn_hr):0);
       });
       row.push(META);
