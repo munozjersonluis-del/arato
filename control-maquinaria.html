@@ -189,6 +189,7 @@ tr:nth-child(even) td{background:rgba(255,255,255,0.015)}
     <button class="tab-btn active" onclick="setTab('dashboard')">📊 Dashboard</button>
     <button class="tab-btn" onclick="setTab('registro')">➕ Registrar</button>
     <button class="tab-btn" onclick="setTab('tabla')">📋 Tabla</button>
+    <button class="tab-btn" onclick="setTab('reporte')">📄 Reporte</button>
     <span id="ultima-act" style="font-size:0.6rem;color:rgba(255,255,255,0.6);align-self:center;"></span>
     <button class="import-btn" onclick="cargarRegistros()" style="background:#2563EB;">☁️ Cargar</button>
     <button class="import-btn" onclick="syncMaquinaria()" style="background:#16A34A;">🔄 Sync</button>
@@ -226,8 +227,15 @@ tr:nth-child(even) td{background:rgba(255,255,255,0.015)}
   <div id="page-registro" class="page">
     <div class="sec-title">Nuevo Registro</div>
     <div class="form-card">
+      <div class="field">
+        <label>Tipo de Equipo *</label>
+        <select id="f-tipo" onchange="updatePreview()" style="font-weight:700">
+          <option value="maquinaria">🚜 Maquinaria (Meta: 3.5 TN/Hr)</option>
+          <option value="montacargas">🏗️ Montacargas</option>
+        </select>
+      </div>
       <div class="field" style="position:relative">
-        <label>Máquina *</label>
+        <label>Máquina / Equipo *</label>
         <input id="f-maquina" type="text" placeholder="Ej: INC-VAL-01" autocomplete="off"
           oninput="onMaquinaInput()" onblur="hideSug('sug-maquina')"/>
         <div id="sug-maquina" class="sug-list"></div>
@@ -241,8 +249,9 @@ tr:nth-child(even) td{background:rgba(255,255,255,0.015)}
         <input id="f-hrsejec" type="number" step="0.1" min="0" placeholder="Ej: 8.5" oninput="updatePreview()"/>
       </div>
       <div class="field">
-        <label>Bins cosechados *</label>
-        <input id="f-bins" type="number" step="0.1" placeholder="Ej: 28.5" oninput="updatePreview()"/>
+        <label>Toneladas cosechadas *</label>
+        <input id="f-bins" type="number" step="0.1" placeholder="Ej: 12.5" oninput="updatePreview()"/>
+        <div style="font-size:0.6rem;color:#64748B;margin-top:3px" id="f-bins-calc"></div>
       </div>
       <div class="field" style="position:relative">
         <label>Operador</label>
@@ -292,6 +301,25 @@ tr:nth-child(even) td{background:rgba(255,255,255,0.015)}
   </div>
 </div>
 
+  <!-- REPORTE -->
+  <div id="page-reporte" class="page">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button id="rpt-btn-global" onclick="setVistaRpt('global')" style="padding:7px 12px;background:#f97316;border:none;border-radius:8px;color:#fff;font-size:0.7rem;font-weight:700;cursor:pointer;font-family:inherit">🌍 Global/Día</button>
+        <button id="rpt-btn-semanal" onclick="setVistaRpt('semanal')" style="padding:7px 12px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#94A3B8;font-size:0.7rem;font-weight:700;cursor:pointer;font-family:inherit">📅 Semanal</button>
+        <button id="rpt-btn-maq" onclick="setVistaRpt('maq')" style="padding:7px 12px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#94A3B8;font-size:0.7rem;font-weight:700;cursor:pointer;font-family:inherit">🚜 Por Máquina</button>
+        <button id="rpt-btn-monta" onclick="setVistaRpt('monta')" style="padding:7px 12px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#94A3B8;font-size:0.7rem;font-weight:700;cursor:pointer;font-family:inherit">🏗️ Montacargas</button>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button onclick="dlReporte()" style="padding:7px 12px;background:#D97706;border:none;border-radius:8px;color:#fff;font-size:0.7rem;font-weight:700;cursor:pointer;font-family:inherit">📸 Imagen</button>
+        <button onclick="waReporte()" style="padding:7px 12px;background:#16A34A;border:none;border-radius:8px;color:#fff;font-size:0.7rem;font-weight:700;cursor:pointer;font-family:inherit">📲 WhatsApp</button>
+      </div>
+    </div>
+    <div id="rpt-maq-outer" style="overflow:auto;background:#F1F5F9;border-radius:12px;border:1px solid #CBD5E1;padding:6px">
+      <div id="rpt-maq-cont"></div>
+    </div>
+  </div>
+
 <!-- MODAL EDITAR -->
 <div id="modal-edit" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;align-items:flex-end;">
   <div style="background:#0f1729;border-radius:16px 16px 0 0;padding:20px;width:100%;max-height:85vh;overflow-y:auto;">
@@ -303,7 +331,7 @@ tr:nth-child(even) td{background:rgba(255,255,255,0.015)}
     <div class="field"><label>Máquina</label><input id="edit-maquina" type="text" style="text-transform:uppercase;"></div>
     <div class="field"><label>Fecha</label><input id="edit-fecha" type="text" placeholder="DD/MM/AAAA"></div>
     <div class="field"><label>Horas Efectivas</label><input id="edit-hrs" type="number" step="0.1" min="0"></div>
-    <div class="field"><label>Bins</label><input id="edit-bins" type="number" step="0.1" min="0"></div>
+    <div class="field"><label>Toneladas cosechadas</label><input id="edit-bins" type="number" step="0.1" min="0" placeholder="Ej: 12.5"></div>
     <div class="field"><label>Operador</label><input id="edit-operador" type="text"></div>
     <div class="field"><label>Módulos</label><input id="edit-modulos" type="text"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;">
@@ -313,9 +341,10 @@ tr:nth-child(even) td{background:rgba(255,255,255,0.015)}
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
-// ── Constants ──────────────────────────────────────────────
 const META = 3.5;
+const META_MONTA = 0; // Meta montacargas — definir cuando haya datos
 const KG_BIN = 435;
 const COLORS = ["#f97316","#38bdf8","#a78bfa","#34d399","#fb7185","#fbbf24"];
 let records = [];
@@ -499,7 +528,7 @@ function editarRegistro(id) {
   document.getElementById('edit-maquina').value = r.maquina||'';
   document.getElementById('edit-fecha').value = r.fecha||'';
   document.getElementById('edit-hrs').value = r.hrsEjec||'';
-  document.getElementById('edit-bins').value = r.bins||'';
+  document.getElementById('edit-bins').value = r.toneladas||''; // mostrar toneladas, no bins
   document.getElementById('edit-operador').value = r.operador||'';
   document.getElementById('edit-modulos').value = r.modulos||'';
   const modal = document.getElementById('modal-edit');
@@ -515,12 +544,12 @@ async function guardarEdit() {
   const maquina = document.getElementById('edit-maquina').value.trim().toUpperCase();
   const fecha = document.getElementById('edit-fecha').value.trim();
   const hrsEjec = parseFloat(document.getElementById('edit-hrs').value)||0;
-  const bins = parseFloat(document.getElementById('edit-bins').value)||0;
+  const tons = parseFloat(document.getElementById('edit-bins').value)||0; // campo es toneladas
+  const bins = +(tons*1000/KG_BIN).toFixed(1); // bins calculados
   const operador = document.getElementById('edit-operador').value.trim();
   const modulos = document.getElementById('edit-modulos').value.trim();
-  if(!maquina||!fecha||!hrsEjec||!bins){showToast('Completa los campos','err');return;}
-  const tons = +(bins*KG_BIN/1000).toFixed(1);
-  const tnhr = hrsEjec>0 ? +(tons/hrsEjec).toFixed(1) : 0;
+  if(!maquina||!fecha||!hrsEjec||!tons){showToast('Completa los campos','err');return;}
+  const tnhr = hrsEjec>0 ? +(tons/hrsEjec).toFixed(2) : 0;
   const estado = calcEstado(tnhr);
   try {
     await supaFetch('maquinaria_registros?id=eq.'+id,'PATCH',{
@@ -581,13 +610,329 @@ function showToast(msg, type="ok") {
 }
 function setTab(tab) {
   document.querySelectorAll(".tab-btn").forEach((b,i) => {
-    const names = ["dashboard","registro","tabla"];
+    const names = ["dashboard","registro","tabla","reporte"];
     b.classList.toggle("active", names[i] === tab);
   });
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   document.getElementById("page-"+tab).classList.add("active");
   if (tab === "dashboard") renderDashboard();
   if (tab === "tabla") renderTabla();
+  if (tab === "reporte") buildReporteMaq();
+}
+
+// ── REPORTE TN/Hr POR DÍA ────────────────────────────────────
+var _vistaRpt = 'global';
+
+function setVistaRpt(v){
+  _vistaRpt = v;
+  ['global','semanal','maq','monta'].forEach(function(id){
+    const btn=document.getElementById('rpt-btn-'+id);
+    if(!btn)return;
+    const act=id===v;
+    btn.style.background=act?'#f97316':'#1e293b';
+    btn.style.color=act?'#fff':'#94A3B8';
+    btn.style.border=act?'none':'1px solid #334155';
+  });
+  buildReporteMaq();
+}
+
+function buildReporteMaq(){
+  if(!records.length){document.getElementById('rpt-maq-cont').innerHTML='<div style="color:#475569;text-align:center;padding:40px;font-size:0.85rem">Sin datos — importa o registra manualmente</div>';return;}
+  if(_vistaRpt==='global') buildReporteGlobal();
+  else if(_vistaRpt==='semanal') buildReporteSemanal();
+  else if(_vistaRpt==='monta') buildReporteMonta();
+  else buildReportePorMaq();
+}
+
+const _rptColors={ok:'#16A34A',bgOk:'#DCFCE7',reg:'#D97706',bgReg:'#FEF3C7',mal:'#DC2626',bgMal:'#FEE2E2'};
+function _rptCol(tnhr){return tnhr>=META?_rptColors.ok:tnhr>=META*0.7?_rptColors.reg:_rptColors.mal;}
+function _rptBg(tnhr){return tnhr>=META?_rptColors.bgOk:tnhr>=META*0.7?_rptColors.bgReg:_rptColors.bgMal;}
+function _rptEstado(tnhr){return tnhr>=META?'✅ BIEN':tnhr>=META*0.7?'⚠️ REGULAR':'❌ BAJO META';}
+function _rptRowBg(i){return i%2===0?'#F8FAFC':'#FFFFFF';}
+function _sortFechas(arr){
+  return [...new Set(arr.map(r=>r.fecha))].sort((a,b)=>{
+    const [da,ma,ya]=a.split('/').map(Number);
+    const [db,mb,yb]=b.split('/').map(Number);
+    return new Date(ya,ma-1,da)-new Date(yb,mb-1,db);
+  });
+}
+function _rptHeader(titulo,subtitulo,ahora){
+  return `<div style="background:linear-gradient(135deg,#0B1437,#1A3A8F);padding:14px 16px;display:flex;justify-content:space-between;align-items:center">
+    <div><div style="font-size:14px;font-weight:700;color:#F5C800;text-transform:uppercase;letter-spacing:2px;font-family:Arial Black,Arial">CONTROL DE MAQUINARIA</div>
+    <div style="font-size:8.5px;color:rgba(255,255,255,.8);letter-spacing:1px;margin-top:3px">ARATO · MISSION PRODUCE · PERÚ</div>
+    <div style="font-size:8.5px;color:#F5C800;margin-top:2px">${subtitulo}</div></div>
+    <div style="text-align:right"><div style="font-size:11px;font-weight:700;color:#fff">${titulo}</div>
+    <div style="font-size:8px;color:rgba(255,255,255,.7);margin-top:2px">${ahora}</div>
+    <div style="background:#F5C800;color:#0B1437;font-size:9px;font-weight:700;padding:2px 8px;border-radius:4px;margin-top:4px;display:inline-block">⚡ Meta: ${META} TN/Hr</div></div>
+  </div>`;
+}
+
+// Vista 1: GLOBAL — un TN/Hr combinado por día
+function buildReporteGlobal(){
+  const ahora=new Date().toLocaleString('es-PE');
+  const fechas=_sortFechas(records);
+  let h=`<table style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px;min-width:340px">`;
+  h+=`<tr><td colspan="6" style="padding:0;border:none">${_rptHeader('ARATO · MISSION PRODUCE','🌍 RENDIMIENTO GLOBAL DIARIO — TODAS LAS MÁQUINAS',ahora)}</td></tr>`;
+  h+=`<tr style="background:#1A3A8F">
+    <th style="padding:9px 12px;color:#F5C800;font-size:9px;border:1px solid #D0DCF4;text-align:left">📅 Fecha</th>
+    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #D0DCF4;text-align:center">🚜 Máqs</th>
+    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #D0DCF4;text-align:center">⏱ Horas</th>
+    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #D0DCF4;text-align:center">📦 Bins</th>
+    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #D0DCF4;text-align:center">⚖️ TN</th>
+    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #D0DCF4;text-align:center;background:#DCFCE7">⚡ TN/Hr GLOBAL</th>
+  </tr>`;
+  let totH=0,totB=0,totT=0;
+  fechas.forEach((f,fi)=>{
+    const rD=records.filter(r=>r.fecha===f);
+    const hD=rD.reduce((s,r)=>s+(r.hrsEjec||0),0);
+    const bD=rD.reduce((s,r)=>s+(r.bins||0),0);
+    const tD=rD.reduce((s,r)=>s+(r.toneladas||0),0);
+    const thD=hD>0?tD/hD:0;
+    const mD=[...new Set(rD.map(r=>r.maquina))].length;
+    const rowBg=fi%2===0?'#F8FAFC':'#FFFFFF';
+    h+=`<tr style="background:${rowBg}">
+      <td style="padding:9px 12px;color:#1E293B;font-weight:700;border:1px solid #D0DCF4">${f}</td>
+      <td style="padding:9px;text-align:center;border:1px solid #D0DCF4;color:#64748B;font-size:10px">${mD}</td>
+      <td style="padding:9px;text-align:center;border:1px solid #D0DCF4;color:#64748B">${hD.toFixed(1)}</td>
+      <td style="padding:9px;text-align:center;border:1px solid #D0DCF4;color:#64748B">${bD.toFixed(1)}</td>
+      <td style="padding:9px;text-align:center;border:1px solid #D0DCF4;color:#1E293B;font-weight:700">${tD.toFixed(1)}</td>
+      <td style="padding:9px;text-align:center;border:1px solid #D0DCF4;background:${_rptBg(thD)}">
+        <div style="font-size:22px;font-weight:800;color:${_rptCol(thD)};font-family:monospace;line-height:1">${thD.toFixed(2)}</div>
+        <div style="font-size:8px;color:${_rptCol(thD)};opacity:.8">${_rptEstado(thD)}</div>
+      </td>
+    </tr>`;
+    totH+=hD;totB+=bD;totT+=tD;
+  });
+  const totTh=totH>0?totT/totH:0;
+  h+=`<tr style="background:#1A3A8F">
+    <td style="padding:10px 12px;color:#F5C800;font-size:11px;font-weight:700;border:1px solid #C0D0F4">PROMEDIO TOTAL</td>
+    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#F5C800">${[...new Set(records.map(r=>r.maquina))].length}</td>
+    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:700">${totH.toFixed(1)}h</td>
+    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:700">${totB.toFixed(1)}</td>
+    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:700">${totT.toFixed(1)}t</td>
+    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;background:${_rptBg(totTh)}">
+      <div style="font-size:26px;font-weight:800;color:${_rptCol(totTh)};font-family:monospace;line-height:1">${totTh.toFixed(2)}</div>
+      <div style="font-size:9px;color:${_rptCol(totTh)};opacity:.8">${_rptEstado(totTh)}</div>
+    </td>
+  </tr>`;
+  h+=`<tr><td colspan="6" style="background:#EEF2FF;color:#64748B;font-size:8px;padding:7px 12px;text-align:center;border:none">ARATO · MISSION PRODUCE · Meta: ${META} TN/Hr · ${ahora}</td></tr></table>`;
+  document.getElementById('rpt-maq-cont').innerHTML=h;
+}
+
+// Vista 2: POR MÁQUINA — columna por máquina + global
+function buildReportePorMaq(){
+  const ahora=new Date().toLocaleString('es-PE');
+  const fechas=_sortFechas(records);
+  const maquinas=[...new Set(records.map(r=>r.maquina))].sort();
+  let h=`<table style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px;min-width:${maquinas.length*110+200}px">`;
+  h+=`<tr><td colspan="${maquinas.length+2}" style="padding:0;border:none">${_rptHeader('TODAS LAS MÁQUINAS','🚜 TN/Hr POR MÁQUINA Y DÍA',ahora)}</td></tr>`;
+  h+=`<tr style="background:#1A3A8F"><th style="padding:8px 10px;color:#F5C800;font-size:9px;border:1px solid #D0DCF4;text-align:left">📅 Fecha</th>`;
+  maquinas.forEach(m=>{h+=`<th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #D0DCF4;text-align:center;white-space:nowrap">${m}</th>`;});
+  h+=`<th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #D0DCF4;text-align:center;background:#DCFCE7">🌍 GLOBAL</th></tr>`;
+  fechas.forEach((f,fi)=>{
+    const bg=fi%2===0?'#F8FAFC':'#FFFFFF';
+    let hG=0,tG=0;
+    let row=`<tr style="background:${bg}"><td style="padding:8px 10px;color:#1E293B;font-weight:700;border:1px solid #D0DCF4;white-space:nowrap">${f}</td>`;
+    maquinas.forEach(m=>{
+      const r=records.find(x=>x.fecha===f&&x.maquina===m);
+      if(r){hG+=r.hrsEjec||0;tG+=r.toneladas||0;
+        row+=`<td style="padding:8px;text-align:center;border:1px solid #D0DCF4;background:${_rptBg(r.tnhr)}">
+          <div style="font-size:15px;font-weight:800;color:${_rptCol(r.tnhr)};font-family:monospace">${r.tnhr.toFixed(1)}</div>
+          <div style="font-size:8px;color:#6B7280">${r.hrsEjec.toFixed(1)}h·${r.toneladas.toFixed(1)}t</div>
+        </td>`;
+      }else{row+=`<td style="padding:8px;text-align:center;border:1px solid #D0DCF4;color:#334155;font-size:10px">—</td>`;}
+    });
+    const thG=hG>0?tG/hG:0;
+    row+=`<td style="padding:8px;text-align:center;border:1px solid #D0DCF4;background:${_rptBg(thG)}">
+      <div style="font-size:17px;font-weight:800;color:${_rptCol(thG)};font-family:monospace">${thG.toFixed(2)}</div>
+      <div style="font-size:8px;color:${_rptCol(thG)};opacity:.8">${tG.toFixed(1)}t</div>
+    </td>`;
+    h+=row+'</tr>';
+  });
+  // Promedios por máquina
+  let totH2=0,totT2=0;
+  h+=`<tr style="background:#1A3A8F"><td style="padding:8px 10px;color:#F5C800;font-size:10px;font-weight:700;border:1px solid #C0D0F4">PROMEDIO</td>`;
+  maquinas.forEach(m=>{
+    const rM=records.filter(r=>r.maquina===m);
+    const hM=rM.reduce((s,r)=>s+(r.hrsEjec||0),0);
+    const tM=rM.reduce((s,r)=>s+(r.toneladas||0),0);
+    const pM=hM>0?tM/hM:0;
+    totH2+=hM;totT2+=tM;
+    h+=`<td style="padding:8px;text-align:center;border:1px solid #C0D0F4;font-size:14px;font-weight:800;color:${_rptCol(pM)};font-family:monospace">${pM.toFixed(1)}<div style="font-size:8px;color:#64748B">${tM.toFixed(1)}t</div></td>`;
+  });
+  const totP=totH2>0?totT2/totH2:0;
+  h+=`<td style="padding:8px;text-align:center;border:1px solid #C0D0F4;font-size:18px;font-weight:800;color:${_rptCol(totP)};font-family:monospace">${totP.toFixed(2)}</td></tr>`;
+  h+=`<tr><td colspan="${maquinas.length+2}" style="background:#EEF2FF;color:#64748B;font-size:8px;padding:7px 12px;text-align:center;border:none">ARATO · MISSION PRODUCE · Meta: ${META} TN/Hr · ${ahora}</td></tr></table>`;
+  document.getElementById('rpt-maq-cont').innerHTML=h;
+}
+
+// ── Helper: get week key (lunes de la semana) ──
+function _weekKey(fecha){
+  const [d,m,y]=fecha.split('/').map(Number);
+  const dt=new Date(y,m-1,d);
+  const day=dt.getDay();
+  const diff=day===0?-6:1-day; // lunes
+  const lunes=new Date(dt);lunes.setDate(dt.getDate()+diff);
+  return lunes.toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+function _weekLabel(lunesStr){
+  const [d,m,y]=lunesStr.split('/').map(Number);
+  const lunes=new Date(y,m-1,d);
+  const domingo=new Date(lunes);domingo.setDate(lunes.getDate()+6);
+  return `${d}/${m} – ${domingo.getDate()}/${domingo.getMonth()+1}/${y}`;
+}
+
+// Vista 3: SEMANAL — TN/Hr global agrupado por semana (solo maquinaria)
+function buildReporteSemanal(){
+  const ahora=new Date().toLocaleString('es-PE');
+  const recsMaq=records.filter(r=>!r.tipo||r.tipo==='maquinaria');
+  if(!recsMaq.length){document.getElementById('rpt-maq-cont').innerHTML='<div style="color:#475569;text-align:center;padding:40px;font-size:0.85rem">Sin registros de maquinaria</div>';return;}
+
+  // Agrupar por semana
+  const semMap={};
+  recsMaq.forEach(r=>{
+    const wk=_weekKey(r.fecha);
+    if(!semMap[wk])semMap[wk]={lunes:wk,dias:new Set(),maquinas:new Set(),hrs:0,bins:0,tons:0};
+    semMap[wk].dias.add(r.fecha);
+    semMap[wk].maquinas.add(r.maquina);
+    semMap[wk].hrs+=r.hrsEjec||0;
+    semMap[wk].bins+=r.bins||0;
+    semMap[wk].tons+=r.toneladas||0;
+  });
+
+  const semanas=Object.keys(semMap).sort((a,b)=>{
+    const [da,ma,ya]=a.split('/').map(Number);
+    const [db,mb,yb]=b.split('/').map(Number);
+    return new Date(ya,ma-1,da)-new Date(yb,mb-1,db);
+  });
+
+  let h=`<table style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px;min-width:360px">`;
+  h+=`<tr><td colspan="6" style="padding:0;border:none">${_rptHeader('RESUMEN SEMANAL — MAQUINARIA','📅 TN/Hr ACUMULADO POR SEMANA',ahora)}</td></tr>`;
+  h+=`<tr style="background:#1A3A8F">
+    <th style="padding:9px 10px;color:#F5C800;font-size:9px;border:1px solid #D0DCF4;text-align:left">📅 Semana</th>
+    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #D0DCF4;text-align:center">📆 Días</th>
+    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #D0DCF4;text-align:center">🚜 Máqs</th>
+    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #D0DCF4;text-align:center">⏱ Horas</th>
+    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #D0DCF4;text-align:center">⚖️ TN</th>
+    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #D0DCF4;text-align:center;background:#DCFCE7">⚡ TN/Hr</th>
+  </tr>`;
+
+  let totH=0,totT=0;
+  semanas.forEach((wk,i)=>{
+    const s=semMap[wk];
+    const th=s.hrs>0?s.tons/s.hrs:0;
+    const bg=i%2===0?'#F8FAFC':'#FFFFFF';
+    h+=`<tr style="background:${bg}">
+      <td style="padding:9px 10px;color:#1E293B;font-weight:700;border:1px solid #D0DCF4;font-size:10px">${_weekLabel(wk)}</td>
+      <td style="padding:9px;text-align:center;border:1px solid #D0DCF4;color:#64748B">${s.dias.size}</td>
+      <td style="padding:9px;text-align:center;border:1px solid #D0DCF4;color:#64748B">${s.maquinas.size}</td>
+      <td style="padding:9px;text-align:center;border:1px solid #D0DCF4;color:#64748B">${s.hrs.toFixed(1)}</td>
+      <td style="padding:9px;text-align:center;border:1px solid #D0DCF4;color:#1E293B;font-weight:700">${s.tons.toFixed(1)}</td>
+      <td style="padding:9px;text-align:center;border:1px solid #D0DCF4;background:${_rptBg(th)}">
+        <div style="font-size:22px;font-weight:800;color:${_rptCol(th)};font-family:monospace;line-height:1">${th.toFixed(2)}</div>
+        <div style="font-size:8px;color:${_rptCol(th)};opacity:.8">${_rptEstado(th)}</div>
+      </td>
+    </tr>`;
+    totH+=s.hrs;totT+=s.tons;
+  });
+  const totTh=totH>0?totT/totH:0;
+  h+=`<tr style="background:#1A3A8F">
+    <td colspan="4" style="padding:10px;color:#F5C800;font-size:10px;font-weight:700;border:1px solid #C0D0F4;text-align:right">PROMEDIO TOTAL · ${totT.toFixed(1)} TN · ${totH.toFixed(1)} hrs</td>
+    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:700">${totT.toFixed(1)}</td>
+    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;background:${_rptBg(totTh)}">
+      <div style="font-size:26px;font-weight:800;color:${_rptCol(totTh)};font-family:monospace;line-height:1">${totTh.toFixed(2)}</div>
+      <div style="font-size:9px;color:${_rptCol(totTh)};opacity:.8">${_rptEstado(totTh)}</div>
+    </td>
+  </tr>`;
+  h+=`<tr><td colspan="6" style="background:#EEF2FF;color:#64748B;font-size:8px;padding:7px 12px;text-align:center;border:none">ARATO · MISSION PRODUCE · Meta: ${META} TN/Hr · ${ahora}</td></tr></table>`;
+  document.getElementById('rpt-maq-cont').innerHTML=h;
+}
+
+// Vista 4: MONTACARGAS — por día
+function buildReporteMonta(){
+  const ahora=new Date().toLocaleString('es-PE');
+  const recsMonta=records.filter(r=>r.tipo==='montacargas');
+  if(!recsMonta.length){
+    document.getElementById('rpt-maq-cont').innerHTML=`<div style="color:#475569;text-align:center;padding:40px;font-size:0.85rem">Sin registros de montacargas.<br><span style="font-size:0.75rem">Registra seleccionando "🏗️ Montacargas" en el formulario.</span></div>`;
+    return;
+  }
+  const fechas=_sortFechas(recsMonta);
+  const equipos=[...new Set(recsMonta.map(r=>r.maquina))].sort();
+  const metaMonta=META_MONTA;
+
+  let h=`<table style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px;min-width:340px">`;
+  h+=`<tr><td colspan="${equipos.length+2}" style="padding:0;border:none">${_rptHeader('🏗️ MONTACARGAS','RENDIMIENTO DIARIO POR EQUIPO',ahora)}</td></tr>`;
+
+  // Columnas
+  h+=`<tr style="background:#1A3A8F"><th style="padding:8px 10px;color:#F5C800;font-size:9px;border:1px solid #D0DCF4;text-align:left">📅 Fecha</th>`;
+  equipos.forEach(e=>{h+=`<th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #D0DCF4;text-align:center;white-space:nowrap">${e}</th>`;});
+  h+=`<th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #D0DCF4;text-align:center;background:#FEF9C3">🌍 GLOBAL</th></tr>`;
+
+  let totH=0,totT=0;
+  const colMonta='#D97706'; // naranja para montacargas (meta desconocida)
+
+  fechas.forEach((f,fi)=>{
+    const bg=fi%2===0?'#F8FAFC':'#FFFFFF';
+    let hG=0,tG=0;
+    let row=`<tr style="background:${bg}"><td style="padding:8px 10px;color:#1E293B;font-weight:700;border:1px solid #D0DCF4">${f}</td>`;
+    equipos.forEach(e=>{
+      const r=recsMonta.find(x=>x.fecha===f&&x.maquina===e);
+      if(r){
+        hG+=r.hrsEjec||0;tG+=r.toneladas||0;
+        const col=metaMonta>0?_rptCol(r.tnhr):colMonta;
+        const bg2=metaMonta>0?_rptBg(r.tnhr):'#1a1005';
+        row+=`<td style="padding:8px;text-align:center;border:1px solid #D0DCF4;background:${bg2}">
+          <div style="font-size:15px;font-weight:800;color:${col};font-family:monospace">${r.tnhr.toFixed(1)}</div>
+          <div style="font-size:8px;color:#6B7280">${r.hrsEjec.toFixed(1)}h·${r.toneladas.toFixed(1)}t</div>
+        </td>`;
+      }else{row+=`<td style="padding:8px;text-align:center;border:1px solid #D0DCF4;color:#334155;font-size:10px">—</td>`;}
+    });
+    const thG=hG>0?tG/hG:0;
+    const col=metaMonta>0?_rptCol(thG):colMonta;
+    const bg2=metaMonta>0?_rptBg(thG):'#1a1005';
+    row+=`<td style="padding:8px;text-align:center;border:1px solid #D0DCF4;background:${bg2}">
+      <div style="font-size:17px;font-weight:800;color:${col};font-family:monospace">${thG.toFixed(2)}</div>
+      <div style="font-size:8px;color:#6B7280">${tG.toFixed(1)}t</div>
+    </td>`;
+    h+=row+'</tr>';
+    totH+=hG;totT+=tG;
+  });
+
+  const totTh=totH>0?totT/totH:0;
+  h+=`<tr style="background:#1A3A8F"><td style="padding:8px 10px;color:#F5C800;font-size:10px;font-weight:700;border:1px solid #C0D0F4">PROMEDIO</td>`;
+  equipos.forEach(e=>{
+    const rE=recsMonta.filter(r=>r.maquina===e);
+    const hE=rE.reduce((s,r)=>s+(r.hrsEjec||0),0);
+    const tE=rE.reduce((s,r)=>s+(r.toneladas||0),0);
+    const pE=hE>0?tE/hE:0;
+    const col=metaMonta>0?_rptCol(pE):colMonta;
+    h+=`<td style="padding:8px;text-align:center;border:1px solid #C0D0F4;font-size:14px;font-weight:800;color:${col};font-family:monospace">${pE.toFixed(1)}</td>`;
+  });
+  const colT=metaMonta>0?_rptCol(totTh):colMonta;
+  h+=`<td style="padding:8px;text-align:center;border:1px solid #C0D0F4;font-size:18px;font-weight:800;color:${colT};font-family:monospace">${totTh.toFixed(2)}<div style="font-size:8px;color:#64748B">${totT.toFixed(1)}t total</div></td></tr>`;
+  if(metaMonta===0){h+=`<tr><td colspan="${equipos.length+2}" style="background:#FEF9C3;color:#B45309;font-size:8.5px;padding:6px 12px;text-align:center;border:none">⚠️ Meta de montacargas pendiente de definir — editar META_MONTA en el código cuando tengas los datos</td></tr>`;}
+  h+=`<tr><td colspan="${equipos.length+2}" style="background:#EEF2FF;color:#64748B;font-size:8px;padding:7px 12px;text-align:center;border:none">ARATO · MISSION PRODUCE · ${ahora}</td></tr></table>`;
+  document.getElementById('rpt-maq-cont').innerHTML=h;
+}
+
+async function dlReporte(){
+  try{
+    const el=document.getElementById('rpt-maq-cont');
+    const cv=await html2canvas(el,{scale:3,useCORS:true,backgroundColor:'#ffffff',logging:false});
+    const a=document.createElement('a');a.download='maquinaria-'+new Date().toLocaleDateString('es-PE').replace(/\//g,'-')+'.png';a.href=cv.toDataURL('image/png');a.click();
+    showToast('✅ Imagen descargada');
+  }catch(e){showToast('Error: '+e.message);}
+}
+async function waReporte(){
+  try{
+    const el=document.getElementById('rpt-maq-cont');
+    const cv=await html2canvas(el,{scale:3,useCORS:true,backgroundColor:'#ffffff',logging:false});
+    cv.toBlob(async function(blob){
+      const f=new File([blob],'maquinaria.png',{type:'image/png'});
+      if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:'Control de Maquinaria'});}
+      else{const a=document.createElement('a');a.download='maquinaria.png';a.href=cv.toDataURL('image/png');a.click();setTimeout(()=>window.open('https://web.whatsapp.com/','_blank'),800);}
+    },'image/png');
+  }catch(e){if(e.name!=='AbortError')showToast('Error: '+e.message);}
 }
 
 // ── Build record ───────────────────────────────────────────
@@ -602,31 +947,37 @@ function buildRecord(maquina,operador,fecha,ini,fin,bins,modulos) {
 // ── Form ───────────────────────────────────────────────────
 function updatePreview() {
   const hrs = parseFloat(document.getElementById("f-hrsejec")?.value)||0;
-  const bins = document.getElementById("f-bins").value;
-  if (!hrs||!bins) { document.getElementById("preview").style.display="none"; return; }
-  const b = parseFloat(bins)||0;
-  const tons = +(b*KG_BIN/1000).toFixed(1);
-  const tnhr = hrs>0 ? +(tons/hrs).toFixed(1) : 0;
+  const tonsInput = document.getElementById("f-bins").value;
+  if (!hrs||!tonsInput) { document.getElementById("preview").style.display="none"; return; }
+  const tons = parseFloat(tonsInput)||0;
+  const bins = +(tons*1000/KG_BIN).toFixed(1); // toneladas → bins
+  const tnhr = hrs>0 ? +(tons/hrs).toFixed(2) : 0;
   const estado = calcEstado(tnhr);
-  document.getElementById("p-hrs").textContent = hrs.toFixed(1);
-  document.getElementById("p-tons").textContent = tons+" t";
-  document.getElementById("p-tnhr").innerHTML = `<span style="color:${tnhr>=META?'var(--green)':'var(--red)'}">${tnhr}</span>`;
+  // Mostrar bins calculados debajo del campo
+  const calcEl=document.getElementById("f-bins-calc");
+  if(calcEl)calcEl.textContent=`≈ ${bins} bins (a ${KG_BIN} kg/bin)`;
+  document.getElementById("p-hrs").textContent = hrs.toFixed(1)+" hrs";
+  document.getElementById("p-tons").textContent = tons+" t → "+bins+" bins";
+  document.getElementById("p-tnhr").innerHTML = `<span style="color:${tnhr>=META?'var(--green)':'var(--red)'}">${tnhr} TN/Hr</span>`;
   document.getElementById("p-estado").innerHTML = badge(estado);
   document.getElementById("preview").style.display = "grid";
 }
 async function guardarRegistro() {
+  const tipo     = document.getElementById("f-tipo")?.value||"maquinaria";
   const maquina  = document.getElementById("f-maquina").value.trim().toUpperCase();
   const operador = document.getElementById("f-operador").value.trim();
   const fecha    = document.getElementById("f-fecha").value.trim();
   const hrsEjec  = parseFloat(document.getElementById("f-hrsejec").value)||0;
-  const bins     = parseFloat(document.getElementById("f-bins").value)||0;
+  const tonsInput= parseFloat(document.getElementById("f-bins").value)||0; // campo ahora es toneladas
   const modulos  = document.getElementById("f-modulos").value.trim();
-  if (!maquina||!fecha||!hrsEjec||!bins) { showToast("Completa los campos obligatorios","err"); return; }
-  const tons = +(bins*KG_BIN/1000).toFixed(1);
-  const tnhr = hrsEjec>0 ? +(tons/hrsEjec).toFixed(1) : 0;
-  const estado = tnhr>=META?"BIEN":"MAL";
+  if (!maquina||!fecha||!hrsEjec||!tonsInput) { showToast("Completa los campos obligatorios","err"); return; }
+  const tons = +tonsInput.toFixed(1);
+  const bins = +(tons*1000/KG_BIN).toFixed(1); // bins calculados automáticamente
+  const metaUsada = tipo==='montacargas'?META_MONTA:META;
+  const tnhr = hrsEjec>0 ? +(tons/hrsEjec).toFixed(2) : 0;
+  const estado = metaUsada>0?(tnhr>=metaUsada?"BIEN":"MAL"):"—";
   const rec = {
-    maquina, operador, fecha,
+    maquina, operador, fecha, tipo,
     horaInicio:'—', horaFin:'—',
     hrsEjec:+hrsEjec.toFixed(1),
     bins:+bins.toFixed(1), toneladas:tons, tnhr, estado, modulos
@@ -642,7 +993,7 @@ async function guardarRegistro() {
       bins: rec.bins,
       toneladas: rec.toneladas,
       tn_hr: rec.tnhr,
-      meta: META,
+      meta: metaUsada,
       estado: rec.estado,
       modulos: rec.modulos
     });
