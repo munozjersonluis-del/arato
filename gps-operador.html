@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GPS Arato">
+<meta name="theme-color" content="#0B1437">
+<title>GPS Operador — Arato</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--ink:#0B1437;--g:#16A34A;--r:#DC2626;--y:#D97706;--gold:#F5C800}
+body{font-family:'Inter',sans-serif;background:var(--ink);color:#fff;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;overflow:hidden}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--gold);letter-spacing:3px;margin-bottom:4px;text-align:center}
+.sub{font-size:0.6rem;color:rgba(255,255,255,.4);letter-spacing:2px;text-transform:uppercase;text-align:center;margin-bottom:28px}
+/* PANTALLA INICIO */
+#screen-login{width:100%;max-width:340px;display:flex;flex-direction:column;gap:12px}
+.field{display:flex;flex-direction:column;gap:4px}
+label{font-size:0.6rem;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1px}
+select,input{background:#1e293b;border:1.5px solid #334155;border-radius:10px;padding:13px 14px;color:#fff;font-size:0.9rem;font-family:'Inter',sans-serif;width:100%;-webkit-appearance:none}
+select:focus,input:focus{outline:none;border-color:var(--gold)}
+.btn-start{background:linear-gradient(180deg,var(--g),#0F5C2C);border:none;border-radius:12px;padding:16px;color:#fff;font-size:1rem;font-weight:800;font-family:'Inter',sans-serif;width:100%;cursor:pointer;margin-top:8px;letter-spacing:.5px}
+/* PANTALLA ACTIVO */
+#screen-active{width:100%;max-width:340px;display:none;flex-direction:column;align-items:center;gap:16px}
+.pulse-ring{position:relative;width:140px;height:140px;display:flex;align-items:center;justify-content:center;margin:8px auto}
+.pulse-ring::before,.pulse-ring::after{content:'';position:absolute;border-radius:50%;border:2px solid var(--g);animation:pulse 2s ease-out infinite}
+.pulse-ring::before{width:100%;height:100%;opacity:.4}
+.pulse-ring::after{width:130%;height:130%;opacity:.2;animation-delay:.5s}
+@keyframes pulse{0%{transform:scale(.8);opacity:.6}100%{transform:scale(1.2);opacity:0}}
+.pulse-icon{width:80px;height:80px;background:linear-gradient(135deg,var(--g),#0F5C2C);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2.2rem;z-index:1;box-shadow:0 0 30px rgba(22,163,74,.5)}
+.status-badge{background:rgba(22,163,74,.15);border:1.5px solid var(--g);border-radius:20px;padding:6px 16px;font-size:0.7rem;font-weight:700;color:var(--g);letter-spacing:1px;text-transform:uppercase}
+.info-card{background:#1e293b;border-radius:12px;padding:14px 18px;width:100%;border:1.5px solid #334155}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #1e293b}
+.info-row:last-child{border:none;padding-bottom:0}
+.info-lbl{font-size:0.62rem;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px}
+.info-val{font-size:0.85rem;font-weight:700;color:#fff;font-family:'JetBrains Mono',monospace}
+.coord-box{background:#0d1526;border-radius:8px;padding:8px 12px;font-size:0.6rem;color:rgba(255,255,255,.35);font-family:monospace;text-align:center;width:100%;word-break:break-all}
+.btn-stop{background:linear-gradient(180deg,var(--r),#991B1B);border:none;border-radius:12px;padding:14px;color:#fff;font-size:0.9rem;font-weight:800;font-family:'Inter',sans-serif;width:100%;cursor:pointer;margin-top:4px}
+.sync-indicator{display:flex;align-items:center;gap:6px;font-size:0.65rem;color:rgba(255,255,255,.4)}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--g);animation:blink 1.5s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 20px;border-radius:20px;font-size:0.75rem;font-weight:700;display:none;white-space:nowrap;border:1px solid #334155;z-index:99}
+</style>
+</head>
+<body>
+
+<div class="logo">🥑 ARATO GPS</div>
+<div class="sub">Mission Produce · Operador</div>
+
+<!-- PANTALLA INICIO -->
+<div id="screen-login">
+  <div class="field">
+    <label>Tu Nombre / Máquina</label>
+    <select id="sel-maq">
+      <option value="">— Seleccionar equipo —</option>
+      <option>INC-VAL-01</option>
+      <option>INC-VAL-02</option>
+      <option>INC-VAL-19</option>
+      <option>LT-LN-363</option>
+      <option>LT-LN-364</option>
+      <option>LT-LN-383</option>
+      <option>LT-LN-385</option>
+      <option>MONTACARGA-01</option>
+      <option>MONTACARGA-02</option>
+      <option>MONTACARGA-03</option>
+    </select>
+  </div>
+  <div class="field">
+    <label>Operador</label>
+    <input type="text" id="inp-op" placeholder="Tu nombre completo">
+  </div>
+  <div class="field">
+    <label>Módulo / Zona</label>
+    <select id="sel-mod">
+      <option value="">— Seleccionar módulo —</option>
+      <option>Módulo 1</option><option>Módulo 2</option><option>Módulo 3</option>
+      <option>Módulo 4</option><option>Módulo 5</option><option>Módulo 6</option>
+      <option>Módulo 7</option><option>Módulo 8</option><option>Módulo 9</option>
+      <option>Módulo 10</option><option>Módulo 11</option><option>Módulo 12</option>
+      <option>Módulo 13</option><option>Módulo 14</option><option>Módulo 15</option>
+      <option>Módulo 16</option><option>Módulo 17</option><option>Módulo 18</option>
+      <option>Módulo 19</option><option>Módulo 20</option><option>Módulo 21</option>
+      <option>Módulo 22</option><option>Módulo 23</option><option>Módulo 24</option>
+      <option>Patio / Acopio</option><option>En camino</option>
+    </select>
+  </div>
+  <button class="btn-start" onclick="iniciarTurno()">📍 Iniciar Turno</button>
+</div>
+
+<!-- PANTALLA ACTIVO -->
+<div id="screen-active">
+  <div class="pulse-ring">
+    <div class="pulse-icon">🚜</div>
+  </div>
+  <div class="status-badge" id="status-txt">LOCALIZANDO...</div>
+  <div class="info-card">
+    <div class="info-row">
+      <span class="info-lbl">Máquina</span>
+      <span class="info-val" id="act-maq">—</span>
+    </div>
+    <div class="info-row">
+      <span class="info-lbl">Operador</span>
+      <span class="info-val" id="act-op">—</span>
+    </div>
+    <div class="info-row">
+      <span class="info-lbl">Módulo</span>
+      <span class="info-val" id="act-mod">—</span>
+    </div>
+    <div class="info-row">
+      <span class="info-lbl">Velocidad</span>
+      <span class="info-val" id="act-vel">— km/h</span>
+    </div>
+    <div class="info-row">
+      <span class="info-lbl">Última actualización</span>
+      <span class="info-val" id="act-hora">—</span>
+    </div>
+  </div>
+  <div class="coord-box" id="act-coords">Obteniendo coordenadas GPS...</div>
+  <div class="sync-indicator">
+    <div class="sync-dot"></div>
+    <span id="sync-txt">Enviando ubicación cada 30 segundos</span>
+  </div>
+  <button class="btn-stop" onclick="detenerTurno()">⏹ Finalizar Turno</button>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const SURL='https://rqvcvffyynpnighzwxju.supabase.co';
+const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdmN2ZmZ5eW5wbmlnaHp3eGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MjgyNDcsImV4cCI6MjA5MzMwNDI0N30.fFufNEdRvAzl6O6BqtTbx83O3Eg8Wd7gACNJDGQKga4';
+
+let trackInterval=null;
+let maquina='',operador='',modulo='';
+let ultimaLat=null,ultimaLng=null,ultimaVel=0;
+
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.style.display='block';
+  setTimeout(()=>el.style.display='none',2500);
+}
+
+function V(id){return document.getElementById(id)?.value?.trim()||'';}
+
+// Cargar datos guardados
+window.addEventListener('load',()=>{
+  const saved=localStorage.getItem('gps_op_data');
+  if(saved){
+    try{
+      const d=JSON.parse(saved);
+      if(d.maquina)document.getElementById('sel-maq').value=d.maquina;
+      if(d.operador)document.getElementById('inp-op').value=d.operador;
+      if(d.modulo)document.getElementById('sel-mod').value=d.modulo;
+    }catch(e){}
+  }
+});
+
+async function enviarUbicacion(lat,lng,vel,dir){
+  const ahora=new Date().toISOString();
+  const estadoMov=vel>1?'en movimiento':'detenido';
+  try{
+    await fetch(SURL+'/rest/v1/ubicaciones_maquinaria',{
+      method:'POST',
+      headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify({
+        maquina,operador,modulo,
+        lat,lng,
+        velocidad:Math.round(vel||0),
+        direccion:Math.round(dir||0),
+        estado:estadoMov,
+        created_at:ahora
+      })
+    });
+    document.getElementById('sync-txt').textContent='✅ Enviado: '+new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  }catch(e){
+    document.getElementById('sync-txt').textContent='⚠️ Sin conexión — reintentando...';
+  }
+}
+
+function actualizarPantalla(lat,lng,vel,dir){
+  ultimaLat=lat;ultimaLng=lng;ultimaVel=vel;
+  const velKmh=Math.round((vel||0)*3.6);
+  const hora=new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  document.getElementById('act-vel').textContent=velKmh+' km/h';
+  document.getElementById('act-hora').textContent=hora;
+  document.getElementById('act-coords').textContent='📍 '+lat.toFixed(6)+', '+lng.toFixed(6);
+  const estadoTxt=velKmh>2?'🟢 EN MOVIMIENTO':'🔴 DETENIDO';
+  document.getElementById('status-txt').textContent=estadoTxt;
+}
+
+function iniciarTurno(){
+  maquina=V('sel-maq');
+  operador=V('inp-op');
+  modulo=V('sel-mod');
+  if(!maquina){toast('⚠️ Selecciona tu máquina');return;}
+  if(!operador){toast('⚠️ Ingresa tu nombre');return;}
+  if(!modulo){toast('⚠️ Selecciona el módulo');return;}
+
+  // Guardar datos para próxima vez
+  localStorage.setItem('gps_op_data',JSON.stringify({maquina,operador,modulo}));
+
+  if(!navigator.geolocation){toast('GPS no disponible en este dispositivo');return;}
+
+  // Mostrar pantalla activa
+  document.getElementById('screen-login').style.display='none';
+  document.getElementById('screen-active').style.display='flex';
+  document.getElementById('act-maq').textContent=maquina;
+  document.getElementById('act-op').textContent=operador;
+  document.getElementById('act-mod').textContent=modulo;
+
+  // Obtener primera posición
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const{latitude:lat,longitude:lng,speed:vel,heading:dir}=pos.coords;
+    actualizarPantalla(lat,lng,vel||0,dir||0);
+    enviarUbicacion(lat,lng,vel||0,dir||0);
+    toast('✅ Turno iniciado — GPS activo');
+  },err=>{
+    toast('⚠️ Error GPS: '+err.message);
+  },{enableHighAccuracy:true,timeout:10000});
+
+  // Enviar cada 30 segundos
+  trackInterval=setInterval(()=>{
+    navigator.geolocation.getCurrentPosition(pos=>{
+      const{latitude:lat,longitude:lng,speed:vel,heading:dir}=pos.coords;
+      actualizarPantalla(lat,lng,vel||0,dir||0);
+      enviarUbicacion(lat,lng,vel||0,dir||0);
+    },err=>{
+      document.getElementById('sync-txt').textContent='⚠️ GPS perdido — reintentando...';
+    },{enableHighAccuracy:true,timeout:8000});
+  },30000);
+}
+
+function detenerTurno(){
+  if(!confirm('¿Finalizar turno? Se dejará de enviar tu ubicación.'))return;
+  if(trackInterval){clearInterval(trackInterval);trackInterval=null;}
+  // Enviar estado "inactivo"
+  if(ultimaLat){
+    fetch(SURL+'/rest/v1/ubicaciones_maquinaria',{
+      method:'POST',
+      headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify({maquina,operador,modulo,lat:ultimaLat,lng:ultimaLng,velocidad:0,estado:'inactivo'})
+    }).catch(()=>{});
+  }
+  document.getElementById('screen-active').style.display='none';
+  document.getElementById('screen-login').style.display='flex';
+  toast('Turno finalizado');
+}
+</script>
+</body>
+</html>
