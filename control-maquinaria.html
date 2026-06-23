@@ -838,7 +838,7 @@ function _rptHeader(titulo,subtitulo,ahora){
     <div style="font-size:8.5px;color:#F5C800;margin-top:2px">${subtitulo}</div></div>
     <div style="text-align:right"><div style="font-size:11px;font-weight:700;color:#fff">${titulo}</div>
     <div style="font-size:8px;color:rgba(255,255,255,.7);margin-top:2px">${ahora}</div>
-    <div style="background:#F5C800;color:#0B1437;font-size:9px;font-weight:700;padding:2px 8px;border-radius:4px;margin-top:4px;display:inline-block">⚡ Meta: ${META} TN/Hr</div></div>
+    <div style="background:#F5C800;color:#0B1437;font-size:9px;font-weight:700;padding:2px 8px;border-radius:4px;margin-top:4px;display:inline-block">⚡ Meta maquinaria: ${META} TN/Hr</div></div>
   </div>`;
 }
 
@@ -899,7 +899,7 @@ function buildReporteGlobal(){
       <div style="font-size:9px;color:${_rptCol(totTh)};margin-top:2px">${_rptEstado(totTh)}</div>
     </td>
   </tr>`;
-  html+=`<tr><td colspan="6" style="background:#EEF2FF;color:#64748B;font-size:8px;padding:7px 12px;text-align:center;border:none">ARATO · MISSION PRODUCE · Meta: ${META} TN/Hr · ${ahora}</td></tr></table>`;
+  html+=`<tr><td colspan="6" style="background:#EEF2FF;color:#64748B;font-size:8px;padding:7px 12px;text-align:center;border:none">ARATO · MISSION PRODUCE · Meta maquinaria: ${META} TN/Hr · ${ahora}</td></tr></table>`;
   document.getElementById('rpt-maq-cont').innerHTML=html;
   const newSel=document.getElementById('rpt-fecha-global');
   if(newSel&&fechaSel)newSel.value=fechaSel;
@@ -972,7 +972,7 @@ function buildReportePorMaq(){
     </td>
   </tr>`;
 
-  h+=`<tr><td colspan="6" style="background:#EEF2FF;color:#64748B;font-size:8px;padding:7px 12px;text-align:center;border:none">ARATO · MISSION PRODUCE · Meta: ${META} TN/Hr · ${ahora}</td></tr>`;
+  h+=`<tr><td colspan="6" style="background:#EEF2FF;color:#64748B;font-size:8px;padding:7px 12px;text-align:center;border:none">ARATO · MISSION PRODUCE · Meta maquinaria: ${META} TN/Hr · ${ahora}</td></tr>`;
   h+='</table>';
   document.getElementById('rpt-maq-cont').innerHTML=h;
 
@@ -1105,19 +1105,19 @@ function buildReporteSemanal(){
             <div style="font-size:7px;color:rgba(255,255,255,.5);margin-top:2px">toneladas</div>
           </div>
           <div style="background:${totTnhrMaq>=META?'rgba(22,163,74,.35)':totTnhrMaq>=META*0.7?'rgba(217,119,6,.35)':'rgba(220,38,38,.35)'};border-radius:8px;padding:9px 6px;text-align:center">
-            <div style="font-size:7px;color:rgba(255,255,255,.7);text-transform:uppercase;margin-bottom:4px">🚜 TN/Hr Tractor</div>
+            <div style="font-size:7px;color:rgba(255,255,255,.7);text-transform:uppercase;margin-bottom:4px">🚜 TN/Hr Maquinaria</div>
             <div style="font-size:17px;font-weight:800;color:${_rptCol(totTnhrMaq)};font-family:monospace;line-height:1">${totTnhrMaq.toFixed(2)}</div>
             <div style="font-size:7px;color:${_rptCol(totTnhrMaq)};margin-top:2px">${_rptEstado(totTnhrMaq)}</div>
           </div>
           <div style="background:rgba(255,255,255,.1);border-radius:8px;padding:9px 6px;text-align:center">
             <div style="font-size:7px;color:rgba(255,255,255,.6);text-transform:uppercase;margin-bottom:4px">🏗️ TN/Hr Monta.</div>
             <div style="font-size:17px;font-weight:800;color:#D97706;font-family:monospace;line-height:1">${totTnhrMonta>0?totTnhrMonta.toFixed(2):'—'}</div>
-            <div style="font-size:7px;color:rgba(255,255,255,.5);margin-top:2px">${totMontaT>0?totMontaT.toFixed(0)+' TN':'sin datos'}</div>
+            <div style="font-size:7px;color:rgba(255,255,255,.5);margin-top:2px">${totMontaT>0?totMontaT.toFixed(0)+' TN':'N/D'}</div>
           </div>
           <div style="background:rgba(255,255,255,.1);border-radius:8px;padding:9px 6px;text-align:center">
             <div style="font-size:7px;color:rgba(255,255,255,.6);text-transform:uppercase;margin-bottom:4px">👷 TN/Persona</div>
             <div style="font-size:17px;font-weight:800;color:#A78BFA;font-family:monospace;line-height:1">${totTnp>0?totTnp.toFixed(2):'—'}</div>
-            <div style="font-size:7px;color:rgba(255,255,255,.5);margin-top:2px">${totPersP>0?totPersP+' trab.':'sin datos'}</div>
+            <div style="font-size:7px;color:rgba(255,255,255,.5);margin-top:2px">${totPersP>0?totPersP+' trab.':'N/D'}</div>
           </div>
           <div style="background:${cumplimiento>=100?'rgba(22,163,74,.35)':cumplimiento>=80?'rgba(217,119,6,.35)':'rgba(220,38,38,.35)'};border-radius:8px;padding:9px 6px;text-align:center">
             <div style="font-size:7px;color:rgba(255,255,255,.7);text-transform:uppercase;margin-bottom:4px">🎯 Cumplimiento</div>
@@ -1126,8 +1126,8 @@ function buildReporteSemanal(){
           </div>
         </div>
       </div>
-      <div style="background:rgba(0,0,0,.25);border-radius:8px;padding:10px 12px;border:1px solid rgba(255,255,255,.1)">
-        <div style="font-size:7.5px;font-weight:700;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">📈 TN/DÍA (barras) + TN/HR TRACTOR (línea dorada)</div>
+      ${numDias>=3?`<div style="background:rgba(0,0,0,.25);border-radius:8px;padding:10px 12px;border:1px solid rgba(255,255,255,.1)">
+        <div style="font-size:7.5px;font-weight:700;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">📈 TN/DÍA (barras) + TN/Hr MAQUINARIA (línea dorada)</div>
         <svg width="100%" viewBox="0 0 ${Math.max(numDias*(barW+4),200)} ${barH+16}" style="overflow:visible">
           <line x1="0" y1="${metaY}" x2="${numDias*(barW+4)}" y2="${metaY}" stroke="#F5C800" stroke-width="1" stroke-dasharray="4,3" opacity=".8"/>
           <text x="${numDias*(barW+4)-2}" y="${metaY-3}" text-anchor="end" font-size="6" fill="#F5C800">Meta</text>
@@ -1145,7 +1145,7 @@ function buildReporteSemanal(){
           <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:8px;background:#DC2626;border-radius:2px;opacity:.85"></div><span style="font-size:7px;color:rgba(255,255,255,.6)">Bajo meta</span></div>
           <div style="display:flex;align-items:center;gap:4px"><div style="width:18px;height:2px;background:#F5C800;margin-top:3px"></div><span style="font-size:7px;color:rgba(255,255,255,.6)">TN/Hr</span></div>
         </div>
-      </div>
+      </div>`:'<div style="background:rgba(0,0,0,.2);border-radius:8px;padding:14px;text-align:center;color:rgba(255,255,255,.5);font-size:9px;border:1px dashed rgba(255,255,255,.2)">📊 Se necesitan al menos 3 días de datos para mostrar la tendencia semanal</div>'}
     </div>
   </td></tr>`;
   const cS='padding:8px 6px;color:#F5C800;font-size:9px;border:1px solid #1e3a5f;text-align:center;white-space:nowrap;min-width:65px';
@@ -1161,22 +1161,22 @@ function buildReporteSemanal(){
   function num(v,b,c,bg){return`<td style="padding:8px 6px;text-align:center;border:1px solid #e2e8f0;font-family:monospace;font-weight:${b?800:600};color:${c||'#1E293B'};font-size:${b?13:11}px;background:${bg||'inherit'}">${v}</td>`;}
   function emp(bg){return`<td style="padding:8px;text-align:center;border:1px solid #e2e8f0;background:${bg||'#F8FAFC'};color:#CBD5E1;font-size:9px">—</td>`;}
   function cCol(v,tnhr,td){return`<td style="padding:8px 6px;text-align:center;border:1px solid #e2e8f0;background:${_rptBg(tnhr)}"><div style="font-size:14px;font-weight:800;color:${_rptCol(tnhr)};font-family:monospace;line-height:1">${v}${td||''}</div><div style="font-size:8px;color:${_rptCol(tnhr)};margin-top:1px">${tnhr>=META?'🟢':tnhr>=META*0.7?'🟡':'🔴'}</div></td>`;}
-  h+=`<tr style="background:#EEF2FF">${lbl('🚜 Horas Tractor','#1A3A8F','#EEF2FF')}`;
+  h+=`<tr style="background:#EEF2FF">${lbl('🚜 Horas Maquinaria','#1A3A8F','#EEF2FF')}`;
   mD.forEach(d=>h+=d.hrs?num(d.hrs.toFixed(1),true,'#1A3A8F'):emp());
   h+=num(totMaqH.toFixed(1),true,'#1A3A8F','#E0E8FF')+'</tr>';
-  h+=`<tr style="background:#FFFBEB">${lbl('🏗️ Horas Montacargas','#B45309','#FEF9C3')}`;
+  h+=`<tr style="background:#FFFBEB">${lbl('🏗️ Horas Montacargas','#475569','#F1F5F9')}`;
   moD.forEach(d=>h+=d.hrs?num(d.hrs.toFixed(1),true,'#B45309','#FFFBEB'):emp('#FFFBEB'));
   h+=num(totMontaH>0?totMontaH.toFixed(1):'—',true,'#B45309','#FEF9C3')+'</tr>';
-  h+=`<tr style="background:#F5F3FF">${lbl('👷 Personal Acopio','#7C3AED','#EDE9FE')}`;
+  h+=`<tr style="background:#F5F3FF">${lbl('👷 Personal Acopio','#475569','#F1F5F9')}`;
   pD.forEach(d=>h+=d.pers?num(d.pers,true,'#7C3AED','#F5F3FF'):emp('#F5F3FF'));
   h+=num(totPersP||'—',true,'#7C3AED','#EDE9FE')+'</tr>';
-  h+=`<tr style="background:#F0F9FF">${lbl('📦 Bins','#0369A1','#E0F2FE')}`;
+  h+=`<tr style="background:#F0F9FF">${lbl('📦 Bins','#475569','#F8FAFC')}`;
   mD.forEach(d=>h+=d.bins>0?num(Math.round(d.bins),false,'#0369A1','#F0F9FF'):emp('#F0F9FF'));
   h+=num(Math.round(totMaqB),true,'#0369A1','#E0F2FE')+'</tr>';
-  h+=`<tr style="background:#F0FBF4">${lbl('⚖️ TN / Día','#15803D','#DCFCE7')}`;
+  h+=`<tr style="background:#F0FBF4">${lbl('⚖️ TN / Día','#15803D','#F0FBF4')}`;
   mD.forEach(d=>h+=d.tons>0?num(d.tons.toFixed(1),true,'#15803D','#F0FBF4'):emp('#F0FBF4'));
   h+=num(totMaqT.toFixed(1),true,'#15803D','#DCFCE7')+'</tr>';
-  h+=`<tr>${lbl('⚡ TN/Hr Tractor','#F5C800','#0B1437')}`;
+  h+=`<tr>${lbl('⚡ TN/Hr Maquinaria','#F5C800','#0B1437')}`;
   mD.forEach((d,i)=>h+=d.hrs?cCol(d.tnhr.toFixed(2),d.tnhr,tend(mD,i,'tnhr')):emp());
   h+=`<td style="padding:8px;text-align:center;border:1px solid #e2e8f0;background:${_rptBg(totTnhrMaq)}">
     <div style="font-size:16px;font-weight:800;color:${_rptCol(totTnhrMaq)};font-family:monospace">${totTnhrMaq.toFixed(2)}</div>
@@ -1195,7 +1195,7 @@ function buildReporteSemanal(){
   });
   h+=num(totTnp>0?totTnp.toFixed(2):'—',true,'#7C3AED','#EDE9FE')+'</tr>';
   h+=`<tr style="background:#0B1437">
-    <td style="padding:7px 10px;color:rgba(255,255,255,.7);font-size:9px;border:1px solid #1e3a5f;font-weight:600">🎯 META TN/Hr Tractor</td>
+    <td style="padding:7px 10px;color:rgba(255,255,255,.7);font-size:9px;border:1px solid #1e3a5f;font-weight:600">🎯 META TN/Hr Maquinaria</td>
     ${diasConDatos.map(()=>`<td style="padding:7px;text-align:center;border:1px solid #1e3a5f;color:#F5C800;font-size:11px;font-weight:700">${META}</td>`).join('')}
     <td style="padding:7px;text-align:center;border:1px solid #1e3a5f;color:#F5C800;font-size:11px;font-weight:700">${META}</td>
   </tr>`;
@@ -1215,7 +1215,7 @@ function buildReporteSemanal(){
       </div>
     </div>
   </td></tr>`;
-  h+=`<tr><td colspan="${numDias+2}" style="background:#0B1437;color:rgba(255,255,255,.75);font-size:8.5px;font-weight:600;padding:9px 14px;text-align:center;border:none">ARATO · MISSION PRODUCE PERÚ &nbsp;|&nbsp; Meta: ${META} TN/Hr &nbsp;|&nbsp; SEM-${semN} · ${semLabel} &nbsp;|&nbsp; ${ahora}</td></tr>`;
+  h+=`<tr><td colspan="${numDias+2}" style="background:#0B1437;color:rgba(255,255,255,.75);font-size:8.5px;font-weight:600;padding:9px 14px;text-align:center;border:none">ARATO · MISSION PRODUCE PERÚ &nbsp;|&nbsp; Meta maquinaria: ${META} TN/Hr &nbsp;|&nbsp; SEM-${semN} · ${semLabel} &nbsp;|&nbsp; ${ahora}</td></tr>`;
   h+='</table>';
   document.getElementById('rpt-maq-cont').innerHTML=h;
   const nS=document.getElementById('rpt-sem-sel');
@@ -1365,12 +1365,12 @@ function buildReporteCombinado(){
           <div style="background:rgba(255,255,255,.08);border-radius:6px;padding:7px 4px">
             <div style="font-size:7px;color:rgba(255,255,255,.6);text-transform:uppercase;margin-bottom:3px">🏗️ TN/Hr Monta.</div>
             <div style="font-size:15px;font-weight:800;color:#D97706;font-family:monospace">${montaTH>0?montaTH.toFixed(2):'—'}</div>
-            <div style="font-size:7px;color:rgba(255,255,255,.5)">${montaT>0?montaT.toFixed(1)+' TN':'sin datos'}</div>
+            <div style="font-size:7px;color:rgba(255,255,255,.5)">${montaT>0?montaT.toFixed(1)+' TN':'N/D'}</div>
           </div>
           <div style="background:rgba(255,255,255,.08);border-radius:6px;padding:7px 4px">
             <div style="font-size:7px;color:rgba(255,255,255,.6);text-transform:uppercase;margin-bottom:3px">👷 Personal</div>
             <div style="font-size:15px;font-weight:800;color:#A78BFA;font-family:monospace">${persP||'—'}</div>
-            <div style="font-size:7px;color:rgba(255,255,255,.7)">${persP&&persT?+(persT/persP).toFixed(2)+' TN/persona':persP?persP+' trabajadores':'sin datos'}</div>
+            <div style="font-size:7px;color:rgba(255,255,255,.7)">${persP&&persT?+(persT/persP).toFixed(2)+' TN/persona':persP?persP+' trabajadores':'N/D'}</div>
           </div>
         </div>
       </div>
