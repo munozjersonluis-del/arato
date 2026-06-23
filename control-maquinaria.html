@@ -265,9 +265,9 @@ tr:nth-child(even) td{background:rgba(255,255,255,0.015)}
         <input id="f-modulos" type="text" placeholder="Ej: M01, M07"/>
       </div>
       <div class="preview-box" id="preview" style="display:none">
-        <div><span>Horas: </span><strong id="p-hrs">—</strong></div>
-        <div><span>Toneladas: </span><strong id="p-tons">—</strong></div>
-        <div><span>TN/Hr: </span><strong id="p-tnhr">—</strong></div>
+        <div><span>Horas: </span><strong id="maq-p-hrs">—</strong></div>
+        <div><span>Toneladas: </span><strong id="maq-p-tons">—</strong></div>
+        <div><span>TN/Hr: </span><strong id="maq-p-tnhr">—</strong></div>
         <div><span>Estado: </span><span id="p-estado">—</span></div>
       </div>
       <button class="submit-btn" onclick="guardarRegistro()">Guardar Registro ➜</button>
@@ -330,36 +330,48 @@ tr:nth-child(even) td{background:rgba(255,255,255,0.015)}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
           <div class="field">
             <label>Fecha *</label>
-            <input id="p-fecha" type="date">
+            <input id="prs-fecha" type="date">
           </div>
           <div class="field">
             <label>N° Trabajadores *</label>
-            <input id="p-personal" type="number" min="1" placeholder="276" oninput="prevPersonal()">
+            <input id="prs-personal" type="number" min="1" placeholder="276" oninput="calcHrsTotal();prevPersonal()">
           </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
           <div class="field">
             <label>Toneladas *</label>
-            <input id="p-tons" type="number" step="0.1" min="0" placeholder="52.0" oninput="prevPersonal()">
+            <input id="prs-tons" type="number" step="0.01" min="0" placeholder="51.77" oninput="prevPersonal()">
           </div>
           <div class="field">
-            <label>Horas *</label>
-            <input id="p-hrs" type="number" step="0.1" min="0" placeholder="8.0" oninput="prevPersonal()">
+            <label>Hrs por persona</label>
+            <input id="prs-hrs-pp" type="number" step="0.01" min="0" placeholder="10.46" oninput="calcHrsTotal()">
           </div>
         </div>
-        <div id="p-prev" style="display:none;background:#1e293b;border-radius:8px;padding:10px;margin-bottom:10px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center">
-          <div><div style="font-size:8px;color:#94A3B8;text-transform:uppercase">TN/Hr</div><div id="p-tnhr" style="font-size:1.4rem;font-weight:800;font-family:monospace;color:#F5C800">—</div></div>
-          <div><div style="font-size:8px;color:#94A3B8;text-transform:uppercase">TN/Persona</div><div id="p-tnp" style="font-size:1.4rem;font-weight:800;font-family:monospace;color:#60A5FA">—</div></div>
-          <div><div style="font-size:8px;color:#94A3B8;text-transform:uppercase">Hrs/Persona</div><div id="p-hrsp" style="font-size:1.4rem;font-weight:800;font-family:monospace;color:#A78BFA">—</div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <div class="field">
+            <label>Horas totales *</label>
+            <input id="prs-hrs" type="number" step="0.01" min="0" placeholder="52.3" oninput="prevPersonal()">
+          </div>
+          <div class="field" style="display:flex;flex-direction:column;justify-content:flex-end">
+            <div style="font-size:0.6rem;color:#64748B;padding:6px 0">Se calcula automático si ingresas hrs/persona, o escribe el total directamente</div>
+          </div>
+        </div>
+        <div id="prs-prev" style="display:none;background:#1e293b;border-radius:8px;padding:10px;margin-bottom:10px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center">
+          <div><div style="font-size:8px;color:#94A3B8;text-transform:uppercase">TN/Hr</div><div id="prs-tnhr" style="font-size:1.4rem;font-weight:800;font-family:monospace;color:#F5C800">—</div></div>
+          <div><div style="font-size:8px;color:#94A3B8;text-transform:uppercase">TN/Persona</div><div id="prs-tnp" style="font-size:1.4rem;font-weight:800;font-family:monospace;color:#60A5FA">—</div></div>
+          <div><div style="font-size:8px;color:#94A3B8;text-transform:uppercase">Hrs/Persona</div><div id="prs-hrsp" style="font-size:1.4rem;font-weight:800;font-family:monospace;color:#A78BFA">—</div></div>
         </div>
         <div class="field" style="margin-bottom:10px">
           <label>Observación</label>
-          <input id="p-obs" type="text" placeholder="Opcional">
+          <input id="prs-obs" type="text" placeholder="Opcional">
         </div>
         <button onclick="guardarPersonal()" style="width:100%;padding:11px;background:#16A34A;border:none;border-radius:8px;color:#fff;font-weight:700;font-size:0.85rem;cursor:pointer;font-family:inherit">✅ Guardar Registro de Personal</button>
       </div>
     </div>
     <div id="personal-tabla-cont"></div>
+    <div style="text-align:right;margin-top:8px">
+      <button onclick="if(confirm('¿Borrar todo el historial de personal?')){personalRecords=[];svPersonal();renderPersonalTabla();showToast('Historial borrado');}" style="background:none;border:1px solid #DC2626;color:#DC2626;border-radius:7px;padding:6px 14px;font-size:0.7rem;cursor:pointer;font-family:inherit">🗑 Borrar historial</button>
+    </div>
   </div>
 
 <!-- MODAL EDITAR -->
@@ -637,31 +649,47 @@ var personalRecords = [];
 function svPersonal(){try{localStorage.setItem('arato_personal',JSON.stringify(personalRecords));}catch(e){}}
 function ldPersonal(){try{const d=JSON.parse(localStorage.getItem('arato_personal'));if(Array.isArray(d))personalRecords=d;}catch(e){}}
 
+function calcHrsTotal(){
+  const pp=parseFloat(document.getElementById('prs-hrs-pp').value)||0;
+  const pers=parseFloat(document.getElementById('prs-personal').value)||0;
+  if(pp&&pers){
+    const total=+(pp*pers).toFixed(2);
+    document.getElementById('prs-hrs').value=total;
+  }
+  prevPersonal();
+}
+
 function prevPersonal(){
-  const tons=parseFloat(document.getElementById('p-tons').value)||0;
-  const hrs=parseFloat(document.getElementById('p-hrs').value)||0;
-  const pers=parseFloat(document.getElementById('p-personal').value)||0;
-  if(!tons||!hrs||!pers){document.getElementById('p-prev').style.display='none';return;}
+  const tons=parseFloat(document.getElementById('prs-tons').value)||0;
+  const hrs=parseFloat(document.getElementById('prs-hrs').value)||0;
+  const pers=parseFloat(document.getElementById('prs-personal').value)||0;
+  if(!tons||!hrs||!pers){document.getElementById('prs-prev').style.display='none';return;}
   const tnhr=+(tons/hrs).toFixed(2);
   const tnp=+(tons/pers).toFixed(3);
   const hrsp=+(hrs/pers).toFixed(3);
-  document.getElementById('p-tnhr').textContent=tnhr;
-  document.getElementById('p-tnp').textContent=tnp;
-  document.getElementById('p-hrsp').textContent=hrsp;
-  document.getElementById('p-prev').style.display='grid';
+  document.getElementById('prs-tnhr').textContent=tnhr;
+  document.getElementById('prs-tnp').textContent=tnp;
+  document.getElementById('prs-hrsp').textContent=hrsp;
+  document.getElementById('prs-prev').style.display='grid';
 }
 
 function guardarPersonal(){
-  const fechaRaw=document.getElementById('p-fecha').value.trim();
-  const pers=parseInt(document.getElementById('p-personal').value)||0;
-  const tons=parseFloat(document.getElementById('p-tons').value)||0;
-  const hrs=parseFloat(document.getElementById('p-hrs').value)||0;
-  const obs=document.getElementById('p-obs').value.trim();
+  let fechaRaw=document.getElementById('prs-fecha').value.trim();
+  // Si fecha vacía, usar hoy
+  if(!fechaRaw) fechaRaw=new Date().toISOString().split('T')[0];
 
-  if(!fechaRaw){showToast('⚠️ Ingresa la fecha','err');return;}
+  const pers=parseInt(document.getElementById('prs-personal').value)||0;
+  const tons=parseFloat(document.getElementById('prs-tons').value)||0;
+  const hrs=parseFloat(document.getElementById('prs-hrs').value)||0;
+  const obs=document.getElementById('prs-obs')?document.getElementById('prs-obs').value.trim():'';
+
   if(!pers){showToast('⚠️ Ingresa el número de trabajadores','err');return;}
   if(!tons){showToast('⚠️ Ingresa las toneladas','err');return;}
   if(!hrs){showToast('⚠️ Ingresa las horas','err');return;}
+
+  // Advertir si ya existe registro para esa fecha
+  const existe=personalRecords.find(r=>r.fecha===fecha);
+  if(existe&&!confirm('Ya existe un registro para '+fecha+'. ¿Agregar otro de todas formas?'))return;
 
   // Convertir YYYY-MM-DD → DD/MM/YYYY
   let fecha=fechaRaw;
@@ -673,16 +701,20 @@ function guardarPersonal(){
   const tnhr=+(tons/hrs).toFixed(2);
   const tnp=+(tons/pers).toFixed(3);
   const hrsp=+(hrs/pers).toFixed(3);
+  // Confirmar valores antes de guardar
+  console.log('Guardando personal:',{fecha,pers,tons,hrs,tnhr,tnp});
   personalRecords.unshift({id:'p'+Date.now(),fecha,personal:pers,toneladas:tons,horas:hrs,tnhr,tnp,hrsp,obs});
   svPersonal();
   renderPersonalTabla();
-  document.getElementById('p-fecha').value='';
-  document.getElementById('p-tons').value='';
-  document.getElementById('p-hrs').value='';
-  document.getElementById('p-personal').value='';
-  document.getElementById('p-obs').value='';
-  document.getElementById('p-prev').style.display='none';
-  showToast('✅ Personal guardado — '+pers+' trabajadores · '+tons+'t · '+tnhr+' TN/Hr','ok');
+  // Limpiar campos menos fecha
+  document.getElementById('prs-tons').value='';
+  document.getElementById('prs-hrs').value='';
+  document.getElementById('prs-hrs-pp').value='';
+  document.getElementById('prs-personal').value='';
+  if(document.getElementById('prs-obs'))document.getElementById('prs-obs').value='';
+  const prev=document.getElementById('prs-prev');
+  if(prev)prev.style.display='none';
+  showToast('✅ '+pers+' trabajadores · '+tons+'t · '+tnhr+' TN/Hr guardado','ok');
 }
 
 function eliminarPersonal(id){
@@ -696,26 +728,30 @@ function renderPersonalTabla(){
   const cont=document.getElementById('personal-tabla-cont');
   if(!personalRecords.length){cont.innerHTML='<div style="color:#64748B;text-align:center;padding:30px;font-size:0.8rem">Sin registros — agrega el primero arriba</div>';return;}
   let h='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:0.75rem">';
-  h+='<thead><tr style="background:#1e293b;color:#F5C800">'
-    +'<th style="padding:8px;text-align:left">Fecha</th>'
+  h+='<thead><tr style="background:#0B1437;color:#F5C800">'
+    +'<th style="padding:8px;text-align:left;white-space:nowrap">📅 Fecha</th>'
     +'<th style="padding:8px;text-align:center">👷 Pers.</th>'
-    +'<th style="padding:8px;text-align:center">⏱ Hrs</th>'
+    +'<th style="padding:8px;text-align:center">⏱ Hrs Tot.</th>'
+    +'<th style="padding:8px;text-align:center">⏱ Hrs/Pers</th>'
     +'<th style="padding:8px;text-align:center">⚖️ TN</th>'
-    +'<th style="padding:8px;text-align:center">TN/Hr</th>'
-    +'<th style="padding:8px;text-align:center">TN/Pers</th>'
+    +'<th style="padding:8px;text-align:center">⚡ TN/Hr</th>'
+    +'<th style="padding:8px;text-align:center">📦 TN/Pers</th>'
     +'<th style="padding:8px;text-align:center"></th>'
     +'</tr></thead><tbody>';
   personalRecords.forEach((r,i)=>{
-    const bg=i%2===0?'#0d1526':'#111d35';
+    const bg=i%2===0?'#F8FAFC':'#FFFFFF';
+    const hrsp=r.hrsp||(r.horas&&r.personal?+(r.horas/r.personal).toFixed(2):0);
     h+=`<tr style="background:${bg}">
-      <td style="padding:7px 8px;color:#CBD5E1;font-weight:700">${r.fecha}</td>
-      <td style="padding:7px 8px;text-align:center;color:#60A5FA;font-weight:700">${r.personal}</td>
-      <td style="padding:7px 8px;text-align:center;color:#94A3B8">${r.horas}</td>
-      <td style="padding:7px 8px;text-align:center;color:#CBD5E1;font-weight:700">${r.toneladas}</td>
-      <td style="padding:7px 8px;text-align:center;font-weight:800;color:#F5C800;font-family:monospace">${r.tnhr}</td>
-      <td style="padding:7px 8px;text-align:center;color:#A78BFA;font-weight:700">${r.tnp}</td>
-      <td style="padding:7px 8px;text-align:center"><button onclick="eliminarPersonal('${r.id}')" style="background:none;border:1px solid #DC2626;color:#DC2626;border-radius:5px;padding:3px 8px;cursor:pointer;font-size:0.7rem">🗑</button></td>
+      <td style="padding:8px;color:#1E293B;font-weight:700;border:1px solid #E2E8F0">${r.fecha}</td>
+      <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;font-weight:800;font-size:1rem;color:#7C3AED">${r.personal}</td>
+      <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;font-weight:700;font-family:monospace;color:#1E293B">${r.horas}</td>
+      <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;color:#475569;font-family:monospace">${hrsp}</td>
+      <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;font-weight:700;font-family:monospace;color:#1E293B">${r.toneladas}</td>
+      <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;font-weight:800;font-size:1rem;color:#D97706;font-family:monospace">${r.tnhr}</td>
+      <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;font-weight:700;color:#16A34A;font-family:monospace">${r.tnp}</td>
+      <td style="padding:8px;text-align:center;border:1px solid #E2E8F0"><button onclick="eliminarPersonal('${r.id}')" style="background:none;border:1px solid #DC2626;color:#DC2626;border-radius:5px;padding:3px 8px;cursor:pointer;font-size:0.7rem">🗑</button></td>
     </tr>`;
+    if(r.obs)h+=`<tr style="background:${bg}"><td colspan="8" style="padding:3px 8px 6px;font-size:9px;color:#6B7280;border:1px solid #E2E8F0;font-style:italic">📝 ${r.obs}</td></tr>`;
   });
   h+='</tbody></table></div>';
   cont.innerHTML=h;
@@ -863,7 +899,7 @@ function buildReporteGlobal(){
       <div style="font-size:9px;color:${_rptCol(totTh)};margin-top:2px">${_rptEstado(totTh)}</div>
     </td>
   </tr>`;
-  html+=`<tr><td colspan="5" style="background:#EEF2FF;color:#64748B;font-size:8px;padding:7px 12px;text-align:center;border:none">ARATO · MISSION PRODUCE · Meta: ${META} TN/Hr · ${ahora}</td></tr></table>`;
+  html+=`<tr><td colspan="6" style="background:#EEF2FF;color:#64748B;font-size:8px;padding:7px 12px;text-align:center;border:none">ARATO · MISSION PRODUCE · Meta: ${META} TN/Hr · ${ahora}</td></tr></table>`;
   document.getElementById('rpt-maq-cont').innerHTML=html;
   const newSel=document.getElementById('rpt-fecha-global');
   if(newSel&&fechaSel)newSel.value=fechaSel;
@@ -936,7 +972,7 @@ function buildReportePorMaq(){
     </td>
   </tr>`;
 
-  h+=`<tr><td colspan="5" style="background:#EEF2FF;color:#64748B;font-size:8px;padding:7px 12px;text-align:center;border:none">ARATO · MISSION PRODUCE · Meta: ${META} TN/Hr · ${ahora}</td></tr>`;
+  h+=`<tr><td colspan="6" style="background:#EEF2FF;color:#64748B;font-size:8px;padding:7px 12px;text-align:center;border:none">ARATO · MISSION PRODUCE · Meta: ${META} TN/Hr · ${ahora}</td></tr>`;
   h+='</table>';
   document.getElementById('rpt-maq-cont').innerHTML=h;
 
@@ -1107,39 +1143,83 @@ function buildReporteCombinado(){
   const selEl=document.getElementById('rpt-fecha-combo');
   const fechaSel=selEl?selEl.value:fechas[fechas.length-1];
 
-  let html=`<div style="margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-    <span style="font-size:0.7rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px">📅 Fecha:</span>
-    <select id="rpt-fecha-combo" onchange="buildReporteCombinado()" style="padding:7px 12px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#fff;font-size:0.8rem;font-family:inherit;font-weight:700">
-      ${fechas.map(f=>`<option value="${f}" ${f===fechaSel?'selected':''}>${f}</option>`).join('')}
-    </select>
-  </div>`;
+  let html='';
+  // Pre-calcular totales para resumen ejecutivo
+  const recsMaqPre=records.filter(r=>r.fecha===fechaSel&&(!r.tipo||r.tipo==='maquinaria'));
+  const recsMontaPre=records.filter(r=>r.fecha===fechaSel&&r.tipo==='montacargas');
+  const recsPersPre=personalRecords.filter(r=>r.fecha===fechaSel);
+  const maqH=recsMaqPre.reduce((s,r)=>s+(r.hrsEjec||0),0);
+  const maqT=recsMaqPre.reduce((s,r)=>s+(r.toneladas||0),0);
+  const maqTH=maqH>0?maqT/maqH:0;
+  const montaH=recsMontaPre.reduce((s,r)=>s+(r.hrsEjec||0),0);
+  const montaT=recsMontaPre.reduce((s,r)=>s+(r.toneladas||0),0);
+  const montaTH=montaH>0?montaT/montaH:0;
+  const persT=recsPersPre.reduce((s,r)=>s+(r.toneladas||0),0);
+  const persP=recsPersPre.reduce((s,r)=>s+(r.personal||0),0);
+  const totalTN=maqT; // Producción total = maquinaria (montacargas mueve la misma fruta, no se suma)
+  const estadoGral=maqTH>=META?'✅ BIEN':maqTH>=META*0.7?'⚠️ REGULAR':'❌ BAJO META';
 
   html+=`<table id="rpt-combo-table" style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px;min-width:340px">`;
 
   // ENCABEZADO
-  html+=`<tr><td colspan="5" style="padding:0;border:none">
-    <div style="background:linear-gradient(135deg,#0B1437,#1A3A8F);padding:14px 16px;display:flex;justify-content:space-between;align-items:center">
-      <div>
-        <div style="font-size:14px;font-weight:700;color:#F5C800;text-transform:uppercase;letter-spacing:2px;font-family:Arial Black,Arial">REPORTE DIARIO ARATO</div>
-        <div style="font-size:8px;color:rgba(255,255,255,.7);margin-top:2px">MAQUINARIA · MONTACARGAS · PERSONAL — MISSION PRODUCE</div>
+  html+=`<tr><td colspan="6" style="padding:0;border:none">
+    <div style="background:linear-gradient(135deg,#0B1437,#1A3A8F);padding:16px 16px 12px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+        <div>
+          <div style="font-size:16px;font-weight:700;color:#F5C800;text-transform:uppercase;letter-spacing:2px;font-family:Arial Black,Arial">REPORTE DIARIO</div>
+          <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,.9);margin-top:3px;letter-spacing:1px">ARATO · MISSION PRODUCE · PERÚ</div>
+          <div style="font-size:8px;color:rgba(255,255,255,.6);margin-top:2px">Maquinaria · Montacargas · Personal</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:20px;font-weight:800;color:#F5C800;font-family:monospace">${fechaSel}</div>
+        <div style="font-size:7px;color:rgba(255,255,255,.75);margin-top:2px">Generado: ${ahora}</div>
+        </div>
       </div>
-      <div style="text-align:right">
-        <div style="font-size:13px;font-weight:700;color:#F5C800">📅 ${fechaSel}</div>
-        <div style="font-size:8px;color:rgba(255,255,255,.6)">${ahora}</div>
+      <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.08);border-radius:8px;padding:8px 12px;margin-bottom:12px">
+        <span style="font-size:10px;font-weight:700;color:#F5C800;white-space:nowrap">📅 FECHA EVALUADA:</span>
+        <select id="rpt-fecha-combo" onchange="buildReporteCombinado()" style="flex:1;padding:7px 10px;border-radius:6px;border:1.5px solid #F5C800;background:#0B1437;color:#F5C800;font-size:12px;font-family:monospace;font-weight:800;cursor:pointer">
+          ${fechas.map(f=>`<option value="${f}" ${f===fechaSel?'selected':''}>${f}</option>`).join('')}
+        </select>
+      </div>
+      <div style="background:rgba(0,0,0,.3);border-radius:8px;padding:10px 12px">
+        <div style="font-size:8px;font-weight:700;color:#F5C800;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">📊 RESUMEN EJECUTIVO</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center">
+          <div style="background:rgba(255,255,255,.08);border-radius:6px;padding:7px 4px">
+            <div style="font-size:7px;color:rgba(255,255,255,.6);text-transform:uppercase;margin-bottom:3px">Producción total</div>
+            <div style="font-size:15px;font-weight:800;color:#fff;font-family:monospace">${totalTN.toFixed(1)}</div>
+            <div style="font-size:7px;color:rgba(255,255,255,.5)">toneladas</div>
+          </div>
+          <div style="background:${maqTH>=META?'rgba(22,163,74,.3)':maqTH>=META*0.7?'rgba(217,119,6,.3)':'rgba(220,38,38,.3)'};border-radius:6px;padding:7px 4px">
+            <div style="font-size:7px;color:rgba(255,255,255,.6);text-transform:uppercase;margin-bottom:3px">🚜 TN/Hr Maq.</div>
+            <div style="font-size:15px;font-weight:800;color:${_rptCol(maqTH)};font-family:monospace">${maqTH.toFixed(2)}</div>
+            <div style="font-size:7px;color:${_rptCol(maqTH)}">${estadoGral}</div>
+          </div>
+          <div style="background:rgba(255,255,255,.08);border-radius:6px;padding:7px 4px">
+            <div style="font-size:7px;color:rgba(255,255,255,.6);text-transform:uppercase;margin-bottom:3px">🏗️ TN/Hr Monta.</div>
+            <div style="font-size:15px;font-weight:800;color:#D97706;font-family:monospace">${montaTH>0?montaTH.toFixed(2):'—'}</div>
+            <div style="font-size:7px;color:rgba(255,255,255,.5)">${montaT>0?montaT.toFixed(1)+' TN':'sin datos'}</div>
+          </div>
+          <div style="background:rgba(255,255,255,.08);border-radius:6px;padding:7px 4px">
+            <div style="font-size:7px;color:rgba(255,255,255,.6);text-transform:uppercase;margin-bottom:3px">👷 Personal</div>
+            <div style="font-size:15px;font-weight:800;color:#A78BFA;font-family:monospace">${persP||'—'}</div>
+            <div style="font-size:7px;color:rgba(255,255,255,.7)">${persP&&persT?+(persT/persP).toFixed(2)+' TN/persona':persP?persP+' trabajadores':'sin datos'}</div>
+          </div>
+        </div>
       </div>
     </div>
   </td></tr>`;
 
   function seccionHeader(icon,titulo,color){
-    return `<tr><td colspan="5" style="background:${color};padding:7px 12px;font-size:10px;font-weight:700;color:#fff;letter-spacing:1px;text-transform:uppercase;border:none">${icon} ${titulo}</td></tr>`;
+    return `<tr><td colspan="6" style="background:${color};padding:7px 12px;font-size:10px;font-weight:700;color:#fff;letter-spacing:1px;text-transform:uppercase;border:none">${icon} ${titulo}</td></tr>`;
   }
   function colHeader(){
     return `<tr style="background:#1A3A8F">
-      <th style="padding:8px 12px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:left">Equipo / Nombre</th>
+      <th style="padding:8px 12px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:left">Equipo</th>
       <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">👤 Operador</th>
       <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⏱ Horas</th>
       <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⚖️ Toneladas</th>
       <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⚡ TN/Hr</th>
+      <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">📊 Estado</th>
     </tr>`;
   }
   function totalRow(label,h,t,colspan2label){
@@ -1164,6 +1244,7 @@ function buildReporteCombinado(){
     recsMaq.forEach((r,i)=>{
       const bg=i%2===0?'#F8FAFC':'#FFFFFF';
       totH+=r.hrsEjec||0;totT+=r.toneladas||0;
+      const estadoIcon=r.tnhr>=META?'🟢 BIEN':r.tnhr>=META*0.7?'🟡 REGULAR':'🔴 BAJO META';
       html+=`<tr style="background:${bg}">
         <td style="padding:8px 12px;font-weight:700;color:#1E293B;border:1px solid #D0DCF4">${r.maquina}</td>
         <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;color:#475569;font-size:10px">${r.operador||'—'}</td>
@@ -1172,16 +1253,17 @@ function buildReporteCombinado(){
         <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;background:${_rptBg(r.tnhr)}">
           <div style="font-size:16px;font-weight:800;color:${_rptCol(r.tnhr)};font-family:monospace">${(r.tnhr||0).toFixed(2)}</div>
         </td>
+        <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;font-size:10px;font-weight:700;color:${_rptCol(r.tnhr)}">${estadoIcon}</td>
       </tr>`;
     });
     html+=totalRow(`TOTAL MAQUINARIA — ${recsMaq.length} equipo(s)`,totH,totT);
   } else {
-    html+=`<tr><td colspan="5" style="padding:10px;text-align:center;color:#94A3B8;font-style:italic;font-size:10px;background:#F8FAFC">Sin registros de maquinaria para esta fecha</td></tr>`;
+    html+=`<tr><td colspan="6" style="padding:10px;text-align:center;color:#94A3B8;font-style:italic;font-size:10px;background:#F8FAFC">Sin registros de maquinaria para esta fecha</td></tr>`;
   }
 
   // ── SECCIÓN MONTACARGAS ──
   const recsMonta=records.filter(r=>r.fecha===fechaSel&&r.tipo==='montacargas');
-  html+=`<tr><td colspan="5" style="height:6px;background:#E2E8F0;border:none"></td></tr>`;
+  html+=`<tr><td colspan="6" style="height:6px;background:#E2E8F0;border:none"></td></tr>`;
   html+=seccionHeader('🏗️','MONTACARGAS','#B45309');
   if(recsMonta.length){
     html+=colHeader();
@@ -1189,6 +1271,7 @@ function buildReporteCombinado(){
     recsMonta.forEach((r,i)=>{
       const bg=i%2===0?'#FFFBEB':'#FEF9C3';
       totH+=r.hrsEjec||0;totT+=r.toneladas||0;
+      const montaEstado=META_MONTA>0?(r.tnhr>=META_MONTA?'🟢 BIEN':r.tnhr>=META_MONTA*0.7?'🟡 REGULAR':'🔴 BAJO META'):'📋 S/META';
       html+=`<tr style="background:${bg}">
         <td style="padding:8px 12px;font-weight:700;color:#1E293B;border:1px solid #FDE68A">${r.maquina}</td>
         <td style="padding:8px;text-align:center;border:1px solid #FDE68A;color:#475569;font-size:10px">${r.operador||'—'}</td>
@@ -1197,41 +1280,45 @@ function buildReporteCombinado(){
         <td style="padding:8px;text-align:center;border:1px solid #FDE68A;background:#FEF3C7">
           <div style="font-size:16px;font-weight:800;color:#D97706;font-family:monospace">${(r.tnhr||0).toFixed(2)}</div>
         </td>
+        <td style="padding:8px;text-align:center;border:1px solid #FDE68A;font-size:10px;font-weight:700;color:#B45309">${montaEstado}</td>
       </tr>`;
     });
     html+=totalRow(`TOTAL MONTACARGAS — ${recsMonta.length} equipo(s)`,totH,totT);
   } else {
-    html+=`<tr><td colspan="5" style="padding:10px;text-align:center;color:#94A3B8;font-style:italic;font-size:10px;background:#FFFBEB">Sin registros de montacargas para esta fecha</td></tr>`;
+    html+=`<tr><td colspan="6" style="padding:10px;text-align:center;color:#94A3B8;font-style:italic;font-size:10px;background:#FFFBEB">Sin registros de montacargas para esta fecha</td></tr>`;
   }
 
   // ── SECCIÓN PERSONAL ──
   const recsPers=personalRecords.filter(r=>r.fecha===fechaSel);
-  html+=`<tr><td colspan="5" style="height:6px;background:#E2E8F0;border:none"></td></tr>`;
+  html+=`<tr><td colspan="6" style="height:6px;background:#E2E8F0;border:none"></td></tr>`;
   html+=seccionHeader('👷','PERSONAL / MANO DE OBRA','#5B21B6');
   if(recsPers.length){
     html+=`<tr style="background:#1A3A8F">
       <th style="padding:8px 12px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">👷 Trabajadores</th>
-      <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⏱ Horas</th>
+      <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⏱ Hrs Tot.</th>
+      <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⏱ Hrs/Pers</th>
       <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⚖️ Toneladas</th>
       <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⚡ TN/Hr</th>
       <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">📦 TN/Persona</th>
     </tr>`;
     recsPers.forEach((r,i)=>{
       const bg=i%2===0?'#F5F3FF':'#EDE9FE';
+      const hrsp=r.hrsp||(r.horas&&r.personal?+(r.horas/r.personal).toFixed(2):0);
       html+=`<tr style="background:${bg}">
         <td style="padding:9px;text-align:center;font-size:18px;font-weight:800;color:#7C3AED;border:1px solid #DDD6FE">${r.personal}</td>
         <td style="padding:9px;text-align:center;font-weight:700;font-family:monospace;border:1px solid #DDD6FE;color:#1E293B">${r.horas}</td>
+        <td style="padding:9px;text-align:center;font-family:monospace;border:1px solid #DDD6FE;color:#475569">${hrsp}</td>
         <td style="padding:9px;text-align:center;font-weight:700;font-family:monospace;border:1px solid #DDD6FE;color:#1E293B">${r.toneladas}</td>
-        <td style="padding:9px;text-align:center;font-size:18px;font-weight:800;color:#F5C800;font-family:monospace;border:1px solid #DDD6FE;background:#1A3A8F">${r.tnhr}</td>
-        <td style="padding:9px;text-align:center;font-size:16px;font-weight:800;color:#7C3AED;font-family:monospace;border:1px solid #DDD6FE">${r.tnp}</td>
+        <td style="padding:9px;text-align:center;font-size:18px;font-weight:800;color:#D97706;font-family:monospace;border:1px solid #DDD6FE">${r.tnhr}</td>
+        <td style="padding:9px;text-align:center;font-size:16px;font-weight:800;color:#16A34A;font-family:monospace;border:1px solid #DDD6FE">${r.tnp}</td>
       </tr>`;
-      if(r.obs)html+=`<tr style="background:${bg}"><td colspan="5" style="padding:4px 12px;font-size:9px;color:#6B7280;border:1px solid #DDD6FE;font-style:italic">📝 ${r.obs}</td></tr>`;
+      if(r.obs)html+=`<tr style="background:${bg}"><td colspan="6" style="padding:4px 12px;font-size:9px;color:#6B7280;border:1px solid #DDD6FE;font-style:italic">📝 ${r.obs}</td></tr>`;
     });
   } else {
-    html+=`<tr><td colspan="5" style="padding:10px;text-align:center;color:#94A3B8;font-style:italic;font-size:10px;background:#F5F3FF">Sin registros de personal — agrégalos en la pestaña 👷 Personal</td></tr>`;
+    html+=`<tr><td colspan="6" style="padding:10px;text-align:center;color:#94A3B8;font-style:italic;font-size:10px;background:#F5F3FF">Sin registros de personal — agrégalos en la pestaña 👷 Personal</td></tr>`;
   }
 
-  html+=`<tr><td colspan="5" style="background:#EEF2FF;color:#64748B;font-size:8px;padding:7px 12px;text-align:center;border:none">ARATO · MISSION PRODUCE · Meta maquinaria: ${META} TN/Hr · ${ahora}</td></tr>`;
+  html+=`<tr><td colspan="6" style="background:#0B1437;color:rgba(255,255,255,.75);font-size:9px;font-weight:600;padding:9px 14px;text-align:center;border:none;letter-spacing:.5px">ARATO · MISSION PRODUCE PERÚ &nbsp;|&nbsp; Meta maquinaria: ${META} TN/Hr &nbsp;|&nbsp; ${ahora}</td></tr>`;
   html+='</table>';
   document.getElementById('rpt-maq-cont').innerHTML=html;
   const newSel=document.getElementById('rpt-fecha-combo');
@@ -1241,17 +1328,30 @@ function buildReporteCombinado(){
 async function _capturarReporte(){
   const outer=document.getElementById('rpt-maq-outer');
   const cont=document.getElementById('rpt-maq-cont');
-  // Guardar estilos originales
+  // Ocultar selectores de fecha durante captura (html2canvas no los renderiza bien)
+  const sels=cont.querySelectorAll('select');
+  const selVals=[];
+  sels.forEach(s=>{
+    selVals.push({el:s,val:s.value,display:s.style.display,parent:s.parentNode});
+    const span=document.createElement('span');
+    span.id='_rpt_fecha_span_'+Math.random();
+    span.textContent=s.value;
+    span.style.cssText='padding:8px 12px;border-radius:6px;border:2px solid #F5C800;background:#0B1437;color:#F5C800;font-size:13px;font-family:monospace;font-weight:800;display:inline-block';
+    s.parentNode.insertBefore(span,s);
+    s.style.display='none';
+    selVals[selVals.length-1].span=span;
+  });
+  // Expandir
   const origMaxH=outer.style.maxHeight;
   const origOverflow=outer.style.overflow;
-  // Expandir para capturar todo
   outer.style.maxHeight='none';
   outer.style.overflow='visible';
-  await new Promise(r=>setTimeout(r,80)); // esperar repintado
+  await new Promise(r=>setTimeout(r,100));
   const cv=await html2canvas(cont,{scale:2.5,useCORS:true,backgroundColor:'#ffffff',logging:false,scrollY:0,windowWidth:cont.scrollWidth+40,windowHeight:cont.scrollHeight+40});
   // Restaurar
   outer.style.maxHeight=origMaxH;
   outer.style.overflow=origOverflow;
+  selVals.forEach(s=>{s.el.style.display='';if(s.span)s.span.remove();});
   return cv;
 }
 
@@ -1303,9 +1403,9 @@ function updatePreview() {
   // Mostrar bins calculados debajo del campo
   const calcEl=document.getElementById("f-bins-calc");
   if(calcEl)calcEl.textContent=`≈ ${bins} bins (a ${KG_BIN} kg/bin)`;
-  document.getElementById("p-hrs").textContent = hrs.toFixed(1)+" hrs";
-  document.getElementById("p-tons").textContent = tons+" t → "+bins+" bins";
-  document.getElementById("p-tnhr").innerHTML = `<span style="color:${tnhr>=META?'var(--green)':'var(--red)'}">${tnhr} TN/Hr</span>`;
+  document.getElementById("maq-p-hrs").textContent = hrs.toFixed(1)+" hrs";
+  document.getElementById("maq-p-tons").textContent = tons+" t → "+bins+" bins";
+  document.getElementById("maq-p-tnhr").innerHTML = `<span style="color:${tnhr>=META?'var(--green)':'var(--red)'}">${tnhr} TN/Hr</span>`;
   document.getElementById("p-estado").innerHTML = badge(estado);
   document.getElementById("preview").style.display = "grid";
 }
@@ -1648,7 +1748,7 @@ function onOperadorInput() {
 
 // init
 document.getElementById("f-fecha").value = new Date().toLocaleDateString("es-PE",{day:"2-digit",month:"2-digit",year:"numeric"}).replace(/\//g,"/");
-document.getElementById("p-fecha").value = new Date().toISOString().split('T')[0];
+document.getElementById("prs-fecha").value = new Date().toISOString().split('T')[0];
 updateMaquinaFilter();
 ldPersonal();
 cargarRegistros();
