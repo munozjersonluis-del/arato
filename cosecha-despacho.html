@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cosecha Arato">
+<meta name="theme-color" content="#0D1B0F">
 <title>Cosecha & Despacho — Arato</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
@@ -432,15 +437,47 @@ async function registrarCosecha(){
 // ── STOCK ──
 async function cargarStock(){
   const cont=document.getElementById('stock-list');
+  const CACHE_KEY='arato_stock_'+fundoActual;
+  // Mostrar caché inmediatamente si existe
+  try{
+    const cached=localStorage.getItem(CACHE_KEY);
+    if(cached){
+      const cachedRows=JSON.parse(cached);
+      if(cachedRows&&cachedRows.length){
+        renderStock(cachedRows,cont);
+        cont.insertAdjacentHTML('afterbegin','<div style="font-size:0.6rem;color:var(--txt3);text-align:center;padding:4px;background:#FEF9C3;border-radius:6px;margin-bottom:6px">🔄 Actualizando desde servidor...</div>');
+      }
+    }
+  }catch(e){}
   try{
     const rows=await api('cosecha_modulos?select=*&fundo=eq.'+encodeURIComponent(fundoActual)+'&order=fecha_cosecha.desc,modulo.asc');
     if(!rows||!rows.length){cont.innerHTML='<div class="empty">Sin cosechas registradas</div>';return;}
+    // Guardar en caché para próxima vez
+    try{localStorage.setItem(CACHE_KEY,JSON.stringify(rows));}catch(e){}
+    renderStock(rows,cont);
+  }catch(e){
+    // Si falla la red, mostrar caché y aviso
+    try{
+      const cached=localStorage.getItem(CACHE_KEY);
+      if(cached){
+        const cachedRows=JSON.parse(cached);
+        renderStock(cachedRows,cont);
+        cont.insertAdjacentHTML('afterbegin','<div style="font-size:0.65rem;color:#92400E;text-align:center;padding:6px;background:#FEF3C7;border-radius:6px;margin-bottom:8px;font-weight:600">⚠️ Sin conexión — mostrando datos guardados localmente</div>');
+        return;
+      }
+    }catch(e2){}
+    cont.innerHTML='<div class="empty">Sin conexión — verifica tu señal</div>';
+  }
+}
+
+function renderStock(rows,cont){
     // Update header stats
     const totalBins=rows.reduce((s,r)=>s+(r.bins_cosechados||0),0);
     const vendBins=rows.reduce((s,r)=>s+(r.bins_vendidos||0),0);
     const vendJabasBins=rows.reduce((s,r)=>s+((r.jabas_vendidas||0)/JABAS_BIN),0);
+    const dispTotal=rows.reduce((s,r)=>s+Math.floor(Math.max(0,(r.bins_cosechados||0)-(r.bins_vendidos||0)-((r.jabas_vendidas||0)/JABAS_BIN))),0);
     document.getElementById('hdr-total').textContent=totalBins;
-    document.getElementById('hdr-disp').textContent=Math.floor(Math.max(0,totalBins-vendBins-vendJabasBins));
+    document.getElementById('hdr-disp').textContent=dispTotal;
     // Group by modulo
     const modMap={};
     rows.forEach(r=>{
@@ -472,7 +509,6 @@ async function cargarStock(){
         +'</div></div>';
     });
     cont.innerHTML=html||'<div class="empty">Sin stock disponible</div>';
-  }catch(e){cont.innerHTML='<div class="empty">Error cargando stock</div>';}
 }
 
 // ── REPORTE VISUAL (tipo Excel en pantalla) ──
