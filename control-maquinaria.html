@@ -1001,66 +1001,234 @@ function _weekLabel(lunesStr){
 function buildReporteSemanal(){
   const ahora=new Date().toLocaleString('es-PE');
   const recsMaq=records.filter(r=>!r.tipo||r.tipo==='maquinaria');
+  const recsMonta=records.filter(r=>r.tipo==='montacargas');
   if(!recsMaq.length){document.getElementById('rpt-maq-cont').innerHTML='<div style="color:#475569;text-align:center;padding:40px;font-size:0.85rem">Sin registros de maquinaria</div>';return;}
-
-  // Agrupar por semana
-  const semMap={};
-  recsMaq.forEach(r=>{
-    const wk=_weekKey(r.fecha);
-    if(!semMap[wk])semMap[wk]={lunes:wk,dias:new Set(),maquinas:new Set(),hrs:0,bins:0,tons:0};
-    semMap[wk].dias.add(r.fecha);
-    semMap[wk].maquinas.add(r.maquina);
-    semMap[wk].hrs+=r.hrsEjec||0;
-    semMap[wk].bins+=r.bins||0;
-    semMap[wk].tons+=r.toneladas||0;
-  });
-
-  const semanas=Object.keys(semMap).sort((a,b)=>{
-    const [da,ma,ya]=a.split('/').map(Number);
-    const [db,mb,yb]=b.split('/').map(Number);
+  const semKeys=[...new Set(recsMaq.map(r=>_weekKey(r.fecha)))].sort((a,b)=>{
+    const [da,ma,ya]=a.split('/').map(Number);const [db,mb,yb]=b.split('/').map(Number);
     return new Date(ya,ma-1,da)-new Date(yb,mb-1,db);
   });
-
-  let h=`<table style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px;min-width:360px">`;
-  h+=`<tr><td colspan="6" style="padding:0;border:none">${_rptHeader('RESUMEN SEMANAL — MAQUINARIA','📅 TN/Hr ACUMULADO POR SEMANA',ahora)}</td></tr>`;
-  h+=`<tr style="background:#1A3A8F">
-    <th style="padding:9px 10px;color:#F5C800;font-size:9px;border:1px solid #D0DCF4;text-align:left">📅 Semana</th>
-    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #D0DCF4;text-align:center">📆 Días</th>
-    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #D0DCF4;text-align:center">🚜 Máqs</th>
-    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #D0DCF4;text-align:center">⏱ Horas</th>
-    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #D0DCF4;text-align:center">⚖️ TN</th>
-    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #D0DCF4;text-align:center;background:#DCFCE7">⚡ TN/Hr</th>
-  </tr>`;
-
-  let totH=0,totT=0;
-  semanas.forEach((wk,i)=>{
-    const s=semMap[wk];
-    const th=s.hrs>0?s.tons/s.hrs:0;
-    const bg=i%2===0?'#F8FAFC':'#FFFFFF';
-    h+=`<tr style="background:${bg}">
-      <td style="padding:9px 10px;color:#1E293B;font-weight:700;border:1px solid #D0DCF4;font-size:10px">${_weekLabel(wk)}</td>
-      <td style="padding:9px;text-align:center;border:1px solid #D0DCF4;color:#64748B">${s.dias.size}</td>
-      <td style="padding:9px;text-align:center;border:1px solid #D0DCF4;color:#64748B">${s.maquinas.size}</td>
-      <td style="padding:9px;text-align:center;border:1px solid #D0DCF4;color:#64748B">${s.hrs.toFixed(1)}</td>
-      <td style="padding:9px;text-align:center;border:1px solid #D0DCF4;color:#1E293B;font-weight:700">${s.tons.toFixed(1)}</td>
-      <td style="padding:9px;text-align:center;border:1px solid #D0DCF4;background:${_rptBg(th)}">
-        <div style="font-size:22px;font-weight:800;color:${_rptCol(th)};font-family:monospace;line-height:1">${th.toFixed(2)}</div>
-        <div style="font-size:8px;color:${_rptCol(th)};opacity:.8">${_rptEstado(th)}</div>
-      </td>
-    </tr>`;
-    totH+=s.hrs;totT+=s.tons;
+  const selEl=document.getElementById('rpt-sem-sel');
+  const semSel=selEl?selEl.value:semKeys[semKeys.length-1];
+  const [ds,ms,ys]=semSel.split('/').map(Number);
+  const lunes=new Date(ys,ms-1,ds);
+  const diasSem=[];
+  for(let i=0;i<7;i++){const d=new Date(lunes);d.setDate(lunes.getDate()+i);diasSem.push(d.toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'numeric'}));}
+  const diasConDatos=diasSem.filter(d=>recsMaq.some(r=>r.fecha===d));
+  const numDias=diasConDatos.length;
+  const semLabel=_weekLabel(semSel);
+  const semN=String(getWeekNumber(lunes)).padStart(2,'0');
+  function dD(dia,recs){
+    const r=recs.filter(x=>x.fecha===dia);
+    const hrs=r.reduce((s,x)=>s+(x.hrsEjec||0),0);
+    const bins=r.reduce((s,x)=>s+(x.bins||0),0);
+    const tons=r.reduce((s,x)=>s+(x.toneladas||0),0);
+    return{hrs,bins,tons,tnhr:hrs>0?tons/hrs:0};
+  }
+  const mD=diasConDatos.map(d=>dD(d,recsMaq));
+  const moD=diasConDatos.map(d=>dD(d,recsMonta));
+  const pD=diasConDatos.map(d=>{
+    const r=personalRecords.filter(x=>x.fecha===d);
+    return{pers:r.reduce((s,x)=>s+(x.personal||0),0),tons:r.reduce((s,x)=>s+(x.toneladas||0),0),hrs:r.reduce((s,x)=>s+(x.horas||0),0)};
   });
-  const totTh=totH>0?totT/totH:0;
-  h+=`<tr style="background:#1A3A8F">
-    <td colspan="4" style="padding:10px;color:#F5C800;font-size:10px;font-weight:700;border:1px solid #C0D0F4;text-align:right">PROMEDIO TOTAL · ${totT.toFixed(1)} TN · ${totH.toFixed(1)} hrs</td>
-    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:700">${totT.toFixed(1)}</td>
-    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;background:${_rptBg(totTh)}">
-      <div style="font-size:26px;font-weight:800;color:${_rptCol(totTh)};font-family:monospace;line-height:1">${totTh.toFixed(2)}</div>
-      <div style="font-size:9px;color:${_rptCol(totTh)};opacity:.8">${_rptEstado(totTh)}</div>
-    </td>
+  const totMaqH=mD.reduce((s,d)=>s+d.hrs,0);
+  const totMaqT=mD.reduce((s,d)=>s+d.tons,0);
+  const totMaqB=mD.reduce((s,d)=>s+d.bins,0);
+  const totMontaH=moD.reduce((s,d)=>s+d.hrs,0);
+  const totMontaT=moD.reduce((s,d)=>s+d.tons,0);
+  const totPersP=pD.reduce((s,d)=>s+d.pers,0);
+  const totPersT=pD.reduce((s,d)=>s+d.tons,0);
+  const totTnhrMaq=totMaqH>0?totMaqT/totMaqH:0;
+  const totTnhrMonta=totMontaH>0?totMontaT/totMontaH:0;
+  const totTnp=totPersP&&totPersT?totPersT/totPersP:0;
+  const cumplimiento=META>0?Math.round(totTnhrMaq/META*100):0;
+  const tnhrsPorDia=mD.map((d,i)=>({dia:diasConDatos[i],tnhr:d.tnhr,tons:d.tons})).filter(x=>x.tnhr>0);
+  const mejorDia=tnhrsPorDia.length?tnhrsPorDia.reduce((a,b)=>b.tnhr>a.tnhr?b:a):{dia:'—',tnhr:0};
+  const peorDia=tnhrsPorDia.length?tnhrsPorDia.reduce((a,b)=>b.tnhr<a.tnhr?b:a):{dia:'—',tnhr:0};
+  function tend(arr,i,key){
+    if(i===0)return'';const c=arr[i][key],p=arr[i-1][key];
+    if(!p||!c)return'';
+    return c>p?'<span style="color:#16A34A;font-size:8px">▲</span>':c<p?'<span style="color:#DC2626;font-size:8px">▼</span>':'';
+  }
+  const analisis=(()=>{
+    if(!tnhrsPorDia.length)return'Sin datos suficientes.';
+    const mStr=mejorDia.dia!=='—'?`El mejor rendimiento fue el <b>${mejorDia.dia}</b> con <b>${mejorDia.tnhr.toFixed(2)} TN/Hr</b>`:'';
+    const pStr=peorDia.dia!=='—'&&peorDia.dia!==mejorDia.dia?`, el menor el <b>${peorDia.dia}</b> con <b>${peorDia.tnhr.toFixed(2)} TN/Hr</b>`:'';
+    const cStr=cumplimiento>=100?'superando la meta':cumplimiento>=80?'dentro del rango aceptable':'por debajo de la meta, requiriendo atención';
+    const prsStr=totTnp>0?` Personal: <b>${totTnp.toFixed(2)} TN/persona</b>.`:'';
+    return`Semana ${semN}: <b>${totMaqT.toFixed(1)} TN</b> en ${numDias} día(s). ${mStr}${pStr}. Ratio global <b>${totTnhrMaq.toFixed(2)} TN/Hr</b> — ${cStr} (${cumplimiento}%).${prsStr}`;
+  })();
+  const barW=Math.floor(260/Math.max(numDias,1));
+  const barH=55;
+  const maxTons=Math.max(...mD.map(d=>d.tons),1);
+  const maxTnhr=Math.max(...mD.map(d=>d.tnhr),META,1);
+  let svgBars='';
+  diasConDatos.forEach((dia,i)=>{
+    const t=mD[i].tons;const h2=Math.round(t/maxTons*barH);const x=i*(barW+4);
+    const col=mD[i].tnhr>=META?'#16A34A':mD[i].tnhr>=META*0.7?'#D97706':'#DC2626';
+    svgBars+=`<rect x="${x}" y="${barH-h2}" width="${barW}" height="${h2}" fill="${col}" rx="2" opacity=".85"/>
+      <text x="${x+barW/2}" y="${barH-h2-3}" text-anchor="middle" font-size="6" fill="#fff">${t.toFixed(0)}</text>
+      <text x="${x+barW/2}" y="${barH+10}" text-anchor="middle" font-size="6" fill="rgba(255,255,255,.6)">${dia.substring(0,5)}</text>`;
+  });
+  const pts=diasConDatos.map((d,i)=>{
+    const x=i*(barW+4)+barW/2;const y=barH-(mD[i].tnhr/maxTnhr*barH*0.88);return`${x},${y}`;
+  }).join(' ');
+  const metaY=barH-(META/maxTnhr*barH*0.88);
+  let h='';
+  h+=`<div style="margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+    <span style="font-size:0.7rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px">📅 Semana:</span>
+    <select id="rpt-sem-sel" onchange="buildReporteSemanal()" style="padding:7px 12px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#fff;font-size:0.8rem;font-family:inherit;font-weight:700">
+      ${semKeys.map(k=>`<option value="${k}" ${k===semSel?'selected':''}>${_weekLabel(k)}</option>`).join('')}
+    </select>
+  </div>`;
+  h+=`<table style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px">`;
+  h+=`<tr><td colspan="${numDias+2}" style="padding:0;border:none">
+    <div style="background:linear-gradient(135deg,#0B1437 0%,#1A3A8F 60%,#0d2d10 100%);padding:16px 18px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+        <div>
+          <div style="font-size:16px;font-weight:700;color:#F5C800;text-transform:uppercase;letter-spacing:2.5px;font-family:Arial Black,Arial">REPORTE SEMANAL</div>
+          <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,.9);margin-top:3px;letter-spacing:1px">MAQUINARIA ACOPIO COSECHA · ARATO 2026</div>
+          <div style="font-size:8.5px;color:rgba(255,255,255,.6);margin-top:2px">MISSION PRODUCE · VALLE DE VIRÚ · LA LIBERTAD, PERÚ</div>
+          <div style="font-size:9px;font-weight:700;color:#fff;margin-top:6px">📅 ${semLabel}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="background:#F5C800;color:#0B1437;font-size:13px;font-weight:800;padding:6px 14px;border-radius:8px">SEM-${semN}</div>
+          <div style="font-size:7.5px;color:rgba(255,255,255,.6);margin-top:5px">Generado: ${ahora}</div>
+          <div style="font-size:8.5px;color:#F5C800;margin-top:2px">${numDias} días operativos</div>
+        </div>
+      </div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:8px;font-weight:700;color:#F5C800;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">📊 RESUMEN EJECUTIVO</div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px">
+          <div style="background:rgba(255,255,255,.1);border-radius:8px;padding:9px 6px;text-align:center">
+            <div style="font-size:7px;color:rgba(255,255,255,.6);text-transform:uppercase;margin-bottom:4px">⚖️ Producción</div>
+            <div style="font-size:17px;font-weight:800;color:#fff;font-family:monospace;line-height:1">${totMaqT.toFixed(0)}</div>
+            <div style="font-size:7px;color:rgba(255,255,255,.5);margin-top:2px">toneladas</div>
+          </div>
+          <div style="background:${totTnhrMaq>=META?'rgba(22,163,74,.35)':totTnhrMaq>=META*0.7?'rgba(217,119,6,.35)':'rgba(220,38,38,.35)'};border-radius:8px;padding:9px 6px;text-align:center">
+            <div style="font-size:7px;color:rgba(255,255,255,.7);text-transform:uppercase;margin-bottom:4px">🚜 TN/Hr Tractor</div>
+            <div style="font-size:17px;font-weight:800;color:${_rptCol(totTnhrMaq)};font-family:monospace;line-height:1">${totTnhrMaq.toFixed(2)}</div>
+            <div style="font-size:7px;color:${_rptCol(totTnhrMaq)};margin-top:2px">${_rptEstado(totTnhrMaq)}</div>
+          </div>
+          <div style="background:rgba(255,255,255,.1);border-radius:8px;padding:9px 6px;text-align:center">
+            <div style="font-size:7px;color:rgba(255,255,255,.6);text-transform:uppercase;margin-bottom:4px">🏗️ TN/Hr Monta.</div>
+            <div style="font-size:17px;font-weight:800;color:#D97706;font-family:monospace;line-height:1">${totTnhrMonta>0?totTnhrMonta.toFixed(2):'—'}</div>
+            <div style="font-size:7px;color:rgba(255,255,255,.5);margin-top:2px">${totMontaT>0?totMontaT.toFixed(0)+' TN':'sin datos'}</div>
+          </div>
+          <div style="background:rgba(255,255,255,.1);border-radius:8px;padding:9px 6px;text-align:center">
+            <div style="font-size:7px;color:rgba(255,255,255,.6);text-transform:uppercase;margin-bottom:4px">👷 TN/Persona</div>
+            <div style="font-size:17px;font-weight:800;color:#A78BFA;font-family:monospace;line-height:1">${totTnp>0?totTnp.toFixed(2):'—'}</div>
+            <div style="font-size:7px;color:rgba(255,255,255,.5);margin-top:2px">${totPersP>0?totPersP+' trab.':'sin datos'}</div>
+          </div>
+          <div style="background:${cumplimiento>=100?'rgba(22,163,74,.35)':cumplimiento>=80?'rgba(217,119,6,.35)':'rgba(220,38,38,.35)'};border-radius:8px;padding:9px 6px;text-align:center">
+            <div style="font-size:7px;color:rgba(255,255,255,.7);text-transform:uppercase;margin-bottom:4px">🎯 Cumplimiento</div>
+            <div style="font-size:17px;font-weight:800;color:${cumplimiento>=100?'#4ADE80':cumplimiento>=80?'#FCD34D':'#FCA5A5'};font-family:monospace;line-height:1">${cumplimiento}%</div>
+            <div style="font-size:7px;color:rgba(255,255,255,.6);margin-top:2px">meta ${META} TN/Hr</div>
+          </div>
+        </div>
+      </div>
+      <div style="background:rgba(0,0,0,.25);border-radius:8px;padding:10px 12px;border:1px solid rgba(255,255,255,.1)">
+        <div style="font-size:7.5px;font-weight:700;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">📈 TN/DÍA (barras) + TN/HR TRACTOR (línea dorada)</div>
+        <svg width="100%" viewBox="0 0 ${Math.max(numDias*(barW+4),200)} ${barH+16}" style="overflow:visible">
+          <line x1="0" y1="${metaY}" x2="${numDias*(barW+4)}" y2="${metaY}" stroke="#F5C800" stroke-width="1" stroke-dasharray="4,3" opacity=".8"/>
+          <text x="${numDias*(barW+4)-2}" y="${metaY-3}" text-anchor="end" font-size="6" fill="#F5C800">Meta</text>
+          ${svgBars}
+          ${pts?`<polyline points="${pts}" fill="none" stroke="#F5C800" stroke-width="2" opacity=".9"/>`:''}
+          ${diasConDatos.map((d,i)=>{
+            const x=i*(barW+4)+barW/2;const y=barH-(mD[i].tnhr/maxTnhr*barH*0.88);
+            return mD[i].tnhr>0?`<circle cx="${x}" cy="${y}" r="3" fill="#F5C800" stroke="#fff" stroke-width="1"/>
+              <text x="${x}" y="${y-5}" text-anchor="middle" font-size="6.5" fill="#F5C800" font-weight="bold">${mD[i].tnhr.toFixed(1)}</text>`:'';
+          }).join('')}
+        </svg>
+        <div style="display:flex;gap:14px;margin-top:6px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:8px;background:#16A34A;border-radius:2px;opacity:.85"></div><span style="font-size:7px;color:rgba(255,255,255,.6)">Sobre meta</span></div>
+          <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:8px;background:#D97706;border-radius:2px;opacity:.85"></div><span style="font-size:7px;color:rgba(255,255,255,.6)">Regular</span></div>
+          <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:8px;background:#DC2626;border-radius:2px;opacity:.85"></div><span style="font-size:7px;color:rgba(255,255,255,.6)">Bajo meta</span></div>
+          <div style="display:flex;align-items:center;gap:4px"><div style="width:18px;height:2px;background:#F5C800;margin-top:3px"></div><span style="font-size:7px;color:rgba(255,255,255,.6)">TN/Hr</span></div>
+        </div>
+      </div>
+    </div>
+  </td></tr>`;
+  const cS='padding:8px 6px;color:#F5C800;font-size:9px;border:1px solid #1e3a5f;text-align:center;white-space:nowrap;min-width:65px';
+  h+=`<tr style="background:#0B1437">
+    <th style="${cS};text-align:left;min-width:155px">CATEGORÍA</th>
+    ${diasConDatos.map(d=>{
+      const pts=d.split('/');const dow=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][new Date(+pts[2],+pts[1]-1,+pts[0]).getDay()];
+      return`<th style="${cS}">${pts[0]}/${pts[1]}<br><span style="font-size:7px;opacity:.7">${dow}</span></th>`;
+    }).join('')}
+    <th style="${cS};background:#0d2d10">TOTAL SEM</th>
   </tr>`;
-  h+=`<tr><td colspan="6" style="background:#EEF2FF;color:#64748B;font-size:8px;padding:7px 12px;text-align:center;border:none">ARATO · MISSION PRODUCE · Meta: ${META} TN/Hr · ${ahora}</td></tr></table>`;
+  function lbl(t,c,bg){return`<td style="padding:8px 10px;font-weight:700;font-size:10px;color:${c};background:${bg};border:1px solid #e2e8f0;white-space:nowrap">${t}</td>`;}
+  function num(v,b,c,bg){return`<td style="padding:8px 6px;text-align:center;border:1px solid #e2e8f0;font-family:monospace;font-weight:${b?800:600};color:${c||'#1E293B'};font-size:${b?13:11}px;background:${bg||'inherit'}">${v}</td>`;}
+  function emp(bg){return`<td style="padding:8px;text-align:center;border:1px solid #e2e8f0;background:${bg||'#F8FAFC'};color:#CBD5E1;font-size:9px">—</td>`;}
+  function cCol(v,tnhr,td){return`<td style="padding:8px 6px;text-align:center;border:1px solid #e2e8f0;background:${_rptBg(tnhr)}"><div style="font-size:14px;font-weight:800;color:${_rptCol(tnhr)};font-family:monospace;line-height:1">${v}${td||''}</div><div style="font-size:8px;color:${_rptCol(tnhr)};margin-top:1px">${tnhr>=META?'🟢':tnhr>=META*0.7?'🟡':'🔴'}</div></td>`;}
+  h+=`<tr style="background:#EEF2FF">${lbl('🚜 Horas Tractor','#1A3A8F','#EEF2FF')}`;
+  mD.forEach(d=>h+=d.hrs?num(d.hrs.toFixed(1),true,'#1A3A8F'):emp());
+  h+=num(totMaqH.toFixed(1),true,'#1A3A8F','#E0E8FF')+'</tr>';
+  h+=`<tr style="background:#FFFBEB">${lbl('🏗️ Horas Montacargas','#B45309','#FEF9C3')}`;
+  moD.forEach(d=>h+=d.hrs?num(d.hrs.toFixed(1),true,'#B45309','#FFFBEB'):emp('#FFFBEB'));
+  h+=num(totMontaH>0?totMontaH.toFixed(1):'—',true,'#B45309','#FEF9C3')+'</tr>';
+  h+=`<tr style="background:#F5F3FF">${lbl('👷 Personal Acopio','#7C3AED','#EDE9FE')}`;
+  pD.forEach(d=>h+=d.pers?num(d.pers,true,'#7C3AED','#F5F3FF'):emp('#F5F3FF'));
+  h+=num(totPersP||'—',true,'#7C3AED','#EDE9FE')+'</tr>';
+  h+=`<tr style="background:#F0F9FF">${lbl('📦 Bins','#0369A1','#E0F2FE')}`;
+  mD.forEach(d=>h+=d.bins>0?num(Math.round(d.bins),false,'#0369A1','#F0F9FF'):emp('#F0F9FF'));
+  h+=num(Math.round(totMaqB),true,'#0369A1','#E0F2FE')+'</tr>';
+  h+=`<tr style="background:#F0FBF4">${lbl('⚖️ TN / Día','#15803D','#DCFCE7')}`;
+  mD.forEach(d=>h+=d.tons>0?num(d.tons.toFixed(1),true,'#15803D','#F0FBF4'):emp('#F0FBF4'));
+  h+=num(totMaqT.toFixed(1),true,'#15803D','#DCFCE7')+'</tr>';
+  h+=`<tr>${lbl('⚡ TN/Hr Tractor','#F5C800','#0B1437')}`;
+  mD.forEach((d,i)=>h+=d.hrs?cCol(d.tnhr.toFixed(2),d.tnhr,tend(mD,i,'tnhr')):emp());
+  h+=`<td style="padding:8px;text-align:center;border:1px solid #e2e8f0;background:${_rptBg(totTnhrMaq)}">
+    <div style="font-size:16px;font-weight:800;color:${_rptCol(totTnhrMaq)};font-family:monospace">${totTnhrMaq.toFixed(2)}</div>
+    <div style="font-size:8px;color:${_rptCol(totTnhrMaq)}">${_rptEstado(totTnhrMaq)}</div>
+  </td></tr>`;
+  h+=`<tr style="background:#FFFBEB">${lbl('⚡ TN/Hr Montacargas','#B45309','#FEF3C7')}`;
+  moD.forEach((d,i)=>h+=d.hrs?`<td style="padding:8px 6px;text-align:center;border:1px solid #FDE68A;background:#FEF9C3"><div style="font-size:13px;font-weight:800;color:#D97706;font-family:monospace">${d.tnhr.toFixed(2)}${tend(moD,i,'tnhr')}</div></td>`:emp('#FFFBEB'));
+  h+=num(totTnhrMonta>0?totTnhrMonta.toFixed(2):'—',true,'#D97706','#FEF3C7')+'</tr>';
+  h+=`<tr style="background:#F5F3FF">${lbl('📦 TN/Persona','#7C3AED','#EDE9FE')}`;
+  pD.forEach((d,i)=>{
+    if(!d.pers||!d.tons){h+=emp('#F5F3FF');return;}
+    const tnp=+(d.tons/d.pers).toFixed(2);
+    const pr=i>0&&pD[i-1].pers&&pD[i-1].tons?pD[i-1].tons/pD[i-1].pers:null;
+    const td=pr?tnp>pr?'<span style="color:#16A34A;font-size:8px">▲</span>':'<span style="color:#DC2626;font-size:8px">▼</span>':'';
+    h+=`<td style="padding:8px 6px;text-align:center;border:1px solid #DDD6FE;background:#EDE9FE"><div style="font-size:13px;font-weight:800;color:#7C3AED;font-family:monospace">${tnp}${td}</div></td>`;
+  });
+  h+=num(totTnp>0?totTnp.toFixed(2):'—',true,'#7C3AED','#EDE9FE')+'</tr>';
+  h+=`<tr style="background:#0B1437">
+    <td style="padding:7px 10px;color:rgba(255,255,255,.7);font-size:9px;border:1px solid #1e3a5f;font-weight:600">🎯 META TN/Hr Tractor</td>
+    ${diasConDatos.map(()=>`<td style="padding:7px;text-align:center;border:1px solid #1e3a5f;color:#F5C800;font-size:11px;font-weight:700">${META}</td>`).join('')}
+    <td style="padding:7px;text-align:center;border:1px solid #1e3a5f;color:#F5C800;font-size:11px;font-weight:700">${META}</td>
+  </tr>`;
+  h+=`<tr style="background:#F8FAFC">
+    <td style="padding:7px 10px;color:#334155;font-size:9px;border:1px solid #e2e8f0;font-weight:600">📊 Estado Operativo</td>
+    ${mD.map(d=>!d.hrs?emp():`<td style="padding:7px;text-align:center;border:1px solid #e2e8f0;font-size:10px;font-weight:700;color:${_rptCol(d.tnhr)}">${d.tnhr>=META?'🟢 BIEN':d.tnhr>=META*0.7?'🟡 REGULAR':'🔴 BAJO META'}</td>`).join('')}
+    <td style="padding:7px;text-align:center;border:1px solid #e2e8f0;font-size:10px;font-weight:700;color:${_rptCol(totTnhrMaq)}">${totTnhrMaq>=META?'🟢 BIEN':totTnhrMaq>=META*0.7?'🟡 REGULAR':'🔴 BAJO META'}</td>
+  </tr>`;
+  h+=`<tr><td colspan="${numDias+2}" style="padding:0;border:none">
+    <div style="background:#F8FAFC;border-left:4px solid #1A3A8F;padding:12px 16px">
+      <div style="font-size:8.5px;font-weight:700;color:#1A3A8F;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">🧠 ANÁLISIS OPERACIONAL</div>
+      <div style="font-size:10.5px;color:#334155;line-height:1.7">${analisis}</div>
+      <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap">
+        <span style="font-size:8.5px;color:#16A34A;font-weight:700">✅ Mejor: ${mejorDia.dia} · ${mejorDia.tnhr.toFixed(2)} TN/Hr</span>
+        <span style="font-size:8.5px;color:#DC2626;font-weight:700">⚠️ Menor: ${peorDia.dia} · ${peorDia.tnhr.toFixed(2)} TN/Hr</span>
+        <span style="font-size:8.5px;color:#1A3A8F;font-weight:700">🎯 Cumplimiento: ${cumplimiento}%</span>
+      </div>
+    </div>
+  </td></tr>`;
+  h+=`<tr><td colspan="${numDias+2}" style="background:#0B1437;color:rgba(255,255,255,.75);font-size:8.5px;font-weight:600;padding:9px 14px;text-align:center;border:none">ARATO · MISSION PRODUCE PERÚ &nbsp;|&nbsp; Meta: ${META} TN/Hr &nbsp;|&nbsp; SEM-${semN} · ${semLabel} &nbsp;|&nbsp; ${ahora}</td></tr>`;
+  h+='</table>';
   document.getElementById('rpt-maq-cont').innerHTML=h;
+  const nS=document.getElementById('rpt-sem-sel');
+  if(nS&&semSel)nS.value=semSel;
+}
+
+
+function getWeekNumber(d){
+  const date=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+  const dayNum=date.getUTCDay()||7;
+  date.setUTCDate(date.getUTCDate()+4-dayNum);
+  const yearStart=new Date(Date.UTC(date.getUTCFullYear(),0,1));
+  return Math.ceil((((date-yearStart)/86400000)+1)/7);
 }
 
 // Vista 4: MONTACARGAS — por día
