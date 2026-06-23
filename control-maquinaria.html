@@ -330,11 +330,11 @@ tr:nth-child(even) td{background:rgba(255,255,255,0.015)}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
           <div class="field">
             <label>Fecha *</label>
-            <input id="p-fecha" type="text" placeholder="DD/MM/AAAA">
+            <input id="p-fecha" type="date">
           </div>
           <div class="field">
             <label>N° Trabajadores *</label>
-            <input id="p-personal" type="number" min="0" placeholder="276" oninput="prevPersonal()">
+            <input id="p-personal" type="number" min="1" placeholder="276" oninput="prevPersonal()">
           </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
@@ -652,24 +652,37 @@ function prevPersonal(){
 }
 
 function guardarPersonal(){
-  const fecha=document.getElementById('p-fecha').value.trim();
+  const fechaRaw=document.getElementById('p-fecha').value.trim();
   const pers=parseInt(document.getElementById('p-personal').value)||0;
   const tons=parseFloat(document.getElementById('p-tons').value)||0;
   const hrs=parseFloat(document.getElementById('p-hrs').value)||0;
   const obs=document.getElementById('p-obs').value.trim();
-  if(!fecha||!pers||!tons||!hrs){showToast('Completa los campos obligatorios','err');return;}
+
+  if(!fechaRaw){showToast('⚠️ Ingresa la fecha','err');return;}
+  if(!pers){showToast('⚠️ Ingresa el número de trabajadores','err');return;}
+  if(!tons){showToast('⚠️ Ingresa las toneladas','err');return;}
+  if(!hrs){showToast('⚠️ Ingresa las horas','err');return;}
+
+  // Convertir YYYY-MM-DD → DD/MM/YYYY
+  let fecha=fechaRaw;
+  if(fechaRaw.includes('-')){
+    const [y,m,d]=fechaRaw.split('-');
+    fecha=`${d}/${m}/${y}`;
+  }
+
   const tnhr=+(tons/hrs).toFixed(2);
   const tnp=+(tons/pers).toFixed(3);
   const hrsp=+(hrs/pers).toFixed(3);
   personalRecords.unshift({id:'p'+Date.now(),fecha,personal:pers,toneladas:tons,horas:hrs,tnhr,tnp,hrsp,obs});
   svPersonal();
   renderPersonalTabla();
+  document.getElementById('p-fecha').value='';
   document.getElementById('p-tons').value='';
   document.getElementById('p-hrs').value='';
   document.getElementById('p-personal').value='';
   document.getElementById('p-obs').value='';
   document.getElementById('p-prev').style.display='none';
-  showToast('✅ Registro de personal guardado','ok');
+  showToast('✅ Personal guardado — '+pers+' trabajadores · '+tons+'t · '+tnhr+' TN/Hr','ok');
 }
 
 function eliminarPersonal(id){
@@ -1635,7 +1648,7 @@ function onOperadorInput() {
 
 // init
 document.getElementById("f-fecha").value = new Date().toLocaleDateString("es-PE",{day:"2-digit",month:"2-digit",year:"numeric"}).replace(/\//g,"/");
-document.getElementById("p-fecha").value = new Date().toLocaleDateString("es-PE",{day:"2-digit",month:"2-digit",year:"numeric"}).replace(/\//g,"/");
+document.getElementById("p-fecha").value = new Date().toISOString().split('T')[0];
 updateMaquinaFilter();
 ldPersonal();
 cargarRegistros();
