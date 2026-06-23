@@ -547,6 +547,7 @@ async function cargarRegistros() {
       maquina: r.maquina||'',
       operador: r.operador||'',
       fecha: r.fecha||'',
+      tipo: r.tipo||'maquinaria',
       horaInicio: r.hora_inicio||'',
       horaFin: r.hora_fin||'',
       hrsEjec: r.hrs_ejec||0,
@@ -1391,7 +1392,8 @@ async function importExcel(input) {
         const tnhr  = hrs>0 ? +(tons/hrs).toFixed(1) : 0;
         const modulos = String(get(r,"modulo")||"").trim();
         const dup = records.find(x=>x.maquina===maquina&&x.fecha===fecha&&x.horaInicio===ini);
-        if (!dup) { records.push({maquina,operador,fecha,horaInicio:ini,horaFin:fin,hrsEjec:hrs,bins,toneladas:tons,tnhr,estado:calcEstado(tnhr),modulos}); imported++; }
+        const tipo   = String(get(r,"tipo")||"").trim().toLowerCase()||'maquinaria';
+        if (!dup) { records.push({maquina,operador,fecha,tipo,horaInicio:ini,horaFin:fin,hrsEjec:hrs,bins,toneladas:tons,tnhr,estado:calcEstado(tnhr),modulos}); imported++; }
       });
       showToast(`✓ ${imported} registros importados`,"ok");
       updateMaquinaFilter();
