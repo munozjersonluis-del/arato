@@ -830,8 +830,8 @@ function buildReporteGlobal(){
       html+=`<tr style="background:${bg}">
         <td style="padding:9px 12px;font-weight:700;color:#1E293B;border:1px solid #D0DCF4">${r.maquina}</td>
         <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;color:#475569;font-size:10px">${r.operador||'—'}</td>
-        <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;font-weight:700;font-family:monospace;color:#1E293B">${(r.hrsEjec||0).toFixed(1)}</td>
-        <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;font-weight:700;font-family:monospace;color:#1E293B">${(r.toneladas||0).toFixed(1)}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-family:monospace;font-size:15px;color:#0F172A">${(r.hrsEjec||0).toFixed(1)}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-family:monospace;font-size:15px;color:#0F172A">${(r.toneladas||0).toFixed(1)}</td>
         <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;background:${_rptBg(r.tnhr)}">
           <div style="font-size:20px;font-weight:800;color:${_rptCol(r.tnhr)};font-family:monospace;line-height:1">${(r.tnhr||0).toFixed(2)}</div>
           <div style="font-size:8px;color:${_rptCol(r.tnhr)};margin-top:2px">${_rptEstado(r.tnhr)}</div>
@@ -842,8 +842,8 @@ function buildReporteGlobal(){
 
   html+=`<tr style="background:#1A3A8F">
     <td colspan="2" style="padding:10px 12px;color:#F5C800;font-weight:700;font-size:11px;border:1px solid #C0D0F4">TOTAL DÍA — ${recsDia.length} máquina(s)</td>
-    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:14px">${totH.toFixed(1)}</td>
-    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:14px">${totT.toFixed(1)}</td>
+    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${totH.toFixed(1)}</td>
+    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${totT.toFixed(1)}</td>
     <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;background:${_rptBg(totTh)}">
       <div style="font-size:26px;font-weight:800;color:${_rptCol(totTh)};font-family:monospace;line-height:1">${totTh.toFixed(2)}</div>
       <div style="font-size:9px;color:${_rptCol(totTh)};margin-top:2px">${_rptEstado(totTh)}</div>
@@ -914,8 +914,8 @@ function buildReportePorMaq(){
     <td colspan="2" style="padding:10px 12px;color:#F5C800;font-size:11px;font-weight:700;border:1px solid #C0D0F4">
       TOTAL ${fechaSel} — ${maquinas.length} máquina(s)
     </td>
-    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:14px">${totH.toFixed(1)}</td>
-    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:14px">${totT.toFixed(1)}</td>
+    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${totH.toFixed(1)}</td>
+    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${totT.toFixed(1)}</td>
     <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;background:${_rptBg(totTh)}">
       <div style="font-size:26px;font-weight:800;color:${_rptCol(totTh)};font-family:monospace;line-height:1">${totTh.toFixed(2)}</div>
       <div style="font-size:9px;color:${_rptCol(totTh)};margin-top:2px">${_rptEstado(totTh)}</div>
@@ -1132,8 +1132,8 @@ function buildReporteCombinado(){
     const th=h>0?t/h:0;
     return `<tr style="background:#1A3A8F">
       <td colspan="2" style="padding:9px 12px;color:#F5C800;font-weight:700;font-size:10px;border:1px solid #C0D0F4">${label}</td>
-      <td style="padding:9px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace">${h.toFixed(1)}</td>
-      <td style="padding:9px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace">${t.toFixed(1)}</td>
+      <td style="padding:9px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:16px">${h.toFixed(1)}</td>
+      <td style="padding:9px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:16px">${t.toFixed(1)}</td>
       <td style="padding:9px;text-align:center;border:1px solid #C0D0F4;background:${_rptBg(th)}">
         <div style="font-size:18px;font-weight:800;color:${_rptCol(th)};font-family:monospace;line-height:1">${th.toFixed(2)}</div>
         <div style="font-size:8px;color:${_rptCol(th)};margin-top:1px">${_rptEstado(th)}</div>
@@ -1153,8 +1153,8 @@ function buildReporteCombinado(){
       html+=`<tr style="background:${bg}">
         <td style="padding:8px 12px;font-weight:700;color:#1E293B;border:1px solid #D0DCF4">${r.maquina}</td>
         <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;color:#475569;font-size:10px">${r.operador||'—'}</td>
-        <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;font-weight:700;font-family:monospace">${(r.hrsEjec||0).toFixed(1)}</td>
-        <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;font-weight:700;font-family:monospace">${(r.toneladas||0).toFixed(1)}</td>
+        <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.hrsEjec||0).toFixed(1)}</td>
+        <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.toneladas||0).toFixed(1)}</td>
         <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;background:${_rptBg(r.tnhr)}">
           <div style="font-size:16px;font-weight:800;color:${_rptCol(r.tnhr)};font-family:monospace">${(r.tnhr||0).toFixed(2)}</div>
         </td>
@@ -1178,8 +1178,8 @@ function buildReporteCombinado(){
       html+=`<tr style="background:${bg}">
         <td style="padding:8px 12px;font-weight:700;color:#1E293B;border:1px solid #FDE68A">${r.maquina}</td>
         <td style="padding:8px;text-align:center;border:1px solid #FDE68A;color:#475569;font-size:10px">${r.operador||'—'}</td>
-        <td style="padding:8px;text-align:center;border:1px solid #FDE68A;font-weight:700;font-family:monospace">${(r.hrsEjec||0).toFixed(1)}</td>
-        <td style="padding:8px;text-align:center;border:1px solid #FDE68A;font-weight:700;font-family:monospace">${(r.toneladas||0).toFixed(1)}</td>
+        <td style="padding:8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.hrsEjec||0).toFixed(1)}</td>
+        <td style="padding:8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.toneladas||0).toFixed(1)}</td>
         <td style="padding:8px;text-align:center;border:1px solid #FDE68A;background:#FEF3C7">
           <div style="font-size:16px;font-weight:800;color:#D97706;font-family:monospace">${(r.tnhr||0).toFixed(2)}</div>
         </td>
