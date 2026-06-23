@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0B1437">
+<title>Arato — Panel de Apps</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Inter',sans-serif;background:#0B1437;min-height:100vh;padding:0 0 30px}
+.header{background:linear-gradient(135deg,#0B1437,#1A3A8F);padding:28px 20px 22px;text-align:center;border-bottom:3px solid #F5C800}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;color:#F5C800;letter-spacing:4px}
+.sub{font-size:0.65rem;color:rgba(255,255,255,.5);letter-spacing:2px;text-transform:uppercase;margin-top:4px}
+.mission{font-size:0.7rem;color:rgba(255,255,255,.3);margin-top:2px}
+.date{font-size:0.7rem;color:#F5C800;margin-top:8px;font-weight:600}
+.section{padding:18px 16px 4px}
+.section-title{font-size:0.6rem;font-weight:700;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.section-title::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.08)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px}
+.app-card{background:#1e293b;border-radius:14px;padding:16px 14px;text-decoration:none;display:flex;flex-direction:column;gap:6px;border:1.5px solid #334155;transition:transform .15s,border-color .15s;active:scale(.97)}
+.app-card:active{transform:scale(.96)}
+.app-card.full{grid-column:1/-1}
+.app-icon{font-size:1.8rem;line-height:1}
+.app-name{font-size:0.82rem;font-weight:800;color:#fff;line-height:1.2}
+.app-desc{font-size:0.6rem;color:rgba(255,255,255,.4);line-height:1.4}
+.app-badge{display:inline-block;font-size:0.5rem;font-weight:700;padding:2px 6px;border-radius:6px;text-transform:uppercase;letter-spacing:.5px;margin-top:2px;width:fit-content}
+.badge-green{background:rgba(22,163,74,.2);color:#4ADE80}
+.badge-blue{background:rgba(26,58,143,.4);color:#93C5FD}
+.badge-gold{background:rgba(245,200,0,.15);color:#F5C800}
+.badge-purple{background:rgba(124,58,237,.2);color:#C4B5FD}
+.badge-orange{background:rgba(217,119,6,.2);color:#FCD34D}
+/* Color accents per card */
+.card-cosecha{border-color:#16A34A}
+.card-maq{border-color:#1A3A8F}
+.card-acopio{border-color:#D97706}
+.card-gps{border-color:#F5C800}
+.card-fichas{border-color:#DC2626}
+.card-stock{border-color:#0369A1}
+.card-cosecha-prog{border-color:#7C3AED}
+.card-bins{border-color:#334155}
+.footer{text-align:center;padding:24px 16px 10px;color:rgba(255,255,255,.2);font-size:0.6rem;line-height:1.8}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">🥑 ARATO</div>
+  <div class="sub">Mission Produce · Perú</div>
+  <div class="mission">Valle de Virú · La Libertad</div>
+  <div class="date" id="fecha-hora"></div>
+</div>
+
+<div class="section">
+  <div class="section-title">Operaciones principales</div>
+</div>
+<div class="grid">
+  <a class="app-card card-cosecha" href="cosecha-despacho.html">
+    <div class="app-icon">🥑</div>
+    <div class="app-name">Cosecha & Despacho</div>
+    <div class="app-desc">Stock de bins, guías de despacho, reporte de calidad</div>
+    <div class="app-badge badge-green">Principal</div>
+  </a>
+  <a class="app-card card-maq" href="control-maquinaria.html">
+    <div class="app-icon">🚜</div>
+    <div class="app-name">Control de Maquinaria</div>
+    <div class="app-desc">TN/Hr, horas, montacargas, personal, reporte semanal</div>
+    <div class="app-badge badge-blue">Dashboard</div>
+  </a>
+  <a class="app-card card-stock" href="stock-bins.html">
+    <div class="app-icon">📦</div>
+    <div class="app-name">Stock de Bins</div>
+    <div class="app-desc">Control de bins en campo, acopio y planta</div>
+    <div class="app-badge badge-blue">Inventario</div>
+  </a>
+  <a class="app-card card-acopio" href="acopio-palta-v2.html">
+    <div class="app-icon">🌾</div>
+    <div class="app-name">Programa de Acopio</div>
+    <div class="app-desc">Grupos, auxiliares, máquinas, portabineros</div>
+    <div class="app-badge badge-orange">Acopio</div>
+  </a>
+</div>
+
+<div class="section">
+  <div class="section-title">Planificación</div>
+</div>
+<div class="grid">
+  <a class="app-card card-cosecha-prog full" href="programa-cosecha.html">
+    <div class="app-icon">📋</div>
+    <div class="app-name">Programa de Cosecha</div>
+    <div class="app-desc">Grupos de cosechadores, supervisores, auxiliares, metas TN/Ha, reporte semanal</div>
+    <div class="app-badge badge-purple">Programación</div>
+  </a>
+</div>
+
+<div class="section">
+  <div class="section-title">GPS y Rastreo</div>
+</div>
+<div class="grid">
+  <a class="app-card card-gps" href="gps-mapa.html">
+    <div class="app-icon">🗺️</div>
+    <div class="app-name">Mapa GPS</div>
+    <div class="app-desc">Ver equipos en tiempo real sobre mapa satelital de Arato 1</div>
+    <div class="app-badge badge-gold">Supervisor</div>
+  </a>
+  <a class="app-card card-gps" href="gps-operador.html">
+    <div class="app-icon">📍</div>
+    <div class="app-name">GPS Operador</div>
+    <div class="app-desc">Iniciar turno y enviar ubicación al mapa del supervisor</div>
+    <div class="app-badge badge-gold">Operador</div>
+  </a>
+</div>
+
+<div class="section">
+  <div class="section-title">Administración</div>
+</div>
+<div class="grid">
+  <a class="app-card card-fichas" href="fichas-medicas-110.html">
+    <div class="app-icon">🏥</div>
+    <div class="app-name">Fichas Médicas</div>
+    <div class="app-desc">Salud ocupacional, registros médicos del personal</div>
+    <div class="app-badge badge-purple">RRHH</div>
+  </a>
+  <a class="app-card card-bins" href="index.html">
+    <div class="app-icon">🔐</div>
+    <div class="app-name">Control de Bines</div>
+    <div class="app-desc">Sistema de control por roles: despachador, recepción, supervisor</div>
+    <div class="app-badge">Roles</div>
+  </a>
+</div>
+
+<div class="footer">
+  ARATO · MISSION PRODUCE PERÚ<br>
+  Sistema de Control Operativo v2026<br>
+  Valle de Virú · La Libertad
+</div>
+
+<script>
+function updateTime(){
+  const now=new Date();
+  const opts={weekday:'long',day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'};
+  document.getElementById('fecha-hora').textContent=now.toLocaleDateString('es-PE',opts);
+}
+updateTime();
+setInterval(updateTime,60000);
+</script>
+</body>
+</html>
