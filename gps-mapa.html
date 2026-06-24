@@ -64,16 +64,19 @@ body{font-family:'Inter',sans-serif;background:var(--ink);color:#fff;height:100v
 
 <div class="top">
   <div>
-    <div class="top-brand">🗺️ Arato GPS — Mapa</div>
+    <div class="top-brand">🗺️ Arato GPS</div>
     <div class="top-sub">Equipos en tiempo real · Arato 1</div>
   </div>
   <div class="top-right">
     <button class="tbtn active" id="btn-mods" onclick="toggleModules()">🟦 Módulos</button>
     <button class="tbtn" id="btn-lotes" onclick="toggleLotes()">📦 Lotes</button>
-    <button class="tbtn" onclick="limpiarInactivos()">🗑 Inactivos</button>
     <button class="tbtn" onclick="cargarUbicaciones()">🔄</button>
-    <div class="last-update" id="last-update">—</div>
+    <button class="tbtn" style="background:#DC2626;border-color:#DC2626;color:#fff" onclick="limpiarInactivos()">🗑</button>
   </div>
+</div>
+<div style="background:#0d1526;padding:4px 14px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1e293b;flex-shrink:0">
+  <div class="last-update" id="last-update">—</div>
+  <div id="count-badge" style="font-size:0.6rem;color:#F5C800;font-weight:700">—</div>
 </div>
 
 <div id="map"></div>
@@ -86,7 +89,7 @@ body{font-family:'Inter',sans-serif;background:var(--ink);color:#fff;height:100v
 
 <div class="panel" id="panel">
   <div class="panel-handle" onclick="togglePanel()">
-    <div class="panel-title">📋 Equipos <span id="count-badge" style="background:#1e293b;padding:2px 8px;border-radius:10px;margin-left:6px;font-size:0.65rem">—</span></div>
+    <div class="panel-title">📋 Equipos activos</div>
     <div id="toggle-icon">▼</div>
   </div>
   <div class="maq-list" id="maq-list">
@@ -208,7 +211,7 @@ async function cargarUbicaciones(){
     });
     const equipos=Object.values(latest);
     const activos=equipos.filter(e=>minsDiff(e.created_at)<=10).length;
-    document.getElementById('count-badge').textContent=activos+' activos / '+equipos.length;
+    document.getElementById('count-badge').textContent=activos+' activos / '+equipos.length+' total';
     document.getElementById('last-update').textContent=new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
     const ids=new Set(equipos.map(e=>e.maquina));
     Object.keys(markers).forEach(m=>{if(!ids.has(m)){markers[m].remove();delete markers[m];}});
