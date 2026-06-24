@@ -647,7 +647,23 @@ async function eliminarRegistro(id) {
 var personalRecords = [];
 
 function svPersonal(){try{localStorage.setItem('arato_personal',JSON.stringify(personalRecords));}catch(e){}}
-function ldPersonal(){try{const d=JSON.parse(localStorage.getItem('arato_personal'));if(Array.isArray(d))personalRecords=d;}catch(e){}}
+async function ldPersonal(){
+  // Cargar desde caché local primero
+  try{const d=JSON.parse(localStorage.getItem('arato_personal'));if(Array.isArray(d)&&d.length)personalRecords=d;}catch(e){}
+  // Luego cargar desde Supabase
+  try{
+    const rows=await supaFetch('personal_acopio?order=fecha.desc,created_at.desc','GET');
+    if(Array.isArray(rows)&&rows.length){
+      personalRecords=rows.map(r=>({
+        id:r.id,fecha:r.fecha,personal:r.personal,
+        toneladas:r.toneladas,horas:r.horas,
+        tnhr:r.tnhr,tnp:r.tnp,hrsp:r.hrsp,obs:r.obs||''
+      }));
+      svPersonal();
+    }
+  }catch(e){console.warn('Personal desde localStorage');}
+  renderPersonalTabla();
+}
 
 function calcHrsTotal(){
   const pp=parseFloat(document.getElementById('prs-hrs-pp').value)||0;
@@ -673,7 +689,7 @@ function prevPersonal(){
   document.getElementById('prs-prev').style.display='grid';
 }
 
-function guardarPersonal(){
+async function guardarPersonal(){
   let fechaRaw=document.getElementById('prs-fecha').value.trim();
   // Si fecha vacía, usar hoy
   if(!fechaRaw) fechaRaw=new Date().toISOString().split('T')[0];
@@ -701,27 +717,35 @@ function guardarPersonal(){
   const tnhr=+(tons/hrs).toFixed(2);
   const tnp=+(tons/pers).toFixed(3);
   const hrsp=+(hrs/pers).toFixed(3);
-  // Confirmar valores antes de guardar
-  console.log('Guardando personal:',{fecha,pers,tons,hrs,tnhr,tnp});
-  personalRecords.unshift({id:'p'+Date.now(),fecha,personal:pers,toneladas:tons,horas:hrs,tnhr,tnp,hrsp,obs});
-  svPersonal();
-  renderPersonalTabla();
-  // Limpiar campos menos fecha
-  document.getElementById('prs-tons').value='';
-  document.getElementById('prs-hrs').value='';
-  document.getElementById('prs-hrs-pp').value='';
-  document.getElementById('prs-personal').value='';
-  if(document.getElementById('prs-obs'))document.getElementById('prs-obs').value='';
-  const prev=document.getElementById('prs-prev');
-  if(prev)prev.style.display='none';
-  showToast('✅ '+pers+' trabajadores · '+tons+'t · '+tnhr+' TN/Hr guardado','ok');
+  try{
+    const saved=await supaFetch('personal_acopio','POST',{
+      fecha,personal:pers,toneladas:tons,horas:hrs,tnhr,tnp,hrsp,obs
+    });
+    const newId=Array.isArray(saved)?saved[0]?.id:saved?.id;
+    personalRecords.unshift({id:newId||'p'+Date.now(),fecha,personal:pers,toneladas:tons,horas:hrs,tnhr,tnp,hrsp,obs});
+    svPersonal();
+    renderPersonalTabla();
+    document.getElementById('prs-tons').value='';
+    document.getElementById('prs-hrs').value='';
+    document.getElementById('prs-hrs-pp').value='';
+    document.getElementById('prs-personal').value='';
+    if(document.getElementById('prs-obs'))document.getElementById('prs-obs').value='';
+    const prev=document.getElementById('prs-prev');
+    if(prev)prev.style.display='none';
+    showToast('✅ '+pers+' trabajadores · '+tons+'t · '+tnhr+' TN/Hr guardado','ok');
+  }catch(e){showToast('Error: '+e.message,'err');}
 }
 
-function eliminarPersonal(id){
+async function eliminarPersonal(id){
   if(!confirm('¿Eliminar este registro?'))return;
-  personalRecords=personalRecords.filter(r=>r.id!==id);
-  svPersonal();renderPersonalTabla();
-  showToast('Eliminado','ok');
+  try{
+    if(typeof id==='number'||!String(id).startsWith('p')){
+      await supaFetch('personal_acopio?id=eq.'+id,'DELETE');
+    }
+    personalRecords=personalRecords.filter(r=>r.id!==id);
+    svPersonal();renderPersonalTabla();
+    showToast('Eliminado','ok');
+  }catch(e){showToast('Error: '+e.message,'err');}
 }
 
 function renderPersonalTabla(){
