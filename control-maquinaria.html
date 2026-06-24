@@ -1264,62 +1264,71 @@ function buildReporteMonta(){
     return;
   }
   const fechas=_sortFechas(recsMonta);
-  const equipos=[...new Set(recsMonta.map(r=>r.maquina))].sort();
-  const metaMonta=META_MONTA;
-
-  let h=`<table style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px;min-width:340px">`;
-  h+=`<tr><td colspan="${equipos.length+2}" style="padding:0;border:none">${_rptHeader('🏗️ MONTACARGAS','RENDIMIENTO DIARIO POR EQUIPO',ahora)}</td></tr>`;
-
-  // Columnas
-  h+=`<tr style="background:#1A3A8F"><th style="padding:8px 10px;color:#F5C800;font-size:9px;border:1px solid #D0DCF4;text-align:left">📅 Fecha</th>`;
-  equipos.forEach(e=>{h+=`<th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #D0DCF4;text-align:center;white-space:nowrap">${e}</th>`;});
-  h+=`<th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #D0DCF4;text-align:center;background:#FEF9C3">🌍 GLOBAL</th></tr>`;
+  const selEl=document.getElementById('rpt-fecha-monta');
+  const fechaSel=selEl?selEl.value:fechas[fechas.length-1];
+  const recsDia=recsMonta.filter(r=>r.fecha===fechaSel);
 
   let totH=0,totT=0;
-  const colMonta='#D97706'; // naranja para montacargas (meta desconocida)
-
-  fechas.forEach((f,fi)=>{
-    const bg=fi%2===0?'#F8FAFC':'#FFFFFF';
-    let hG=0,tG=0;
-    let row=`<tr style="background:${bg}"><td style="padding:8px 10px;color:#1E293B;font-weight:700;border:1px solid #D0DCF4">${f}</td>`;
-    equipos.forEach(e=>{
-      const r=recsMonta.find(x=>x.fecha===f&&x.maquina===e);
-      if(r){
-        hG+=r.hrsEjec||0;tG+=r.toneladas||0;
-        const col=metaMonta>0?_rptCol(r.tnhr):colMonta;
-        const bg2=metaMonta>0?_rptBg(r.tnhr):'#1a1005';
-        row+=`<td style="padding:8px;text-align:center;border:1px solid #D0DCF4;background:${bg2}">
-          <div style="font-size:15px;font-weight:800;color:${col};font-family:monospace">${r.tnhr.toFixed(1)}</div>
-          <div style="font-size:8px;color:#6B7280">${r.hrsEjec.toFixed(1)}h·${r.toneladas.toFixed(1)}t</div>
-        </td>`;
-      }else{row+=`<td style="padding:8px;text-align:center;border:1px solid #D0DCF4;color:#334155;font-size:10px">—</td>`;}
-    });
-    const thG=hG>0?tG/hG:0;
-    const col=metaMonta>0?_rptCol(thG):colMonta;
-    const bg2=metaMonta>0?_rptBg(thG):'#1a1005';
-    row+=`<td style="padding:8px;text-align:center;border:1px solid #D0DCF4;background:${bg2}">
-      <div style="font-size:17px;font-weight:800;color:${col};font-family:monospace">${thG.toFixed(2)}</div>
-      <div style="font-size:8px;color:#6B7280">${tG.toFixed(1)}t</div>
-    </td>`;
-    h+=row+'</tr>';
-    totH+=hG;totT+=tG;
-  });
-
+  recsDia.forEach(r=>{totH+=r.hrsEjec||0;totT+=r.toneladas||0;});
   const totTh=totH>0?totT/totH:0;
-  h+=`<tr style="background:#1A3A8F"><td style="padding:8px 10px;color:#F5C800;font-size:10px;font-weight:700;border:1px solid #C0D0F4">PROMEDIO</td>`;
-  equipos.forEach(e=>{
-    const rE=recsMonta.filter(r=>r.maquina===e);
-    const hE=rE.reduce((s,r)=>s+(r.hrsEjec||0),0);
-    const tE=rE.reduce((s,r)=>s+(r.toneladas||0),0);
-    const pE=hE>0?tE/hE:0;
-    const col=metaMonta>0?_rptCol(pE):colMonta;
-    h+=`<td style="padding:8px;text-align:center;border:1px solid #C0D0F4;font-size:14px;font-weight:800;color:${col};font-family:monospace">${pE.toFixed(1)}</td>`;
-  });
-  const colT=metaMonta>0?_rptCol(totTh):colMonta;
-  h+=`<td style="padding:8px;text-align:center;border:1px solid #C0D0F4;font-size:18px;font-weight:800;color:${colT};font-family:monospace">${totTh.toFixed(2)}<div style="font-size:8px;color:#64748B">${totT.toFixed(1)}t total</div></td></tr>`;
-  if(metaMonta===0){h+=`<tr><td colspan="${equipos.length+2}" style="background:#FEF9C3;color:#B45309;font-size:8.5px;padding:6px 12px;text-align:center;border:none">⚠️ Meta de montacargas pendiente de definir — editar META_MONTA en el código cuando tengas los datos</td></tr>`;}
-  h+=`<tr><td colspan="${equipos.length+2}" style="background:#EEF2FF;color:#64748B;font-size:8px;padding:7px 12px;text-align:center;border:none">ARATO · MISSION PRODUCE · ${ahora}</td></tr></table>`;
-  document.getElementById('rpt-maq-cont').innerHTML=h;
+
+  let html=`<div style="margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+    <span style="font-size:0.7rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px">📅 Fecha:</span>
+    <select id="rpt-fecha-monta" onchange="buildReporteMonta()" style="padding:7px 12px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#fff;font-size:0.8rem;font-family:inherit;font-weight:700">
+      ${fechas.map(f=>`<option value="${f}" ${f===fechaSel?'selected':''}>${f}</option>`).join('')}
+    </select>
+  </div>`;
+
+  html+=`<table style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px;min-width:340px">`;
+  html+=`<tr><td colspan="6" style="padding:0;border:none">${_rptHeader('REPORTE DEL '+fechaSel,'🏗️ '+recsDia.length+' montacargas — Resumen del día',ahora)}</td></tr>`;
+  html+=`<tr style="background:#B45309">
+    <th style="padding:9px 12px;color:#FEF9C3;font-size:9px;border:1px solid #FDE68A;text-align:left">🏗️ Equipo</th>
+    <th style="padding:9px 8px;color:#FEF9C3;font-size:9px;border:1px solid #FDE68A;text-align:center">👤 Operador</th>
+    <th style="padding:9px 8px;color:#FEF9C3;font-size:9px;border:1px solid #FDE68A;text-align:center">⏱ Horas</th>
+    <th style="padding:9px 8px;color:#FEF9C3;font-size:9px;border:1px solid #FDE68A;text-align:center">⚖️ Toneladas</th>
+    <th style="padding:9px 8px;color:#FEF9C3;font-size:9px;border:1px solid #FDE68A;text-align:center">⚡ TN/Hr</th>
+    <th style="padding:9px 8px;color:#FEF9C3;font-size:9px;border:1px solid #FDE68A;text-align:center">📊 Estado</th>
+  </tr>`;
+
+  if(!recsDia.length){
+    html+=`<tr><td colspan="6" style="padding:20px;text-align:center;color:#94A3B8;font-style:italic;font-size:10px">Sin registros de montacargas para esta fecha</td></tr>`;
+  }else{
+    recsDia.forEach((r,i)=>{
+      const bg=i%2===0?'#FFFBEB':'#FEF9C3';
+      const col=META_MONTA>0?_rptCol(r.tnhr):'#D97706';
+      const bg2=META_MONTA>0?_rptBg(r.tnhr):'#FEF3C7';
+      const estado=META_MONTA>0?(r.tnhr>=META_MONTA?'🟢 BIEN':r.tnhr>=META_MONTA*0.7?'🟡 REGULAR':'🔴 BAJO META'):'📋 S/META';
+      html+=`<tr style="background:${bg}">
+        <td style="padding:9px 12px;font-weight:700;color:#1E293B;border:1px solid #FDE68A">${r.maquina}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #FDE68A;color:#475569;font-size:10px">${r.operador||'—'}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.hrsEjec||0).toFixed(1)}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.toneladas||0).toFixed(1)}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #FDE68A;background:${bg2}">
+          <div style="font-size:20px;font-weight:800;color:${col};font-family:monospace;line-height:1">${(r.tnhr||0).toFixed(2)}</div>
+        </td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #FDE68A;font-size:10px;font-weight:700;color:${col}">${estado}</td>
+      </tr>`;
+    });
+  }
+
+  // TOTAL DEL DÍA
+  html+=`<tr style="background:#B45309">
+    <td colspan="2" style="padding:10px 12px;color:#FEF9C3;font-weight:700;font-size:11px;border:1px solid #FDE68A">TOTAL DÍA — ${recsDia.length} equipo(s)</td>
+    <td style="padding:10px;text-align:center;border:1px solid #FDE68A;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${totH.toFixed(1)}</td>
+    <td style="padding:10px;text-align:center;border:1px solid #FDE68A;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${totT.toFixed(1)}</td>
+    <td style="padding:10px;text-align:center;border:1px solid #FDE68A;background:#FEF3C7">
+      <div style="font-size:26px;font-weight:800;color:#D97706;font-family:monospace;line-height:1">${totTh.toFixed(2)}</div>
+    </td>
+    <td style="padding:10px;text-align:center;border:1px solid #FDE68A;font-size:10px;font-weight:700;color:#D97706">${META_MONTA>0?(totTh>=META_MONTA?'🟢 BIEN':totTh>=META_MONTA*0.7?'🟡 REGULAR':'🔴 BAJO META'):'📋 S/META'}</td>
+  </tr>`;
+
+  if(META_MONTA===0){html+=`<tr><td colspan="6" style="background:#FEF9C3;color:#B45309;font-size:8.5px;padding:6px 12px;text-align:center;border:none">⚠️ Meta de montacargas pendiente de definir</td></tr>`;}
+
+  html+=`<tr><td colspan="6" style="background:#FEF3C7;color:#92400E;font-size:8px;padding:7px 12px;text-align:center;border:none">ARATO · MISSION PRODUCE · ${ahora}</td></tr>`;
+  html+='</table>';
+  document.getElementById('rpt-maq-cont').innerHTML=html;
+  const newSel=document.getElementById('rpt-fecha-monta');
+  if(newSel&&fechaSel)newSel.value=fechaSel;
 }
 
 // Vista COMBINADO — Maquinaria + Montacargas + Personal en un solo reporte por fecha
