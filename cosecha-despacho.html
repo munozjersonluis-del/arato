@@ -538,16 +538,16 @@ function renderStock(rows,cont){
       const dispMod=items.reduce((s,r)=>s+r.disp,0);
       const cosMod=items.reduce((s,r)=>s+(r.bins_cosechados||0),0);
       const vendMod=items.reduce((s,r)=>s+(r.bins_vendidos||0),0);
-      if(dispMod<=0)return;
-      html+='<div class="mod-card">'
+      const agotado=dispMod<=0;
+      html+='<div class="mod-card" style="'+(agotado?'opacity:0.6;border-left:3px solid var(--txt3)':'')+'">'
         +'<div class="mod-hdr">'
-        +'<div class="mod-name">'+mod+'</div>'
+        +'<div class="mod-name">'+mod+(agotado?' <span style="font-size:0.55rem;background:#334155;color:#94A3B8;padding:2px 6px;border-radius:6px;margin-left:4px">AGOTADO</span>':'')+'</div>'
         +'<div style="text-align:right;">'
-        +'<div class="mod-total">'+Math.floor(dispMod)+' bins disp.</div>'
+        +'<div class="mod-total" style="color:'+(agotado?'var(--txt3)':'var(--g)')+'">'+Math.floor(dispMod)+' bins disp.</div>'
         +'<div style="font-size:0.55rem;color:var(--txt3);">'+vendMod+' despachados · '+cosMod+' cosechados</div>'
         +'</div></div>'
         +'<div class="mod-body">'
-        +items.filter(i=>i.disp>0).map(i=>'<div class="mod-row">'
+        +items.map(i=>'<div class="mod-row">'
           +'<div><span style="font-weight:700;">'+i.variedad+'</span> <span style="color:var(--txt3);font-size:0.62rem;">cosecha: '+i.fecha_cosecha+'</span></div>'
           +'<div style="text-align:right;">'
           +'<div style="font-weight:800;font-family:\'JetBrains Mono\',monospace;color:'+(i.disp>0?'var(--g)':'var(--txt3)')+';">'+Math.floor(i.disp)+' disp</div>'
@@ -1073,7 +1073,7 @@ function renderLineas(){
 </div>
 <div class="g2">
   <div class="f"><label>Envase</label>
-    <select id="le-${l.id}" onchange="updPeso(${l.id})">
+    <select id="le-${l.id}" onchange="updPeso(${l.id});refrescarSaldoLinea(${l.id})">
       <option ${l.envase==='Jabas'?'selected':''}>Jabas</option>
       <option ${l.envase==='Bins'?'selected':''}>Bins</option>
       <option ${l.envase==='Granel'?'selected':''}>Granel</option>
@@ -1129,25 +1129,36 @@ function updPeso(id){
 function refrescarSaldoLinea(id){
   const fcEl=document.getElementById('lfc-'+id);
   const dispEl=document.getElementById('ldisp-'+id);
+  const leEl=document.getElementById('le-'+id);
   if(!fcEl||!fcEl.value)return;
   const opt=fcEl.selectedOptions[0];
   if(!opt)return;
-  // dataset.dispTotal guarda el stock TOTAL de la BD (sin restar nada), guardado al cargar las fechas
   const dTotal=opt.dataset.dispTotal?parseInt(opt.dataset.dispTotal):parseInt(opt.dataset.disp||0);
   const fundo=document.getElementById('lf-'+id)?.value||fundoActual;
   const variedad=document.getElementById('lv-'+id)?.value||'Fuerte';
   const modulo=document.getElementById('lm-'+id)?.value||'';
   const fcosecha=fcEl.value;
   const usado=yaUsadoEnOtrasLineas(id,modulo,variedad,fcosecha,fundo);
-  const d=Math.max(0,Math.floor(dTotal-usado));
-  opt.dataset.disp=d; // actualizar el saldo vigente del option para que validarCant/onFechaSel lo usen correctamente
+  const dBins=Math.max(0,dTotal-usado);
+  const dBinsFloor=Math.floor(dBins);
+  // Calcular jabas disponibles (incluyendo fracciones de bin)
+  const dJabas=Math.floor(dBins*JABAS_BIN);
+  opt.dataset.disp=dBinsFloor;
+  opt.dataset.dispjabas=dJabas; // guardar jabas disponibles
+  const envase=leEl?leEl.value:'Bins';
+  const esJabas=envase==='Jabas';
   if(dispEl){
-    if(usado>0){
-      dispEl.textContent=d>0?'✅ '+d+' bins disponibles (saldo, ya usaste '+Math.ceil(usado)+' en otra línea)':'⚠️ Sin saldo — ya usaste todo en otra línea';
-    }else{
-      dispEl.textContent=d>0?'✅ '+d+' bins disponibles':'⚠️ Sin stock';
+    if(dBins<=0){
+      dispEl.textContent='⚠️ Sin saldo'+(usado>0?' — todo usado en otra línea':'');
+      dispEl.style.color='var(--r)';
+    } else if(esJabas){
+      const jabasStr=dJabas+' jabas disponibles ('+dBins.toFixed(2)+' bins)';
+      dispEl.textContent=usado>0?'✅ '+jabasStr+' · usaste '+Math.ceil(usado*JABAS_BIN)+' jabas en otra línea':'✅ '+jabasStr;
+      dispEl.style.color='var(--g)';
+    } else {
+      dispEl.textContent=usado>0?'✅ '+dBinsFloor+' bins (usaste '+Math.ceil(usado)+' en otra línea)':'✅ '+dBinsFloor+' bins disponibles';
+      dispEl.style.color=dBinsFloor>0?'var(--g)':'var(--r)';
     }
-    dispEl.style.color=d>0?'var(--g)':'var(--r)';
   }
 }
 
@@ -1188,13 +1199,20 @@ function validarCant(id){
   if(!fcEl||!lcEl)return;
   const opt=fcEl.selectedOptions[0];
   if(!opt||!opt.dataset.disp)return;
-  // data-disp ya viene con el saldo correcto (cargarFechas ya restó lo usado en otras líneas)
-  const dispBins=parseInt(opt.dataset.disp)||0;
+  const dispBins=parseFloat(opt.dataset.disp)||0;
+  // Usar jabas disponibles guardadas, o calcular desde bins
+  const dispJabas=opt.dataset.dispjabas?parseInt(opt.dataset.dispjabas):Math.floor(dispBins*JABAS_BIN);
   const envase=leEl?leEl.value:'Jabas';
-  const maxCant=(envase==='Bins'||envase==='Granel')?dispBins:dispBins*JABAS_BIN;
+  const esJabas=envase==='Jabas';
+  const maxCant=esJabas?dispJabas:(envase==='Bins'||envase==='Granel')?dispBins:dispBins*JABAS_BIN;
   const cant=parseInt(lcEl.value)||0;
-  if(maxCant>0&&cant>maxCant){lcEl.value=maxCant;toast('Máximo (saldo restante): '+maxCant+' '+envase,'err');}
-  else if(maxCant<=0&&cant>0){lcEl.value=0;toast('Sin saldo — ya usaste todo el stock disponible en otra línea','err');}
+  if(maxCant>0&&cant>maxCant){
+    lcEl.value=Math.floor(maxCant);
+    toast('Máximo disponible: '+Math.floor(maxCant)+' '+envase,'err');
+  } else if(maxCant<=0&&cant>0){
+    lcEl.value=0;
+    toast('Sin saldo disponible para este módulo/fecha','err');
+  }
   updPeso(id);
   actualizarResumen();
 }
