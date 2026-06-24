@@ -121,7 +121,7 @@ select:focus,input:focus{outline:none;border-color:var(--gold)}
   <div class="coord-box" id="act-coords">Obteniendo coordenadas GPS...</div>
   <div class="sync-indicator">
     <div class="sync-dot"></div>
-    <span id="sync-txt">Enviando ubicación cada 30 segundos</span>
+    <span id="sync-txt">Enviando ubicación cada 10 segundos</span>
   </div>
   <button class="btn-stop" onclick="detenerTurno()">⏹ Finalizar Turno</button>
 </div>
@@ -135,6 +135,24 @@ const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI
 let trackInterval=null;
 let maquina='',operador='',modulo='';
 let ultimaLat=null,ultimaLng=null,ultimaVel=0;
+let prevLat=null,prevLng=null,prevTime=null;
+
+function calcVelocidad(lat,lng){
+  const now=Date.now();
+  if(prevLat===null||prevLng===null){prevLat=lat;prevLng=lng;prevTime=now;return 0;}
+  const dt=(now-prevTime)/1000; // segundos
+  if(dt<2){return ultimaVel;}
+  // Distancia en metros (Haversine simple)
+  const R=6371000;
+  const dLat=(lat-prevLat)*Math.PI/180;
+  const dLng=(lng-prevLng)*Math.PI/180;
+  const a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(prevLat*Math.PI/180)*Math.cos(lat*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
+  const dist=R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+  const velMs=dist/dt;
+  const velKmh=velMs*3.6;
+  prevLat=lat;prevLng=lng;prevTime=now;
+  return Math.round(velKmh);
+}
 
 function toast(msg){
   const el=document.getElementById('toast');
@@ -179,15 +197,18 @@ async function enviarUbicacion(lat,lng,vel,dir){
   }
 }
 
-function actualizarPantalla(lat,lng,vel,dir){
-  ultimaLat=lat;ultimaLng=lng;ultimaVel=vel;
-  const velKmh=Math.round((vel||0)*3.6);
+function actualizarPantalla(lat,lng,velNativa){
+  ultimaLat=lat;ultimaLng=lng;
+  const velCalc=calcVelocidad(lat,lng);
+  const velKmh=velNativa>1?Math.round(velNativa*3.6):velCalc;
+  ultimaVel=velKmh;
   const hora=new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
   document.getElementById('act-vel').textContent=velKmh+' km/h';
   document.getElementById('act-hora').textContent=hora;
   document.getElementById('act-coords').textContent='📍 '+lat.toFixed(6)+', '+lng.toFixed(6);
   const estadoTxt=velKmh>2?'🟢 EN MOVIMIENTO':'🔴 DETENIDO';
   document.getElementById('status-txt').textContent=estadoTxt;
+  return velKmh;
 }
 
 function iniciarTurno(){
@@ -213,23 +234,23 @@ function iniciarTurno(){
   // Obtener primera posición
   navigator.geolocation.getCurrentPosition(pos=>{
     const{latitude:lat,longitude:lng,speed:vel,heading:dir}=pos.coords;
-    actualizarPantalla(lat,lng,vel||0,dir||0);
-    enviarUbicacion(lat,lng,vel||0,dir||0);
+    const velKmh=actualizarPantalla(lat,lng,vel||0);
+    enviarUbicacion(lat,lng,velKmh,dir||0);
     toast('✅ Turno iniciado — GPS activo');
   },err=>{
     toast('⚠️ Error GPS: '+err.message);
   },{enableHighAccuracy:true,timeout:10000});
 
-  // Enviar cada 30 segundos
+  // Enviar cada 10 segundos
   trackInterval=setInterval(()=>{
     navigator.geolocation.getCurrentPosition(pos=>{
       const{latitude:lat,longitude:lng,speed:vel,heading:dir}=pos.coords;
-      actualizarPantalla(lat,lng,vel||0,dir||0);
-      enviarUbicacion(lat,lng,vel||0,dir||0);
+      const velKmh=actualizarPantalla(lat,lng,vel||0);
+      enviarUbicacion(lat,lng,velKmh,dir||0);
     },err=>{
       document.getElementById('sync-txt').textContent='⚠️ GPS perdido — reintentando...';
     },{enableHighAccuracy:true,timeout:8000});
-  },30000);
+  },10000);
 }
 
 function detenerTurno(){
