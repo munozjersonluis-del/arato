@@ -70,6 +70,7 @@ body{font-family:'Inter',sans-serif;background:var(--ink);color:#fff;height:100v
   <div class="top-right">
     <button class="tbtn active" id="btn-mods" onclick="toggleModules()">🟦 Módulos</button>
     <button class="tbtn" id="btn-lotes" onclick="toggleLotes()">📦 Lotes</button>
+    <button class="tbtn" onclick="limpiarInactivos()">🗑 Inactivos</button>
     <button class="tbtn" onclick="cargarUbicaciones()">🔄</button>
     <div class="last-update" id="last-update">—</div>
   </div>
@@ -266,7 +267,34 @@ function togglePanel(){
   document.getElementById('toggle-icon').textContent=panelOpen?'▼':'▲';
 }
 
+async function limpiarInactivos(){
+  if(!confirm('¿Eliminar todos los equipos sin señal (más de 10 min inactivos)?'))return;
+  try{
+    const desde=new Date(Date.now()-10*60*1000).toISOString();
+    const r=await fetch(
+      SURL+'/rest/v1/ubicaciones_maquinaria?created_at=lt.'+desde,
+      {method:'DELETE',headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY}}
+    );
+    // Limpiar marcadores del mapa
+    Object.keys(markers).forEach(m=>{markers[m].remove();delete markers[m];});
+    document.getElementById('maq-list').innerHTML='<div class="empty-panel">Limpiado — actualizando...</div>';
+    setTimeout(cargarUbicaciones,1000);
+  }catch(e){
+    alert('Error: '+e.message);
+  }
+}
+
+// Auto-limpiar registros de más de 24 horas al cargar
+async function autoLimpiar(){
+  try{
+    const desde=new Date(Date.now()-24*60*60*1000).toISOString();
+    await fetch(SURL+'/rest/v1/ubicaciones_maquinaria?created_at=lt.'+desde,
+      {method:'DELETE',headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY}});
+  }catch(e){}
+}
+
 // Init
+autoLimpiar();
 drawModules();
 cargarUbicaciones();
 setInterval(cargarUbicaciones,10000);
