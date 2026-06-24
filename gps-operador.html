@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="GPS Arato">
 <meta name="theme-color" content="#0B1437">
+<link rel="manifest" href="gps-manifest.json">
 <title>GPS Operador — Arato</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
 <style>
@@ -127,10 +128,74 @@ select:focus,input:focus{outline:none;border-color:var(--gold)}
 const SURL='https://rqvcvffyynpnighzwxju.supabase.co';
 const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdmN2ZmZ5eW5wbmlnaHp3eGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MjgyNDcsImV4cCI6MjA5MzMwNDI0N30.fFufNEdRvAzl6O6BqtTbx83O3Eg8Wd7gACNJDGQKga4';
 
+// PWA install prompt
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();deferredPrompt=e;
+  const btn=document.createElement('button');
+  btn.textContent='📲 Instalar como App';
+  btn.style.cssText='background:#F5C800;border:none;border-radius:10px;padding:12px;color:#0B1437;font-weight:800;font-family:inherit;width:100%;margin-top:8px;font-size:0.85rem;cursor:pointer';
+  btn.onclick=async()=>{
+    deferredPrompt.prompt();
+    const{outcome}=await deferredPrompt.userChoice;
+    if(outcome==='accepted')btn.remove();
+  };
+  document.getElementById('screen-login').appendChild(btn);
+});
+
+// Registrar Service Worker
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/gps-sw.js').then(reg=>{
+    console.log('SW registrado');
+  }).catch(e=>console.warn('SW error:',e));
+}
+
+// IndexedDB para cola offline
+function openDB(){
+  return new Promise((res,rej)=>{
+    const req=indexedDB.open('arato-gps',1);
+    req.onupgradeneeded=e=>{e.target.result.createObjectStore('pending',{keyPath:'id',autoIncrement:true});};
+    req.onsuccess=e=>res(e.target.result);
+    req.onerror=e=>rej(e);
+  });
+}
+function savePending(db,data){
+  return new Promise((res,rej)=>{
+    const tx=db.transaction('pending','readwrite');
+    tx.objectStore('pending').add(data);
+    tx.oncomplete=()=>res();tx.onerror=e=>rej(e);
+  });
+}
+
 let trackInterval=null;
 let maquina='',operador='',modulo='';
 let ultimaLat=null,ultimaLng=null,ultimaVel=0;
 let prevLat=null,prevLng=null,prevTime=null;
+let wakeLock=null;
+
+async function activarWakeLock(){
+  try{
+    if('wakeLock' in navigator){
+      wakeLock=await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release',()=>{
+        // Reactivar si se libera automáticamente
+        setTimeout(activarWakeLock,1000);
+      });
+      console.log('Pantalla bloqueada encendida');
+    }
+  }catch(e){console.warn('WakeLock no disponible:',e);}
+}
+
+async function liberarWakeLock(){
+  if(wakeLock){try{await wakeLock.release();wakeLock=null;}catch(e){}}
+}
+
+// Reactivar WakeLock cuando la app vuelve al primer plano
+document.addEventListener('visibilitychange',async()=>{
+  if(document.visibilityState==='visible'&&trackInterval){
+    await activarWakeLock();
+  }
+});
 
 function calcVelocidad(lat,lng){
   const now=Date.now();
@@ -173,22 +238,29 @@ window.addEventListener('load',()=>{
 async function enviarUbicacion(lat,lng,vel,dir){
   const ahora=new Date().toISOString();
   const estadoMov=vel>1?'en movimiento':'detenido';
+  const data={maquina,operador,modulo,lat,lng,velocidad:Math.round(vel||0),direccion:Math.round(dir||0),estado:estadoMov,created_at:ahora};
   try{
-    await fetch(SURL+'/rest/v1/ubicaciones_maquinaria',{
+    const resp=await fetch(SURL+'/rest/v1/ubicaciones_maquinaria',{
       method:'POST',
       headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'return=minimal'},
-      body:JSON.stringify({
-        maquina,operador,modulo,
-        lat,lng,
-        velocidad:Math.round(vel||0),
-        direccion:Math.round(dir||0),
-        estado:estadoMov,
-        created_at:ahora
-      })
+      body:JSON.stringify(data)
     });
-    document.getElementById('sync-txt').textContent='✅ Enviado: '+new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    if(resp.ok||resp.status===201){
+      document.getElementById('sync-txt').textContent='🔆 Pantalla activa · ✅ Enviado: '+new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    }else{throw new Error('HTTP '+resp.status);}
   }catch(e){
-    document.getElementById('sync-txt').textContent='⚠️ Sin conexión — reintentando...';
+    // Sin conexión — guardar en IndexedDB y registrar sync
+    try{
+      const db=await openDB();
+      await savePending(db,data);
+      if('serviceWorker' in navigator && 'SyncManager' in window){
+        const reg=await navigator.serviceWorker.ready;
+        await reg.sync.register('gps-sync');
+      }
+      document.getElementById('sync-txt').textContent='⚠️ Sin señal — guardado local, enviará al recuperar';
+    }catch(e2){
+      document.getElementById('sync-txt').textContent='⚠️ Sin conexión — reintentando...';
+    }
   }
 }
 
@@ -232,6 +304,9 @@ function iniciarTurno(){
     const velKmh=actualizarPantalla(lat,lng,vel||0);
     enviarUbicacion(lat,lng,velKmh,dir||0);
     toast('✅ Turno iniciado — GPS activo');
+    activarWakeLock().then(()=>{
+      document.getElementById('sync-txt').textContent='🔆 Pantalla encendida · Enviando cada 10 seg';
+    });
   },err=>{
     toast('⚠️ Error GPS: '+err.message);
   },{enableHighAccuracy:true,timeout:10000});
@@ -251,6 +326,7 @@ function iniciarTurno(){
 function detenerTurno(){
   if(!confirm('¿Finalizar turno? Se dejará de enviar tu ubicación.'))return;
   if(trackInterval){clearInterval(trackInterval);trackInterval=null;}
+  liberarWakeLock();
   // Enviar estado "inactivo"
   if(ultimaLat){
     fetch(SURL+'/rest/v1/ubicaciones_maquinaria',{
