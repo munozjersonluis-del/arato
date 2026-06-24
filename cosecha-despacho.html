@@ -1355,10 +1355,54 @@ async function confirmarDespacho(){
   const totC=_previewLineas.reduce((s,l)=>s+l.cantidad,0);
   const totP=_previewLineas.reduce((s,l)=>s+calcPeso(l),0);
 
-  // ── MEJORA 1: Confirmación con resumen antes de despachar ──
-  const resumenLineas=_previewLineas.map(l=>`• ${l.modulo} | ${l.variedad} | ${l.calidad||'Exportable'} | ${l.cantidad} ${l.envase}`).join('\n');
-  const binsEquiv=_previewLineas.reduce((s,l)=>s+(l.envase==='Bins'||l.envase==='Granel'?l.cantidad:l.cantidad/JABAS_BIN),0);
-  if(!confirm(`📋 RESUMEN DEL DESPACHO\n\n${resumenLineas}\n\n⚖️ Peso total: ${totP.toLocaleString()} kg\n📦 Equivale a: ~${Math.round(binsEquiv)} bins\n\n¿Confirmas el despacho?`)){return;}
+  // ── CONFIRMACIÓN VISUAL con conversión por línea ──
+  await new Promise((resolve,reject)=>{
+    // Construir tabla de líneas con conversión
+    const lineasHtml=_previewLineas.map(l=>{
+      const esBin=l.envase==='Bins'||l.envase==='Granel';
+      const binsL=esBin?l.cantidad:l.cantidad/JABAS_BIN;
+      const kgL=calcPeso(l);
+      const iconEnv=l.envase==='Bins'?'📦':l.envase==='Granel'?'🏗️':'🧺';
+      return`<div style="background:#1e293b;border-radius:8px;padding:10px 12px;margin-bottom:6px;border-left:3px solid ${esBin?'#D97706':'#7C3AED'}">
+        <div style="font-size:0.7rem;font-weight:700;color:#fff;margin-bottom:4px">${l.modulo} · ${l.variedad||''} · <span style="color:#94A3B8">${l.calidad||'Exportable'}</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:0.85rem;color:#F5C800;font-weight:700">${iconEnv} ${l.cantidad} ${l.envase}</div>
+          <div style="text-align:right">
+            <div style="font-size:0.75rem;font-weight:800;color:#fff">→ ${binsL.toFixed(2)} bins</div>
+            <div style="font-size:0.65rem;color:#64748B">${kgL.toLocaleString()} kg</div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    const totalBins=_previewLineas.reduce((s,l)=>s+(l.envase==='Bins'||l.envase==='Granel'?l.cantidad:l.cantidad/JABAS_BIN),0);
+
+    // Crear modal
+    const overlay=document.createElement('div');
+    overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+    overlay.innerHTML=`<div style="background:#0d1526;border-radius:16px;padding:20px;width:100%;max-width:380px;max-height:85vh;overflow-y:auto;border:1px solid #334155">
+      <div style="font-size:0.85rem;font-weight:800;color:#F5C800;margin-bottom:4px;text-align:center">📋 RESUMEN DEL DESPACHO</div>
+      <div style="font-size:0.65rem;color:#64748B;text-align:center;margin-bottom:14px">Verifica antes de confirmar</div>
+      ${lineasHtml}
+      <div style="background:#0B1437;border-radius:10px;padding:12px;margin-top:10px;border:1.5px solid #F5C800">
+        <div style="font-size:0.65rem;color:#94A3B8;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">TOTAL CAMIÓN</div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:1.3rem;font-weight:800;color:#F5C800;font-family:monospace">${totalBins.toFixed(2)} bins</div>
+            <div style="font-size:0.7rem;color:#64748B">${totP.toLocaleString()} kg</div>
+          </div>
+          <div style="font-size:0.65rem;color:#475569;text-align:right">${_previewLineas.length} línea(s)</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px">
+        <button id="btn-cancel-disp" style="padding:12px;background:#1e293b;border:1px solid #334155;border-radius:10px;color:#fff;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:inherit">✗ Cancelar</button>
+        <button id="btn-ok-disp" style="padding:12px;background:#16A34A;border:none;border-radius:10px;color:#fff;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:inherit">✅ Confirmar</button>
+      </div>
+    </div>`;
+    document.body.appendChild(overlay);
+    document.getElementById('btn-ok-disp').onclick=()=>{overlay.remove();resolve();};
+    document.getElementById('btn-cancel-disp').onclick=()=>{overlay.remove();reject('cancelado');};
+  }).catch(()=>{return;});
 
   // ── Re-validar stock real antes de confirmar ──
   toast('Verificando stock disponible...','ok');

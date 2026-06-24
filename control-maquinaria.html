@@ -230,7 +230,7 @@ tr:nth-child(even) td{background:rgba(255,255,255,0.015)}
     <div class="form-card">
       <div class="field">
         <label>Tipo de Equipo *</label>
-        <select id="f-tipo" onchange="updatePreview()" style="font-weight:700">
+        <select id="f-tipo" onchange="onTipoChange()" style="font-weight:700">
           <option value="maquinaria">🚜 Maquinaria (Meta: 3.5 TN/Hr)</option>
           <option value="montacargas">🏗️ Montacargas</option>
         </select>
@@ -243,7 +243,7 @@ tr:nth-child(even) td{background:rgba(255,255,255,0.015)}
       </div>
       <div class="field">
         <label>Fecha *</label>
-        <input id="f-fecha" type="text" placeholder="DD/MM/AAAA" oninput="updatePreview()"/>
+        <input id="f-fecha" type="text" placeholder="DD/MM/AAAA" oninput="updatePreview();autoCargarToneladasMaq()"/>
       </div>
       <div class="field">
         <label>Horas Efectivas *</label>
@@ -330,7 +330,7 @@ tr:nth-child(even) td{background:rgba(255,255,255,0.015)}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
           <div class="field">
             <label>Fecha *</label>
-            <input id="prs-fecha" type="date">
+            <input id="prs-fecha" type="date" onchange="autoCargarToneladas()">
           </div>
           <div class="field">
             <label>N° Trabajadores *</label>
@@ -339,8 +339,8 @@ tr:nth-child(even) td{background:rgba(255,255,255,0.015)}
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
           <div class="field">
-            <label>Toneladas *</label>
-            <input id="prs-tons" type="number" step="0.01" min="0" placeholder="51.77" oninput="prevPersonal()">
+            <label>Toneladas <span id="prs-tons-lbl" style="color:#16A34A;font-size:0.55rem">(se carga automático de maquinaria)</span></label>
+            <input id="prs-tons" type="number" step="0.01" min="0" placeholder="Se carga automático..." oninput="prevPersonal()" style="font-family:'JetBrains Mono',monospace;font-weight:700">
           </div>
           <div class="field">
             <label>Hrs por persona</label>
@@ -663,6 +663,52 @@ async function ldPersonal(){
     }
   }catch(e){console.warn('Personal desde localStorage');}
   renderPersonalTabla();
+}
+
+function onTipoChange(){
+  updatePreview();
+  autoCargarToneladasMaq();
+}
+
+function autoCargarToneladasMaq(){
+  const tipo=document.getElementById('f-tipo')?.value;
+  const fecha=document.getElementById('f-fecha')?.value?.trim();
+  if(!fecha)return;
+  // Solo auto-cargar si es montacargas
+  if(tipo!=='montacargas')return;
+  // Sumar toneladas de maquinaria de esa fecha
+  const recsMaq=records.filter(r=>r.fecha===fecha&&(!r.tipo||r.tipo==='maquinaria'));
+  const totTons=recsMaq.reduce((s,r)=>s+(r.toneladas||0),0);
+  if(totTons>0){
+    document.getElementById('f-bins').value=totTons.toFixed(2);
+    document.getElementById('f-bins-calc').textContent='✅ '+totTons.toFixed(2)+' TN cargadas automáticamente de maquinaria del '+fecha;
+    document.getElementById('f-bins-calc').style.color='#16A34A';
+    updatePreview();
+  } else {
+    document.getElementById('f-bins-calc').textContent='⚠️ Sin datos de maquinaria para '+fecha+' — ingresa manualmente';
+    document.getElementById('f-bins-calc').style.color='#D97706';
+  }
+}
+
+function autoCargarToneladas(){
+  const fechaRaw=document.getElementById('prs-fecha').value;
+  if(!fechaRaw)return;
+  // Convertir YYYY-MM-DD → DD/MM/YYYY para comparar con records
+  const [y,m,d]=fechaRaw.split('-');
+  const fecha=`${d}/${m}/${y}`;
+  // Sumar toneladas de maquinaria de esa fecha
+  const recsMaq=records.filter(r=>r.fecha===fecha&&(!r.tipo||r.tipo==='maquinaria'));
+  const totTons=recsMaq.reduce((s,r)=>s+(r.toneladas||0),0);
+  if(totTons>0){
+    document.getElementById('prs-tons').value=totTons.toFixed(2);
+    document.getElementById('prs-tons-lbl').textContent='(✅ '+totTons.toFixed(2)+' TN cargadas de maquinaria '+fecha+')';
+    document.getElementById('prs-tons-lbl').style.color='#16A34A';
+    prevPersonal();
+  } else {
+    document.getElementById('prs-tons').value='';
+    document.getElementById('prs-tons-lbl').textContent='(sin datos de maquinaria para esta fecha — ingresa manualmente)';
+    document.getElementById('prs-tons-lbl').style.color='#D97706';
+  }
 }
 
 function calcHrsTotal(){
