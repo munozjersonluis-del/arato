@@ -53,9 +53,9 @@ select:focus,input:focus{outline:none;border-color:var(--gold)}
 <!-- PANTALLA INICIO -->
 <div id="screen-login">
   <div class="field">
-    <label>Tu Nombre / Máquina</label>
-    <select id="sel-maq">
-      <option value="">— Seleccionar equipo —</option>
+    <label>Tu Máquina / Equipo</label>
+    <input type="text" id="sel-maq" placeholder="Ej: INC-VAL-01, LT-LN-363..." list="maq-sugs">
+    <datalist id="maq-sugs">
       <option>INC-VAL-01</option>
       <option>INC-VAL-02</option>
       <option>INC-VAL-19</option>
@@ -66,7 +66,7 @@ select:focus,input:focus{outline:none;border-color:var(--gold)}
       <option>MONTACARGA-01</option>
       <option>MONTACARGA-02</option>
       <option>MONTACARGA-03</option>
-    </select>
+    </datalist>
   </div>
   <div class="field">
     <label>Operador</label>
@@ -74,18 +74,13 @@ select:focus,input:focus{outline:none;border-color:var(--gold)}
   </div>
   <div class="field">
     <label>Módulo / Zona</label>
-    <select id="sel-mod">
-      <option value="">— Seleccionar módulo —</option>
+    <input type="text" id="sel-mod" placeholder="Ej: Módulo 4, Patio, En camino..." list="mod-sugs">
+    <datalist id="mod-sugs">
       <option>Módulo 1</option><option>Módulo 2</option><option>Módulo 3</option>
       <option>Módulo 4</option><option>Módulo 5</option><option>Módulo 6</option>
       <option>Módulo 7</option><option>Módulo 8</option><option>Módulo 9</option>
-      <option>Módulo 10</option><option>Módulo 11</option><option>Módulo 12</option>
-      <option>Módulo 13</option><option>Módulo 14</option><option>Módulo 15</option>
-      <option>Módulo 16</option><option>Módulo 17</option><option>Módulo 18</option>
-      <option>Módulo 19</option><option>Módulo 20</option><option>Módulo 21</option>
-      <option>Módulo 22</option><option>Módulo 23</option><option>Módulo 24</option>
-      <option>Patio / Acopio</option><option>En camino</option>
-    </select>
+      <option>Módulo 10</option><option>Patio / Acopio</option><option>En camino</option>
+    </datalist>
   </div>
   <button class="btn-start" onclick="iniciarTurno()">📍 Iniciar Turno</button>
 </div>
