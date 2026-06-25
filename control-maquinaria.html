@@ -737,7 +737,6 @@ function prevPersonal(){
 
 async function guardarPersonal(){
   let fechaRaw=document.getElementById('prs-fecha').value.trim();
-  // Si fecha vacía, usar hoy
   if(!fechaRaw) fechaRaw=new Date().toISOString().split('T')[0];
 
   const pers=parseInt(document.getElementById('prs-personal').value)||0;
@@ -745,25 +744,27 @@ async function guardarPersonal(){
   const hrs=parseFloat(document.getElementById('prs-hrs').value)||0;
   const obs=document.getElementById('prs-obs')?document.getElementById('prs-obs').value.trim():'';
 
-  if(!pers){showToast('⚠️ Ingresa el número de trabajadores','err');return;}
-  if(!tons){showToast('⚠️ Ingresa las toneladas','err');return;}
-  if(!hrs){showToast('⚠️ Ingresa las horas','err');return;}
+  // Debug - mostrar qué valores lee
+  showToast('Leyendo: '+pers+' pers, '+tons+'t, '+hrs+'h','ok');
 
-  // Avisar si ya existe registro para esa fecha pero NO bloquear
-  const existe=personalRecords.find(r=>r.fecha===fecha);
-  if(existe)showToast('⚠️ Ya hay un registro para '+fecha+' — agregando otro','ok');
+  if(!pers){showToast('⚠️ Falta: trabajadores','err');return;}
+  if(!tons){showToast('⚠️ Falta: toneladas','err');return;}
+  if(!hrs){showToast('⚠️ Falta: horas','err');return;}
 
-  // Convertir YYYY-MM-DD → DD/MM/YYYY
   let fecha=fechaRaw;
   if(fechaRaw.includes('-')){
     const [y,m,d]=fechaRaw.split('-');
     fecha=`${d}/${m}/${y}`;
   }
 
+  const existe=personalRecords.find(r=>r.fecha===fecha);
+  if(existe)showToast('Ya hay registro para '+fecha+' — agregando otro','ok');
+
   const tnhr=+(tons/hrs).toFixed(2);
   const tnp=+(tons/pers).toFixed(3);
   const hrsp=+(hrs/pers).toFixed(3);
   try{
+    showToast('Guardando en Supabase...','ok');
     const saved=await supaFetch('personal_acopio','POST',{
       fecha,personal:pers,toneladas:tons,horas:hrs,tnhr,tnp,hrsp,obs
     });
@@ -778,8 +779,11 @@ async function guardarPersonal(){
     if(document.getElementById('prs-obs'))document.getElementById('prs-obs').value='';
     const prev=document.getElementById('prs-prev');
     if(prev)prev.style.display='none';
-    showToast('✅ '+pers+' trabajadores · '+tons+'t · '+tnhr+' TN/Hr guardado','ok');
-  }catch(e){showToast('Error: '+e.message,'err');}
+    showToast('✅ '+pers+' trab · '+tons+'t · '+tnhr+' TN/Hr guardado','ok');
+  }catch(e){
+    showToast('❌ Error Supabase: '+e.message,'err');
+    console.error('guardarPersonal error:',e);
+  }
 }
 
 function editarPersonal(id){
