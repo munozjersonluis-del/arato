@@ -749,9 +749,9 @@ async function guardarPersonal(){
   if(!tons){showToast('⚠️ Ingresa las toneladas','err');return;}
   if(!hrs){showToast('⚠️ Ingresa las horas','err');return;}
 
-  // Advertir si ya existe registro para esa fecha
+  // Avisar si ya existe registro para esa fecha pero NO bloquear
   const existe=personalRecords.find(r=>r.fecha===fecha);
-  if(existe&&!confirm('Ya existe un registro para '+fecha+'. ¿Agregar otro de todas formas?'))return;
+  if(existe)showToast('⚠️ Ya hay un registro para '+fecha+' — agregando otro','ok');
 
   // Convertir YYYY-MM-DD → DD/MM/YYYY
   let fecha=fechaRaw;
@@ -779,6 +779,68 @@ async function guardarPersonal(){
     const prev=document.getElementById('prs-prev');
     if(prev)prev.style.display='none';
     showToast('✅ '+pers+' trabajadores · '+tons+'t · '+tnhr+' TN/Hr guardado','ok');
+  }catch(e){showToast('Error: '+e.message,'err');}
+}
+
+function editarPersonal(id){
+  const r=personalRecords.find(x=>String(x.id)===String(id));
+  if(!r)return;
+  // Crear modal de edición
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  // Convertir fecha DD/MM/YYYY → YYYY-MM-DD para input date
+  let fechaInput=r.fecha;
+  if(r.fecha&&r.fecha.includes('/')){
+    const [d,m,y]=r.fecha.split('/');
+    fechaInput=`${y}-${m}-${d}`;
+  }
+  overlay.innerHTML=`<div style="background:#0d1526;border-radius:16px;padding:20px;width:100%;max-width:360px;border:1px solid #334155">
+    <div style="font-size:0.85rem;font-weight:800;color:#F5C800;margin-bottom:16px;text-align:center">✏️ Editar Registro de Personal</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div><label style="font-size:0.6rem;color:#64748B;display:block;margin-bottom:3px">Fecha</label>
+        <input id="ep-fecha" type="date" value="${fechaInput}" style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:8px;color:#fff;font-size:0.8rem;width:100%"></div>
+      <div><label style="font-size:0.6rem;color:#64748B;display:block;margin-bottom:3px">Trabajadores</label>
+        <input id="ep-pers" type="number" value="${r.personal}" style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:8px;color:#fff;font-size:0.8rem;width:100%"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div><label style="font-size:0.6rem;color:#64748B;display:block;margin-bottom:3px">Toneladas</label>
+        <input id="ep-tons" type="number" step="0.01" value="${r.toneladas}" style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:8px;color:#fff;font-size:0.8rem;width:100%"></div>
+      <div><label style="font-size:0.6rem;color:#64748B;display:block;margin-bottom:3px">Horas totales</label>
+        <input id="ep-hrs" type="number" step="0.01" value="${r.horas}" style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:8px;color:#fff;font-size:0.8rem;width:100%"></div>
+    </div>
+    <div style="margin-bottom:12px"><label style="font-size:0.6rem;color:#64748B;display:block;margin-bottom:3px">Observación</label>
+      <input id="ep-obs" type="text" value="${r.obs||''}" style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:8px;color:#fff;font-size:0.8rem;width:100%"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <button onclick="this.closest('div[style*=fixed]').remove()" style="padding:10px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#fff;font-size:0.8rem;cursor:pointer;font-family:inherit">✗ Cancelar</button>
+      <button onclick="guardarEdicionPersonal('${id}')" style="padding:10px;background:#3B82F6;border:none;border-radius:8px;color:#fff;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:inherit">✅ Guardar</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function guardarEdicionPersonal(id){
+  const fechaRaw=document.getElementById('ep-fecha').value;
+  const pers=parseInt(document.getElementById('ep-pers').value)||0;
+  const tons=parseFloat(document.getElementById('ep-tons').value)||0;
+  const hrs=parseFloat(document.getElementById('ep-hrs').value)||0;
+  const obs=document.getElementById('ep-obs').value.trim();
+  if(!fechaRaw||!pers||!tons||!hrs){showToast('Completa todos los campos','err');return;}
+  const [y,m,d]=fechaRaw.split('-');
+  const fecha=`${d}/${m}/${y}`;
+  const tnhr=+(tons/hrs).toFixed(2);
+  const tnp=+(tons/pers).toFixed(3);
+  const hrsp=+(hrs/pers).toFixed(3);
+  try{
+    // Actualizar en Supabase si tiene ID numérico
+    if(!String(id).startsWith('p')){
+      await supaFetch('personal_acopio?id=eq.'+id,'PATCH',{fecha,personal:pers,toneladas:tons,horas:hrs,tnhr,tnp,hrsp,obs});
+    }
+    const idx=personalRecords.findIndex(r=>String(r.id)===String(id));
+    if(idx>=0)personalRecords[idx]={...personalRecords[idx],fecha,personal:pers,toneladas:tons,horas:hrs,tnhr,tnp,hrsp,obs};
+    svPersonal();
+    renderPersonalTabla();
+    document.querySelector('div[style*="position:fixed"]')?.remove();
+    showToast('✅ Registro actualizado','ok');
   }catch(e){showToast('Error: '+e.message,'err');}
 }
 
@@ -819,7 +881,10 @@ function renderPersonalTabla(){
       <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;font-weight:700;font-family:monospace;color:#1E293B">${r.toneladas}</td>
       <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;font-weight:800;font-size:1rem;color:#D97706;font-family:monospace">${r.tnhr}</td>
       <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;font-weight:700;color:#16A34A;font-family:monospace">${r.tnp}</td>
-      <td style="padding:8px;text-align:center;border:1px solid #E2E8F0"><button onclick="eliminarPersonal('${r.id}')" style="background:none;border:1px solid #DC2626;color:#DC2626;border-radius:5px;padding:3px 8px;cursor:pointer;font-size:0.7rem">🗑</button></td>
+      <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;display:flex;gap:4px;justify-content:center">
+        <button onclick="editarPersonal('${r.id}')" style="background:none;border:1px solid #3B82F6;color:#3B82F6;border-radius:5px;padding:3px 8px;cursor:pointer;font-size:0.7rem">✏️</button>
+        <button onclick="eliminarPersonal('${r.id}')" style="background:none;border:1px solid #DC2626;color:#DC2626;border-radius:5px;padding:3px 8px;cursor:pointer;font-size:0.7rem">🗑</button>
+      </td>
     </tr>`;
     if(r.obs)h+=`<tr style="background:${bg}"><td colspan="8" style="padding:3px 8px 6px;font-size:9px;color:#6B7280;border:1px solid #E2E8F0;font-style:italic">📝 ${r.obs}</td></tr>`;
   });
