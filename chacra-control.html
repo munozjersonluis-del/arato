@@ -3,7 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#1A3A1A">
+<meta name="theme-color" content="#7B2D00">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Chacra Muñoz">
+<meta name="application-name" content="Chacra Muñoz">
+<meta name="description" content="Control de campaña agrícola - Familia Muñoz">
+<link rel="manifest" href="chacra-manifest.json">
 <title>Chacra Muñoz</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
 <style>
@@ -213,6 +220,8 @@ body{background:var(--bg);color:var(--txt);min-height:100vh;}
   <button class="tb on" onclick="go('resumen',this)">📊 Inicio</button>
   <button class="tb" onclick="go('ventas',this)">💰 Ventas</button>
   <button class="tb" onclick="go('gastos',this)">💸 Gastos</button>
+  <button class="tb" onclick="go('historial',this)">📋 Historial</button>
+  <button class="tb" onclick="go('fiados',this)">🤝 Fiados</button>
   <button class="tb" id="tb-finanzas" onclick="goAdmin('finanzas',this)" style="opacity:0.5;">🏦 Finanzas</button>
   <button class="tb" id="tb-socios" onclick="goAdmin('socios',this)" style="opacity:0.5;">👥 Socios</button>
   <button class="tb" onclick="go('calendario',this)">🌱 Campaña</button>
@@ -230,16 +239,7 @@ body{background:var(--bg);color:var(--txt);min-height:100vh;}
 
 <!-- ═══════════ INICIO ═══════════ -->
 <div class="pg on" id="pg-resumen">
-  <div class="kgrid" id="kpis-top"></div>
-  <div class="bolsas" id="bolsas-cont"></div>
-  <div class="card" id="res-socios-card" style="display:none">
-    <div class="ch"><div class="ch-t">👥 Reparto socios</div></div>
-    <div class="cb" id="res-socios-body"></div>
-  </div>
-  <div class="card">
-    <div class="ch"><div class="ch-t">📅 Estado campaña</div></div>
-    <div class="cb" id="res-campana"></div>
-  </div>
+  <!-- renderResumen() construye todo el contenido aquí -->
 </div>
 
 <!-- ═══════════ VENTAS ═══════════ -->
@@ -398,7 +398,74 @@ body{background:var(--bg);color:var(--txt);min-height:100vh;}
       </div>
       <div class="f"><label>Inversión inicial estimada (S/)</label><input type="number" id="cfg-inversion" placeholder="Ej: 6000" onchange="guardarConfig()"></div>
       <button class="btn btn-v" onclick="guardarConfig();toast2('✅ Configuración guardada')">💾 Guardar</button>
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--bdr);">
+        <div style="font-size:0.65rem;color:var(--txt2);margin-bottom:8px;">⚠️ Cuando el capital esté completo y quieras empezar una nueva temporada:</div>
+        <button class="btn" style="background:linear-gradient(180deg,#FF6B1A,#7B2D00);color:#fff;" onclick="nuevaCampana()">🌱 Iniciar Nueva Campaña</button>
+      </div>
     </div>
+  </div>
+</div>
+
+<!-- ═══════════ HISTORIAL ═══════════ -->
+<div class="pg" id="pg-historial">
+
+  <!-- Selector periodo -->
+  <div style="display:flex;gap:8px;margin-bottom:12px;">
+    <button id="h-btn-dia" class="btn btn-v btn-sm" onclick="setHistPeriodo('dia',this)" style="flex:1;font-size:0.65rem;">Hoy</button>
+    <button id="h-btn-sem" class="btn btn-sm" onclick="setHistPeriodo('semana',this)" style="flex:1;font-size:0.65rem;background:#334155;color:#fff;">Esta semana</button>
+    <button id="h-btn-todo" class="btn btn-sm" onclick="setHistPeriodo('todo',this)" style="flex:1;font-size:0.65rem;background:#334155;color:#fff;">Todo</button>
+  </div>
+
+  <!-- Resumen periodo -->
+  <div id="hist-resumen" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;"></div>
+
+  <!-- Ciclos de venta -->
+  <div class="card" style="margin-bottom:12px;">
+    <div class="ch">
+      <div class="ch-t">🏁 Ciclos de Venta</div>
+      <button class="btn btn-sm btn-v" onclick="nuevoCiclo()" style="font-size:0.6rem;">+ Nuevo</button>
+    </div>
+    <div class="cb" id="lista-ciclos"><div class="empty">Sin ciclos registrados</div></div>
+  </div>
+
+  <!-- Movimientos -->
+  <div class="card">
+    <div class="ch"><div class="ch-t">📋 Movimientos</div></div>
+    <div class="cb" id="lista-historial"><div class="empty">Sin movimientos</div></div>
+  </div>
+</div>
+
+<!-- ═══════════ FIADOS ═══════════ -->
+<div class="pg" id="pg-fiados">
+  <div class="card">
+    <div class="ch"><div class="ch-t">🤝 Registrar Fiado</div></div>
+    <div class="cb">
+      <div class="f2">
+        <div class="f"><label>Nombre cliente</label><input type="text" id="fi-nombre" placeholder="Ej: Don Carlos"></div>
+        <div class="f"><label>Monto S/</label><input type="number" id="fi-monto" placeholder="0.00" min="0" step="0.5"></div>
+      </div>
+      <div class="f2">
+        <div class="f"><label>Fecha fiado</label><input type="date" id="fi-fecha"></div>
+        <div class="f"><label>Fecha promete pagar</label><input type="date" id="fi-paga"></div>
+      </div>
+      <div class="f"><label>Detalle (qué llevó)</label><input type="text" id="fi-obs" placeholder="Ej: 2 cargas de chala"></div>
+      <button class="btn btn-v" onclick="addFiado()">➕ Registrar Fiado</button>
+    </div>
+  </div>
+
+  <!-- Resumen fiados -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;" id="fi-resumen"></div>
+
+  <!-- Lista fiados -->
+  <div class="card">
+    <div class="ch"><div class="ch-t">📋 Fiados pendientes</div></div>
+    <div class="cb" id="lista-fiados"><div class="empty">Sin fiados registrados</div></div>
+  </div>
+
+  <!-- Fiados cobrados -->
+  <div class="card">
+    <div class="ch"><div class="ch-t">✅ Fiados cobrados</div></div>
+    <div class="cb" id="lista-fiados-cobrados"><div class="empty">Sin cobros</div></div>
   </div>
 </div>
 
@@ -454,27 +521,49 @@ async function sbUpsert(tabla,data){
 // ═══════ GOOGLE SHEETS ═══════
 async function enviarASheet(tipo, fila){
   try{
-    await fetch(GAS_URL, {
-      method:'POST',
-      body:JSON.stringify({tipo, fila}),
-      headers:{'Content-Type':'application/json'}
-    });
-  }catch(e){console.warn('Sheets sin conexión:',e);}
+    const params=new URLSearchParams();
+    params.append('tipo',tipo);
+    params.append('fila',JSON.stringify(fila));
+    await fetch(GAS_URL+'?'+params.toString(),{method:'GET',mode:'no-cors'});
+  }catch(e){console.warn('Sheets:',e);}
 }
 
 async function sincronizarSheets(){
   const c=calculos();
   const hoyStr=new Date().toLocaleString('es-PE');
+  toast2('Enviando a Sheets...');
+  const filas=[
+    ['Total Ventas', c.totV],
+    ['Total Gastos', c.totG],
+    ['Balance neto', c.bruto],
+    ['Capital acumulado', c.capitalAcum],
+    ['Capital objetivo', c.capitalObj],
+    ['Falta recuperar', c.capitalFaltante],
+    ['Para repartir socios', c.repartoAcum],
+    ['Fondo emergencia', c.emergAcum],
+    ['Actualizado', hoyStr]
+  ];
+  // Enviar ventas
+  for(const v of D.ventas){
+    await enviarASheet('Ventas',[v.id,v.fecha,v.monto,v.obs,hoyStr]);
+  }
+  // Enviar gastos
+  for(const g of D.gastos){
+    await enviarASheet('Gastos',[g.id,g.fecha,g.monto,g.cat,g.obs,g.tipo,g.trab,hoyStr]);
+  }
   // Enviar resumen
-  await enviarASheet('Resumen',[['Total Ventas',c.totV],['Total Gastos',c.totG],['Balance',c.bruto],['Capital Acumulado',c.capitalAcum],['Capital Objetivo',c.capitalObj],['Para Repartir',c.repartoAcum],['Emergencia',c.emergAcum],['Actualizado',hoyStr]]);
+  for(const f of filas){
+    await enviarASheet('Resumen',f);
+  }
   toast2('✅ Enviado a Google Sheets');
 }
 
 // ═══════════════════ ESTADO ═══════════════════
 let D={
   ventas:[],gastos:[],socios:[],deudas:[],retiros:[],
-  cfg:{siembra:'',reinvPct:20,emergPct:5,inversionInicial:6000},
-  bolsasCfg:{capitalPct:30,repartoPct:60,emergPct:10}
+  fiados:[],ciclos:[],
+  cfg:{siembra:'',reinvPct:20,emergPct:5,inversionInicial:6000,inicioVenta:'2026-06-25'},
+  bolsasCfg:{capitalPct:50,repartoPct:20,emergPct:30}
 };
 
 function sv(){localStorage.setItem('cc2',JSON.stringify(D));}
@@ -560,6 +649,8 @@ function go(id,btn){
   if(id==='calendario')renderCalendario();
   if(id==='ventas')renderVentas();
   if(id==='gastos')renderGastos();
+  if(id==='historial')renderHistorial();
+  if(id==='fiados')renderFiados();
 }
 
 // ═══════════════════ CÁLCULOS FINANCIEROS ═══════════════════
@@ -593,122 +684,189 @@ function calculos(){
 // ═══════════════════ INICIO ═══════════════════
 function renderResumen(){
   const c=calculos();
-  document.getElementById('hdr-bal').textContent=fmt(c.repartoAcum);
-  document.getElementById('hdr-bal').style.color='var(--oro)';
+  const nTrab=D.socios.filter(s=>s.tipo==='trabajador').length||4;
+  const manoObra=c.totV*(D.bolsasCfg.emergPct/100);
+  const porTrabajador=manoObra/nTrab;
+  const inversionista=c.repartoAcum;
+  const barColor=c.capitalPct100>=100?'#16A34A':c.capitalPct100>=50?'#D97706':'#DC2626';
 
-  // KPIs principales
-  document.getElementById('kpis-top').innerHTML=`
-    <div class="kcard">
-      <div class="ki">💰</div><div class="kl">Total ventas</div>
-      <div class="kv" style="color:var(--v3)">${fmt(c.totV)}</div>
-      <div class="ks">${D.ventas.length} registros</div>
-    </div>
-    <div class="kcard">
-      <div class="ki">💸</div><div class="kl">Total gastos</div>
-      <div class="kv" style="color:var(--r)">${fmt(c.totG)}</div>
-      <div class="ks">${D.gastos.length} registros</div>
-    </div>
-    <div class="kcard">
-      <div class="ki">💵</div><div class="kl">Para repartir</div>
-      <div class="kv" style="color:var(--am)">${fmt(c.repartoAcum)}</div>
-      <div class="ks">${D.bolsasCfg.repartoPct}% de ventas</div>
-    </div>
-    <div class="kcard">
-      <div class="ki">📈</div><div class="kl">Balance neto</div>
-      <div class="kv" style="color:${c.bruto>=0?'var(--v3)':'var(--r)'}">${fmt(c.bruto)}</div>
-      <div class="ks">${c.bruto>=0?'positivo':'negativo'}</div>
-    </div>`;
+  document.getElementById('hdr-bal').textContent=fmt(c.bruto);
+  document.getElementById('hdr-bal').style.color=c.bruto>=0?'var(--oro)':'#FCA5A5';
 
-  // Capital rotativo — barra de progreso
-  const barColor=c.capitalPct100>=100?'#4CAF50':c.capitalPct100>=50?'#D97706':'#DC2626';
-  document.getElementById('bolsas-cont').innerHTML=`
-    <div style="grid-column:1/-1;background:#fff;border-radius:12px;padding:14px;border:2px solid ${barColor}33;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <div style="font-size:0.7rem;font-weight:800;color:${barColor};">🌱 Capital Rotativo</div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;font-weight:800;color:${barColor};">${c.capitalPct100}%</div>
+  // ── RESUMEN SIMPLE ──
+  document.getElementById('kpis-top').innerHTML='';
+  document.getElementById('bolsas-cont').innerHTML='';
+
+  // Contenido del inicio
+  const main=document.getElementById('pg-resumen');
+
+  // Limpiar y reconstruir
+  main.innerHTML=`
+
+    <!-- VENTAS vs GASTOS -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+      <div style="background:#fff;border-radius:14px;padding:14px;border:2px solid #BBF7D0;text-align:center;">
+        <div style="font-size:0.6rem;color:#64748B;text-transform:uppercase;font-weight:700;margin-bottom:4px;">💰 Total vendido</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:1.4rem;font-weight:900;color:#15803D;">${fmt(c.totV)}</div>
+        <div style="font-size:0.6rem;color:#94A3B8;margin-top:2px;">${D.ventas.length} ventas</div>
       </div>
-      <div style="background:#E2E8F0;border-radius:10px;height:10px;margin-bottom:8px;">
-        <div style="background:${barColor};height:10px;border-radius:10px;width:${c.capitalPct100}%;transition:width .5s;"></div>
+      <div style="background:#fff;border-radius:14px;padding:14px;border:2px solid #FCA5A5;text-align:center;">
+        <div style="font-size:0.6rem;color:#64748B;text-transform:uppercase;font-weight:700;margin-bottom:4px;">💸 Total gastado</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:1.4rem;font-weight:900;color:#DC2626;">${fmt(c.totG)}</div>
+        <div style="font-size:0.6rem;color:#94A3B8;margin-top:2px;">${D.gastos.length} gastos</div>
       </div>
-      <div style="display:flex;justify-content:space-between;font-size:0.62rem;">
-        <div><span style="color:var(--txt3);">Acumulado</span><br><b style="color:${barColor};font-family:monospace;">${fmt(c.capitalAcum)}</b></div>
-        <div style="text-align:center;"><span style="color:var(--txt3);">Objetivo</span><br><b style="font-family:monospace;">${fmt(c.capitalObj)}</b></div>
-        <div style="text-align:right;"><span style="color:var(--txt3);">Falta</span><br><b style="color:var(--r);font-family:monospace;">${fmt(c.capitalFaltante)}</b></div>
-      </div>
-      ${c.capitalPct100>=100?'<div style="text-align:center;margin-top:8px;font-size:0.7rem;font-weight:800;color:var(--v3);">✅ ¡Capital recuperado! Listo para nueva siembra</div>':''}
     </div>
 
-    <div class="bolsa" style="background:#FEF9C3;border-color:#FDE68A;">
-      <div class="bname" style="color:#B45309;">🌱 Capital (${D.bolsasCfg.capitalPct}%)</div>
-      <div class="bval" style="color:#B45309;">${fmt(c.capitalAcum)}</div>
-      <div class="bpct" style="color:#B45309;">Para próxima siembra</div>
+    <!-- BALANCE -->
+    <div style="background:${c.bruto>=0?'#F0FDF4':'#FEF2F2'};border-radius:14px;padding:14px;border:2px solid ${c.bruto>=0?'#86EFAC':'#FCA5A5'};text-align:center;margin-bottom:12px;">
+      <div style="font-size:0.6rem;color:#64748B;text-transform:uppercase;font-weight:700;margin-bottom:4px;">📊 Ganancia neta (Ventas − Gastos)</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:1.8rem;font-weight:900;color:${c.bruto>=0?'#15803D':'#DC2626'};">${fmt(c.bruto)}</div>
+      <div style="font-size:0.65rem;color:${c.bruto>=0?'#15803D':'#DC2626'};font-weight:700;margin-top:3px;">${c.bruto>=0?'✅ Estamos ganando':'⚠️ Estamos perdiendo'}</div>
     </div>
-    <div class="bolsa" style="background:var(--v4);border-color:#BBF7D0;">
-      <div class="bname" style="color:var(--v2);">💵 Reparto (${D.bolsasCfg.repartoPct}%)</div>
-      <div class="bval" style="color:var(--v2);">${fmt(c.repartoAcum)}</div>
-      <div class="bpct" style="color:var(--v2);">Para socios</div>
-    </div>
-    <div class="bolsa" style="background:var(--rc);border-color:#FCA5A5;">
-      <div class="bname" style="color:var(--r);">🚨 Emergencia (${D.bolsasCfg.emergPct}%)</div>
-      <div class="bval" style="color:var(--r);">${fmt(c.emergAcum)}</div>
-      <div class="bpct" style="color:var(--r);">Imprevistos</div>
-    </div>
-    <div class="bolsa" style="background:#F0F9FF;border-color:#BFDBFE;">
-      <div class="bname" style="color:#0369A1;">📊 Gastos (real)</div>
-      <div class="bval" style="color:#0369A1;">${fmt(c.totG)}</div>
-      <div class="bpct" style="color:#0369A1;">Operativo + trabajadores</div>
-    </div>`;
 
-  // Socios
-  const socios=D.socios.filter(s=>s.tipo==='socio');
-  if(socios.length&&c.repartoAcum>0){
-    document.getElementById('res-socios-card').style.display='block';
-    document.getElementById('res-socios-body').innerHTML=socios.map(s=>{
-      const le=c.repartoAcum*(s.pct/100);
-      const ret=D.retiros.filter(r=>r.quien.toLowerCase()===s.nombre.toLowerCase()).reduce((ss,r)=>ss+r.monto,0);
-      const pend=Math.max(0,le-ret);
-      return`<div class="socio-row">
-        <div>
-          <div style="font-size:0.78rem;font-weight:800;color:var(--txt)">${s.nombre}</div>
-          <div style="font-size:0.6rem;color:var(--txt2)">${s.rol} · ${s.pct}%</div>
+    <!-- REPARTO AUTOMÁTICO -->
+    <div style="background:#fff;border-radius:14px;border:2px solid #FFD9BC;margin-bottom:12px;overflow:hidden;">
+      <div style="background:linear-gradient(135deg,#7B2D00,#B84500);padding:10px 14px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:0.95rem;color:#FFD700;letter-spacing:1px;">🔀 Así se reparte cada sol que entra</div>
+        <div style="font-size:0.58rem;color:rgba(255,255,255,.6);margin-top:1px;">Automático — basado en S/ ${fmt(c.totV)} en ventas</div>
+      </div>
+      <div style="padding:12px 14px;">
+
+        <!-- Reinversión -->
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#FFFBEB;border-radius:10px;margin-bottom:8px;border-left:4px solid #D97706;">
+          <div>
+            <div style="font-size:0.78rem;font-weight:800;color:#B45309;">🌱 Reinversión (${D.bolsasCfg.capitalPct}%)</div>
+            <div style="font-size:0.6rem;color:#92400E;">Para gastos del negocio y próxima siembra</div>
+          </div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:1.1rem;font-weight:900;color:#B45309;">${fmt(c.capitalAcum)}</div>
         </div>
-        <div style="text-align:right;">
-          <div style="font-family:'JetBrains Mono',monospace;font-size:0.9rem;font-weight:800;color:var(--v2)">${fmt(le)}</div>
-          ${ret>0?`<div style="font-size:0.58rem;color:var(--r)">Retirado: ${fmt(ret)}</div>`:''}
-          <div style="font-size:0.58rem;color:${pend>0?'var(--am)':'var(--v3)'}">Pendiente: ${fmt(pend)}</div>
+
+        <!-- Inversionista -->
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#F0FDF4;border-radius:10px;margin-bottom:8px;border-left:4px solid #16A34A;">
+          <div>
+            <div style="font-size:0.78rem;font-weight:800;color:#15803D;">💵 Tú / Socios (${D.bolsasCfg.repartoPct}%)</div>
+            <div style="font-size:0.6rem;color:#166534;">Para recuperar gastos de emergencia</div>
+          </div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:1.1rem;font-weight:900;color:#15803D;">${fmt(inversionista)}</div>
         </div>
-      </div>`;
-    }).join('');
-  }else{
-    document.getElementById('res-socios-card').style.display=socios.length?'block':'none';
-    if(socios.length)document.getElementById('res-socios-body').innerHTML='<div class="empty">Aún no hay ventas para repartir</div>';
-  }
+
+        <!-- Mano de obra -->
+        <div style="background:#EFF6FF;border-radius:10px;padding:10px 12px;border-left:4px solid #0369A1;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div>
+              <div style="font-size:0.78rem;font-weight:800;color:#0369A1;">👷 Mano de obra (${D.bolsasCfg.emergPct}%)</div>
+              <div style="font-size:0.6rem;color:#1e3a8a;">Dividido entre ${nTrab} trabajadores — INTOCABLE</div>
+            </div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:1.1rem;font-weight:900;color:#0369A1;">${fmt(manoObra)}</div>
+          </div>
+          ${D.socios.filter(s=>s.tipo==='trabajador').length>0?
+            D.socios.filter(s=>s.tipo==='trabajador').map(t=>`
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-top:1px solid #BFDBFE;">
+              <div style="font-size:0.7rem;font-weight:700;color:#1e3a8a;">👤 ${t.nombre}</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;font-weight:800;color:#0369A1;">${fmt(porTrabajador)}</div>
+            </div>`).join('')
+            :`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-top:1px solid #BFDBFE;">
+              <div style="font-size:0.7rem;color:#64748B;">Cada trabajador (÷ ${nTrab})</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;font-weight:800;color:#0369A1;">${fmt(porTrabajador)}</div>
+            </div>`
+          }
+        </div>
+
+      </div>
+    </div>
+
+    <!-- CAPITAL ROTATIVO -->
+    <div style="background:#fff;border-radius:14px;padding:14px;border:2px solid ${barColor}44;margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-size:0.75rem;font-weight:800;color:${barColor};">🌱 Capital para próxima siembra</div>
+        <div style="font-size:0.75rem;font-weight:800;color:${barColor};">${c.capitalPct100}%</div>
+      </div>
+      <div style="background:#E2E8F0;border-radius:10px;height:12px;margin-bottom:8px;">
+        <div style="background:${barColor};height:12px;border-radius:10px;width:${c.capitalPct100}%;transition:width .5s;"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;text-align:center;">
+        <div><div style="font-size:0.55rem;color:#94A3B8;">Acumulado</div><div style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;font-weight:800;color:${barColor};">${fmt(c.capitalAcum)}</div></div>
+        <div><div style="font-size:0.55rem;color:#94A3B8;">Objetivo</div><div style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;font-weight:800;">${fmt(c.capitalObj)}</div></div>
+        <div><div style="font-size:0.55rem;color:#94A3B8;">Falta</div><div style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;font-weight:800;color:#DC2626;">${fmt(c.capitalFaltante)}</div></div>
+      </div>
+      ${c.capitalPct100>=100?'<div style="text-align:center;margin-top:10px;background:#DCFCE7;border-radius:8px;padding:8px;font-size:0.75rem;font-weight:800;color:#15803D;">✅ ¡Capital completo! Listo para nueva siembra</div>':''}
+    </div>
+
+    <!-- CAMPAÑA -->
+    <div id="res-campana-block" style="background:#fff;border-radius:14px;padding:14px;border:1px solid var(--bdr);margin-bottom:12px;"></div>
+
+    <!-- SOCIOS -->
+    <div id="res-socios-card" style="display:none;background:#fff;border-radius:14px;border:1px solid var(--bdr);margin-bottom:12px;overflow:hidden;">
+      <div style="background:#7B2D00;padding:9px 14px;"><div style="font-family:'Bebas Neue',sans-serif;font-size:0.88rem;color:#FFD700;letter-spacing:1px;">👥 Reparto socios</div></div>
+      <div style="padding:12px 14px;" id="res-socios-body"></div>
+    </div>
+
+  `;
 
   // Campaña
-  let campHTML='<div class="empty">Sin fecha de siembra configurada</div>';
+  const campEl=document.getElementById('res-campana-block');
   if(D.cfg.siembra){
     const dias=Math.floor((new Date()-new Date(D.cfg.siembra))/(864e5));
     const eta=Math.max(0,90-dias);
-    campHTML=`
-      <div class="it"><div class="it-l"><div class="it-tag" style="color:var(--v2)">Inicio siembra</div></div><div class="it-r"><div class="it-m">${D.cfg.siembra}</div></div></div>
-      <div class="it"><div class="it-l"><div class="it-tag" style="color:var(--a)">Días activos</div></div><div class="it-r"><div class="it-m" style="color:var(--a)">${dias} días</div></div></div>
-      <div class="it"><div class="it-l"><div class="it-tag" style="color:var(--am)">Días para cosecha</div></div><div class="it-r"><div class="it-m" style="color:var(--am)">${eta>0?eta+' días aprox.':'🌽 En época de cosecha'}</div></div></div>
-    `;
+    campEl.innerHTML=`
+      <div style="font-size:0.65rem;font-weight:800;color:#7B2D00;margin-bottom:8px;">📅 Estado de campaña</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+        <div style="text-align:center;background:#FFF8F3;border-radius:8px;padding:8px;border:1px solid #FFD9BC;">
+          <div style="font-size:0.55rem;color:#94A3B8;">Días activos</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:1.2rem;font-weight:900;color:#B84500;">${dias}</div>
+        </div>
+        <div style="text-align:center;background:#FFF8F3;border-radius:8px;padding:8px;border:1px solid #FFD9BC;">
+          <div style="font-size:0.55rem;color:#94A3B8;">Para cosecha</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:1.2rem;font-weight:900;color:${eta<10?'#DC2626':'#B84500'};">${eta>0?eta+'d':'🌽 Ya!'}</div>
+        </div>
+      </div>`;
+  }else{
+    campEl.innerHTML='<div style="text-align:center;color:#94A3B8;font-size:0.75rem;padding:8px;">Configura la fecha de siembra en 👥 Socios</div>';
   }
-  document.getElementById('res-campana').innerHTML=campHTML;
+
+  // Socios
+  if(D.socios.filter(s=>s.tipo==='socio').length&&inversionista>0){
+    document.getElementById('res-socios-card').style.display='block';
+    document.getElementById('res-socios-body').innerHTML=D.socios.filter(s=>s.tipo==='socio').map(s=>{
+      const le=inversionista*(s.pct/100);
+      const ret=D.retiros.filter(r=>r.quien.toLowerCase()===s.nombre.toLowerCase()).reduce((ss,r)=>ss+r.monto,0);
+      return`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--bdr);">
+        <div><div style="font-size:0.78rem;font-weight:800;">${s.nombre}</div><div style="font-size:0.6rem;color:#64748B;">${s.rol} · ${s.pct}%</div></div>
+        <div style="text-align:right;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.9rem;font-weight:800;color:#15803D;">${fmt(le)}</div>
+          ${ret>0?`<div style="font-size:0.58rem;color:#DC2626;">Retirado: ${fmt(ret)}</div><div style="font-size:0.58rem;color:#D97706;">Pendiente: ${fmt(Math.max(0,le-ret))}</div>`:''}
+        </div>
+      </div>`;
+    }).join('');
+  }
 }
 
 // ═══════════════════ VENTAS ═══════════════════
-function addVenta(){
+async function addVenta(){
   const fecha=document.getElementById('v-fecha').value;
   const monto=parseFloat(document.getElementById('v-monto').value)||0;
   const obs=document.getElementById('v-obs').value.trim();
   if(!fecha||!monto){toast2('Completa fecha y monto','err');return;}
-  D.ventas.push({id:Date.now(),fecha,monto,obs});
-  D.ventas.sort((a,b)=>b.fecha.localeCompare(a.fecha));
-  sv();renderVentas();renderResumen();
-  document.getElementById('v-monto').value='';document.getElementById('v-obs').value='';
-  toast2('✅ Venta: '+fmt(monto));
+  toast2('Guardando...');
+  try{
+    const saved=await sbPost('chacra_ventas',{fecha,monto,obs});
+    const id=saved?.id||Date.now();
+    D.ventas.unshift({id,fecha,monto,obs});
+    D.ventas.sort((a,b)=>b.fecha.localeCompare(a.fecha));
+    sv();renderVentas();renderResumen();
+    document.getElementById('v-monto').value='';
+    document.getElementById('v-obs').value='';
+    // Enviar a Sheets automaticamente
+    enviarASheet('Ventas',[id,fecha,monto,obs,new Date().toLocaleString('es-PE')]);
+    toast2('✅ Venta guardada: '+fmt(monto));
+  }catch(e){
+    // Guardar local si no hay internet
+    D.ventas.unshift({id:Date.now(),fecha,monto,obs,pendiente:true});
+    sv();renderVentas();renderResumen();
+    document.getElementById('v-monto').value='';
+    document.getElementById('v-obs').value='';
+    toast2('⚠️ Guardado local — sin internet');
+  }
 }
 // ═══════════════════ ROLES / PIN ═══════════════════
 const PIN_ADMIN='63394588';
@@ -766,17 +924,25 @@ async function addGasto(){
   const tipo=document.getElementById('g-tipo').value;
   const trab=document.getElementById('g-trab').value.trim();
   if(!fecha||!monto){toast2('Completa fecha y monto','err');return;}
-  D.gastos.push({id:Date.now(),fecha,monto,cat,obs,tipo,trab});
-  D.gastos.sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  toast2('Guardando...');
   try{
     const saved=await sbPost('chacra_gastos',{fecha,monto,cat,obs,tipo,trab});
-    D.gastos.unshift({id:saved?.id||Date.now(),fecha,monto,cat,obs,tipo,trab});
+    const id=saved?.id||Date.now();
+    D.gastos.unshift({id,fecha,monto,cat,obs,tipo,trab});
     D.gastos.sort((a,b)=>b.fecha.localeCompare(a.fecha));
     sv();renderGastos();renderResumen();
-    document.getElementById('g-monto').value='';document.getElementById('g-obs').value='';document.getElementById('g-trab').value='';
+    document.getElementById('g-monto').value='';
+    document.getElementById('g-obs').value='';
+    document.getElementById('g-trab').value='';
+    enviarASheet('Gastos',[id,fecha,monto,cat,obs,tipo,trab,new Date().toLocaleString('es-PE')]);
     toast2('✅ Gasto guardado: '+fmt(monto));
-    enviarASheet('Gastos',[saved?.id||'',fecha,monto,cat,obs,tipo,trab,new Date().toLocaleString('es-PE')]);
-  }catch(e){toast2('Error al guardar','err');}
+  }catch(e){
+    D.gastos.unshift({id:Date.now(),fecha,monto,cat,obs,tipo,trab,pendiente:true});
+    sv();renderGastos();renderResumen();
+    document.getElementById('g-monto').value='';
+    document.getElementById('g-obs').value='';
+    toast2('⚠️ Guardado local — sin internet');
+  }
 }
 async function delGasto(id){if(!checkAdmin())return;if(!confirm('¿Eliminar?'))return;await sbDel('chacra_gastos',id);D.gastos=D.gastos.filter(x=>x.id!==id);sv();renderGastos();renderResumen();toast2('Eliminado');}
 function renderGastos(){
@@ -794,6 +960,204 @@ function renderGastos(){
     </div>
     <div class="it-r"><div class="it-m" style="color:var(--r)">${fmt(g.monto)}</div>${esAdmin?`<button class="del" onclick="delGasto(${g.id})">🗑</button>`:''}</div>
   </div>`).join('');
+}
+
+// ═══════════════════ HISTORIAL ═══════════════════
+let histPeriodo='dia';
+
+function setHistPeriodo(p,btn){
+  histPeriodo=p;
+  ['dia','sem','todo'].forEach(x=>{
+    const b=document.getElementById('h-btn-'+x);
+    if(b){b.className='btn btn-sm';b.style.background='#334155';b.style.color='#fff';}
+  });
+  btn.className='btn btn-v btn-sm';btn.style.background='';btn.style.color='';
+  renderHistorial();
+}
+
+function filtrarPorPeriodo(arr){
+  const hoyD=new Date();hoyD.setHours(0,0,0,0);
+  const hoyStr=hoyD.toISOString().split('T')[0];
+  const lunes=new Date(hoyD);lunes.setDate(hoyD.getDate()-(hoyD.getDay()||7)+1);
+  const lunesStr=lunes.toISOString().split('T')[0];
+  if(histPeriodo==='dia')return arr.filter(x=>(x.fecha||'')===hoyStr);
+  if(histPeriodo==='semana')return arr.filter(x=>(x.fecha||'')>=lunesStr);
+  return arr;
+}
+
+function renderHistorial(){
+  const vF=filtrarPorPeriodo(D.ventas);
+  const gF=filtrarPorPeriodo(D.gastos);
+  const totV=vF.reduce((s,x)=>s+x.monto,0);
+  const totG=gF.reduce((s,x)=>s+x.monto,0);
+  const bal=totV-totG;
+  const resEl=document.getElementById('hist-resumen');
+  if(resEl)resEl.innerHTML=`
+    <div style="background:#fff;border-radius:10px;padding:10px;border:1.5px solid #BBF7D0;text-align:center;">
+      <div style="font-size:0.55rem;color:#64748B;text-transform:uppercase;font-weight:700;">💰 Ventas</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:1rem;font-weight:900;color:#15803D;">${fmt(totV)}</div>
+    </div>
+    <div style="background:#fff;border-radius:10px;padding:10px;border:1.5px solid #FCA5A5;text-align:center;">
+      <div style="font-size:0.55rem;color:#64748B;text-transform:uppercase;font-weight:700;">💸 Gastos</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:1rem;font-weight:900;color:#DC2626;">${fmt(totG)}</div>
+    </div>
+    <div style="background:#fff;border-radius:10px;padding:10px;border:1.5px solid ${bal>=0?'#86EFAC':'#FCA5A5'};text-align:center;">
+      <div style="font-size:0.55rem;color:#64748B;text-transform:uppercase;font-weight:700;">📈 Balance</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:1rem;font-weight:900;color:${bal>=0?'#15803D':'#DC2626'};">${fmt(bal)}</div>
+    </div>`;
+  renderCiclos();
+  const todos=[...vF.map(x=>({...x,tipo:'venta'})),...gF.map(x=>({...x,tipo:'gasto'}))].sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+  const lh=document.getElementById('lista-historial');
+  if(!lh)return;
+  if(!todos.length){lh.innerHTML='<div class="empty">Sin movimientos en este período</div>';return;}
+  lh.innerHTML=todos.map(m=>`<div class="it">
+    <div class="it-l">
+      <div class="it-tag"><span class="badge ${m.tipo==='venta'?'bv':'bg2'}">${m.tipo==='venta'?'Venta':'Gasto'}</span></div>
+      <div class="it-d">${m.obs||m.trab||'Sin detalle'}</div>
+      <div class="it-dt">📅 ${m.fecha||''}</div>
+    </div>
+    <div class="it-r"><div class="it-m" style="color:${m.tipo==='venta'?'#15803D':'#DC2626'}">${m.tipo==='venta'?'+':'−'}${fmt(m.monto)}</div></div>
+  </div>`).join('');
+}
+
+// ═══ CICLOS ═══
+function nuevoCiclo(){
+  if(!checkAdmin())return;
+  const nombre=prompt('Nombre del ciclo:\nEj: Campaña Junio 2026');
+  if(!nombre)return;
+  const inicio=prompt('Fecha inicio (YYYY-MM-DD):',hoy());
+  if(!inicio)return;
+  if(!D.ciclos)D.ciclos=[];
+  D.ciclos.push({id:Date.now(),nombre,inicio,fin:null,cerrado:false});
+  sv();renderCiclos();toast2('✅ Ciclo: '+nombre);
+}
+
+function cerrarCiclo(id){
+  if(!checkAdmin())return;
+  const ci=D.ciclos.find(c=>c.id===id);
+  if(!ci||!confirm('¿Cerrar ciclo "'+ci.nombre+'"?'))return;
+  ci.fin=hoy();ci.cerrado=true;
+  const vC=D.ventas.filter(v=>v.fecha>=ci.inicio&&v.fecha<=ci.fin);
+  const gC=D.gastos.filter(g=>g.fecha>=ci.inicio&&g.fecha<=ci.fin);
+  ci.totVentas=vC.reduce((s,x)=>s+x.monto,0);
+  ci.totGastos=gC.reduce((s,x)=>s+x.monto,0);
+  ci.ganancia=ci.totVentas-ci.totGastos;
+  sv();renderCiclos();toast2('✅ Ciclo cerrado');
+}
+
+function renderCiclos(){
+  const c=document.getElementById('lista-ciclos');
+  if(!c)return;
+  if(!D.ciclos||!D.ciclos.length){c.innerHTML='<div class="empty">Sin ciclos — toca "+ Nuevo" para iniciar</div>';return;}
+  c.innerHTML=D.ciclos.slice().reverse().map(ci=>{
+    const vC=D.ventas.filter(v=>v.fecha>=ci.inicio&&(!ci.fin||v.fecha<=ci.fin));
+    const gC=D.gastos.filter(g=>g.fecha>=ci.inicio&&(!ci.fin||g.fecha<=ci.fin));
+    const totV=ci.totVentas||vC.reduce((s,x)=>s+x.monto,0);
+    const totG=ci.totGastos||gC.reduce((s,x)=>s+x.monto,0);
+    const gan=totV-totG;
+    return`<div style="background:${ci.cerrado?'#F8FAFC':'#F0FDF4'};border-radius:10px;padding:10px 12px;margin-bottom:8px;border-left:4px solid ${ci.cerrado?'#94A3B8':'#16A34A'};">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <div>
+          <div style="font-size:0.78rem;font-weight:800;color:${ci.cerrado?'#64748B':'#15803D'}">${ci.nombre}</div>
+          <div style="font-size:0.58rem;color:#94A3B8;">📅 ${ci.inicio} ${ci.fin?'→ '+ci.fin:'→ hoy'}</div>
+        </div>
+        <div style="font-size:0.6rem;font-weight:700;background:${ci.cerrado?'#E2E8F0':'#DCFCE7'};color:${ci.cerrado?'#64748B':'#15803D'};padding:2px 8px;border-radius:6px;">${ci.cerrado?'✅ Cerrado':'🟢 Activo'}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;font-size:0.62rem;text-align:center;">
+        <div><div style="color:#64748B;">Ventas</div><div style="font-weight:800;color:#15803D;font-family:monospace;">${fmt(totV)}</div></div>
+        <div><div style="color:#64748B;">Gastos</div><div style="font-weight:800;color:#DC2626;font-family:monospace;">${fmt(totG)}</div></div>
+        <div><div style="color:#64748B;">Balance</div><div style="font-weight:800;color:${gan>=0?'#15803D':'#DC2626'};font-family:monospace;">${fmt(gan)}</div></div>
+      </div>
+      ${!ci.cerrado&&esAdmin?`<button onclick="cerrarCiclo(${ci.id})" class="btn btn-sm" style="margin-top:8px;background:#1e3a8a;color:#fff;font-size:0.6rem;width:100%;">🏁 Cerrar y comparar</button>`:''}
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════ FIADOS ═══════════════════
+async function addFiado(){
+  const nombre=document.getElementById('fi-nombre').value.trim();
+  const monto=parseFloat(document.getElementById('fi-monto').value)||0;
+  const fecha=document.getElementById('fi-fecha').value;
+  const paga=document.getElementById('fi-paga').value;
+  const obs=document.getElementById('fi-obs').value.trim();
+  if(!nombre||!monto){toast2('Completa nombre y monto','err');return;}
+  if(!D.fiados)D.fiados=[];
+  D.fiados.push({id:Date.now(),nombre,monto,fecha,paga,obs,cobrado:false,fechaCobro:null});
+  sv();renderFiados();
+  document.getElementById('fi-nombre').value='';
+  document.getElementById('fi-monto').value='';
+  document.getElementById('fi-obs').value='';
+  toast2('✅ Fiado: '+nombre+' · '+fmt(monto));
+}
+
+function cobrarFiado(id){
+  if(!checkAdmin())return;
+  const f=D.fiados.find(x=>x.id===id);
+  if(!f||!confirm('¿Cobrado a '+f.nombre+'?'))return;
+  f.cobrado=true;f.fechaCobro=hoy();
+  D.ventas.unshift({id:Date.now(),fecha:hoy(),monto:f.monto,obs:'Cobro fiado: '+f.nombre});
+  D.ventas.sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  sbPost('chacra_ventas',{fecha:hoy(),monto:f.monto,obs:'Cobro fiado: '+f.nombre});
+  sv();renderFiados();renderVentas();renderResumen();
+  toast2('✅ Cobrado y registrado como venta');
+}
+
+function delFiado(id){
+  if(!checkAdmin())return;
+  if(!confirm('¿Eliminar fiado?'))return;
+  D.fiados=D.fiados.filter(x=>x.id!==id);
+  sv();renderFiados();toast2('Eliminado');
+}
+
+function renderFiados(){
+  if(!D.fiados)D.fiados=[];
+  const pendientes=D.fiados.filter(f=>!f.cobrado);
+  const cobrados=D.fiados.filter(f=>f.cobrado);
+  const totPend=pendientes.reduce((s,x)=>s+x.monto,0);
+  const totCob=cobrados.reduce((s,x)=>s+x.monto,0);
+  const hoyStr=hoy();
+  const fr=document.getElementById('fi-resumen');
+  if(fr)fr.innerHTML=`
+    <div style="background:#fff;border-radius:10px;padding:10px;border:2px solid #FCA5A5;text-align:center;">
+      <div style="font-size:0.55rem;color:#64748B;font-weight:700;text-transform:uppercase;">⏳ Por cobrar</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:1.1rem;font-weight:900;color:#DC2626;">${fmt(totPend)}</div>
+      <div style="font-size:0.55rem;color:#94A3B8;">${pendientes.length} clientes</div>
+    </div>
+    <div style="background:#fff;border-radius:10px;padding:10px;border:2px solid #BBF7D0;text-align:center;">
+      <div style="font-size:0.55rem;color:#64748B;font-weight:700;text-transform:uppercase;">✅ Cobrado</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:1.1rem;font-weight:900;color:#15803D;">${fmt(totCob)}</div>
+      <div style="font-size:0.55rem;color:#94A3B8;">${cobrados.length} cobrados</div>
+    </div>`;
+  const lp=document.getElementById('lista-fiados');
+  if(lp){
+    if(!pendientes.length){lp.innerHTML='<div class="empty">Sin fiados pendientes ✅</div>';}
+    else lp.innerHTML=pendientes.map(f=>{
+      const vencido=f.paga&&f.paga<hoyStr;
+      return`<div style="background:${vencido?'#FEF2F2':'#FFFBEB'};border-radius:10px;padding:10px 12px;margin-bottom:8px;border-left:4px solid ${vencido?'#DC2626':'#D97706'};">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <div style="font-size:0.8rem;font-weight:800;">👤 ${f.nombre}</div>
+            <div style="font-size:0.62rem;color:#64748B;">${f.obs||''}</div>
+            <div style="font-size:0.58rem;color:#94A3B8;">📅 ${f.fecha||'—'} · Paga: ${f.paga||'—'}</div>
+            ${vencido?`<div style="font-size:0.6rem;font-weight:700;color:#DC2626;">⚠️ VENCIDO</div>`:''}
+          </div>
+          <div style="text-align:right;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:1rem;font-weight:900;color:#DC2626;">${fmt(f.monto)}</div>
+            <button onclick="cobrarFiado(${f.id})" class="btn btn-sm btn-v" style="margin-top:4px;font-size:0.6rem;">✅ Cobrar</button>
+            ${esAdmin?`<button onclick="delFiado(${f.id})" class="del">🗑</button>`:''}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  const lc=document.getElementById('lista-fiados-cobrados');
+  if(lc){
+    if(!cobrados.length){lc.innerHTML='<div class="empty">Sin cobros aún</div>';}
+    else lc.innerHTML=cobrados.slice(0,10).map(f=>`<div class="it">
+      <div class="it-l"><div class="it-d" style="font-weight:700;">✅ ${f.nombre}</div><div class="it-dt">${f.obs||''} · ${f.fechaCobro||'—'}</div></div>
+      <div class="it-r"><div class="it-m" style="color:#15803D;">${fmt(f.monto)}</div></div>
+    </div>`).join('');
+  }
 }
 
 // ═══════════════════ FINANZAS ═══════════════════
@@ -958,6 +1322,46 @@ function renderSocios(){
   if(D.cfg.inversionInicial)document.getElementById('cfg-inversion').value=D.cfg.inversionInicial;
 }
 
+async function nuevaCampana(){
+  if(!checkAdmin())return;
+  const c=calculos();
+  const msg=`🌱 INICIAR NUEVA CAMPAÑA\n\nEsto reiniciará:\n✅ Ventas (${D.ventas.length} registros)\n✅ Gastos (${D.gastos.length} registros)\n✅ Deudas y retiros\n\nSe conservará:\n👥 Socios y trabajadores\n⚙️ Configuración y porcentajes\n\nCapital acumulado: S/ ${c.capitalAcum.toFixed(2)}\n\n¿Confirmas el inicio de nueva campaña?`;
+  if(!confirm(msg))return;
+
+  // Guardar resumen de campaña anterior en Sheets
+  const hoy=new Date().toLocaleString('es-PE');
+  await enviarASheet('Historial_Campanas',[
+    hoy,
+    D.cfg.siembra||'—',
+    c.totV.toFixed(2),
+    c.totG.toFixed(2),
+    c.bruto.toFixed(2),
+    c.capitalAcum.toFixed(2),
+    c.repartoAcum.toFixed(2),
+    c.emergAcum.toFixed(2),
+    D.ventas.length,
+    D.gastos.length
+  ]);
+
+  // Reiniciar solo ventas, gastos, deudas, retiros
+  D.ventas=[];
+  D.gastos=[];
+  D.deudas=[];
+  D.retiros=[];
+  D.cfg.siembra='';
+  sv();
+
+  // Limpiar fecha de siembra en UI
+  const cfgFecha=document.getElementById('cfg-siembra');
+  if(cfgFecha)cfgFecha.value='';
+  const calFecha=document.getElementById('cal-fecha');
+  if(calFecha)calFecha.value='';
+
+  renderVentas();renderGastos();renderResumen();
+  toast2('✅ Nueva campaña iniciada — ¡a sembrar!');
+  go('resumen',document.querySelector('.tb'));
+}
+
 function guardarConfig(){if(!esAdmin&&!document.getElementById('cal-fecha').value)return;
   D.cfg.siembra=document.getElementById('cfg-siembra')?.value||document.getElementById('cal-fecha')?.value||D.cfg.siembra;
   D.cfg.reinvPct=parseFloat(document.getElementById('cfg-reinv')?.value)||20;
@@ -1069,12 +1473,37 @@ window.addEventListener('load',async()=>{
   document.getElementById('d-fecha').value=h;
   document.getElementById('ret-fecha').value=h;
   if(D.cfg.siembra)document.getElementById('cal-fecha').value=D.cfg.siembra;
+  const fiF=document.getElementById('fi-fecha');if(fiF)fiF.value=h;
+  // Auto-crear primer ciclo si no existe
+  if(!D.ciclos)D.ciclos=[];
+  if(!D.fiados)D.fiados=[];
+  if(D.ciclos.length===0){
+    D.ciclos.push({id:Date.now(),nombre:'Campaña Junio 2026',inicio:'2026-06-25',fin:null,cerrado:false});
+    sv();
+  }
   if(localStorage.getItem('cc2_guia')==='visto'){
     document.getElementById('guia-overlay').style.display='none';
   }
   renderVentas();renderGastos();renderResumen();
-  // Sync Supabase en background
+  // Sync inicial
   await syncAll();
+  // Auto-sync cada 30 segundos
+  setInterval(syncAll, 30000);
+  // PWA install prompt
+  let deferredPrompt=null;
+  window.addEventListener('beforeinstallprompt',e=>{
+    e.preventDefault();deferredPrompt=e;
+    const btn=document.createElement('button');
+    btn.innerHTML='📲 Instalar app en celular';
+    btn.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#7B2D00;color:#FFD700;border:2px solid #FFD700;border-radius:12px;padding:10px 20px;font-size:0.8rem;font-weight:800;cursor:pointer;z-index:9998;font-family:Inter,sans-serif;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.4);';
+    btn.onclick=async()=>{deferredPrompt.prompt();const{outcome}=await deferredPrompt.userChoice;if(outcome==='accepted')btn.remove();};
+    document.body.appendChild(btn);
+    setTimeout(()=>{if(btn.parentNode)btn.remove();},10000);
+  });
+  // Service Worker para offline
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('chacra-sw.js').catch(()=>{});
+  }
 });
 </script>
 </body>
