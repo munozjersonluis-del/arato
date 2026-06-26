@@ -1,0 +1,2213 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Control de Maquinaria – Arato</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #080d1a;
+  --surface: #0f1729;
+  --surface2: #162035;
+  --border: rgba(255,255,255,0.08);
+  --orange: #f97316;
+  --orange2: #ea580c;
+  --blue: #38bdf8;
+  --green: #22c55e;
+  --red: #ef4444;
+  --yellow: #f59e0b;
+  --text: #f1f5f9;
+  --muted: #64748b;
+  --sub: #94a3b8;
+  --meta: 2.3;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh}
+/* HEADER */
+.header{
+  background:linear-gradient(135deg,#0a1020 0%,#111827 100%);
+  border-bottom:2px solid rgba(249,115,22,0.4);
+  padding:12px 16px;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;
+  position:sticky;top:0;z-index:100;
+}
+.brand .sup{font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--orange);letter-spacing:3px;text-transform:uppercase;font-weight:700}
+.brand .title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;letter-spacing:1px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab-btn{
+  font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;
+  border:none;border-radius:7px;padding:8px 16px;cursor:pointer;
+  background:rgba(255,255,255,0.05);color:var(--sub);transition:all .2s;
+}
+.tab-btn.active{background:var(--orange);color:#fff}
+.import-btn{
+  font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;
+  background:rgba(56,189,248,0.12);color:var(--blue);border:1px solid rgba(56,189,248,0.3);
+  border-radius:7px;padding:8px 14px;cursor:pointer;transition:all .2s;
+}
+.import-btn:hover{background:rgba(56,189,248,0.22)}
+/* MAIN */
+.main{padding:18px 14px;max-width:960px;margin:0 auto}
+/* PAGES */
+.page{display:none}.page.active{display:block}
+/* TOAST */
+.toast{
+  position:fixed;top:72px;right:16px;z-index:999;
+  border-radius:10px;padding:12px 18px;font-weight:600;font-size:14px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.5);animation:slideIn .25s ease;
+  pointer-events:none;
+}
+.toast.ok{background:#14532d;border:1px solid var(--green);color:var(--green)}
+.toast.err{background:#450a0a;border:1px solid var(--red);color:var(--red)}
+@keyframes slideIn{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+/* SECTION TITLE */
+.sec-title{
+  font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;
+  color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;
+}
+/* STAT CARDS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:22px}
+.stat-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  padding:14px 16px;border-left:3px solid var(--orange);
+}
+.stat-card.blue{border-left-color:var(--blue)}
+.stat-card.purple{border-left-color:#a78bfa}
+.stat-card.green{border-left-color:var(--green)}
+.stat-card.yellow{border-left-color:var(--yellow)}
+.stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;font-weight:600}
+.stat-value{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--text)}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:3px}
+/* MACHINE CARDS */
+.machines-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:22px}
+.machine-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:16px;border-top:3px solid var(--orange);
+}
+.machine-name{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;margin-bottom:10px}
+.machine-stats{display:grid;grid-template-columns:1fr 1fr;gap:7px;font-size:13px}
+.machine-stats span{color:var(--muted)}
+.machine-stats strong{color:var(--text)}
+.progress-bar-bg{background:rgba(255,255,255,0.07);border-radius:4px;height:6px;margin-top:12px}
+.progress-bar{height:6px;border-radius:4px;transition:width .6s ease}
+.progress-label{font-size:10px;color:var(--muted);margin-top:4px}
+/* BADGE */
+.badge{
+  display:inline-block;border-radius:5px;padding:2px 9px;
+  font-size:10px;font-weight:800;letter-spacing:1.5px;font-family:'Barlow Condensed',sans-serif;
+}
+.badge.BIEN{background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3)}
+.badge.MAL{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.badge.REGULAR{background:rgba(245,158,11,.15);color:var(--yellow);border:1px solid rgba(245,158,11,.3)}
+/* CHART */
+.chart-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:13px;
+  padding:18px 16px;
+}
+/* FORM */
+.form-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:13px;
+  padding:22px 18px;display:flex;flex-direction:column;gap:15px;max-width:460px;
+}
+.field label{display:block;font-size:11px;color:var(--sub);font-weight:600;letter-spacing:.5px;margin-bottom:6px;text-transform:uppercase}
+.field input,.field select{
+  width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);
+  border-radius:8px;padding:11px 13px;color:var(--text);font-size:15px;font-family:'Barlow',sans-serif;
+  outline:none;transition:border .2s;
+}
+.field input:focus,.field select:focus{border-color:var(--orange)}
+.field input::placeholder{color:#475569}
+.preview-box{
+  background:rgba(249,115,22,.07);border:1px solid rgba(249,115,22,.2);
+  border-radius:9px;padding:13px 15px;
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;
+}
+.preview-box span{color:var(--muted)}
+.submit-btn{
+  background:linear-gradient(135deg,var(--orange2),var(--orange));
+  color:#fff;border:none;border-radius:10px;padding:14px;
+  font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;letter-spacing:1px;
+  cursor:pointer;transition:opacity .2s;
+}
+.submit-btn:hover{opacity:.88}
+/* TABLE */
+.filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.filters select,.filters input{
+  background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);
+  border-radius:8px;padding:8px 13px;color:var(--text);font-size:13px;font-family:'Barlow',sans-serif;outline:none;
+}
+.filters select option{background:#1e293b}
+.record-count{font-size:12px;color:var(--muted)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{background:rgba(255,255,255,0.05)}
+th{
+  padding:9px 11px;text-align:left;font-family:'Barlow Condensed',sans-serif;
+  font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;
+  border-bottom:1px solid var(--border);white-space:nowrap;
+}
+td{padding:9px 11px;border-bottom:1px solid rgba(255,255,255,0.04);white-space:nowrap}
+tr:nth-child(even) td{background:rgba(255,255,255,0.015)}
+.td-maquina{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;color:var(--orange)}
+.td-num{font-family:monospace}
+.td-tnhr-ok{color:var(--green);font-weight:700;font-family:monospace}
+.td-tnhr-bad{color:var(--red);font-weight:700;font-family:monospace}
+.td-modulos{color:var(--sub);font-size:12px}
+/* EMPTY */
+.empty{text-align:center;padding:60px 20px;color:var(--muted)}
+.empty .icon{font-size:48px;margin-bottom:14px}
+.empty p{font-size:16px;font-weight:600;margin-bottom:6px;color:#475569}
+.empty small{font-size:13px}
+
+/* AUTOCOMPLETE */
+.sug-list{
+  position:absolute;top:100%;left:0;right:0;z-index:200;
+  background:#1e293b;border:1px solid rgba(249,115,22,.4);border-radius:0 0 8px 8px;
+  max-height:180px;overflow-y:auto;display:none;
+}
+.sug-item{
+  padding:10px 13px;font-size:14px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.05);
+  transition:background .15s;
+}
+.sug-item:hover,.sug-item.active{background:rgba(249,115,22,.15);color:var(--orange)}
+.sug-item small{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="brand">
+    <div class="sup">Arato Mission Produce</div>
+    <div class="title">Control de Maquinaria</div>
+  </div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="setTab('dashboard')">📊 Dashboard</button>
+    <button class="tab-btn" onclick="setTab('registro')">➕ Registrar</button>
+    <button class="tab-btn" onclick="setTab('personal')">👷 Personal</button>
+    <button class="tab-btn" onclick="setTab('tabla')">📋 Tabla</button>
+    <button class="tab-btn" onclick="setTab('reporte')">📄 Reporte</button>
+    <span id="ultima-act" style="font-size:0.6rem;color:rgba(255,255,255,0.6);align-self:center;"></span>
+    <button class="import-btn" onclick="cargarRegistros()" style="background:#2563EB;">☁️ Cargar</button>
+    <button class="import-btn" onclick="syncMaquinaria()" style="background:#16A34A;">🔄 Sync</button>
+    <button class="import-btn" onclick="exportarExcelCompleto()" style="background:#D97706;">📊 Excel</button>
+    <button class="import-btn" onclick="window.open('https://docs.google.com/spreadsheets/d/1wKwRNcox1Ydnqwz9CkDP1_hheaAnWO8y0xWcuq9hTlk','_blank')" style="background:#0F9D58;">🔗 Sheets</button>
+    <button class="import-btn" onclick="document.getElementById('xlsxInput').click()">📂 Importar</button>
+    <input type="file" id="xlsxInput" accept=".xlsx,.xls" style="display:none" onchange="importExcel(this)"/>
+  </div>
+</div>
+
+<div class="main">
+  <!-- TOAST -->
+  <div id="toast" class="toast" style="display:none"></div>
+
+  <!-- DASHBOARD -->
+  <div id="page-dashboard" class="page active">
+    <div id="dash-empty" class="empty">
+      <div class="icon">📊</div>
+      <p>Sin datos todavía</p>
+      <small>Importa un Excel o registra manualmente</small>
+    </div>
+    <div id="dash-content" style="display:none">
+      <div class="sec-title">Resumen General</div>
+      <div class="stats-grid" id="stats-grid"></div>
+      <div class="sec-title">Por Máquina</div>
+      <div class="machines-grid" id="machines-grid"></div>
+      <div class="chart-card" id="chart-wrap" style="display:none">
+        <div class="sec-title">Evolución TN/Hr por Fecha</div>
+        <canvas id="myChart" height="90"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- REGISTRO -->
+  <div id="page-registro" class="page">
+    <div class="sec-title">Nuevo Registro</div>
+    <div class="form-card">
+      <div class="field">
+        <label>Tipo de Equipo *</label>
+        <select id="f-tipo" onchange="onTipoChange()" style="font-weight:700">
+          <option value="maquinaria">🚜 Maquinaria (Meta: 3.5 TN/Hr)</option>
+          <option value="montacargas">🏗️ Montacargas</option>
+        </select>
+      </div>
+      <div class="field" style="position:relative">
+        <label>Máquina / Equipo *</label>
+        <input id="f-maquina" type="text" placeholder="Ej: INC-VAL-01" autocomplete="off"
+          oninput="onMaquinaInput()" onblur="hideSug('sug-maquina')"/>
+        <div id="sug-maquina" class="sug-list"></div>
+      </div>
+      <div class="field">
+        <label>Fecha *</label>
+        <input id="f-fecha" type="text" placeholder="DD/MM/AAAA" oninput="updatePreview();autoCargarToneladasMaq()"/>
+      </div>
+      <div class="field">
+        <label>Horas Efectivas *</label>
+        <input id="f-hrsejec" type="number" step="0.1" min="0" placeholder="Ej: 8.5" oninput="updatePreview()"/>
+      </div>
+      <div class="field">
+        <label>Toneladas cosechadas *</label>
+        <input id="f-bins" type="number" step="0.1" placeholder="Ej: 12.5" oninput="updatePreview()"/>
+        <div style="font-size:0.6rem;color:#64748B;margin-top:3px" id="f-bins-calc"></div>
+      </div>
+      <div class="field" style="position:relative">
+        <label>Operador</label>
+        <input id="f-operador" type="text" placeholder="Nombre del operador" autocomplete="off"
+          oninput="onOperadorInput()" onblur="hideSug('sug-operador')"/>
+        <div id="sug-operador" class="sug-list"></div>
+      </div>
+      <div class="field">
+        <label>Módulos</label>
+        <input id="f-modulos" type="text" placeholder="Ej: M01, M07"/>
+      </div>
+      <div class="preview-box" id="preview" style="display:none">
+        <div><span>Horas: </span><strong id="maq-p-hrs">—</strong></div>
+        <div><span>Toneladas: </span><strong id="maq-p-tons">—</strong></div>
+        <div><span>TN/Hr: </span><strong id="maq-p-tnhr">—</strong></div>
+        <div><span>Estado: </span><span id="p-estado">—</span></div>
+      </div>
+      <button class="submit-btn" onclick="guardarRegistro()">Guardar Registro ➜</button>
+    </div>
+  </div>
+
+  <!-- TABLA -->
+  <div id="page-tabla" class="page">
+    <div class="filters">
+      <select id="filter-maquina" onchange="renderTabla()">
+        <option value="TODAS">Todas las máquinas</option>
+      </select>
+      <input id="filter-fecha" type="text" placeholder="Filtrar fecha DD/MM/AAAA" oninput="renderTabla()" style="width:200px"/>
+      <span class="record-count" id="record-count">0 registros</span>
+    </div>
+    <div id="tabla-empty" class="empty" style="display:none">
+      <div class="icon">📋</div>
+      <p>Sin registros</p>
+    </div>
+    <div class="table-wrap" id="tabla-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Máquina</th><th>Operador</th><th>Fecha</th><th>Inicio</th><th>Fin</th>
+            <th>Hrs</th><th>Bins</th><th>Toneladas</th><th>TN/Hr</th>
+            <th>Estado</th><th>Módulos</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+  <!-- REPORTE -->
+  <div id="page-reporte" class="page">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button id="rpt-btn-global" onclick="setVistaRpt('global')" style="padding:7px 12px;background:#f97316;border:none;border-radius:8px;color:#fff;font-size:0.7rem;font-weight:700;cursor:pointer;font-family:inherit">🌍 Global/Día</button>
+        <button id="rpt-btn-semanal" onclick="setVistaRpt('semanal')" style="padding:7px 12px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#94A3B8;font-size:0.7rem;font-weight:700;cursor:pointer;font-family:inherit">📅 Semanal</button>
+        <button id="rpt-btn-maq" onclick="setVistaRpt('maq')" style="padding:7px 12px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#94A3B8;font-size:0.7rem;font-weight:700;cursor:pointer;font-family:inherit">🚜 Por Máquina</button>
+        <button id="rpt-btn-monta" onclick="setVistaRpt('monta')" style="padding:7px 12px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#94A3B8;font-size:0.7rem;font-weight:700;cursor:pointer;font-family:inherit">🏗️ Montacargas</button>
+        <button id="rpt-btn-combo" onclick="setVistaRpt('combo')" style="padding:7px 12px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#94A3B8;font-size:0.7rem;font-weight:700;cursor:pointer;font-family:inherit">📋 Combinado</button>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button onclick="dlReporte()" style="padding:7px 12px;background:#D97706;border:none;border-radius:8px;color:#fff;font-size:0.7rem;font-weight:700;cursor:pointer;font-family:inherit">📸 Imagen</button>
+        <button onclick="waReporte()" style="padding:7px 12px;background:#16A34A;border:none;border-radius:8px;color:#fff;font-size:0.7rem;font-weight:700;cursor:pointer;font-family:inherit">📲 WhatsApp</button>
+      </div>
+    </div>
+    <div id="rpt-maq-outer" style="overflow:auto;background:#F1F5F9;border-radius:12px;border:1px solid #CBD5E1;padding:6px">
+      <div id="rpt-maq-cont"></div>
+    </div>
+  </div>
+
+  <!-- PERSONAL -->
+  <div id="page-personal" class="page">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div class="form-card" style="grid-column:1/-1">
+        <div style="font-size:0.65rem;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">👷 Registrar Personal</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <div class="field">
+            <label>Fecha *</label>
+            <input id="prs-fecha" type="date" onchange="autoCargarToneladas()">
+          </div>
+          <div class="field">
+            <label>N° Trabajadores *</label>
+            <input id="prs-personal" type="number" min="1" placeholder="276" oninput="calcHrsTotal();prevPersonal()">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <div class="field">
+            <label>Toneladas <span id="prs-tons-lbl" style="color:#16A34A;font-size:0.55rem">(se carga automático de maquinaria)</span></label>
+            <input id="prs-tons" type="number" step="0.01" min="0" placeholder="Se carga automático..." oninput="prevPersonal()" style="font-family:'JetBrains Mono',monospace;font-weight:700">
+          </div>
+          <div class="field">
+            <label>Hrs por persona</label>
+            <input id="prs-hrs-pp" type="number" step="0.01" min="0" placeholder="10.46" oninput="calcHrsTotal()">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <div class="field">
+            <label>Horas totales *</label>
+            <input id="prs-hrs" type="number" step="0.01" min="0" placeholder="52.3" oninput="prevPersonal()">
+          </div>
+          <div class="field" style="display:flex;flex-direction:column;justify-content:flex-end">
+            <div style="font-size:0.6rem;color:#64748B;padding:6px 0">Se calcula automático si ingresas hrs/persona, o escribe el total directamente</div>
+          </div>
+        </div>
+        <div id="prs-prev" style="display:none;background:#1e293b;border-radius:8px;padding:10px;margin-bottom:10px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center">
+          <div><div style="font-size:8px;color:#94A3B8;text-transform:uppercase">TN/Hr</div><div id="prs-tnhr" style="font-size:1.4rem;font-weight:800;font-family:monospace;color:#F5C800">—</div></div>
+          <div><div style="font-size:8px;color:#94A3B8;text-transform:uppercase">TN/Persona</div><div id="prs-tnp" style="font-size:1.4rem;font-weight:800;font-family:monospace;color:#60A5FA">—</div></div>
+          <div><div style="font-size:8px;color:#94A3B8;text-transform:uppercase">Hrs/Persona</div><div id="prs-hrsp" style="font-size:1.4rem;font-weight:800;font-family:monospace;color:#A78BFA">—</div></div>
+        </div>
+        <div class="field" style="margin-bottom:10px">
+          <label>Observación</label>
+          <input id="prs-obs" type="text" placeholder="Opcional">
+        </div>
+        <button onclick="guardarPersonal()" style="width:100%;padding:11px;background:#16A34A;border:none;border-radius:8px;color:#fff;font-weight:700;font-size:0.85rem;cursor:pointer;font-family:inherit">✅ Guardar Registro de Personal</button>
+      </div>
+    </div>
+    <div id="personal-tabla-cont"></div>
+    <div style="text-align:right;margin-top:8px">
+      <button onclick="if(confirm('¿Borrar todo el historial de personal?')){personalRecords=[];svPersonal();renderPersonalTabla();showToast('Historial borrado');}" style="background:none;border:1px solid #DC2626;color:#DC2626;border-radius:7px;padding:6px 14px;font-size:0.7rem;cursor:pointer;font-family:inherit">🗑 Borrar historial</button>
+    </div>
+  </div>
+
+<!-- MODAL EDITAR -->
+<div id="modal-edit" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;align-items:flex-end;">
+  <div style="background:#0f1729;border-radius:16px 16px 0 0;padding:20px;width:100%;max-height:85vh;overflow-y:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:800;color:#fff;letter-spacing:1px;">✏️ EDITAR REGISTRO</div>
+      <button onclick="cerrarEdit()" style="background:none;border:none;color:#888;font-size:1.2rem;cursor:pointer;">✕</button>
+    </div>
+    <input type="hidden" id="edit-id">
+    <div class="field"><label>Máquina</label><input id="edit-maquina" type="text" style="text-transform:uppercase;"></div>
+    <div class="field"><label>Fecha</label><input id="edit-fecha" type="text" placeholder="DD/MM/AAAA"></div>
+    <div class="field"><label>Horas Efectivas</label><input id="edit-hrs" type="number" step="0.1" min="0"></div>
+    <div class="field"><label>Toneladas cosechadas</label><input id="edit-bins" type="number" step="0.1" min="0" placeholder="Ej: 12.5"></div>
+    <div class="field"><label>Operador</label><input id="edit-operador" type="text"></div>
+    <div class="field"><label>Módulos</label><input id="edit-modulos" type="text"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;">
+      <button onclick="guardarEdit()" style="padding:12px;background:#f97316;color:#fff;border:none;border-radius:10px;font-weight:700;font-size:0.85rem;cursor:pointer;font-family:inherit;">✅ Guardar</button>
+      <button onclick="cerrarEdit()" style="padding:12px;background:#1e293b;color:#888;border:none;border-radius:10px;font-weight:700;font-size:0.85rem;cursor:pointer;font-family:inherit;">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+const META = 3.5;
+const META_MONTA = 0; // Meta montacargas — definir cuando haya datos
+const KG_BIN = 435;
+const COLORS = ["#f97316","#38bdf8","#a78bfa","#34d399","#fb7185","#fbbf24"];
+let records = [];
+let chartInstance = null;
+
+function exportarExcelCompleto() {
+  if(!records.length){showToast('Sin datos para exportar','err');return;}
+  const wb = XLSX.utils.book_new();
+  const META_VAL = META;
+
+  // ── HOJA 1: BASE DE DATOS ──
+  const bd = [
+    ['REGISTRO CONTINUO DE MAQUINARIA Y CAMPO','','','','','','','','','',''],
+    ['','','','','','','','','','',''],
+    ['','','','','','','','','','',''],
+    ['Maquina','Operador','Fecha','Hora Inicio','Hora Fin','Hrs Ejec','Bins','Toneladas','TN/Hr Real','Meta','Estado','Modulos']
+  ];
+  records.forEach(r=>{
+    bd.push([r.maquina||'',r.operador||'',r.fecha||'',r.horaInicio||'',r.horaFin||'',
+      +r.hrsEjec.toFixed(1),+r.bins.toFixed(1),+r.toneladas.toFixed(1),+r.tnhr.toFixed(1),
+      META_VAL,r.estado||'',r.modulos||'']);
+  });
+  const ws1 = XLSX.utils.aoa_to_sheet(bd);
+  ws1['!cols']=[{wch:12},{wch:14},{wch:11},{wch:10},{wch:8},{wch:8},{wch:7},{wch:10},{wch:10},{wch:6},{wch:8},{wch:18}];
+  ws1['!merges']=[{s:{r:0,c:0},e:{r:0,c:11}}];
+
+  // Estilos hoja 1
+  const hdrS={font:{bold:true,color:{rgb:'FFFFFF'},sz:13},fill:{fgColor:{rgb:'1A5C38'}},alignment:{horizontal:'center',vertical:'center'}};
+  const colS={font:{bold:true,color:{rgb:'FFFFFF'},sz:10},fill:{fgColor:{rgb:'2D6A4F'}},alignment:{horizontal:'center'}};
+  if(ws1['A1'])ws1['A1'].s=hdrS;
+  ['A4','B4','C4','D4','E4','F4','G4','H4','I4','J4','K4','L4'].forEach(c=>{if(ws1[c])ws1[c].s=colS;});
+  records.forEach((_,i)=>{
+    const row=i+5;const r=records[i];const bg=i%2===0?'F8FAFC':'FFFFFF';
+    const isBien=(r.tnhr||0)>=META_VAL;const isReg=(r.tnhr||0)>=META_VAL*0.7;
+    ['A','B','C','D','E','F','G','H','L'].forEach(c=>{if(ws1[c+row])ws1[c+row].s={fill:{fgColor:{rgb:bg}},font:{sz:9},alignment:{horizontal:'center'}};});
+    if(ws1['I'+row])ws1['I'+row].s={font:{bold:true,color:{rgb:isBien?'15803D':isReg?'D97706':'DC2626'},sz:10},fill:{fgColor:{rgb:bg}},alignment:{horizontal:'center'}};
+    if(ws1['K'+row])ws1['K'+row].s={font:{bold:true,color:{rgb:isBien?'15803D':isReg?'D97706':'DC2626'},sz:9},fill:{fgColor:{rgb:isBien?'DCFCE7':isReg?'FEF3C7':'FEE2E2'}},alignment:{horizontal:'center'}};
+  });
+  XLSX.utils.book_append_sheet(wb, ws1, 'Base_Datos');
+
+  // ── HOJA 2: DASHBOARD ──
+  const maqMap={};
+  records.forEach(r=>{
+    if(!maqMap[r.maquina])maqMap[r.maquina]={bins:0,tons:0,hrs:0};
+    maqMap[r.maquina].bins+=r.bins||0;
+    maqMap[r.maquina].tons+=r.toneladas||0;
+    maqMap[r.maquina].hrs+=r.hrsEjec||0;
+  });
+  const maqNames=Object.keys(maqMap).sort();
+  const fechas=[...new Set(records.map(r=>r.fecha))].sort((a,b)=>{
+    const pa=a.split('/'),pb=b.split('/');
+    return new Date(pa[2],pa[1]-1,pa[0])-new Date(pb[2],pb[1]-1,pb[0]);
+  });
+
+  const dash=[
+    ['PANEL DE CONTROL GENERAL Y FILTRADO POR FECHAS','','','','',''],
+    ['','','','','',''],['','','','','',''],
+    ['Resumen General por Maquina (Consolidado Historico)','','','','',''],
+    ['Maquina','Total Horas','Total Bins','Total Toneladas','TN/Hr Promedio','Estado Global'],
+  ];
+  maqNames.forEach(m=>{
+    const d=maqMap[m];
+    const prom=d.hrs>0?+(d.tons/d.hrs).toFixed(1):0;
+    const estado=prom>=META_VAL?'BIEN':prom>=META_VAL*0.7?'REGULAR':'MAL';
+    dash.push([m,+d.hrs.toFixed(1),+d.bins.toFixed(1),+d.tons.toFixed(1),prom,estado]);
+  });
+  dash.push(['','','','','','']);
+  dash.push(['','','','','','']);
+  dash.push(['Rendimiento Cronologico Diario (Evolucion por Fechas)','','','','','']);
+  dash.push(['Fecha',...maqNames.map(m=>'TN/Hr '+m),'Meta Minima']);
+  fechas.forEach(f=>{
+    const row=[f];
+    maqNames.forEach(m=>{
+      const rec=records.find(r=>r.fecha===f&&r.maquina===m);
+      row.push(rec?+(rec.tnhr||0).toFixed(1):0);
+    });
+    row.push(META_VAL);
+    dash.push(row);
+  });
+
+  const ws2=XLSX.utils.aoa_to_sheet(dash);
+  ws2['!cols']=[{wch:18},{wch:12},{wch:12},{wch:14},{wch:14},{wch:12}];
+  ws2['!merges']=[{s:{r:0,c:0},e:{r:0,c:5}},{s:{r:3,c:0},e:{r:3,c:5}}];
+
+  const hS2={font:{bold:true,color:{rgb:'FFFFFF'},sz:13},fill:{fgColor:{rgb:'1A5C38'}},alignment:{horizontal:'center',vertical:'center'}};
+  const h2S={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'2D6A4F'}},alignment:{horizontal:'center'}};
+  const colH2={font:{bold:true,color:{rgb:'FFFFFF'},sz:10},fill:{fgColor:{rgb:'1A5C38'}},alignment:{horizontal:'center'}};
+  if(ws2['A1'])ws2['A1'].s=hS2;
+  if(ws2['A4'])ws2['A4'].s=h2S;
+  ['A5','B5','C5','D5','E5','F5'].forEach(c=>{if(ws2[c])ws2[c].s=colH2;});
+  maqNames.forEach((_,i)=>{
+    const row=i+6;const m=maqNames[i];const d=maqMap[m];
+    const prom=d.hrs>0?+(d.tons/d.hrs).toFixed(1):0;
+    const isBien=prom>=META_VAL;const isReg=prom>=META_VAL*0.7;
+    const bg=i%2===0?'F8FAFC':'FFFFFF';
+    ['A','B','C','D'].forEach(c=>{if(ws2[c+row])ws2[c+row].s={fill:{fgColor:{rgb:bg}},font:{sz:10},alignment:{horizontal:'center'}};});
+    if(ws2['E'+row])ws2['E'+row].s={font:{bold:true,color:{rgb:isBien?'15803D':isReg?'D97706':'DC2626'},sz:11},fill:{fgColor:{rgb:bg}},alignment:{horizontal:'center'}};
+    if(ws2['F'+row])ws2['F'+row].s={font:{bold:true,color:{rgb:isBien?'15803D':isReg?'D97706':'DC2626'},sz:10},fill:{fgColor:{rgb:isBien?'DCFCE7':isReg?'FEF3C7':'FEE2E2'}},alignment:{horizontal:'center'}};
+  });
+
+  const cronStart=5+maqNames.length+4;
+  const cronHdrRow=cronStart+1;
+  if(ws2['A'+(cronStart-1)])ws2['A'+(cronStart-1)].s=h2S;
+  // Color cronologico rows
+  fechas.forEach((_,i)=>{
+    const row=cronHdrRow+1+i;const bg=i%2===0?'F8FAFC':'FFFFFF';
+    if(ws2['A'+row])ws2['A'+row].s={fill:{fgColor:{rgb:bg}},font:{sz:10},alignment:{horizontal:'center'}};
+    maqNames.forEach((m,mi)=>{
+      const rec=records.find(r=>r.fecha===fechas[i]&&r.maquina===m);
+      const tnhr=rec?rec.tnhr:0;
+      const isBien=tnhr>=META_VAL;const isReg=tnhr>=META_VAL*0.7;
+      const col=String.fromCharCode(66+mi);
+      if(ws2[col+row])ws2[col+row].s={font:{bold:true,color:{rgb:isBien?'15803D':isReg?'D97706':'DC2626'},sz:10},fill:{fgColor:{rgb:isBien?'DCFCE7':isReg?'FEF3C7':'FEE2E2'}},alignment:{horizontal:'center'}};
+    });
+    const metaCol=String.fromCharCode(66+maqNames.length);
+    if(ws2[metaCol+row])ws2[metaCol+row].s={fill:{fgColor:{rgb:bg}},font:{bold:true,color:{rgb:'2563EB'},sz:10},alignment:{horizontal:'center'}};
+  });
+
+  XLSX.utils.book_append_sheet(wb, ws2, 'Dashboard_Graficos');
+  const hoy=new Date();
+  const fecha=`${hoy.getDate().toString().padStart(2,'0')}_${(hoy.getMonth()+1).toString().padStart(2,'0')}_${hoy.getFullYear()}`;
+  XLSX.writeFile(wb,'Control_Maquinaria_Arato_'+fecha+'.xlsx');
+  showToast('✅ Excel descargado','ok');
+}
+
+async function syncMaquinaria(silent=false) {
+  try {
+    if(!silent)showToast('Sincronizando con Google Sheets...','ok');
+    const r = await fetch('/api/sheets-maquinaria', {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'});
+    const d = await r.json();
+    if(!silent){
+      if(d.ok) showToast('✅ Google Sheets actualizado','ok');
+      else showToast('Error: '+(d.error||'sin respuesta'),'err');
+    }
+  } catch(e) { if(!silent)showToast('Error: '+e.message,'err'); }
+}
+
+// ── Supabase ──
+const SURL='https://rqvcvffyynpnighzwxju.supabase.co';
+const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdmN2ZmZ5eW5wbmlnaHp3eGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MjgyNDcsImV4cCI6MjA5MzMwNDI0N30.fFufNEdRvAzl6O6BqtTbx83O3Eg8Wd7gACNJDGQKga4';
+
+async function supaFetch(path, method, body) {
+  const opts={method:method||'GET',headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json'}};
+  if(body)opts.body=JSON.stringify(body);
+  if(method==='POST')opts.headers['Prefer']='return=representation';
+  if(method==='PATCH')opts.headers['Prefer']='return=representation';
+  const r=await fetch(SURL+'/rest/v1/'+path,opts);
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  return method==='DELETE'?null:r.json();
+}
+
+async function cargarRegistros() {
+  try {
+    showToast('Cargando datos...','ok');
+    const rows = await supaFetch('maquinaria_registros?select=*&order=fecha.desc,created_at.desc');
+    records = rows.map(r => ({
+      id: r.id,
+      maquina: r.maquina||'',
+      operador: r.operador||'',
+      fecha: r.fecha||'',
+      tipo: r.tipo||'maquinaria',
+      horaInicio: r.hora_inicio||'',
+      horaFin: r.hora_fin||'',
+      hrsEjec: r.hrs_ejec||0,
+      bins: r.bins||0,
+      toneladas: r.toneladas||0,
+      tnhr: r.tn_hr||0,
+      estado: r.estado||'',
+      modulos: r.modulos||''
+    }));
+    updateMaquinaFilter();
+    renderDashboard();
+    showToast('✓ '+records.length+' registros cargados','ok');
+    updHora();
+  } catch(e) {
+    showToast('Error cargando: '+e.message,'err');
+  }
+}
+
+function editarRegistro(id) {
+  const r = records.find(x=>x.id===id);
+  if(!r) return;
+  document.getElementById('edit-id').value = id;
+  document.getElementById('edit-maquina').value = r.maquina||'';
+  document.getElementById('edit-fecha').value = r.fecha||'';
+  document.getElementById('edit-hrs').value = r.hrsEjec||'';
+  document.getElementById('edit-bins').value = r.toneladas||''; // mostrar toneladas, no bins
+  document.getElementById('edit-operador').value = r.operador||'';
+  document.getElementById('edit-modulos').value = r.modulos||'';
+  const modal = document.getElementById('modal-edit');
+  modal.style.display = 'flex';
+}
+
+function cerrarEdit() {
+  document.getElementById('modal-edit').style.display = 'none';
+}
+
+async function guardarEdit() {
+  const id = parseInt(document.getElementById('edit-id').value);
+  const maquina = document.getElementById('edit-maquina').value.trim().toUpperCase();
+  const fecha = document.getElementById('edit-fecha').value.trim();
+  const hrsEjec = parseFloat(document.getElementById('edit-hrs').value)||0;
+  const tons = parseFloat(document.getElementById('edit-bins').value)||0; // campo es toneladas
+  const bins = +(tons*1000/KG_BIN).toFixed(1); // bins calculados
+  const operador = document.getElementById('edit-operador').value.trim();
+  const modulos = document.getElementById('edit-modulos').value.trim();
+  if(!maquina||!fecha||!hrsEjec||!tons){showToast('Completa los campos','err');return;}
+  const tnhr = hrsEjec>0 ? +(tons/hrsEjec).toFixed(2) : 0;
+  const estado = calcEstado(tnhr);
+  try {
+    await supaFetch('maquinaria_registros?id=eq.'+id,'PATCH',{
+      maquina, operador, fecha,
+      hrs_ejec: +hrsEjec.toFixed(1),
+      bins: +bins.toFixed(1),
+      toneladas: tons,
+      tn_hr: tnhr,
+      meta: META,
+      estado, modulos
+    });
+    // Update local records
+    const idx = records.findIndex(r=>r.id===id);
+    if(idx>=0) records[idx] = {...records[idx], maquina, operador, fecha, hrsEjec:+hrsEjec.toFixed(1), bins:+bins.toFixed(1), toneladas:tons, tnhr, estado, modulos};
+    cerrarEdit();
+    renderDashboard();
+    renderTabla();
+    showToast('✓ Registro actualizado','ok');
+    syncMaquinaria(true);
+  } catch(e) {
+    showToast('Error: '+e.message,'err');
+  }
+}
+
+async function eliminarRegistro(id) {
+  if(!confirm('¿Eliminar este registro?'))return;
+  try {
+    await supaFetch('maquinaria_registros?id=eq.'+id,'DELETE');
+    records = records.filter(r=>r.id!==id);
+    renderTabla();
+    renderDashboard();
+    showToast('Eliminado','ok');
+    syncMaquinaria(true);
+  } catch(e) { showToast('Error: '+e.message,'err'); }
+}
+
+// ── PERSONAL ────────────────────────────────────────────────
+var personalRecords = [];
+
+function svPersonal(){try{localStorage.setItem('arato_personal',JSON.stringify(personalRecords));}catch(e){}}
+async function ldPersonal(){
+  // Cargar desde caché local primero
+  try{const d=JSON.parse(localStorage.getItem('arato_personal'));if(Array.isArray(d)&&d.length)personalRecords=d;}catch(e){}
+  // Luego cargar desde Supabase
+  try{
+    const rows=await supaFetch('personal_acopio?order=fecha.desc,created_at.desc','GET');
+    if(Array.isArray(rows)&&rows.length){
+      personalRecords=rows.map(r=>({
+        id:r.id,fecha:r.fecha,personal:r.personal,
+        toneladas:r.toneladas,horas:r.horas,
+        tnhr:r.tnhr,tnp:r.tnp,hrsp:r.hrsp,obs:r.obs||''
+      }));
+      svPersonal();
+    }
+  }catch(e){console.warn('Personal desde localStorage');}
+  renderPersonalTabla();
+}
+
+function onTipoChange(){
+  updatePreview();
+  autoCargarToneladasMaq();
+}
+
+function autoCargarToneladasMaq(){
+  const tipo=document.getElementById('f-tipo')?.value;
+  const fecha=document.getElementById('f-fecha')?.value?.trim();
+  if(!fecha)return;
+  // Solo auto-cargar si es montacargas
+  if(tipo!=='montacargas')return;
+  // Sumar toneladas de maquinaria de esa fecha
+  const recsMaq=records.filter(r=>r.fecha===fecha&&(!r.tipo||r.tipo==='maquinaria'));
+  const totTons=recsMaq.reduce((s,r)=>s+(r.toneladas||0),0);
+  if(totTons>0){
+    document.getElementById('f-bins').value=totTons.toFixed(2);
+    document.getElementById('f-bins-calc').textContent='✅ '+totTons.toFixed(2)+' TN cargadas automáticamente de maquinaria del '+fecha;
+    document.getElementById('f-bins-calc').style.color='#16A34A';
+    updatePreview();
+  } else {
+    document.getElementById('f-bins-calc').textContent='⚠️ Sin datos de maquinaria para '+fecha+' — ingresa manualmente';
+    document.getElementById('f-bins-calc').style.color='#D97706';
+  }
+}
+
+function autoCargarToneladas(){
+  const fechaRaw=document.getElementById('prs-fecha').value;
+  if(!fechaRaw)return;
+  // Convertir YYYY-MM-DD → DD/MM/YYYY para comparar con records
+  const [y,m,d]=fechaRaw.split('-');
+  const fecha=`${d}/${m}/${y}`;
+  // Sumar toneladas de maquinaria de esa fecha
+  const recsMaq=records.filter(r=>r.fecha===fecha&&(!r.tipo||r.tipo==='maquinaria'));
+  const totTons=recsMaq.reduce((s,r)=>s+(r.toneladas||0),0);
+  if(totTons>0){
+    document.getElementById('prs-tons').value=totTons.toFixed(2);
+    document.getElementById('prs-tons-lbl').textContent='(✅ '+totTons.toFixed(2)+' TN cargadas de maquinaria '+fecha+')';
+    document.getElementById('prs-tons-lbl').style.color='#16A34A';
+    prevPersonal();
+  } else {
+    document.getElementById('prs-tons').value='';
+    document.getElementById('prs-tons-lbl').textContent='(sin datos de maquinaria para esta fecha — ingresa manualmente)';
+    document.getElementById('prs-tons-lbl').style.color='#D97706';
+  }
+}
+
+function calcHrsTotal(){
+  const pp=parseFloat(document.getElementById('prs-hrs-pp').value)||0;
+  const pers=parseFloat(document.getElementById('prs-personal').value)||0;
+  if(pp&&pers){
+    const total=+(pp*pers).toFixed(2);
+    document.getElementById('prs-hrs').value=total;
+  }
+  prevPersonal();
+}
+
+function prevPersonal(){
+  const tons=parseFloat(document.getElementById('prs-tons').value)||0;
+  const hrs=parseFloat(document.getElementById('prs-hrs').value)||0;
+  const pers=parseFloat(document.getElementById('prs-personal').value)||0;
+  if(!tons||!hrs||!pers){document.getElementById('prs-prev').style.display='none';return;}
+  const tnhr=+(tons/hrs).toFixed(2);
+  const tnp=+(tons/pers).toFixed(3);
+  const hrsp=+(hrs/pers).toFixed(3);
+  document.getElementById('prs-tnhr').textContent=tnhr;
+  document.getElementById('prs-tnp').textContent=tnp;
+  document.getElementById('prs-hrsp').textContent=hrsp;
+  document.getElementById('prs-prev').style.display='grid';
+}
+
+async function guardarPersonal(){
+  let fechaRaw=document.getElementById('prs-fecha').value.trim();
+  if(!fechaRaw) fechaRaw=new Date().toISOString().split('T')[0];
+
+  const pers=parseInt(document.getElementById('prs-personal').value)||0;
+  const tons=parseFloat(document.getElementById('prs-tons').value)||0;
+  const hrs=parseFloat(document.getElementById('prs-hrs').value)||0;
+  const obs=document.getElementById('prs-obs')?document.getElementById('prs-obs').value.trim():'';
+
+  // Debug - mostrar qué valores lee
+  showToast('Leyendo: '+pers+' pers, '+tons+'t, '+hrs+'h','ok');
+
+  if(!pers){showToast('⚠️ Falta: trabajadores','err');return;}
+  if(!tons){showToast('⚠️ Falta: toneladas','err');return;}
+  if(!hrs){showToast('⚠️ Falta: horas','err');return;}
+
+  let fecha=fechaRaw;
+  if(fechaRaw.includes('-')){
+    const [y,m,d]=fechaRaw.split('-');
+    fecha=`${d}/${m}/${y}`;
+  }
+
+  const existe=personalRecords.find(r=>r.fecha===fecha);
+  if(existe)showToast('Ya hay registro para '+fecha+' — agregando otro','ok');
+
+  const tnhr=+(tons/hrs).toFixed(2);
+  const tnp=+(tons/pers).toFixed(3);
+  const hrsp=+(hrs/pers).toFixed(3);
+  try{
+    showToast('Guardando en Supabase...','ok');
+    const saved=await supaFetch('personal_acopio','POST',{
+      fecha,personal:pers,toneladas:tons,horas:hrs,tnhr,tnp,hrsp,obs
+    });
+    const newId=Array.isArray(saved)?saved[0]?.id:saved?.id;
+    personalRecords.unshift({id:newId||'p'+Date.now(),fecha,personal:pers,toneladas:tons,horas:hrs,tnhr,tnp,hrsp,obs});
+    svPersonal();
+    renderPersonalTabla();
+    document.getElementById('prs-tons').value='';
+    document.getElementById('prs-hrs').value='';
+    document.getElementById('prs-hrs-pp').value='';
+    document.getElementById('prs-personal').value='';
+    if(document.getElementById('prs-obs'))document.getElementById('prs-obs').value='';
+    const prev=document.getElementById('prs-prev');
+    if(prev)prev.style.display='none';
+    showToast('✅ '+pers+' trab · '+tons+'t · '+tnhr+' TN/Hr guardado','ok');
+  }catch(e){
+    showToast('❌ Error Supabase: '+e.message,'err');
+    console.error('guardarPersonal error:',e);
+  }
+}
+
+function editarPersonal(id){
+  const r=personalRecords.find(x=>String(x.id)===String(id));
+  if(!r)return;
+  // Crear modal de edición
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  // Convertir fecha DD/MM/YYYY → YYYY-MM-DD para input date
+  let fechaInput=r.fecha;
+  if(r.fecha&&r.fecha.includes('/')){
+    const [d,m,y]=r.fecha.split('/');
+    fechaInput=`${y}-${m}-${d}`;
+  }
+  overlay.innerHTML=`<div style="background:#0d1526;border-radius:16px;padding:20px;width:100%;max-width:360px;border:1px solid #334155">
+    <div style="font-size:0.85rem;font-weight:800;color:#F5C800;margin-bottom:16px;text-align:center">✏️ Editar Registro de Personal</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div><label style="font-size:0.6rem;color:#64748B;display:block;margin-bottom:3px">Fecha</label>
+        <input id="ep-fecha" type="date" value="${fechaInput}" style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:8px;color:#fff;font-size:0.8rem;width:100%"></div>
+      <div><label style="font-size:0.6rem;color:#64748B;display:block;margin-bottom:3px">Trabajadores</label>
+        <input id="ep-pers" type="number" value="${r.personal}" style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:8px;color:#fff;font-size:0.8rem;width:100%"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div><label style="font-size:0.6rem;color:#64748B;display:block;margin-bottom:3px">Toneladas</label>
+        <input id="ep-tons" type="number" step="0.01" value="${r.toneladas}" style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:8px;color:#fff;font-size:0.8rem;width:100%"></div>
+      <div><label style="font-size:0.6rem;color:#64748B;display:block;margin-bottom:3px">Horas totales</label>
+        <input id="ep-hrs" type="number" step="0.01" value="${r.horas}" style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:8px;color:#fff;font-size:0.8rem;width:100%"></div>
+    </div>
+    <div style="margin-bottom:12px"><label style="font-size:0.6rem;color:#64748B;display:block;margin-bottom:3px">Observación</label>
+      <input id="ep-obs" type="text" value="${r.obs||''}" style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:8px;color:#fff;font-size:0.8rem;width:100%"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <button onclick="this.closest('div[style*=fixed]').remove()" style="padding:10px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#fff;font-size:0.8rem;cursor:pointer;font-family:inherit">✗ Cancelar</button>
+      <button onclick="guardarEdicionPersonal('${id}')" style="padding:10px;background:#3B82F6;border:none;border-radius:8px;color:#fff;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:inherit">✅ Guardar</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function guardarEdicionPersonal(id){
+  const fechaRaw=document.getElementById('ep-fecha').value;
+  const pers=parseInt(document.getElementById('ep-pers').value)||0;
+  const tons=parseFloat(document.getElementById('ep-tons').value)||0;
+  const hrs=parseFloat(document.getElementById('ep-hrs').value)||0;
+  const obs=document.getElementById('ep-obs').value.trim();
+  if(!fechaRaw||!pers||!tons||!hrs){showToast('Completa todos los campos','err');return;}
+  const [y,m,d]=fechaRaw.split('-');
+  const fecha=`${d}/${m}/${y}`;
+  const tnhr=+(tons/hrs).toFixed(2);
+  const tnp=+(tons/pers).toFixed(3);
+  const hrsp=+(hrs/pers).toFixed(3);
+  try{
+    // Actualizar en Supabase si tiene ID numérico
+    if(!String(id).startsWith('p')){
+      await supaFetch('personal_acopio?id=eq.'+id,'PATCH',{fecha,personal:pers,toneladas:tons,horas:hrs,tnhr,tnp,hrsp,obs});
+    }
+    const idx=personalRecords.findIndex(r=>String(r.id)===String(id));
+    if(idx>=0)personalRecords[idx]={...personalRecords[idx],fecha,personal:pers,toneladas:tons,horas:hrs,tnhr,tnp,hrsp,obs};
+    svPersonal();
+    renderPersonalTabla();
+    document.querySelector('div[style*="position:fixed"]')?.remove();
+    showToast('✅ Registro actualizado','ok');
+  }catch(e){showToast('Error: '+e.message,'err');}
+}
+
+async function eliminarPersonal(id){
+  if(!confirm('¿Eliminar este registro?'))return;
+  try{
+    if(typeof id==='number'||!String(id).startsWith('p')){
+      await supaFetch('personal_acopio?id=eq.'+id,'DELETE');
+    }
+    personalRecords=personalRecords.filter(r=>r.id!==id);
+    svPersonal();renderPersonalTabla();
+    showToast('Eliminado','ok');
+  }catch(e){showToast('Error: '+e.message,'err');}
+}
+
+function renderPersonalTabla(){
+  const cont=document.getElementById('personal-tabla-cont');
+  if(!personalRecords.length){cont.innerHTML='<div style="color:#64748B;text-align:center;padding:30px;font-size:0.8rem">Sin registros — agrega el primero arriba</div>';return;}
+  let h='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:0.75rem">';
+  h+='<thead><tr style="background:#0B1437;color:#F5C800">'
+    +'<th style="padding:8px;text-align:left;white-space:nowrap">📅 Fecha</th>'
+    +'<th style="padding:8px;text-align:center">👷 Pers.</th>'
+    +'<th style="padding:8px;text-align:center">⏱ Hrs Tot.</th>'
+    +'<th style="padding:8px;text-align:center">⏱ Hrs/Pers</th>'
+    +'<th style="padding:8px;text-align:center">⚖️ TN</th>'
+    +'<th style="padding:8px;text-align:center">⚡ TN/Hr</th>'
+    +'<th style="padding:8px;text-align:center">📦 TN/Pers</th>'
+    +'<th style="padding:8px;text-align:center"></th>'
+    +'</tr></thead><tbody>';
+  personalRecords.forEach((r,i)=>{
+    const bg=i%2===0?'#F8FAFC':'#FFFFFF';
+    const hrsp=r.hrsp||(r.horas&&r.personal?+(r.horas/r.personal).toFixed(2):0);
+    h+=`<tr style="background:${bg}">
+      <td style="padding:8px;color:#1E293B;font-weight:700;border:1px solid #E2E8F0">${r.fecha}</td>
+      <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;font-weight:800;font-size:1rem;color:#7C3AED">${r.personal}</td>
+      <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;font-weight:700;font-family:monospace;color:#1E293B">${r.horas}</td>
+      <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;color:#475569;font-family:monospace">${hrsp}</td>
+      <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;font-weight:700;font-family:monospace;color:#1E293B">${r.toneladas}</td>
+      <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;font-weight:800;font-size:1rem;color:#D97706;font-family:monospace">${r.tnhr}</td>
+      <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;font-weight:700;color:#16A34A;font-family:monospace">${r.tnp}</td>
+      <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;display:flex;gap:4px;justify-content:center">
+        <button onclick="editarPersonal('${r.id}')" style="background:none;border:1px solid #3B82F6;color:#3B82F6;border-radius:5px;padding:3px 8px;cursor:pointer;font-size:0.7rem">✏️</button>
+        <button onclick="eliminarPersonal('${r.id}')" style="background:none;border:1px solid #DC2626;color:#DC2626;border-radius:5px;padding:3px 8px;cursor:pointer;font-size:0.7rem">🗑</button>
+      </td>
+    </tr>`;
+    if(r.obs)h+=`<tr style="background:${bg}"><td colspan="8" style="padding:3px 8px 6px;font-size:9px;color:#6B7280;border:1px solid #E2E8F0;font-style:italic">📝 ${r.obs}</td></tr>`;
+  });
+  h+='</tbody></table></div>';
+  cont.innerHTML=h;
+}
+
+// ── Utils ──────────────────────────────────────────────────
+function horasEntre(ini, fin) {
+  if (!ini || !fin) return 0;
+  const [hI,mI] = ini.split(":").map(Number);
+  const [hF,mF] = fin.split(":").map(Number);
+  let mins = (hF*60+mF)-(hI*60+mI);
+  if (mins < 0) mins += 1440;
+  return +(mins/60).toFixed(2);
+}
+function calcEstado(tnhr) {
+  if (tnhr >= META) return "BIEN";
+  if (tnhr >= META*0.7) return "REGULAR";
+  return "MAL";
+}
+function badge(estado) {
+  return `<span class="badge ${estado}">${estado}</span>`;
+}
+function showToast(msg, type="ok") {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = `toast ${type}`;
+  t.style.display = "block";
+  setTimeout(() => t.style.display = "none", 3000);
+}
+function setTab(tab) {
+  document.querySelectorAll(".tab-btn").forEach((b,i) => {
+    const names = ["dashboard","registro","personal","tabla","reporte"];
+    b.classList.toggle("active", names[i] === tab);
+  });
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.getElementById("page-"+tab).classList.add("active");
+  if (tab === "dashboard") renderDashboard();
+  if (tab === "tabla") renderTabla();
+  if (tab === "personal") renderPersonalTabla();
+  if (tab === "reporte") buildReporteMaq();
+}
+
+// ── REPORTE TN/Hr POR DÍA ────────────────────────────────────
+var _vistaRpt = 'global';
+
+function setVistaRpt(v){
+  _vistaRpt = v;
+  ['global','semanal','maq','monta','combo'].forEach(function(id){
+    const btn=document.getElementById('rpt-btn-'+id);
+    if(!btn)return;
+    const act=id===v;
+    btn.style.background=act?'#f97316':'#1e293b';
+    btn.style.color=act?'#fff':'#94A3B8';
+    btn.style.border=act?'none':'1px solid #334155';
+  });
+  buildReporteMaq();
+}
+
+function buildReporteMaq(){
+  if(!records.length&&_vistaRpt!=='combo'){document.getElementById('rpt-maq-cont').innerHTML='<div style="color:#475569;text-align:center;padding:40px;font-size:0.85rem">Sin datos — importa o registra manualmente</div>';return;}
+  if(_vistaRpt==='global') buildReporteGlobal();
+  else if(_vistaRpt==='semanal') buildReporteSemanal();
+  else if(_vistaRpt==='monta') buildReporteMonta();
+  else if(_vistaRpt==='combo') buildReporteCombinado();
+  else buildReportePorMaq();
+}
+
+const _rptColors={ok:'#16A34A',bgOk:'#DCFCE7',reg:'#D97706',bgReg:'#FEF3C7',mal:'#DC2626',bgMal:'#FEE2E2'};
+function _rptCol(tnhr){return tnhr>=META?_rptColors.ok:tnhr>=META*0.7?_rptColors.reg:_rptColors.mal;}
+function _rptBg(tnhr){return tnhr>=META?_rptColors.bgOk:tnhr>=META*0.7?_rptColors.bgReg:_rptColors.bgMal;}
+function _rptEstado(tnhr){return tnhr>=META?'✅ BIEN':tnhr>=META*0.7?'⚠️ REGULAR':'❌ BAJO META';}
+function _rptRowBg(i){return i%2===0?'#F8FAFC':'#FFFFFF';}
+function _sortFechas(arr){
+  return [...new Set(arr.map(r=>r.fecha))].sort((a,b)=>{
+    const [da,ma,ya]=a.split('/').map(Number);
+    const [db,mb,yb]=b.split('/').map(Number);
+    return new Date(ya,ma-1,da)-new Date(yb,mb-1,db);
+  });
+}
+function _rptHeader(titulo,subtitulo,ahora){
+  return `<div style="background:linear-gradient(135deg,#0B1437,#1A3A8F);padding:14px 16px;display:flex;justify-content:space-between;align-items:center">
+    <div><div style="font-size:14px;font-weight:700;color:#F5C800;text-transform:uppercase;letter-spacing:2px;font-family:Arial Black,Arial">CONTROL DE MAQUINARIA</div>
+    <div style="font-size:8.5px;color:rgba(255,255,255,.8);letter-spacing:1px;margin-top:3px">ARATO · MISSION PRODUCE · PERÚ</div>
+    <div style="font-size:8.5px;color:#F5C800;margin-top:2px">${subtitulo}</div></div>
+    <div style="text-align:right"><div style="font-size:11px;font-weight:700;color:#fff">${titulo}</div>
+    <div style="font-size:8px;color:rgba(255,255,255,.7);margin-top:2px">${ahora}</div>
+    <div style="background:#F5C800;color:#0B1437;font-size:9px;font-weight:700;padding:2px 8px;border-radius:4px;margin-top:4px;display:inline-block">⚡ Meta maquinaria: ${META} TN/Hr</div></div>
+  </div>`;
+}
+
+// Vista 1: GLOBAL — filtrado por fecha, todas las máquinas de ese día
+function buildReporteGlobal(){
+  const ahora=new Date().toLocaleString('es-PE');
+  const fechas=_sortFechas(records);
+  if(!fechas.length){document.getElementById('rpt-maq-cont').innerHTML='<div style="color:#475569;text-align:center;padding:40px">Sin datos</div>';return;}
+
+  const selEl=document.getElementById('rpt-fecha-global');
+  const fechaSel=selEl?selEl.value:fechas[fechas.length-1];
+
+  let html=`<div style="margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+    <span style="font-size:0.7rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px">📅 Fecha:</span>
+    <select id="rpt-fecha-global" onchange="buildReporteGlobal()" style="padding:7px 12px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#fff;font-size:0.8rem;font-family:inherit;font-weight:700">
+      ${fechas.map(f=>`<option value="${f}" ${f===fechaSel?'selected':''}>${f}</option>`).join('')}
+    </select>
+  </div>`;
+
+  const recsDia=records.filter(r=>r.fecha===fechaSel&&(!r.tipo||r.tipo==='maquinaria'));  let totH=0,totT=0;
+  recsDia.forEach(r=>{totH+=r.hrsEjec||0;totT+=r.toneladas||0;});
+  const totTh=totH>0?totT/totH:0;
+
+  html+=`<table style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px;min-width:340px">`;
+  html+=`<tr><td colspan="5" style="padding:0;border:none">${_rptHeader('REPORTE DEL '+fechaSel,'🌍 '+recsDia.length+' máquina(s) — Resumen del día',ahora)}</td></tr>`;
+  html+=`<tr style="background:#1A3A8F">
+    <th style="padding:9px 12px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:left">🚜 Máquina</th>
+    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">👤 Operador</th>
+    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⏱ Horas</th>
+    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⚖️ Toneladas</th>
+    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center;background:#0B2D10">⚡ TN/Hr</th>
+  </tr>`;
+
+  if(!recsDia.length){
+    html+=`<tr><td colspan="5" style="padding:20px;text-align:center;color:#94A3B8;font-style:italic;font-size:10px">Sin registros para esta fecha</td></tr>`;
+  }else{
+    // Detectar mejor y peor equipo
+    const conDatos=recsDia.filter(r=>r.tnhr>0);
+    const mejorId=conDatos.length?conDatos.reduce((a,b)=>b.tnhr>a.tnhr?b:a).id:null;
+    const peorId=conDatos.length?conDatos.reduce((a,b)=>b.tnhr<a.tnhr?b:a).id:null;
+    recsDia.forEach((r,i)=>{
+      const bg=i%2===0?'#F8FAFC':'#FFFFFF';
+      const esMejor=conDatos.length>1&&r.id===mejorId;
+      const esPeor=conDatos.length>1&&r.id===peorId;
+      const resalte=esMejor?'border-left:4px solid #16A34A':esPeor?'border-left:4px solid #DC2626':'';
+      const badge=esMejor?'<span style="font-size:8px;background:#DCFCE7;color:#15803D;padding:1px 5px;border-radius:6px;font-weight:700;margin-left:4px">⭐ MEJOR</span>':
+                  esPeor?'<span style="font-size:8px;background:#FEE2E2;color:#DC2626;padding:1px 5px;border-radius:6px;font-weight:700;margin-left:4px">⚠️ CRÍTICO</span>':'';
+      html+=`<tr style="background:${bg};${resalte}">
+        <td style="padding:9px 12px;font-weight:700;color:#1E293B;border:1px solid #D0DCF4">${r.maquina}${badge}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;color:#475569;font-size:10px">${r.operador||'—'}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-family:monospace;font-size:15px;color:#0F172A">${(r.hrsEjec||0).toFixed(1)}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-family:monospace;font-size:15px;color:#0F172A">${(r.toneladas||0).toFixed(1)}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;background:${_rptBg(r.tnhr)}">
+          <div style="font-size:20px;font-weight:800;color:${_rptCol(r.tnhr)};font-family:monospace;line-height:1">${(r.tnhr||0).toFixed(2)}</div>
+          <div style="font-size:8px;color:${_rptCol(r.tnhr)};margin-top:2px">${_rptEstado(r.tnhr)}</div>
+        </td>
+      </tr>`;
+    });
+  }
+
+  html+=`<tr style="background:#1A3A8F">
+    <td colspan="2" style="padding:10px 12px;color:#F5C800;font-weight:700;font-size:11px;border:1px solid #C0D0F4">TOTAL DÍA — ${recsDia.length} máquina(s)</td>
+    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${totH.toFixed(1)}</td>
+    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${totT.toFixed(1)}</td>
+    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;background:${_rptBg(totTh)}">
+      <div style="font-size:26px;font-weight:800;color:${_rptCol(totTh)};font-family:monospace;line-height:1">${totTh.toFixed(2)}</div>
+      <div style="font-size:9px;color:${_rptCol(totTh)};margin-top:2px">${_rptEstado(totTh)}</div>
+    </td>
+  </tr>`;
+  html+=`<tr><td colspan="6" style="background:#EEF2FF;color:#64748B;font-size:8px;padding:7px 12px;text-align:center;border:none">ARATO · MISSION PRODUCE · Meta maquinaria: ${META} TN/Hr · ${ahora}</td></tr></table>`;
+  document.getElementById('rpt-maq-cont').innerHTML=html;
+  const newSel=document.getElementById('rpt-fecha-global');
+  if(newSel&&fechaSel)newSel.value=fechaSel;
+}
+
+// Vista 2: POR MÁQUINA — Hrs + TN + TN/Hr por máquina, totales por día
+function buildReportePorMaq(){
+  const ahora=new Date().toLocaleString('es-PE');
+  const recsMaq=records.filter(r=>!r.tipo||r.tipo==='maquinaria');
+  if(!recsMaq.length){document.getElementById('rpt-maq-cont').innerHTML='<div style="color:#475569;text-align:center;padding:40px;font-size:0.85rem">Sin registros de maquinaria</div>';return;}
+
+  const fechas=_sortFechas(recsMaq);
+
+  // Selector de fecha encima del reporte
+  let selHtml=`<div style="margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+    <span style="font-size:0.7rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px">📅 Fecha:</span>
+    <select id="rpt-fecha-sel" onchange="buildReportePorMaq()" style="padding:7px 12px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#fff;font-size:0.8rem;font-family:inherit;font-weight:700">
+      ${fechas.map(f=>`<option value="${f}">${f}</option>`).join('')}
+    </select>
+  </div>`;
+
+  // Recuperar fecha seleccionada (o la más reciente)
+  const selEl=document.getElementById('rpt-fecha-sel');
+  const fechaSel=selEl?selEl.value:fechas[fechas.length-1];
+
+  // Filtrar registros de esa fecha
+  const recsDia=recsMaq.filter(r=>r.fecha===fechaSel);
+  const maquinas=[...new Set(recsDia.map(r=>r.maquina))].sort();
+
+  let h=selHtml;
+  h+=`<table style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px;min-width:340px">`;
+  h+=`<tr><td colspan="5" style="padding:0;border:none">${_rptHeader('REPORTE DEL '+fechaSel,'🚜 Rendimiento por Máquina — '+maquinas.length+' máquina(s)',ahora)}</td></tr>`;
+
+  // Columnas
+  h+=`<tr style="background:#1A3A8F">
+    <th style="padding:9px 12px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:left">🚜 Máquina</th>
+    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">👤 Operador</th>
+    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⏱ Horas</th>
+    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⚖️ Toneladas</th>
+    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center;background:#0B2D10;min-width:100px">⚡ TN/Hr</th>
+  </tr>`;
+
+  let totH=0,totT=0;
+  recsDia.forEach((r,i)=>{
+    const bg=i%2===0?'#F8FAFC':'#FFFFFF';
+    totH+=r.hrsEjec||0; totT+=r.toneladas||0;
+    h+=`<tr style="background:${bg}">
+      <td style="padding:9px 12px;font-weight:700;color:#1E293B;border:1px solid #D0DCF4">${r.maquina}</td>
+      <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;color:#475569;font-size:10px">${r.operador||'—'}</td>
+      <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;font-weight:700;color:#1E293B;font-family:monospace">${(r.hrsEjec||0).toFixed(1)}</td>
+      <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;font-weight:700;color:#1E293B;font-family:monospace">${(r.toneladas||0).toFixed(1)}</td>
+      <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;background:${_rptBg(r.tnhr)};vertical-align:middle">
+        <div style="font-size:20px;font-weight:800;color:${_rptCol(r.tnhr)};font-family:monospace;line-height:1">${(r.tnhr||0).toFixed(2)}</div>
+        <div style="font-size:8px;color:${_rptCol(r.tnhr)};margin-top:2px">${_rptEstado(r.tnhr)}</div>
+      </td>
+    </tr>`;
+  });
+
+  // FILA TOTAL DEL DÍA
+  const totTh=totH>0?totT/totH:0;
+  h+=`<tr style="background:#1A3A8F">
+    <td colspan="2" style="padding:10px 12px;color:#F5C800;font-size:11px;font-weight:700;border:1px solid #C0D0F4">
+      TOTAL ${fechaSel} — ${maquinas.length} máquina(s)
+    </td>
+    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${totH.toFixed(1)}</td>
+    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${totT.toFixed(1)}</td>
+    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;background:${_rptBg(totTh)}">
+      <div style="font-size:26px;font-weight:800;color:${_rptCol(totTh)};font-family:monospace;line-height:1">${totTh.toFixed(2)}</div>
+      <div style="font-size:9px;color:${_rptCol(totTh)};margin-top:2px">${_rptEstado(totTh)}</div>
+    </td>
+  </tr>`;
+
+  h+=`<tr><td colspan="6" style="background:#EEF2FF;color:#64748B;font-size:8px;padding:7px 12px;text-align:center;border:none">ARATO · MISSION PRODUCE · Meta maquinaria: ${META} TN/Hr · ${ahora}</td></tr>`;
+  h+='</table>';
+  document.getElementById('rpt-maq-cont').innerHTML=h;
+
+  // Restaurar fecha seleccionada en el nuevo select generado
+  const newSel=document.getElementById('rpt-fecha-sel');
+  if(newSel&&fechaSel)newSel.value=fechaSel;
+}
+
+// ── Helper: get week key (lunes de la semana) ──
+function _weekKey(fecha){
+  const [d,m,y]=fecha.split('/').map(Number);
+  const dt=new Date(y,m-1,d);
+  const day=dt.getDay();
+  const diff=day===0?-6:1-day; // lunes
+  const lunes=new Date(dt);lunes.setDate(dt.getDate()+diff);
+  return lunes.toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+function _weekLabel(lunesStr){
+  const [d,m,y]=lunesStr.split('/').map(Number);
+  const lunes=new Date(y,m-1,d);
+  const domingo=new Date(lunes);domingo.setDate(lunes.getDate()+6);
+  return `${d}/${m} – ${domingo.getDate()}/${domingo.getMonth()+1}/${y}`;
+}
+
+// Vista 3: SEMANAL — TN/Hr global agrupado por semana (solo maquinaria)
+function buildReporteSemanal(){
+  const ahora=new Date().toLocaleString('es-PE');
+  const recsMaq=records.filter(r=>!r.tipo||r.tipo==='maquinaria');
+  const recsMonta=records.filter(r=>r.tipo==='montacargas');
+  if(!recsMaq.length){document.getElementById('rpt-maq-cont').innerHTML='<div style="color:#475569;text-align:center;padding:40px;">Sin registros</div>';return;}
+
+  const semKeys=[...new Set(recsMaq.map(r=>_weekKey(r.fecha)))].sort((a,b)=>{
+    const [da,ma,ya]=a.split('/').map(Number);const [db,mb,yb]=b.split('/').map(Number);
+    return new Date(ya,ma-1,da)-new Date(yb,mb-1,db);
+  });
+  const selEl=document.getElementById('rpt-sem-sel');
+  const semSel=selEl?selEl.value:semKeys[semKeys.length-1];
+  const [ds,ms,ys]=semSel.split('/').map(Number);
+  const lunes=new Date(ys,ms-1,ds);
+  const diasSem=[];
+  for(let i=0;i<7;i++){const d=new Date(lunes);d.setDate(lunes.getDate()+i);diasSem.push(d.toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'numeric'}));}
+  const diasConDatos=diasSem.filter(d=>recsMaq.some(r=>r.fecha===d));
+  const numDias=diasConDatos.length;
+  const semLabel=_weekLabel(semSel);
+  const semN=String(getWeekNumber(lunes)).padStart(2,'0');
+
+  // Semana anterior
+  const semAntKey=semKeys[semKeys.indexOf(semSel)-1]||null;
+  let vsAnt='';
+  if(semAntKey){
+    const [dsa,msa,ysa]=semAntKey.split('/').map(Number);
+    const lunesAnt=new Date(ysa,msa-1,dsa);
+    const diasAnt=[];for(let i=0;i<7;i++){const d=new Date(lunesAnt);d.setDate(lunesAnt.getDate()+i);diasAnt.push(d.toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'numeric'}));}
+    const dAnt=diasAnt.filter(d=>recsMaq.some(r=>r.fecha===d));
+    const hAnt=dAnt.reduce((s,d)=>{const r=recsMaq.filter(x=>x.fecha===d);return s+r.reduce((ss,x)=>ss+(x.hrsEjec||0),0);},0);
+    const tAnt=dAnt.reduce((s,d)=>{const r=recsMaq.filter(x=>x.fecha===d);return s+r.reduce((ss,x)=>ss+(x.toneladas||0),0);},0);
+    const tnhrAnt=hAnt>0?tAnt/hAnt:0;
+    if(tnhrAnt>0){
+      const saN=String(getWeekNumber(lunesAnt)).padStart(2,'0');
+      const diff=0; vsAnt=`SEM-${saN}: ${tnhrAnt.toFixed(2)} TN/Hr`;
+    }
+  }
+
+  function dD(dia,recs){
+    const r=recs.filter(x=>x.fecha===dia);
+    const hrs=r.reduce((s,x)=>s+(x.hrsEjec||0),0);
+    const bins=r.reduce((s,x)=>s+(x.bins||0),0);
+    const tons=r.reduce((s,x)=>s+(x.toneladas||0),0);
+    return{hrs,bins,tons,tnhr:hrs>0?tons/hrs:0};
+  }
+  const mD=diasConDatos.map(d=>dD(d,recsMaq));
+  const moD=diasConDatos.map(d=>dD(d,recsMonta));
+  const pD=diasConDatos.map(d=>{
+    const r=personalRecords.filter(x=>x.fecha===d);
+    return{pers:r.reduce((s,x)=>s+(x.personal||0),0),tons:r.reduce((s,x)=>s+(x.toneladas||0),0),hrs:r.reduce((s,x)=>s+(x.horas||0),0)};
+  });
+
+  const totMaqH=mD.reduce((s,d)=>s+d.hrs,0);
+  const totMaqT=mD.reduce((s,d)=>s+d.tons,0);
+  const totMaqB=mD.reduce((s,d)=>s+d.bins,0);
+  const totMontaH=moD.reduce((s,d)=>s+d.hrs,0);
+  const totMontaT=moD.reduce((s,d)=>s+d.tons,0);
+  const totPersP=pD.reduce((s,d)=>s+d.pers,0);
+  const totPersT=pD.reduce((s,d)=>s+d.tons,0);
+  const totTnhrMaq=totMaqH>0?totMaqT/totMaqH:0;
+  const totTnhrMonta=totMontaH>0?totMontaT/totMontaH:0;
+  const totTnp=totPersP&&totPersT?totPersT/totPersP:0;
+  const avgPers=numDias>0&&totPersP>0?Math.round(totPersP/numDias):0;
+  const cumplimiento=META>0?Math.round(totTnhrMaq/META*100):0;
+
+  const tnhrsPorDia=mD.map((d,i)=>({dia:diasConDatos[i],tnhr:d.tnhr})).filter(x=>x.tnhr>0);
+  const mejorDia=tnhrsPorDia.length?tnhrsPorDia.reduce((a,b)=>b.tnhr>a.tnhr?b:a):{dia:'—',tnhr:0};
+  const peorDia=tnhrsPorDia.length?tnhrsPorDia.reduce((a,b)=>b.tnhr<a.tnhr?b:a):{dia:'—',tnhr:0};
+
+  const kpiC=v=>v>=META?'#15803D':v>=META*0.9?'#D97706':'#DC2626';
+  const kpiBg=v=>v>=META?'rgba(21,128,61,.15)':v>=META*0.9?'rgba(217,119,6,.15)':'rgba(220,38,38,.15)';
+  const kpiBorder=v=>v>=META?'rgba(134,239,172,.5)':v>=META*0.9?'rgba(253,230,138,.5)':'rgba(252,165,165,.5)';
+  const cumIcon=cumplimiento>=100?'🟢':cumplimiento>=90?'🟡':'🔴';
+
+  // Edición
+  const editKey='sem_edit_'+semSel;
+  let semEdit={};try{semEdit=JSON.parse(localStorage.getItem(editKey)||'{}');}catch(e){}
+  const responsable=semEdit.responsable||'Jerson Muñoz';
+  const version=semEdit.version||'v1.0';
+
+  // Causas/acciones automáticas compactas
+  const causasLines=tnhrsPorDia.filter(x=>x.tnhr<META*0.9).map(x=>`• ${x.dia.substring(0,5)}: ${x.tnhr.toFixed(2)} (-${Math.round((1-x.tnhr/META)*100)}%)`);
+  if(causasLines.length===0)causasLines.push('• Sin desviaciones');
+  const accionesLines=totTnhrMaq<META?['• Revisar tiempos muertos',`• Analizar ${peorDia.dia.substring(0,5)} con supervisores`]:['• Mantener condiciones actuales'];
+  const causasTexto=semEdit.causas||causasLines.join('\n');
+  const accionesTexto=semEdit.acciones||accionesLines.join('\n');
+
+  // SVG
+  const chartH=80;const chartPadL=26;
+  const barW=Math.min(36,Math.floor(180/Math.max(numDias,1)));
+  const barGap=8;const svgW=chartPadL+numDias*(barW+barGap)+6;
+  const yMax=Math.max(Math.ceil(Math.max(...mD.map(d=>d.tnhr),META)*1.1),4);
+  let svgG='',svgY='',svgB='';
+  [0,1,2,3,yMax].forEach(v=>{
+    const y=chartH-(v/yMax*chartH*0.88);
+    svgG+=`<line x1="${chartPadL}" y1="${y}" x2="${svgW}" y2="${y}" stroke="#E2E8F0" stroke-width="0.6" stroke-dasharray="2,3"/>`;
+    svgY+=`<text x="${chartPadL-3}" y="${y+3}" text-anchor="end" font-size="6.5" fill="#94A3B8">${v}</text>`;
+  });
+  const metaY=chartH-(META/yMax*chartH*0.88);
+  const svgMeta=`<line x1="${chartPadL}" y1="${metaY}" x2="${svgW}" y2="${metaY}" stroke="#F5C800" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <rect x="${svgW-38}" y="${metaY-8}" width="36" height="9" rx="2" fill="#F5C800"/>
+    <text x="${svgW-20}" y="${metaY-1.5}" text-anchor="middle" font-size="6" fill="#0B1437" font-weight="bold">META ${META}</text>`;
+  diasConDatos.forEach((dia,i)=>{
+    const tnhr=mD[i].tnhr;if(!tnhr)return;
+    const bH=Math.max(6,Math.round(tnhr/yMax*chartH*0.88));
+    const x=chartPadL+i*(barW+barGap);const y=chartH-bH;
+    const col=tnhr>=META?'#16A34A':tnhr>=META*0.9?'#D97706':'#DC2626';
+    const dow=['D','L','M','X','J','V','S'][new Date(+dia.split('/')[2],+dia.split('/')[1]-1,+dia.split('/')[0]).getDay()];
+    svgB+=`<rect x="${x+2}" y="${y}" width="${barW-4}" height="${bH}" fill="${col}" rx="3" opacity=".85"/>`;
+    if(bH>14)svgB+=`<text x="${x+barW/2}" y="${y+bH/2+3.5}" text-anchor="middle" font-size="8.5" fill="#fff" font-weight="bold">${tnhr.toFixed(2)}</text>`;
+    else svgB+=`<text x="${x+barW/2}" y="${y-3}" text-anchor="middle" font-size="7.5" fill="${col}" font-weight="bold">${tnhr.toFixed(2)}</text>`;
+    svgB+=`<text x="${x+barW/2}" y="${chartH+10}" text-anchor="middle" font-size="7" fill="#64748B">${dia.substring(0,5)}</text>`;
+    svgB+=`<text x="${x+barW/2}" y="${chartH+19}" text-anchor="middle" font-size="6" fill="#94A3B8">${dow}</text>`;
+  });
+
+  let h='';
+
+  // SELECTOR
+  h+=`<div style="margin-bottom:10px;display:flex;align-items:center;gap:8px;">
+    <select id="rpt-sem-sel" onchange="buildReporteSemanal()" style="padding:6px 10px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#fff;font-size:0.78rem;font-family:inherit;font-weight:700;flex:1;">${semKeys.map(k=>`<option value="${k}" ${k===semSel?'selected':''}>${_weekLabel(k)}</option>`).join('')}</select>
+    <button onclick="editarSemanal('${semSel}')" style="background:#334155;border:none;border-radius:8px;padding:6px 10px;color:#94A3B8;font-size:0.65rem;cursor:pointer;white-space:nowrap;">✏️ Editar</button>
+  </div>`;
+
+  h+=`<div style="background:#F8FAFC;border-radius:14px;overflow:hidden;font-family:'Inter',Arial,sans-serif;">`;
+
+  // 1. HEADER MÍNIMO
+  h+=`<div style="background:linear-gradient(135deg,#0B1437,#1e3a8a);padding:14px 18px 12px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div>
+        <div style="font-size:13px;font-weight:800;color:#F5C800;letter-spacing:1.5px;">SEM-${semN} · ARATO 2026</div>
+        <div style="font-size:7px;color:rgba(255,255,255,.45);margin-top:2px;">📅 ${semLabel} &nbsp;·&nbsp; 👤 ${responsable} &nbsp;·&nbsp; ${version} &nbsp;·&nbsp; ${numDias}/7 días</div>
+      </div>
+      <div style="background:#F5C800;color:#0B1437;font-size:9px;font-weight:800;padding:3px 9px;border-radius:6px;">${numDias}/7 días</div>
+    </div>
+
+    <!-- 2. KPI PRINCIPAL -->
+    <div style="background:${kpiBg(totTnhrMaq)};border:1.5px solid ${kpiBorder(totTnhrMaq)};border-radius:10px;padding:10px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div style="font-size:6px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.8px;margin-bottom:2px;">🚜 TN/Hr Maquinaria</div>
+        <div style="font-size:2.4rem;font-weight:900;color:${kpiC(totTnhrMaq)};font-family:monospace;line-height:1;">${totTnhrMaq.toFixed(2)}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:11px;font-weight:800;color:${kpiC(totTnhrMaq)};">${cumIcon} ${cumplimiento}%</div>
+        <div style="font-size:8px;color:rgba(255,255,255,.5);margin-top:3px;">meta ${META} TN/Hr</div>
+        ${vsAnt?`<div style="font-size:7.5px;color:rgba(255,255,255,.35);margin-top:2px;">${vsAnt}</div>`:''}
+        <div style="font-size:8px;color:rgba(255,255,255,.55);margin-top:3px;">✅ ${mejorDia.dia.substring(0,5)} ${mejorDia.tnhr.toFixed(2)} &nbsp; ⚠️ ${peorDia.dia.substring(0,5)} ${peorDia.tnhr.toFixed(2)}</div>
+      </div>
+    </div>
+
+    <!-- 3. KPIs SECUNDARIOS -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:12px;">
+      <div style="background:rgba(255,255,255,.07);border-radius:8px;padding:7px 5px;text-align:center;">
+        <div style="font-size:7px;color:rgba(255,255,255,.4);margin-bottom:2px;">⚖️ Producción</div>
+        <div style="font-size:13px;font-weight:800;color:#fff;font-family:monospace;">${totMaqT.toFixed(1)}</div>
+        <div style="font-size:6px;color:rgba(255,255,255,.3);">TN · ${totMaqB|0} bins</div>
+      </div>
+      <div style="background:rgba(217,119,6,.12);border:1px solid rgba(253,230,138,.25);border-radius:8px;padding:7px 5px;text-align:center;">
+        <div style="font-size:7px;color:rgba(255,255,255,.4);margin-bottom:2px;">🏗️ TN/Hr Monta</div>
+        <div style="font-size:13px;font-weight:800;color:#FDE68A;font-family:monospace;">${totTnhrMonta>0?totTnhrMonta.toFixed(2):'N/D'}</div>
+        <div style="font-size:6px;color:rgba(255,255,255,.3);">${totMontaT>0?totMontaT.toFixed(1)+' TN':'—'}</div>
+      </div>
+      <div style="background:rgba(124,58,237,.12);border:1px solid rgba(196,181,253,.25);border-radius:8px;padding:7px 5px;text-align:center;">
+        <div style="font-size:7px;color:rgba(255,255,255,.4);margin-bottom:2px;">👷 TN/Persona</div>
+        <div style="font-size:13px;font-weight:800;color:#C4B5FD;font-family:monospace;">${totTnp>0?totTnp.toFixed(2):'N/D'}</div>
+        <div style="font-size:6px;color:rgba(255,255,255,.3);">${avgPers>0?'~'+avgPers+' p/día':'—'}</div>
+      </div>
+      <div style="background:${cumplimiento>=100?'rgba(21,128,61,.15)':cumplimiento>=90?'rgba(217,119,6,.15)':'rgba(220,38,38,.15)'};border:1px solid ${cumplimiento>=100?'rgba(74,222,128,.3)':cumplimiento>=90?'rgba(253,230,138,.3)':'rgba(252,165,165,.3)'};border-radius:8px;padding:7px 5px;text-align:center;">
+        <div style="font-size:7px;color:rgba(255,255,255,.4);margin-bottom:2px;">🎯 Cumplimiento</div>
+        <div style="font-size:13px;font-weight:800;color:${cumplimiento>=100?'#4ADE80':cumplimiento>=90?'#FDE68A':'#FCA5A5'};font-family:monospace;">${cumplimiento}%</div>
+        <div style="font-size:6px;color:rgba(255,255,255,.3);">meta ${META} TN/Hr</div>
+      </div>
+    </div>
+
+    <!-- 4. GRÁFICO -->
+    ${numDias>=2?`<div style="background:rgba(255,255,255,.04);border-radius:10px;padding:12px 10px 8px;border:1px solid rgba(255,255,255,.07);">
+      <svg width="100%" viewBox="0 0 ${svgW} ${chartH+24}" style="overflow:visible;">${svgG}${svgY}${svgMeta}${svgB}
+        <line x1="${chartPadL}" y1="0" x2="${chartPadL}" y2="${chartH}" stroke="#334155" stroke-width="1"/>
+        <line x1="${chartPadL}" y1="${chartH}" x2="${svgW}" y2="${chartH}" stroke="#334155" stroke-width="1"/>
+      </svg>
+    </div>`:''}
+  </div>`; // cierra header azul
+
+  // ── TABLA ORGANIZADA POR BLOQUES ──
+  const totPersH=pD.reduce((s,d)=>s+(d.hrs||0),0);
+  const hrsPP=totPersH>0&&totPersP>0?+(totPersH/totPersP).toFixed(2):0;
+
+  function row(icon,label,c,bg,bgTotal,vals,fmt){
+    let r=`<tr><td style="padding:8px 10px;font-size:9px;font-weight:700;color:${c};border-bottom:1px solid #F1F5F9;white-space:nowrap;background:${bg};">${icon} ${label}</td>`;
+    vals.forEach(v=>r+=v!==null&&v!==undefined&&v!==0?`<td style="padding:8px 5px;text-align:center;border-bottom:1px solid #F1F5F9;font-family:monospace;font-weight:700;color:${c};background:${bg};">${fmt(v)}</td>`:`<td style="padding:8px;text-align:center;border-bottom:1px solid #F1F5F9;background:${bg};color:#D1D5DB;font-size:9px;">—</td>`);
+    const tot=vals.reduce((s,v)=>s+(v||0),0);
+    r+=`<td style="padding:8px 5px;text-align:center;border-bottom:1px solid #F1F5F9;font-family:monospace;font-weight:800;color:${c};background:${bgTotal};">${fmt(tot)}</td></tr>`;
+    return r;
+  }
+  function blk(txt,c,bg){return`<tr><td colspan="${numDias+2}" style="padding:7px 10px 4px;font-size:7.5px;font-weight:800;color:${c};letter-spacing:1.5px;text-transform:uppercase;background:${bg};border-top:2px solid ${c};border-bottom:1px solid #E2E8F0;">${txt}</td></tr>`;}
+
+  h+=`<div style="background:#fff;padding:12px 14px 10px;">
+    <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-family:'Inter',Arial,sans-serif;font-size:10px;">
+      <thead><tr style="background:#F1F5F9;">
+        <th style="padding:8px 10px;text-align:left;font-size:7.5px;font-weight:700;color:#94A3B8;border-bottom:2px solid #E2E8F0;white-space:nowrap;min-width:140px;"></th>
+        ${diasConDatos.map(d=>{
+          const p=d.split('/');
+          const dow=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][new Date(+p[2],+p[1]-1,+p[0]).getDay()];
+          return`<th style="padding:8px 5px;text-align:center;font-size:8px;font-weight:700;color:#475569;border-bottom:2px solid #E2E8F0;white-space:nowrap;">${p[0]}/${p[1]}<span style="display:block;font-size:6.5px;font-weight:500;color:#94A3B8;">${dow}</span></th>`;
+        }).join('')}
+        <th style="padding:8px 6px;text-align:center;font-size:8px;font-weight:800;color:#1e3a8a;border-bottom:2px solid #1e3a8a;background:#EEF2FF;white-space:nowrap;">Total sem.</th>
+      </tr></thead>
+      <tbody>`;
+
+  // ── BLOQUE 1: MAQUINARIA ──
+  h+=blk('🚜 Maquinaria','#1e3a8a','#F0F4FF');
+  h+=row('','Horas operativas','#1e3a8a','#F8FAFF','#EEF2FF',mD.map(d=>d.hrs||null),v=>`${v.toFixed(1)}h`);
+  h+=row('','Bins cosechados','#0369A1','#F0F9FF','#E0F2FE',mD.map(d=>d.bins||null),v=>`${Math.round(v)}`);
+  h+=row('','Toneladas','#15803D','#F0FDF4','#DCFCE7',mD.map(d=>d.tons||null),v=>`${v.toFixed(1)} TN`);
+
+  // TN/Hr — fila destacada
+  h+=`<tr style="background:#1e293b;">
+    <td style="padding:8px 10px;font-size:9px;font-weight:800;color:#F5C800;border-bottom:1px solid #334155;white-space:nowrap;">⚡ TN/Hr maq.</td>`;
+  let totTnhrSum=0,countTnhr=0;
+  mD.forEach(d=>{
+    if(!d.hrs){h+=`<td style="padding:8px;text-align:center;border-bottom:1px solid #334155;background:#1e293b;color:#475569;">—</td>`;return;}
+    const col=kpiC(d.tnhr);const bg=d.tnhr>=META?'rgba(22,163,74,.22)':d.tnhr>=META*0.9?'rgba(217,119,6,.22)':'rgba(220,38,38,.22)';
+    const est=d.tnhr>=META?'🟢':d.tnhr>=META*0.9?'🟡':'🔴';
+    h+=`<td style="padding:8px 5px;text-align:center;border-bottom:1px solid #334155;background:${bg};">
+      <div style="font-size:13px;font-weight:800;color:${col};font-family:monospace;">${d.tnhr.toFixed(2)}</div>
+      <div style="font-size:8px;">${est}</div>
+    </td>`;
+    totTnhrSum+=d.tnhr;countTnhr++;
+  });
+  h+=`<td style="padding:8px 6px;text-align:center;border-bottom:1px solid #334155;background:${kpiBg(totTnhrMaq)};">
+    <div style="font-size:14px;font-weight:900;color:${kpiC(totTnhrMaq)};font-family:monospace;">${totTnhrMaq.toFixed(2)}</div>
+    <div style="font-size:8px;color:${kpiC(totTnhrMaq)};font-weight:700;">${cumIcon}${cumplimiento}%</div>
+  </td></tr>`;
+
+  // ── BLOQUE 2: MONTACARGAS ──
+  if(totMontaH>0){
+    h+=blk('🏗️ Montacargas','#B45309','#FFFBEB');
+    h+=row('','Horas operativas','#B45309','#FEFCE8','#FEF9C3',moD.map(d=>d.hrs||null),v=>`${v.toFixed(1)}h`);
+    // TN/Hr monta fila
+    h+=`<tr><td style="padding:8px 10px;font-size:9px;font-weight:700;color:#D97706;border-bottom:1px solid #F1F5F9;background:#FEF9C3;white-space:nowrap;">⚡ TN/Hr monta.</td>`;
+    moD.forEach(d=>h+=d.hrs?`<td style="padding:8px 5px;text-align:center;border-bottom:1px solid #FDE68A;font-family:monospace;font-weight:800;color:#D97706;background:#FEF9C3;font-size:12px;">${d.tnhr.toFixed(2)}</td>`:`<td style="padding:8px;text-align:center;border-bottom:1px solid #FDE68A;background:#FEFCE8;color:#D1D5DB;">—</td>`);
+    h+=`<td style="padding:8px 6px;text-align:center;border-bottom:1px solid #FDE68A;font-family:monospace;font-weight:900;color:#D97706;background:#FEF3C7;font-size:13px;">${totTnhrMonta.toFixed(2)}</td></tr>`;
+  }
+
+  // ── BLOQUE 3: PERSONAL ──
+  if(totPersP>0){
+    h+=blk('👷 Personal de Acopio','#7C3AED','#FAF5FF');
+    h+=row('','Trabajadores','#7C3AED','#FAF5FF','#EDE9FE',pD.map(d=>d.pers||null),v=>`${v} p.`);
+    // Hrs/persona
+    h+=`<tr><td style="padding:8px 10px;font-size:9px;font-weight:700;color:#7C3AED;border-bottom:1px solid #F1F5F9;background:#FAF5FF;white-space:nowrap;">⏱ Hrs / persona</td>`;
+    pD.forEach(d=>{
+      const hpp=d.hrs&&d.pers?+(d.hrs/d.pers).toFixed(2):0;
+      h+=hpp?`<td style="padding:8px 5px;text-align:center;border-bottom:1px solid #F1F5F9;font-family:monospace;font-weight:700;color:#7C3AED;background:#FAF5FF;">${hpp} h</td>`:`<td style="padding:8px;text-align:center;border-bottom:1px solid #F1F5F9;background:#FAF5FF;color:#D1D5DB;">—</td>`;
+    });
+    h+=`<td style="padding:8px 6px;text-align:center;border-bottom:1px solid #F1F5F9;font-family:monospace;font-weight:800;color:#7C3AED;background:#EDE9FE;">${hrsPP>0?hrsPP+' h':'—'}</td></tr>`;
+    // TN/persona
+    if(totTnp>0){
+      h+=`<tr><td style="padding:8px 10px;font-size:9px;font-weight:700;color:#7C3AED;border-bottom:1px solid #F1F5F9;background:#FAF5FF;white-space:nowrap;">📦 TN / persona</td>`;
+      pD.forEach(d=>{
+        const tnp=d.pers&&d.tons?+(d.tons/d.pers).toFixed(2):0;
+        h+=tnp?`<td style="padding:8px 5px;text-align:center;border-bottom:1px solid #F1F5F9;font-family:monospace;font-weight:700;color:#7C3AED;background:#FAF5FF;">${tnp}</td>`:`<td style="padding:8px;text-align:center;border-bottom:1px solid #F1F5F9;background:#FAF5FF;color:#D1D5DB;">—</td>`;
+      });
+      h+=`<td style="padding:8px 6px;text-align:center;border-bottom:1px solid #F1F5F9;font-family:monospace;font-weight:800;color:#7C3AED;background:#EDE9FE;">${totTnp.toFixed(2)}</td></tr>`;
+    }
+  }
+
+  h+='</tbody></table></div>';
+
+  // 6. DESVIACIONES + ACCIONES
+  h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;">
+    <div style="background:#FEF9C3;border-radius:9px;padding:9px 11px;border-left:3px solid #D97706;">
+      <div style="font-size:7px;font-weight:800;color:#B45309;letter-spacing:.5px;margin-bottom:5px;">⚠️ Desviaciones</div>
+      <div style="font-size:8.5px;color:#92400E;line-height:1.7;white-space:pre-wrap;">${causasTexto}</div>
+    </div>
+    <div style="background:#EFF6FF;border-radius:9px;padding:9px 11px;border-left:3px solid #3B82F6;">
+      <div style="font-size:7px;font-weight:800;color:#1D4ED8;letter-spacing:.5px;margin-bottom:5px;">✅ Acciones</div>
+      <div style="font-size:8.5px;color:#1E40AF;line-height:1.7;white-space:pre-wrap;">${accionesTexto}</div>
+    </div>
+  </div>`;
+
+  h+=`</div>`; // cierra padding blanco
+
+  // PIE MÍNIMO
+  h+=`<div style="background:#0B1437;padding:6px 16px;text-align:center;">
+    <div style="font-size:7px;color:rgba(255,255,255,.35);">ARATO · SEM-${semN} · ${semLabel} · ${responsable} · ${version}</div>
+  </div>`;
+
+  h+=`</div>`; // contenedor
+
+  document.getElementById('rpt-maq-cont').innerHTML=h;
+  const nS=document.getElementById('rpt-sem-sel');
+  if(nS&&semSel)nS.value=semSel;
+}
+
+function editarSemanal(semSel){
+  const editKey='sem_edit_'+semSel;
+  let semEdit={};try{semEdit=JSON.parse(localStorage.getItem(editKey)||'{}');}catch(e){}
+  const recsMaq=records.filter(r=>!r.tipo||r.tipo==='maquinaria');
+  const [ds,ms,ys]=semSel.split('/').map(Number);
+  const lunes=new Date(ys,ms-1,ds);
+  const diasSem=[];for(let i=0;i<7;i++){const d=new Date(lunes);d.setDate(lunes.getDate()+i);diasSem.push(d.toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'numeric'}));}
+  const diasConDatos=diasSem.filter(d=>recsMaq.some(r=>r.fecha===d));
+  const mD=diasConDatos.map(d=>{const r=recsMaq.filter(x=>x.fecha===d);const hrs=r.reduce((s,x)=>s+(x.hrsEjec||0),0);const tons=r.reduce((s,x)=>s+(x.toneladas||0),0);return{hrs,tons,tnhr:hrs>0?tons/hrs:0,dia:d};});
+  const totH=mD.reduce((s,d)=>s+d.hrs,0);const totT=mD.reduce((s,d)=>s+d.tons,0);
+  const tnhrG=totH>0?totT/totH:0;
+  const causasAuto=mD.filter(d=>d.tnhr>0&&d.tnhr<META*0.9).map(d=>`• ${d.dia.substring(0,5)}: ${d.tnhr.toFixed(2)} (-${Math.round((1-d.tnhr/META)*100)}%)`);
+  if(!causasAuto.length)causasAuto.push('• Sin desviaciones');
+  const accionesAuto=tnhrG<META?['• Revisar tiempos muertos',`• Analizar días críticos`]:['• Mantener condiciones actuales'];
+
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML=`<div style="background:#0d1526;border-radius:14px;padding:18px;width:100%;max-width:380px;max-height:88vh;overflow-y:auto;border:1px solid #334155;">
+    <div style="font-size:0.82rem;font-weight:800;color:#F5C800;margin-bottom:14px;text-align:center;">✏️ Editar SEM-${String(getWeekNumber(lunes)).padStart(2,'0')}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+      <div><label style="font-size:0.58rem;color:#64748B;display:block;margin-bottom:3px;">Responsable</label>
+        <input id="ed-resp" value="${semEdit.responsable||'Jerson Muñoz'}" style="background:#1e293b;border:1px solid #334155;border-radius:7px;padding:7px;color:#fff;font-size:0.72rem;width:100%;"></div>
+      <div><label style="font-size:0.58rem;color:#64748B;display:block;margin-bottom:3px;">Versión</label>
+        <input id="ed-ver" value="${semEdit.version||'v1.0'}" style="background:#1e293b;border:1px solid #334155;border-radius:7px;padding:7px;color:#fff;font-size:0.72rem;width:100%;"></div>
+    </div>
+    <div style="margin-bottom:10px;">
+      <label style="font-size:0.58rem;color:#FDE68A;display:block;margin-bottom:3px;">⚠️ Desviaciones</label>
+      <textarea id="ed-causas" rows="4" style="background:#1e293b;border:1px solid #D97706;border-radius:7px;padding:7px;color:#FDE68A;font-size:0.7rem;width:100%;resize:vertical;">${semEdit.causas||causasAuto.join('\n')}</textarea>
+    </div>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:0.58rem;color:#93C5FD;display:block;margin-bottom:3px;">✅ Acciones</label>
+      <textarea id="ed-acciones" rows="4" style="background:#1e293b;border:1px solid #3B82F6;border-radius:7px;padding:7px;color:#93C5FD;font-size:0.7rem;width:100%;resize:vertical;">${semEdit.acciones||accionesAuto.join('\n')}</textarea>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <button onclick="this.closest('div[style*=fixed]').remove()" style="padding:9px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#fff;font-size:0.78rem;cursor:pointer;font-family:inherit;">✗ Cancelar</button>
+      <button onclick="guardarEdicionSemanal('${semSel}')" style="padding:9px;background:#16A34A;border:none;border-radius:8px;color:#fff;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;">✅ Guardar</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+}
+
+function guardarEdicionSemanal(semSel){
+  const editKey='sem_edit_'+semSel;
+  const data={
+    responsable:document.getElementById('ed-resp').value.trim()||'Jerson Muñoz',
+    version:document.getElementById('ed-ver').value.trim()||'v1.0',
+    causas:document.getElementById('ed-causas').value.trim(),
+    acciones:document.getElementById('ed-acciones').value.trim()
+  };
+  localStorage.setItem(editKey,JSON.stringify(data));
+  document.querySelector('div[style*="position:fixed"]')?.remove();
+  showToast('✅ Reporte actualizado','ok');
+  buildReporteSemanal();
+}
+
+function getWeekNumber(d){
+  const date=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+  const dayNum=date.getUTCDay()||7;
+  date.setUTCDate(date.getUTCDate()+4-dayNum);
+  const yearStart=new Date(Date.UTC(date.getUTCFullYear(),0,1));
+  return Math.ceil((((date-yearStart)/86400000)+1)/7);
+}
+
+// Vista 4: MONTACARGAS — por día
+function buildReporteMonta(){
+  const ahora=new Date().toLocaleString('es-PE');
+  const recsMonta=records.filter(r=>r.tipo==='montacargas');
+  if(!recsMonta.length){
+    document.getElementById('rpt-maq-cont').innerHTML=`<div style="color:#475569;text-align:center;padding:40px;font-size:0.85rem">Sin registros de montacargas.<br><span style="font-size:0.75rem">Registra seleccionando "🏗️ Montacargas" en el formulario.</span></div>`;
+    return;
+  }
+  const fechas=_sortFechas(recsMonta);
+  const selEl=document.getElementById('rpt-fecha-monta');
+  const fechaSel=selEl?selEl.value:fechas[fechas.length-1];
+  const recsDia=recsMonta.filter(r=>r.fecha===fechaSel);
+
+  let totH=0,totT=0;
+  recsDia.forEach(r=>{totH+=r.hrsEjec||0;totT+=r.toneladas||0;});
+  const totTh=totH>0?totT/totH:0;
+
+  let html=`<div style="margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+    <span style="font-size:0.7rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px">📅 Fecha:</span>
+    <select id="rpt-fecha-monta" onchange="buildReporteMonta()" style="padding:7px 12px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#fff;font-size:0.8rem;font-family:inherit;font-weight:700">
+      ${fechas.map(f=>`<option value="${f}" ${f===fechaSel?'selected':''}>${f}</option>`).join('')}
+    </select>
+  </div>`;
+
+  html+=`<table style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px;min-width:340px">`;
+  html+=`<tr><td colspan="6" style="padding:0;border:none">${_rptHeader('REPORTE DEL '+fechaSel,'🏗️ '+recsDia.length+' montacargas — Resumen del día',ahora)}</td></tr>`;
+  html+=`<tr style="background:#B45309">
+    <th style="padding:9px 12px;color:#FEF9C3;font-size:9px;border:1px solid #FDE68A;text-align:left">🏗️ Equipo</th>
+    <th style="padding:9px 8px;color:#FEF9C3;font-size:9px;border:1px solid #FDE68A;text-align:center">👤 Operador</th>
+    <th style="padding:9px 8px;color:#FEF9C3;font-size:9px;border:1px solid #FDE68A;text-align:center">⏱ Horas</th>
+    <th style="padding:9px 8px;color:#FEF9C3;font-size:9px;border:1px solid #FDE68A;text-align:center">⚖️ Toneladas</th>
+    <th style="padding:9px 8px;color:#FEF9C3;font-size:9px;border:1px solid #FDE68A;text-align:center">⚡ TN/Hr</th>
+    <th style="padding:9px 8px;color:#FEF9C3;font-size:9px;border:1px solid #FDE68A;text-align:center">📊 Estado</th>
+  </tr>`;
+
+  if(!recsDia.length){
+    html+=`<tr><td colspan="6" style="padding:20px;text-align:center;color:#94A3B8;font-style:italic;font-size:10px">Sin registros de montacargas para esta fecha</td></tr>`;
+  }else{
+    recsDia.forEach((r,i)=>{
+      const bg=i%2===0?'#FFFBEB':'#FEF9C3';
+      const col=META_MONTA>0?_rptCol(r.tnhr):'#D97706';
+      const bg2=META_MONTA>0?_rptBg(r.tnhr):'#FEF3C7';
+      const estado=META_MONTA>0?(r.tnhr>=META_MONTA?'🟢 BIEN':r.tnhr>=META_MONTA*0.7?'🟡 REGULAR':'🔴 BAJO META'):'🟡 SIN META';
+      html+=`<tr style="background:${bg}">
+        <td style="padding:9px 12px;font-weight:700;color:#1E293B;border:1px solid #FDE68A">${r.maquina}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #FDE68A;color:#475569;font-size:10px">${r.operador||'—'}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.hrsEjec||0).toFixed(1)}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.toneladas||0).toFixed(1)}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #FDE68A;background:${bg2}">
+          <div style="font-size:20px;font-weight:800;color:${col};font-family:monospace;line-height:1">${(r.tnhr||0).toFixed(2)}</div>
+        </td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #FDE68A;font-size:10px;font-weight:700;color:${col}">${estado}</td>
+      </tr>`;
+    });
+  }
+
+  // TOTAL DEL DÍA
+  html+=`<tr style="background:#B45309">
+    <td colspan="2" style="padding:10px 12px;color:#FEF9C3;font-weight:700;font-size:11px;border:1px solid #FDE68A">TOTAL DÍA — ${recsDia.length} equipo(s)</td>
+    <td style="padding:10px;text-align:center;border:1px solid #FDE68A;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${totH.toFixed(1)}</td>
+    <td style="padding:10px;text-align:center;border:1px solid #FDE68A;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${totT.toFixed(1)}</td>
+    <td style="padding:10px;text-align:center;border:1px solid #FDE68A;background:#FEF3C7">
+      <div style="font-size:26px;font-weight:800;color:#D97706;font-family:monospace;line-height:1">${totTh.toFixed(2)}</div>
+    </td>
+    <td style="padding:10px;text-align:center;border:1px solid #FDE68A;font-size:10px;font-weight:700;color:#D97706">${META_MONTA>0?(totTh>=META_MONTA?'🟢 BIEN':totTh>=META_MONTA*0.7?'🟡 REGULAR':'🔴 BAJO META'):'🟡 SIN META'}</td>
+  </tr>`;
+
+  if(META_MONTA===0){html+=`<tr><td colspan="6" style="background:#FEF9C3;color:#B45309;font-size:8.5px;padding:6px 12px;text-align:center;border:none">⚠️ Meta de montacargas pendiente de definir</td></tr>`;}
+
+  html+=`<tr><td colspan="6" style="background:#FEF3C7;color:#92400E;font-size:8px;padding:7px 12px;text-align:center;border:none">ARATO · MISSION PRODUCE · ${ahora}</td></tr>`;
+  html+='</table>';
+  document.getElementById('rpt-maq-cont').innerHTML=html;
+  const newSel=document.getElementById('rpt-fecha-monta');
+  if(newSel&&fechaSel)newSel.value=fechaSel;
+}
+
+// Vista COMBINADO — Maquinaria + Montacargas + Personal en un solo reporte por fecha
+function buildReporteCombinado(){
+  const ahora=new Date().toLocaleString('es-PE');
+  const todasFechas=new Set([
+    ...(records.map(r=>r.fecha)),
+    ...(personalRecords.map(r=>r.fecha))
+  ]);
+  const fechas=_sortFechas([...todasFechas].map(f=>({fecha:f})));
+  if(!fechas.length){document.getElementById('rpt-maq-cont').innerHTML='<div style="color:#475569;text-align:center;padding:40px">Sin datos en ninguna sección</div>';return;}
+
+  const selEl=document.getElementById('rpt-fecha-combo');
+  const fechaSel=selEl?selEl.value:fechas[fechas.length-1];
+
+  let html='';
+  // Pre-calcular totales para resumen ejecutivo
+  const recsMaqPre=records.filter(r=>r.fecha===fechaSel&&(!r.tipo||r.tipo==='maquinaria'));
+  const recsMontaPre=records.filter(r=>r.fecha===fechaSel&&r.tipo==='montacargas');
+  const recsPersPre=personalRecords.filter(r=>r.fecha===fechaSel);
+  const maqH=recsMaqPre.reduce((s,r)=>s+(r.hrsEjec||0),0);
+  const maqT=recsMaqPre.reduce((s,r)=>s+(r.toneladas||0),0);
+  const maqTH=maqH>0?maqT/maqH:0;
+  const montaH=recsMontaPre.reduce((s,r)=>s+(r.hrsEjec||0),0);
+  const montaT=recsMontaPre.reduce((s,r)=>s+(r.toneladas||0),0);
+  const montaTH=montaH>0?montaT/montaH:0;
+  const persT=recsPersPre.reduce((s,r)=>s+(r.toneladas||0),0);
+  const persP=recsPersPre.reduce((s,r)=>s+(r.personal||0),0);
+  const totalTN=maqT; // Producción total = maquinaria (montacargas mueve la misma fruta, no se suma)
+  const estadoGral=maqTH>=META?'✅ BIEN':maqTH>=META*0.7?'⚠️ REGULAR':'❌ BAJO META';
+
+  html+=`<table id="rpt-combo-table" style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px;min-width:340px">`;
+
+  // ENCABEZADO
+  html+=`<tr><td colspan="6" style="padding:0;border:none">
+    <div style="background:linear-gradient(135deg,#0B1437,#1A3A8F);padding:16px 16px 12px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+        <div>
+          <div style="font-size:16px;font-weight:700;color:#F5C800;text-transform:uppercase;letter-spacing:2px;font-family:Arial Black,Arial">REPORTE DIARIO</div>
+          <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,.9);margin-top:3px;letter-spacing:1px">ARATO · MISSION PRODUCE · PERÚ</div>
+          <div style="font-size:8px;color:rgba(255,255,255,.6);margin-top:2px">Maquinaria · Montacargas · Personal</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:20px;font-weight:800;color:#F5C800;font-family:monospace">${fechaSel}</div>
+        <div style="font-size:7px;color:rgba(255,255,255,.75);margin-top:2px">Generado: ${ahora}</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.08);border-radius:8px;padding:8px 12px;margin-bottom:12px">
+        <span style="font-size:10px;font-weight:700;color:#F5C800;white-space:nowrap">📅 FECHA EVALUADA:</span>
+        <select id="rpt-fecha-combo" onchange="buildReporteCombinado()" style="flex:1;padding:7px 10px;border-radius:6px;border:1.5px solid #F5C800;background:#0B1437;color:#F5C800;font-size:12px;font-family:monospace;font-weight:800;cursor:pointer">
+          ${fechas.map(f=>`<option value="${f}" ${f===fechaSel?'selected':''}>${f}</option>`).join('')}
+        </select>
+      </div>
+      <div style="background:rgba(0,0,0,.3);border-radius:8px;padding:10px 12px">
+        <div style="font-size:8px;font-weight:700;color:#F5C800;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">📊 RESUMEN EJECUTIVO</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center">
+          <div style="background:rgba(255,255,255,.08);border-radius:6px;padding:7px 4px">
+            <div style="font-size:7px;color:rgba(255,255,255,.6);text-transform:uppercase;margin-bottom:3px">Producción total</div>
+            <div style="font-size:15px;font-weight:800;color:#fff;font-family:monospace">${totalTN.toFixed(1)}</div>
+            <div style="font-size:7px;color:rgba(255,255,255,.5)">toneladas</div>
+          </div>
+          <div style="background:${maqTH>=META?'rgba(22,163,74,.3)':maqTH>=META*0.7?'rgba(217,119,6,.3)':'rgba(220,38,38,.3)'};border-radius:6px;padding:7px 4px">
+            <div style="font-size:7px;color:rgba(255,255,255,.6);text-transform:uppercase;margin-bottom:3px">🚜 TN/Hr Maq.</div>
+            <div style="font-size:15px;font-weight:800;color:${_rptCol(maqTH)};font-family:monospace">${maqTH.toFixed(2)}</div>
+            <div style="font-size:7px;color:${_rptCol(maqTH)}">${estadoGral}</div>
+          </div>
+          <div style="background:rgba(255,255,255,.08);border-radius:6px;padding:7px 4px">
+            <div style="font-size:7px;color:rgba(255,255,255,.6);text-transform:uppercase;margin-bottom:3px">🏗️ TN/Hr Monta.</div>
+            <div style="font-size:15px;font-weight:800;color:#D97706;font-family:monospace">${montaTH>0?montaTH.toFixed(2):'—'}</div>
+            <div style="font-size:7px;color:rgba(255,255,255,.5)">${montaT>0?montaT.toFixed(1)+' TN':'N/D'}</div>
+          </div>
+          <div style="background:rgba(255,255,255,.08);border-radius:6px;padding:7px 4px">
+            <div style="font-size:7px;color:rgba(255,255,255,.6);text-transform:uppercase;margin-bottom:3px">👷 Personal</div>
+            <div style="font-size:15px;font-weight:800;color:#A78BFA;font-family:monospace">${persP||'—'}</div>
+            <div style="font-size:7px;color:rgba(255,255,255,.7)">${persP&&persT?+(persT/persP).toFixed(2)+' TN/persona':persP?persP+' trabajadores':'N/D'}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </td></tr>`;
+
+  function seccionHeader(icon,titulo,color){
+    return `<tr><td colspan="6" style="background:${color};padding:7px 12px;font-size:10px;font-weight:700;color:#fff;letter-spacing:1px;text-transform:uppercase;border:none">${icon} ${titulo}</td></tr>`;
+  }
+  function colHeader(){
+    return `<tr style="background:#1A3A8F">
+      <th style="padding:8px 12px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:left">Equipo</th>
+      <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">👤 Operador</th>
+      <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⏱ Horas</th>
+      <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⚖️ Toneladas</th>
+      <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⚡ TN/Hr</th>
+      <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">📊 Estado</th>
+    </tr>`;
+  }
+  function totalRow(label,h,t,colspan2label){
+    const th=h>0?t/h:0;
+    return `<tr style="background:#1A3A8F">
+      <td colspan="2" style="padding:9px 12px;color:#F5C800;font-weight:700;font-size:10px;border:1px solid #C0D0F4">${label}</td>
+      <td style="padding:9px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:16px">${h.toFixed(1)}</td>
+      <td style="padding:9px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:16px">${t.toFixed(1)}</td>
+      <td style="padding:9px;text-align:center;border:1px solid #C0D0F4;background:${_rptBg(th)}">
+        <div style="font-size:18px;font-weight:800;color:${_rptCol(th)};font-family:monospace;line-height:1">${th.toFixed(2)}</div>
+        <div style="font-size:8px;color:${_rptCol(th)};margin-top:1px">${_rptEstado(th)}</div>
+      </td>
+    </tr>`;
+  }
+
+  // ── SECCIÓN MAQUINARIA ──
+  const recsMaq=records.filter(r=>r.fecha===fechaSel&&(!r.tipo||r.tipo==='maquinaria'));
+  html+=seccionHeader('🚜','MAQUINARIA','#1A5C38');
+  if(recsMaq.length){
+    html+=colHeader();
+    let totH=0,totT=0;
+    recsMaq.forEach((r,i)=>{
+      const bg=i%2===0?'#F8FAFC':'#FFFFFF';
+      totH+=r.hrsEjec||0;totT+=r.toneladas||0;
+      const estadoIcon=r.tnhr>=META?'🟢 BIEN':r.tnhr>=META*0.7?'🟡 REGULAR':'🔴 BAJO META';
+      html+=`<tr style="background:${bg}">
+        <td style="padding:8px 12px;font-weight:700;color:#1E293B;border:1px solid #D0DCF4">${r.maquina}</td>
+        <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;color:#475569;font-size:10px">${r.operador||'—'}</td>
+        <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.hrsEjec||0).toFixed(1)}</td>
+        <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.toneladas||0).toFixed(1)}</td>
+        <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;background:${_rptBg(r.tnhr)}">
+          <div style="font-size:16px;font-weight:800;color:${_rptCol(r.tnhr)};font-family:monospace">${(r.tnhr||0).toFixed(2)}</div>
+        </td>
+        <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;font-size:10px;font-weight:700;color:${_rptCol(r.tnhr)}">${estadoIcon}</td>
+      </tr>`;
+    });
+    html+=totalRow(`TOTAL MAQUINARIA — ${recsMaq.length} equipo(s)`,totH,totT);
+  } else {
+    html+=`<tr><td colspan="6" style="padding:10px;text-align:center;color:#94A3B8;font-style:italic;font-size:10px;background:#F8FAFC">Sin registros de maquinaria para esta fecha</td></tr>`;
+  }
+
+  // ── SECCIÓN MONTACARGAS ──
+  const recsMonta=records.filter(r=>r.fecha===fechaSel&&r.tipo==='montacargas');
+  html+=`<tr><td colspan="6" style="height:6px;background:#E2E8F0;border:none"></td></tr>`;
+  html+=seccionHeader('🏗️','MONTACARGAS','#B45309');
+  if(recsMonta.length){
+    html+=colHeader();
+    let totH=0,totT=0;
+    recsMonta.forEach((r,i)=>{
+      const bg=i%2===0?'#FFFBEB':'#FEF9C3';
+      totH+=r.hrsEjec||0;totT+=r.toneladas||0;
+      const montaEstado=META_MONTA>0?(r.tnhr>=META_MONTA?'🟢 BIEN':r.tnhr>=META_MONTA*0.7?'🟡 REGULAR':'🔴 BAJO META'):'🟡 SIN META';
+      html+=`<tr style="background:${bg}">
+        <td style="padding:8px 12px;font-weight:700;color:#1E293B;border:1px solid #FDE68A">${r.maquina}</td>
+        <td style="padding:8px;text-align:center;border:1px solid #FDE68A;color:#475569;font-size:10px">${r.operador||'—'}</td>
+        <td style="padding:8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.hrsEjec||0).toFixed(1)}</td>
+        <td style="padding:8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.toneladas||0).toFixed(1)}</td>
+        <td style="padding:8px;text-align:center;border:1px solid #FDE68A;background:#FEF3C7">
+          <div style="font-size:16px;font-weight:800;color:#D97706;font-family:monospace">${(r.tnhr||0).toFixed(2)}</div>
+        </td>
+        <td style="padding:8px;text-align:center;border:1px solid #FDE68A;font-size:10px;font-weight:700;color:#B45309">${montaEstado}</td>
+      </tr>`;
+    });
+    html+=totalRow(`TOTAL MONTACARGAS — ${recsMonta.length} equipo(s)`,totH,totT);
+  } else {
+    html+=`<tr><td colspan="6" style="padding:10px;text-align:center;color:#94A3B8;font-style:italic;font-size:10px;background:#FFFBEB">Sin registros de montacargas para esta fecha</td></tr>`;
+  }
+
+  // ── SECCIÓN PERSONAL ──
+  const recsPers=personalRecords.filter(r=>r.fecha===fechaSel);
+  html+=`<tr><td colspan="6" style="height:6px;background:#E2E8F0;border:none"></td></tr>`;
+  html+=seccionHeader('👷','PERSONAL / MANO DE OBRA','#5B21B6');
+  if(recsPers.length){
+    html+=`<tr style="background:#1A3A8F">
+      <th style="padding:8px 12px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">👷 Trabajadores</th>
+      <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⏱ Hrs Totales</th>
+      <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⏱ Hrs/Persona</th>
+      <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⚖️ Toneladas</th>
+      <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center" colspan="2">📦 TN/Persona</th>
+    </tr>`;
+    recsPers.forEach((r,i)=>{
+      const bg=i%2===0?'#F5F3FF':'#EDE9FE';
+      const hrsp=r.hrsp||(r.horas&&r.personal?+(r.horas/r.personal).toFixed(2):0);
+      html+=`<tr style="background:${bg}">
+        <td style="padding:9px;text-align:center;font-size:18px;font-weight:800;color:#7C3AED;border:1px solid #DDD6FE">${r.personal}</td>
+        <td style="padding:9px;text-align:center;font-weight:700;font-family:monospace;font-size:14px;border:1px solid #DDD6FE;color:#1E293B">${r.horas}</td>
+        <td style="padding:9px;text-align:center;font-family:monospace;font-size:13px;border:1px solid #DDD6FE;color:#475569">${hrsp}</td>
+        <td style="padding:9px;text-align:center;font-weight:700;font-family:monospace;font-size:14px;border:1px solid #DDD6FE;color:#1E293B">${r.toneladas}</td>
+        <td style="padding:9px;text-align:center;font-size:20px;font-weight:800;color:#16A34A;font-family:monospace;border:1px solid #DDD6FE" colspan="2">${r.tnp}</td>
+      </tr>`;
+      if(r.obs)html+=`<tr style="background:${bg}"><td colspan="6" style="padding:4px 12px;font-size:9px;color:#6B7280;border:1px solid #DDD6FE;font-style:italic">📝 ${r.obs}</td></tr>`;
+    });
+  } else {
+    html+=`<tr><td colspan="6" style="padding:10px;text-align:center;color:#94A3B8;font-style:italic;font-size:10px;background:#F5F3FF">Sin registros de personal — agrégalos en la pestaña 👷 Personal</td></tr>`;
+  }
+
+  html+=`<tr><td colspan="6" style="background:#0B1437;color:rgba(255,255,255,.75);font-size:9px;font-weight:600;padding:9px 14px;text-align:center;border:none;letter-spacing:.5px">ARATO · MISSION PRODUCE PERÚ &nbsp;|&nbsp; Meta maquinaria: ${META} TN/Hr &nbsp;|&nbsp; ${ahora}</td></tr>`;
+  html+='</table>';
+  document.getElementById('rpt-maq-cont').innerHTML=html;
+  const newSel=document.getElementById('rpt-fecha-combo');
+  if(newSel&&fechaSel)newSel.value=fechaSel;
+}
+
+async function _capturarReporte(){
+  const outer=document.getElementById('rpt-maq-outer');
+  const cont=document.getElementById('rpt-maq-cont');
+  // Ocultar selectores de fecha durante captura (html2canvas no los renderiza bien)
+  const sels=cont.querySelectorAll('select');
+  const selVals=[];
+  sels.forEach(s=>{
+    selVals.push({el:s,val:s.value,display:s.style.display,parent:s.parentNode});
+    const span=document.createElement('span');
+    span.id='_rpt_fecha_span_'+Math.random();
+    span.textContent=s.value;
+    span.style.cssText='padding:8px 12px;border-radius:6px;border:2px solid #F5C800;background:#0B1437;color:#F5C800;font-size:13px;font-family:monospace;font-weight:800;display:inline-block';
+    s.parentNode.insertBefore(span,s);
+    s.style.display='none';
+    selVals[selVals.length-1].span=span;
+  });
+  // Expandir
+  const origMaxH=outer.style.maxHeight;
+  const origOverflow=outer.style.overflow;
+  outer.style.maxHeight='none';
+  outer.style.overflow='visible';
+  await new Promise(r=>setTimeout(r,100));
+  const cv=await html2canvas(cont,{scale:2.5,useCORS:true,backgroundColor:'#ffffff',logging:false,scrollY:0,windowWidth:cont.scrollWidth+40,windowHeight:cont.scrollHeight+40});
+  // Restaurar
+  outer.style.maxHeight=origMaxH;
+  outer.style.overflow=origOverflow;
+  selVals.forEach(s=>{s.el.style.display='';if(s.span)s.span.remove();});
+  return cv;
+}
+
+async function dlReporte(){
+  try{
+    showToast('Generando imagen...');
+    const cv=await _capturarReporte();
+    const a=document.createElement('a');
+    a.download='maquinaria-'+new Date().toLocaleDateString('es-PE').replace(/\//g,'-')+'.png';
+    a.href=cv.toDataURL('image/png');a.click();
+    showToast('✅ Imagen descargada');
+  }catch(e){showToast('Error: '+e.message);}
+}
+async function waReporte(){
+  try{
+    showToast('Preparando imagen...');
+    const cv=await _capturarReporte();
+    cv.toBlob(async function(blob){
+      const f=new File([blob],'maquinaria.png',{type:'image/png'});
+      if(navigator.canShare&&navigator.canShare({files:[f]})){
+        await navigator.share({files:[f],title:'Control de Maquinaria — Arato'});
+      }else{
+        const a=document.createElement('a');a.download='maquinaria.png';
+        a.href=cv.toDataURL('image/png');a.click();
+        setTimeout(()=>window.open('https://web.whatsapp.com/','_blank'),800);
+      }
+    },'image/png');
+  }catch(e){if(e.name!=='AbortError')showToast('Error: '+e.message);}
+}
+
+// ── Build record ───────────────────────────────────────────
+function buildRecord(maquina,operador,fecha,ini,fin,bins,modulos) {
+  const b = parseFloat(bins)||0;
+  const tons = +(b*KG_BIN/1000).toFixed(1);
+  const hrs = horasEntre(ini,fin);
+  const tnhr = hrs>0 ? +(tons/hrs).toFixed(1) : 0;
+  return {maquina,operador,fecha,horaInicio:ini,horaFin:fin,hrsEjec:hrs,bins:b,toneladas:tons,tnhr,estado:calcEstado(tnhr),modulos};
+}
+
+// ── Form ───────────────────────────────────────────────────
+function updatePreview() {
+  const hrs = parseFloat(document.getElementById("f-hrsejec")?.value)||0;
+  const tonsInput = document.getElementById("f-bins").value;
+  if (!hrs||!tonsInput) { document.getElementById("preview").style.display="none"; return; }
+  const tons = parseFloat(tonsInput)||0;
+  const bins = +(tons*1000/KG_BIN).toFixed(1); // toneladas → bins
+  const tnhr = hrs>0 ? +(tons/hrs).toFixed(2) : 0;
+  const estado = calcEstado(tnhr);
+  // Mostrar bins calculados debajo del campo
+  const calcEl=document.getElementById("f-bins-calc");
+  if(calcEl)calcEl.textContent=`≈ ${bins} bins (a ${KG_BIN} kg/bin)`;
+  document.getElementById("maq-p-hrs").textContent = hrs.toFixed(1)+" hrs";
+  document.getElementById("maq-p-tons").textContent = tons+" t → "+bins+" bins";
+  document.getElementById("maq-p-tnhr").innerHTML = `<span style="color:${tnhr>=META?'var(--green)':'var(--red)'}">${tnhr} TN/Hr</span>`;
+  document.getElementById("p-estado").innerHTML = badge(estado);
+  document.getElementById("preview").style.display = "grid";
+}
+async function guardarRegistro() {
+  const tipo     = document.getElementById("f-tipo")?.value||"maquinaria";
+  const maquina  = document.getElementById("f-maquina").value.trim().toUpperCase();
+  const operador = document.getElementById("f-operador").value.trim();
+  const fecha    = document.getElementById("f-fecha").value.trim();
+  const hrsEjec  = parseFloat(document.getElementById("f-hrsejec").value)||0;
+  const tonsInput= parseFloat(document.getElementById("f-bins").value)||0; // campo ahora es toneladas
+  const modulos  = document.getElementById("f-modulos").value.trim();
+  if (!maquina||!fecha||!hrsEjec||!tonsInput) { showToast("Completa los campos obligatorios","err"); return; }
+  const tons = +tonsInput.toFixed(1);
+  const bins = +(tons*1000/KG_BIN).toFixed(1); // bins calculados automáticamente
+  const metaUsada = tipo==='montacargas'?META_MONTA:META;
+  const tnhr = hrsEjec>0 ? +(tons/hrsEjec).toFixed(2) : 0;
+  const estado = metaUsada>0?(tnhr>=metaUsada?"BIEN":"MAL"):"—";
+  const rec = {
+    maquina, operador, fecha, tipo,
+    horaInicio:'—', horaFin:'—',
+    hrsEjec:+hrsEjec.toFixed(1),
+    bins:+bins.toFixed(1), toneladas:tons, tnhr, estado, modulos
+  };
+  try {
+    const saved = await supaFetch('maquinaria_registros','POST',{
+      maquina: rec.maquina,
+      operador: rec.operador||'',
+      fecha: rec.fecha,
+      tipo: rec.tipo,
+      hora_inicio: '—',
+      hora_fin: '—',
+      hrs_ejec: rec.hrsEjec,
+      bins: rec.bins,
+      toneladas: rec.toneladas,
+      tn_hr: rec.tnhr,
+      meta: metaUsada,
+      estado: rec.estado,
+      modulos: rec.modulos
+    });
+    rec.id = Array.isArray(saved)?saved[0].id:saved.id;
+    records.unshift(rec);
+    document.getElementById("f-bins").value="";
+    document.getElementById("f-hrsejec").value="";
+    document.getElementById("f-modulos").value="";
+    document.getElementById("preview").style.display="none";
+    showToast("✓ Registro guardado — sincronizando Sheets...","ok");
+    updateMaquinaFilter();
+    setTab("dashboard");
+    syncMaquinaria(true); // sync silencioso en segundo plano
+  } catch(e) {
+    showToast("Error guardando: "+e.message,"err");
+  }
+}
+
+// ── Import Excel ───────────────────────────────────────────
+function fmtHora(v) {
+  if (!v) return "";
+  if (typeof v === "number") {
+    const totalMins = Math.round(v*24*60);
+    const h = Math.floor(totalMins/60)%24;
+    const m = totalMins%60;
+    return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
+  }
+  return String(v).trim();
+}
+function fmtFecha(v) {
+  if (!v) return "";
+  if (typeof v === "number") {
+    const d = XLSX.SSF.parse_date_code(v);
+    return `${String(d.d).padStart(2,"0")}/${String(d.m).padStart(2,"0")}/${d.y}`;
+  }
+  return String(v).trim();
+}
+async function importExcel(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const wb = XLSX.read(e.target.result, {type:"array"});
+      const ws = wb.Sheets["Base_Datos"] || wb.Sheets[wb.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json(ws, {header:1});
+      let hi = json.findIndex(r => r.some(c => String(c||"").toLowerCase().includes("maquina")));
+      if (hi<0) hi=1;
+      const headers = json[hi].map(h=>String(h||"").toLowerCase());
+      const rows = json.slice(hi+1).filter(r=>r[0]&&String(r[0]).trim());
+      const get = (r,key) => { const i=headers.findIndex(h=>h.includes(key)); return i>=0?r[i]:""; };
+      let imported=0;
+      rows.forEach(r=>{
+        const maquina = String(get(r,"maquina")||"").trim().toUpperCase();
+        if (!maquina) return;
+        const operador = String(get(r,"operador")||get(r,"oper")||"").trim();
+        const fecha = fmtFecha(get(r,"fecha"));
+        const ini   = fmtHora(get(r,"inicio"));
+        const fin   = fmtHora(get(r,"fin"));
+        const bins  = parseFloat(get(r,"bins"))||0;
+        const hrs   = parseFloat(get(r,"hrs"))||parseFloat(get(r,"ejec"))||horasEntre(ini,fin);
+        const tons  = parseFloat(get(r,"ton"))||+(bins*KG_BIN/1000).toFixed(1);
+        const tnhr  = hrs>0 ? +(tons/hrs).toFixed(1) : 0;
+        const modulos = String(get(r,"modulo")||"").trim();
+        const dup = records.find(x=>x.maquina===maquina&&x.fecha===fecha&&x.horaInicio===ini);
+        const tipo   = String(get(r,"tipo")||"").trim().toLowerCase()||'maquinaria';
+        if (!dup) { records.push({maquina,operador,fecha,tipo,horaInicio:ini,horaFin:fin,hrsEjec:hrs,bins,toneladas:tons,tnhr,estado:calcEstado(tnhr),modulos}); imported++; }
+      });
+      showToast(`✓ ${imported} registros importados`,"ok");
+      updateMaquinaFilter();
+      setTab("dashboard");
+    } catch(err) { showToast("Error al leer el Excel","err"); console.error(err); }
+  };
+  reader.readAsArrayBuffer(file);
+  input.value="";
+}
+
+// ── Filter helpers ─────────────────────────────────────────
+function updateMaquinaFilter() {
+  const sel = document.getElementById("filter-maquina");
+  const cur = sel.value;
+  const maquinas = [...new Set(records.map(r=>r.maquina))].sort();
+  sel.innerHTML = '<option value="TODAS">Todas las máquinas</option>';
+  maquinas.forEach(m=>{ const o=document.createElement("option"); o.value=m; o.textContent=m; sel.appendChild(o); });
+  if (maquinas.includes(cur)) sel.value=cur;
+}
+function filteredRecords() {
+  const m = document.getElementById("filter-maquina").value;
+  const f = document.getElementById("filter-fecha").value.trim();
+  return records.filter(r=>(m==="TODAS"||r.maquina===m)&&(!f||r.fecha===f));
+}
+
+// ── Dashboard ──────────────────────────────────────────────
+function renderDashboard() {
+  const empty = document.getElementById("dash-empty");
+  const content = document.getElementById("dash-content");
+  if (records.length===0) { empty.style.display="block"; content.style.display="none"; return; }
+  empty.style.display="none"; content.style.display="block";
+
+  // Solo maquinaria en el dashboard — montacargas es aparte
+  const recsMaq = records.filter(r=>!r.tipo||r.tipo==='maquinaria');
+  const recsMonta = records.filter(r=>r.tipo==='montacargas');
+
+  const totalBins = recsMaq.reduce((s,r)=>s+r.bins,0);
+  const totalTons = recsMaq.reduce((s,r)=>s+r.toneladas,0);
+  const totalHrs  = recsMaq.reduce((s,r)=>s+r.hrsEjec,0);
+  const maquinas  = [...new Set(recsMaq.map(r=>r.maquina))].sort();
+
+  document.getElementById("stats-grid").innerHTML = `
+    <div class="stat-card"><div class="stat-label">Registros 🚜</div><div class="stat-value">${recsMaq.length}</div></div>
+    <div class="stat-card blue"><div class="stat-label">Máquinas</div><div class="stat-value">${maquinas.length}</div></div>
+    <div class="stat-card purple"><div class="stat-label">Total Bins</div><div class="stat-value">${totalBins.toFixed(1)}</div></div>
+    <div class="stat-card green"><div class="stat-label">Total Toneladas</div><div class="stat-value">${totalTons.toFixed(1)}<span style="font-size:14px">t</span></div></div>
+    <div class="stat-card yellow"><div class="stat-label">Meta TN/Hr</div><div class="stat-value">${META}</div><div class="stat-sub">mínimo requerido</div></div>
+    ${recsMonta.length?`<div class="stat-card" style="border-top-color:#D97706"><div class="stat-label">🏗️ Montacargas</div><div class="stat-value" style="color:#D97706">${recsMonta.length}</div><div class="stat-sub">registros</div></div>`:''}
+  `;
+
+  const mg = document.getElementById("machines-grid");
+  mg.innerHTML = maquinas.map((m,i)=>{
+    const recs = recsMaq.filter(r=>r.maquina===m);
+    const tHrs  = recs.reduce((s,r)=>s+r.hrsEjec,0);
+    const tBins = recs.reduce((s,r)=>s+r.bins,0);
+    const tTons = recs.reduce((s,r)=>s+r.toneladas,0);
+    const avg   = tHrs>0 ? +(tTons/tHrs).toFixed(1) : 0;
+    const est   = calcEstado(avg);
+    const pct   = Math.min(100,(avg/META)*100).toFixed(0);
+    const col   = COLORS[i%COLORS.length];
+    const isBien = avg >= META;
+    const barColor = isBien ? '#22c55e' : '#ef4444';
+    const bgColor = isBien ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)';
+    // Last 5 registros para mini historial
+    const ultimos = recs.slice(-5).reverse();
+    return `<div class="machine-card" style="border-top-color:${col};background:${bgColor};">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <div class="machine-name" style="color:${col};font-size:0.95rem;">${m}</div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:1.1rem;font-weight:900;color:${barColor};">${avg}</span>
+          <span style="font-size:0.6rem;color:#888;">TN/Hr</span>
+          ${badge(est)}
+        </div>
+      </div>
+      <!-- Barra principal -->
+      <div style="background:#1e293b;border-radius:6px;height:10px;margin-bottom:4px;overflow:hidden;position:relative;">
+        <div style="height:100%;width:${pct}%;background:${barColor};border-radius:6px;transition:width 0.5s;"></div>
+        <div style="position:absolute;top:0;left:${Math.min(96,(META/Math.max(avg,META+0.1))*parseFloat(pct))}%;height:100%;width:2px;background:#f59e0b;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:0.6rem;color:#888;margin-bottom:10px;">
+        <span>0</span><span style="color:#f59e0b;">Meta: ${META}</span><span>${(META*1.5).toFixed(1)}</span>
+      </div>
+      <!-- Stats -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;">
+        <div style="text-align:center;background:rgba(255,255,255,0.05);border-radius:6px;padding:5px;">
+          <div style="font-size:1rem;font-weight:800;color:#fff;">${tHrs.toFixed(1)}</div>
+          <div style="font-size:0.5rem;color:#888;text-transform:uppercase;">Hrs</div>
+        </div>
+        <div style="text-align:center;background:rgba(255,255,255,0.05);border-radius:6px;padding:5px;">
+          <div style="font-size:1rem;font-weight:800;color:#fff;">${tBins.toFixed(1)}</div>
+          <div style="font-size:0.5rem;color:#888;text-transform:uppercase;">Bins</div>
+        </div>
+        <div style="text-align:center;background:rgba(255,255,255,0.05);border-radius:6px;padding:5px;">
+          <div style="font-size:1rem;font-weight:800;color:#fff;">${tTons.toFixed(1)}</div>
+          <div style="font-size:0.5rem;color:#888;text-transform:uppercase;">Tons</div>
+        </div>
+      </div>
+      <!-- Mini historial por dia -->
+      <div style="font-size:0.58rem;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Últimos registros</div>
+      ${ultimos.map(r=>{
+        const ib=r.tnhr>=META;
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+          <span style="font-size:0.65rem;color:#888;">${r.fecha}</span>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:0.65rem;color:#ccc;">${r.bins.toFixed(1)} bins · ${r.hrsEjec.toFixed(1)}h</span>
+            <span style="font-size:0.7rem;font-weight:800;color:${ib?'#22c55e':'#ef4444'};">${r.tnhr.toFixed(1)}</span>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join("");
+
+  // Chart
+  const fechas = [...new Set(records.map(r=>r.fecha))].sort((a,b)=>{
+    const pa=a.split("/"),pb=b.split("/");
+    return new Date(pa[2],pa[1]-1,pa[0])-new Date(pb[2],pb[1]-1,pb[0]);
+  });
+  if (fechas.length>1) {
+    document.getElementById("chart-wrap").style.display="block";
+    const datasets = maquinas.map((m,i)=>({
+      label:m,
+      data:fechas.map(f=>{
+        const recs=records.filter(r=>r.maquina===m&&r.fecha===f);
+        if (!recs.length) return null;
+        const avg=recs.reduce((s,r)=>s+r.tnhr,0)/recs.length;
+        return +avg.toFixed(3);
+      }),
+      borderColor:COLORS[i%COLORS.length],
+      backgroundColor:COLORS[i%COLORS.length]+"33",
+      pointRadius:5,borderWidth:2,tension:0.3,spanGaps:true
+    }));
+    datasets.push({
+      label:"Meta "+META,data:fechas.map(()=>META),
+      borderColor:"#f59e0b",borderDash:[6,4],borderWidth:1.5,
+      pointRadius:0,fill:false
+    });
+    const ctx = document.getElementById("myChart").getContext("2d");
+    if (chartInstance) chartInstance.destroy();
+    chartInstance = new Chart(ctx,{
+      type:"line",
+      data:{labels:fechas,datasets},
+      options:{
+        responsive:true,
+        plugins:{legend:{labels:{color:"#94a3b8",font:{family:"Barlow Condensed",size:13}}}},
+        scales:{
+          x:{ticks:{color:"#64748b"},grid:{color:"rgba(255,255,255,0.05)"}},
+          y:{ticks:{color:"#64748b"},grid:{color:"rgba(255,255,255,0.05)"},beginAtZero:true}
+        }
+      }
+    });
+  } else {
+    document.getElementById("chart-wrap").style.display="none";
+  }
+}
+
+// ── Tabla ──────────────────────────────────────────────────
+function renderTabla() {
+  const data = [...filteredRecords()].reverse();
+  document.getElementById("record-count").textContent = data.length+" registros";
+  const empty = document.getElementById("tabla-empty");
+  const wrap  = document.getElementById("tabla-wrap");
+  if (data.length===0) { empty.style.display="block"; wrap.style.display="none"; return; }
+  empty.style.display="none"; wrap.style.display="block";
+  document.getElementById("tabla-body").innerHTML = data.map(r=>`
+    <tr>
+      <td class="td-maquina">${r.maquina}</td>
+      <td style="color:var(--sub);font-size:13px">${r.operador||"—"}</td>
+      <td>${r.fecha}</td>
+      <td>${r.horaInicio}</td>
+      <td>${r.horaFin}</td>
+      <td class="td-num">${r.hrsEjec}</td>
+      <td class="td-num">${r.bins}</td>
+      <td class="td-num">${r.toneladas} t</td>
+      <td class="${r.tnhr>=META?'td-tnhr-ok':'td-tnhr-bad'}">${r.tnhr}</td>
+      <td>${badge(r.estado)}</td>
+      <td class="td-modulos">${r.modulos||"—"}</td>
+      <td style="white-space:nowrap;">
+        <button onclick="editarRegistro(${r.id})" style="background:none;border:1px solid #2563EB;color:#2563EB;border-radius:5px;padding:3px 7px;font-size:0.65rem;cursor:pointer;margin-right:3px;">✏️</button>
+        <button onclick="eliminarRegistro(${r.id})" style="background:none;border:1px solid #DC2626;color:#DC2626;border-radius:5px;padding:3px 7px;font-size:0.65rem;cursor:pointer;">🗑️</button>
+      </td>
+    </tr>`).join("");
+}
+
+
+// ── Autocomplete cruzado Máquina <-> Operador ──────────
+function getPairs() {
+  // retorna array de {maquina, operador} únicos del historial
+  const seen = new Set();
+  const pairs = [];
+  records.forEach(r => {
+    if (!r.maquina) return;
+    const key = r.maquina + '||' + (r.operador||'');
+    if (!seen.has(key)) { seen.add(key); pairs.push({maquina:r.maquina, operador:r.operador||''}); }
+  });
+  return pairs;
+}
+function showSug(id, items) {
+  const el = document.getElementById(id);
+  if (!items.length) { el.style.display='none'; return; }
+  el.innerHTML = items.map((it,i) =>
+    `<div class="sug-item" onmousedown="pickSug('${id}',${i})" data-i="${i}">
+      ${it.label}<small>${it.sub}</small>
+    </div>`
+  ).join('');
+  el.style.display = 'block';
+  el._items = items;
+}
+function hideSug(id) {
+  setTimeout(() => { const el=document.getElementById(id); if(el) el.style.display='none'; }, 150);
+}
+function pickSug(sugId, idx) {
+  const items = document.getElementById(sugId)._items;
+  if (!items || !items[idx]) return;
+  const it = items[idx];
+  document.getElementById('f-maquina').value  = it.maquina;
+  document.getElementById('f-operador').value = it.operador;
+  document.getElementById(sugId).style.display = 'none';
+  updatePreview();
+}
+function onMaquinaInput() {
+  updatePreview();
+  const val = document.getElementById('f-maquina').value.trim().toUpperCase();
+  if (!val) { hideSug('sug-maquina'); return; }
+  const pairs = getPairs();
+  const matches = pairs
+    .filter(p => p.maquina.includes(val))
+    .map(p => ({maquina:p.maquina, operador:p.operador, label:p.maquina, sub:p.operador||'Sin operador registrado'}));
+  showSug('sug-maquina', matches);
+}
+function onOperadorInput() {
+  const val = document.getElementById('f-operador').value.trim().toLowerCase();
+  if (!val) { hideSug('sug-operador'); return; }
+  const pairs = getPairs();
+  const matches = pairs
+    .filter(p => p.operador.toLowerCase().includes(val))
+    .map(p => ({maquina:p.maquina, operador:p.operador, label:p.operador, sub:p.maquina}));
+  showSug('sug-operador', matches);
+}
+
+// init
+document.getElementById("f-fecha").value = new Date().toLocaleDateString("es-PE",{day:"2-digit",month:"2-digit",year:"numeric"}).replace(/\//g,"/");
+document.getElementById("prs-fecha").value = new Date().toISOString().split('T')[0];
+updateMaquinaFilter();
+ldPersonal();
+cargarRegistros();
+
+// Auto-refresh cada 30 segundos
+setInterval(function(){ cargarRegistros(); }, 30000);
+
+function updHora(){
+  var el=document.getElementById('ultima-act');
+  if(el)el.textContent='Act: '+new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'});
+}
+</script>
+</body>
+</html>
