@@ -105,6 +105,41 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-he
 </head>
 <body>
 
+<!-- ═══ PANTALLA DE ACCESO ═══ -->
+<div id="login-screen" style="position:fixed;inset:0;background:linear-gradient(135deg,#3D1400,#7B2D00,#B84500);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;">
+  <!-- Logo -->
+  <svg width="70" height="70" viewBox="0 0 48 48" style="margin-bottom:16px;">
+    <rect width="48" height="48" rx="14" fill="rgba(0,0,0,.25)"/>
+    <ellipse cx="24" cy="27" rx="8" ry="12" fill="#FFD700"/>
+    <ellipse cx="24" cy="27" rx="6" ry="10" fill="#FFC200"/>
+    <circle cx="20" cy="22" r="1.8" fill="#FFE566"/><circle cx="24" cy="21" r="1.8" fill="#FFE566"/>
+    <circle cx="28" cy="22" r="1.8" fill="#FFE566"/><circle cx="21" cy="26" r="1.8" fill="#FFE566"/>
+    <circle cx="25" cy="25" r="1.8" fill="#FFE566"/><circle cx="29" cy="26" r="1.8" fill="#FFE566"/>
+    <circle cx="20" cy="30" r="1.8" fill="#FFE566"/><circle cx="24" cy="29" r="1.8" fill="#FFE566"/>
+    <circle cx="28" cy="30" r="1.8" fill="#FFE566"/>
+    <path d="M24 16 Q18 11 13 17 Q19 15 24 21Z" fill="#22C55E"/>
+    <path d="M24 16 Q30 9 35 15 Q29 13 24 19Z" fill="#4ADE80"/>
+    <rect x="23" y="38" width="2" height="5" rx="1" fill="#92400E"/>
+  </svg>
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:#FFD700;letter-spacing:3px;margin-bottom:4px;">CHACRA MUÑOZ</div>
+  <div style="font-size:0.6rem;color:rgba(255,255,255,.5);letter-spacing:2px;text-transform:uppercase;margin-bottom:32px;">Familia Muñoz · Valle de Virú</div>
+
+  <!-- Form -->
+  <div style="background:rgba(255,255,255,.08);border-radius:18px;padding:24px;width:100%;max-width:320px;border:1px solid rgba(255,255,255,.15);">
+    <div style="font-size:0.7rem;color:rgba(255,255,255,.6);text-align:center;margin-bottom:16px;font-weight:600;">Ingresa tu código de acceso</div>
+    <input type="password" id="login-code" placeholder="Código de acceso"
+      style="width:100%;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.2);border-radius:12px;padding:13px 16px;font-size:1.1rem;color:#fff;font-family:'JetBrains Mono',monospace;text-align:center;letter-spacing:4px;margin-bottom:12px;"
+      onkeydown="if(event.key==='Enter')intentarLogin()">
+    <button onclick="intentarLogin()" style="width:100%;background:linear-gradient(180deg,#FF8C42,#B84500);color:#fff;border:none;border-radius:12px;padding:13px;font-size:0.9rem;font-weight:800;cursor:pointer;font-family:'Inter',sans-serif;">
+      🌽 Ingresar
+    </button>
+    <div id="login-error" style="color:#FCA5A5;font-size:0.7rem;text-align:center;margin-top:10px;display:none;">
+      ❌ Código incorrecto
+    </div>
+  </div>
+  <div style="font-size:0.55rem;color:rgba(255,255,255,.25);margin-top:20px;">Solo personal autorizado</div>
+</div>
+
 <!-- HEADER -->
 <div class="hdr">
   <div class="hdr-logo">
@@ -157,6 +192,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-he
   <button class="tb" onclick="go('inversion',this)">📈 Inversión</button>
   <button class="tb" onclick="go('historial',this)">📋 Historial</button>
   <button class="tb" onclick="go('reportes',this)">📊 Reportes</button>
+  <button class="tb" id="tb-usuarios" onclick="goAdmin('usuarios',this)" style="opacity:0.4;">🔐 Usuarios</button>
 </div>
 
 <!-- TOOLBAR -->
@@ -169,6 +205,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-he
   <div style="display:flex;gap:6px;align-items:center;">
     <div id="admin-indicator" style="display:none;font-size:0.55rem;color:var(--oro);font-weight:700;">🔐 ADMIN</div>
     <button class="tbtn" id="btn-admin" onclick="toggleAdmin()">🔑 Admin</button>
+    <button class="tbtn" onclick="cerrarSesion()" title="Cerrar sesión">🚪</button>
     <button class="tbtn" onclick="mostrarGuia()">❓</button>
   </div>
 </div>
@@ -345,6 +382,39 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-he
   </div>
 </div>
 
+<!-- ═══ USUARIOS ═══ -->
+<div class="pg" id="pg-usuarios">
+  <div class="card">
+    <div class="card-hdr"><div class="card-hdr-t">➕ Crear Usuario</div></div>
+    <div class="cb">
+      <div class="f"><label>Nombre</label><input type="text" id="u-nombre" placeholder="Ej: Juan Miguel"></div>
+      <div class="f2">
+        <div class="f"><label>Código de acceso</label><input type="text" id="u-codigo" placeholder="Ej: juan123" style="font-family:'JetBrains Mono',monospace;"></div>
+        <div class="f">
+          <label>Rol</label>
+          <select id="u-rol">
+            <option value="usuario">✏️ Usuario (registra)</option>
+            <option value="visualizador">👁️ Visualizador (solo ve)</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-cafe" onclick="crearUsuario()">✅ Crear usuario</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-hdr"><div class="card-hdr-t">👥 Usuarios registrados</div></div>
+    <div class="cb" id="lista-usuarios"><div class="empty">Sin usuarios creados</div></div>
+  </div>
+  <div style="background:#EFF6FF;border-radius:12px;padding:12px 14px;margin-top:4px;border:1px solid #BFDBFE;">
+    <div style="font-size:0.65rem;font-weight:800;color:#1e3a8a;margin-bottom:6px;">ℹ️ Roles explicados</div>
+    <div style="font-size:0.65rem;color:#1e40af;line-height:1.7;">
+      <b>✏️ Usuario</b> — puede registrar ventas, gastos y adelantos. Ve todo.<br>
+      <b>👁️ Visualizador</b> — solo puede ver. No puede registrar nada.<br>
+      <b>🔐 Admin</b> — control total (PIN tuyo).
+    </div>
+  </div>
+</div>
+
 <!-- GUÍA -->
 <div id="guia-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:flex-end;justify-content:center;">
   <div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;">
@@ -389,15 +459,119 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-he
 const SURL='https://rqvcvffyynpnighzwxju.supabase.co';
 const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdmN2ZmZ5eW5wbmlnaHp3eGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MjgyNDcsImV4cCI6MjA5MzMwNDI0N30.fFufNEdRvAzl6O6BqtTbx83O3Eg8Wd7gACNJDGQKga4';
 const GAS_URL='https://script.google.com/macros/s/AKfycbws_Tp4inWkHmUIOOcqwHAgE_crNGIYjZ_CLSDs8DCPZ2wtbO0IWMbtOfeosSrC6FC0Rw/exec';
-const PIN='63394588';
+const PIN_ADMIN='63394588';
 const PCT={reinv:45,capital:20,reparto:35};
 
 // ═══════════════ ESTADO ═══════════════
 let D={ventas:[],gastos:[],personas:[],retiros:[],cfg:{capital:6000,inicio:'2026-06-25',nPersonas:4}};
+// Usuarios guardados por admin: [{nombre,codigo,rol:'usuario'|'visualizador'}]
+let USERS=[];
+let sesion=null; // {nombre,rol} — null = no logueado
 let esAdmin=false;
 let filtroHist='hoy';
 
-// ═══════════════ SUPABASE ═══════════════
+// ═══════════════ USUARIOS Y LOGIN ═══════════════
+function svUsers(){localStorage.setItem('chacra_users',JSON.stringify(USERS));}
+function ldUsers(){try{USERS=JSON.parse(localStorage.getItem('chacra_users')||'[]');}catch(e){USERS=[];}}
+
+function intentarLogin(){
+  const code=document.getElementById('login-code').value.trim();
+  const errEl=document.getElementById('login-error');
+  errEl.style.display='none';
+
+  // Admin
+  if(code===PIN_ADMIN){
+    esAdmin=true;
+    sesion={nombre:'Admin',rol:'admin'};
+    document.getElementById('login-screen').style.display='none';
+    actualizarAdmin();
+    renderAll();
+    return;
+  }
+
+  // Usuarios registrados
+  const user=USERS.find(u=>u.codigo===code);
+  if(user){
+    sesion={nombre:user.nombre,rol:user.rol};
+    esAdmin=false;
+    document.getElementById('login-screen').style.display='none';
+    aplicarRol();
+    renderAll();
+    return;
+  }
+
+  // Incorrecto
+  errEl.style.display='block';
+  document.getElementById('login-code').value='';
+  setTimeout(()=>errEl.style.display='none',3000);
+}
+
+function aplicarRol(){
+  const esUsuario=sesion?.rol==='usuario';
+  const esVis=sesion?.rol==='visualizador';
+  // Botones de registro — ocultar para visualizadores
+  const btnsRegistro=['btn-add-venta','btn-add-gasto'];
+  // Actualizar indicador sesión
+  const ind=document.getElementById('admin-indicator');
+  if(ind){
+    ind.style.display='block';
+    ind.textContent=sesion?.rol==='admin'?'🔐 ADMIN':sesion?.rol==='usuario'?'✏️ '+sesion.nombre:'👁️ '+sesion.nombre;
+    ind.style.color=sesion?.rol==='admin'?'#FFD700':sesion?.rol==='usuario'?'#4ADE80':'#94A3B8';
+  }
+}
+
+function cerrarSesion(){
+  sesion=null;esAdmin=false;
+  document.getElementById('login-code').value='';
+  document.getElementById('login-screen').style.display='flex';
+  const ind=document.getElementById('admin-indicator');
+  if(ind)ind.style.display='none';
+}
+
+function crearUsuario(){
+  const nombre=document.getElementById('u-nombre').value.trim();
+  const codigo=document.getElementById('u-codigo').value.trim();
+  const rol=document.getElementById('u-rol').value;
+  if(!nombre||!codigo){toast('Completa nombre y código','err');return;}
+  if(codigo===PIN_ADMIN){toast('Ese código está reservado','err');return;}
+  if(USERS.find(u=>u.codigo===codigo)){toast('Ese código ya existe','err');return;}
+  USERS.push({id:Date.now(),nombre,codigo,rol});
+  svUsers();renderUsuarios();
+  document.getElementById('u-nombre').value='';
+  document.getElementById('u-codigo').value='';
+  toast('✅ Usuario creado: '+nombre);
+}
+
+function eliminarUsuario(id){
+  if(!confirm('¿Eliminar este usuario?'))return;
+  USERS=USERS.filter(u=>u.id!==id);
+  svUsers();renderUsuarios();toast('Eliminado');
+}
+
+function renderUsuarios(){
+  const c=document.getElementById('lista-usuarios');
+  if(!c)return;
+  if(!USERS.length){c.innerHTML='<div class="empty">Sin usuarios — créalos arriba</div>';return;}
+  const rolLbl={usuario:'✏️ Usuario',visualizador:'👁️ Visualizador'};
+  const rolColor={usuario:'#16A34A',visualizador:'#64748B'};
+  c.innerHTML=USERS.map(u=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--bdr);">
+      <div>
+        <div style="font-size:0.82rem;font-weight:800;color:var(--txt);">${u.nombre}</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
+          <span style="font-size:0.6rem;font-weight:700;color:${rolColor[u.rol]||'#64748B'};">${rolLbl[u.rol]||u.rol}</span>
+          <span style="font-size:0.58rem;color:var(--txt3);">· código: <b style="font-family:'JetBrains Mono',monospace;">${u.codigo}</b></span>
+        </div>
+      </div>
+      <button onclick="eliminarUsuario(${u.id})" class="del" style="display:inline-block;">🗑</button>
+    </div>`).join('');
+}
+
+// ═══════════════ PERMISOS ═══════════════
+function puedeRegistrar(){return esAdmin||(sesion?.rol==='usuario');}
+function soloVer(){return sesion?.rol==='visualizador';}
+
+
 async function sbGet(t,ord='created_at.asc'){
   const r=await fetch(SURL+'/rest/v1/'+t+'?order='+ord,{headers:{apikey:SKEY,Authorization:'Bearer '+SKEY}});
   return r.ok?r.json():[];
@@ -464,20 +638,28 @@ const renders={
   personas:renderPersonas,
   inversion:renderInversion,
   historial:renderHistorial,
-  reportes:renderReportes
+  reportes:renderReportes,
+  usuarios:renderUsuarios
 };
 
 // ═══════════════ ADMIN ═══════════════
 function toggleAdmin(){
-  if(esAdmin){esAdmin=false;actualizarAdmin();toast('Sesión admin cerrada');return;}
+  if(esAdmin){cerrarSesion();return;}
   const pin=prompt('🔐 PIN de administrador:');
-  if(pin===PIN){esAdmin=true;actualizarAdmin();toast('✅ Modo admin activo');}
+  if(pin===PIN_ADMIN){esAdmin=true;sesion={nombre:'Admin',rol:'admin'};actualizarAdmin();toast('✅ Modo admin activo');}
   else if(pin!==null)toast('PIN incorrecto','err');
 }
 function actualizarAdmin(){
-  document.getElementById('admin-indicator').style.display=esAdmin?'block':'none';
-  document.getElementById('btn-admin').textContent=esAdmin?'🔓 Salir':'🔑 Admin';
-  document.getElementById('btn-admin').className=esAdmin?'tbtn admin':'tbtn';
+  const ind=document.getElementById('admin-indicator');
+  if(ind){
+    ind.style.display=sesion?'block':'none';
+    ind.textContent=esAdmin?'🔐 ADMIN':sesion?.rol==='usuario'?'✏️ '+sesion.nombre:'👁️ '+sesion.nombre;
+    ind.style.color=esAdmin?'#FFD700':sesion?.rol==='usuario'?'#4ADE80':'#94A3B8';
+  }
+  const btnAdmin=document.getElementById('btn-admin');
+  if(btnAdmin){btnAdmin.textContent=esAdmin?'🔓 Salir':'🔑 Admin';btnAdmin.className=esAdmin?'tbtn admin':'tbtn';}
+  const tbU=document.getElementById('tb-usuarios');
+  if(tbU)tbU.style.opacity=esAdmin?'1':'0.4';
   const cardAdd=document.getElementById('card-add-persona');
   const cardCfg=document.getElementById('card-config');
   if(cardAdd)cardAdd.style.display=esAdmin?'block':'none';
@@ -487,9 +669,13 @@ function actualizarAdmin(){
 function checkAdmin(){
   if(esAdmin)return true;
   const pin=prompt('🔐 PIN de administrador:');
-  if(pin===PIN){esAdmin=true;actualizarAdmin();return true;}
+  if(pin===PIN_ADMIN){esAdmin=true;sesion={nombre:'Admin',rol:'admin'};actualizarAdmin();return true;}
   if(pin!==null)toast('PIN incorrecto','err');
   return false;
+}
+function goAdmin(id,btn){
+  if(!esAdmin){if(!checkAdmin())return;}
+  go(id,btn);
 }
 
 // ═══════════════ GUÍA ═══════════════
@@ -667,6 +853,7 @@ function renderInversion(){
 
 // ═══════════════ VENTAS ═══════════════
 async function addVenta(){
+  if(soloVer()){toast('Solo puedes visualizar','err');return;}
   const fecha=document.getElementById('v-fecha').value;
   const monto=parseFloat(document.getElementById('v-monto').value)||0;
   const cliente=document.getElementById('v-cliente').value.trim();
@@ -720,6 +907,7 @@ function toggleCatLibre(){
   if(v==='libre')document.getElementById('g-cat-libre').focus();
 }
 async function addGasto(){
+  if(soloVer()){toast('Solo puedes visualizar','err');return;}
   const fecha=document.getElementById('g-fecha').value;
   const monto=parseFloat(document.getElementById('g-monto').value)||0;
   let cat=document.getElementById('g-cat').value;
@@ -1081,14 +1269,17 @@ async function enviarSheets(){
 
 // ═══════════════ INIT ═══════════════
 window.addEventListener('load',async()=>{
-  ld();
+  ld();ldUsers();
   const h=hoy();
   document.getElementById('v-fecha').value=h;
   document.getElementById('g-fecha').value=h;
   document.getElementById('ret-fecha').value=h;
-  if(localStorage.getItem('guia3')==='ok')cerrarGuia();
+  // No cerrar guia hasta login
   renderAll();
-  await syncAll();
+  // Mostrar login screen siempre al cargar
+  document.getElementById('login-screen').style.display='flex';
+  // Cargar data en background
+  syncAll();
   setInterval(syncAll,30000);
   if('serviceWorker' in navigator)navigator.serviceWorker.register('chacra-sw.js').catch(()=>{});
   let dp=null;
