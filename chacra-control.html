@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#1A3A1A">
+<title>Chacra Muñoz</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --v1:#7B2D00;--v2:#B84500;--v3:#FF6B1A;--v4:#FFF0E8;
+  --oro:#FFD700;--r:#DC2626;--rc:#FEF2F2;--a:#1e3a8a;
+  --am:#16A34A;--amc:#DCFCE7;--mo:#7C3AED;--moc:#FAF5FF;
+  --bg:#FFF8F3;--card:#fff;--bdr:#FFD9BC;
+  --txt:#3D1400;--txt2:#7B3A00;--txt3:#94A3B8;
+}
+*{font-family:'Inter',sans-serif;}
+body{background:var(--bg);color:var(--txt);min-height:100vh;}
+.hdr{background:linear-gradient(135deg,#7B2D00,#B84500,#FF6B1A);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;}
+.hdr-logo{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:var(--oro);letter-spacing:2px;}
+.hdr-sub{font-size:0.5rem;color:rgba(255,255,255,.5);letter-spacing:1px;margin-top:1px;}
+.hdr-bal{text-align:right;}
+.hdr-bal-v{font-family:'JetBrains Mono',monospace;font-size:1rem;font-weight:800;color:var(--oro);}
+.hdr-bal-l{font-size:0.48rem;color:rgba(255,255,255,.4);text-transform:uppercase;}
+  .tabs{display:flex;background:#7B2D00;overflow-x:auto;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tb{flex:1;min-width:52px;padding:9px 6px;font-size:0.55rem;font-weight:700;color:rgba(255,255,255,.4);border:none;background:none;cursor:pointer;text-align:center;border-bottom:2px solid transparent;white-space:nowrap;transition:all .2s;}
+.tb.on{color:var(--oro);border-bottom-color:var(--oro);}
+.pg{display:none;padding:14px;}
+.pg.on{display:block;}
+.card{background:var(--card);border-radius:14px;border:1px solid #FFD9BC;margin-bottom:12px;overflow:hidden;}
+  .ch{background:#7B2D00;padding:9px 14px;display:flex;justify-content:space-between;align-items:center;}
+.ch-t{font-family:'Bebas Neue',sans-serif;font-size:0.88rem;color:var(--oro);letter-spacing:1px;}
+.cb{padding:12px 14px;}
+.f{margin-bottom:9px;}
+.f label{font-size:0.58rem;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:3px;}
+.f input,.f select,.f textarea{width:100%;background:#F8FBF8;border:1.5px solid var(--bdr);border-radius:9px;padding:9px 11px;font-size:0.82rem;color:var(--txt);}
+.f input:focus,.f select:focus{outline:none;border-color:var(--v3);}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.f3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
+.btn{border:none;border-radius:10px;padding:11px;font-size:0.8rem;font-weight:700;cursor:pointer;width:100%;}
+.btn-v{background:linear-gradient(180deg,#FF8C42,#B84500);color:#fff;}
+.btn-r{background:linear-gradient(180deg,#EF4444,var(--r));color:#fff;}
+.btn-a{background:linear-gradient(180deg,#3B82F6,var(--a));color:#fff;}
+.btn-sm{padding:5px 9px;font-size:0.6rem;border-radius:7px;width:auto;}
+.kgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.kcard{background:var(--card);border-radius:12px;padding:11px;border:1px solid var(--bdr);text-align:center;}
+.kcard .ki{font-size:1rem;margin-bottom:2px;}
+.kcard .kl{font-size:0.55rem;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
+.kcard .kv{font-family:'JetBrains Mono',monospace;font-size:1.1rem;font-weight:800;line-height:1;}
+.kcard .ks{font-size:0.55rem;color:var(--txt3);margin-top:2px;}
+.it{display:flex;justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--bdr);}
+.it:last-child{border:none;}
+.it-l{}
+.it-tag{font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;}
+.it-d{font-size:0.73rem;color:var(--txt);}
+.it-dt{font-size:0.55rem;color:var(--txt3);margin-top:1px;}
+.it-r{text-align:right;flex-shrink:0;margin-left:8px;}
+.it-m{font-family:'JetBrains Mono',monospace;font-size:0.88rem;font-weight:800;}
+.del{background:none;border:none;color:var(--r);font-size:0.75rem;cursor:pointer;padding:2px 4px;display:block;margin-left:auto;margin-top:2px;}
+.badge{display:inline-block;font-size:0.52rem;font-weight:700;padding:2px 6px;border-radius:5px;text-transform:uppercase;}
+.bv{background:#DCFCE7;color:#15803D;}
+.bg2{background:var(--rc);color:var(--r);}
+.bi{background:var(--amc);color:#B45309;}
+.empty{text-align:center;padding:18px;color:var(--txt3);font-size:0.78rem;}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--v1);color:#fff;padding:9px 18px;border-radius:18px;font-size:0.72rem;font-weight:700;display:none;z-index:99;white-space:nowrap;border:1px solid var(--v3);}
+/* BOLSAS */
+.bolsas{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.bolsa{border-radius:12px;padding:11px;border:2px solid;text-align:center;}
+.bolsa .bname{font-size:0.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
+.bolsa .bval{font-family:'JetBrains Mono',monospace;font-size:1.1rem;font-weight:900;line-height:1;}
+.bolsa .bpct{font-size:0.55rem;margin-top:2px;}
+/* CALENDARIO */
+.cal-act{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--bdr);}
+.cal-act:last-child{border:none;}
+.cal-dot{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.95rem;flex-shrink:0;border:2px solid transparent;}
+.alerta-card{border-radius:10px;padding:10px 12px;margin-bottom:8px;border-left:4px solid;}
+/* SOCIOS */
+.socio-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--bdr);}
+.socio-row:last-child{border:none;}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<!-- SPLASH LOGO antes del header -->
+<div style="background:linear-gradient(135deg,#7B2D00,#B84500,#FF6B1A);padding:18px 16px 14px;text-align:center;position:relative;overflow:hidden;">
+  <!-- Decoración fondo -->
+  <div style="position:absolute;top:-20px;right:-20px;width:100px;height:100px;border-radius:50%;background:rgba(255,215,0,.1);"></div>
+  <div style="position:absolute;bottom:-30px;left:-20px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.05);"></div>
+  <!-- Logo SVG maíz -->
+  <svg width="48" height="48" viewBox="0 0 48 48" style="margin-bottom:6px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3))">
+    <ellipse cx="24" cy="26" rx="9" ry="14" fill="#FFD700"/>
+    <ellipse cx="24" cy="26" rx="7" ry="12" fill="#FFC200"/>
+    <!-- granos -->
+    <circle cx="20" cy="20" r="2" fill="#FFE066"/>
+    <circle cx="24" cy="19" r="2" fill="#FFE066"/>
+    <circle cx="28" cy="20" r="2" fill="#FFE066"/>
+    <circle cx="21" cy="24" r="2" fill="#FFE066"/>
+    <circle cx="25" cy="23" r="2" fill="#FFE066"/>
+    <circle cx="29" cy="24" r="2" fill="#FFE066"/>
+    <circle cx="20" cy="28" r="2" fill="#FFE066"/>
+    <circle cx="24" cy="27" r="2" fill="#FFE066"/>
+    <circle cx="28" cy="28" r="2" fill="#FFE066"/>
+    <circle cx="21" cy="32" r="2" fill="#FFE066"/>
+    <circle cx="25" cy="31" r="2" fill="#FFE066"/>
+    <!-- hojas -->
+    <path d="M24 14 Q18 10 14 16 Q20 14 24 20 Z" fill="#4CAF50"/>
+    <path d="M24 14 Q30 8 34 14 Q28 12 24 18 Z" fill="#66BB6A"/>
+    <!-- tallo -->
+    <rect x="23" y="38" width="2" height="6" rx="1" fill="#8B5E3C"/>
+  </svg>
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#FFD700;letter-spacing:3px;text-shadow:0 2px 4px rgba(0,0,0,.3);">CHACRA MUÑOZ</div>
+  <div style="font-size:0.6rem;color:rgba(255,255,255,.75);letter-spacing:2px;text-transform:uppercase;margin-top:2px;">Familia Muñoz · Maíz Chala · Valle de Virú</div>
+</div>
+<div id="guia-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:flex-end;justify-content:center;padding:0;">
+  <div style="background:#fff;border-radius:24px 24px 0 0;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;">
+
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#7B2D00,#B84500,#FF6B1A);padding:22px 20px 16px;border-radius:24px 24px 0 0;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#F5C800;letter-spacing:2px;margin-bottom:4px;">🌽 Bienvenido a Chacra Control</div>
+      <div style="font-size:0.7rem;color:rgba(255,255,255,.7);">Tu app personal para controlar la campaña de maíz chala. Sigue estos 5 pasos para empezar.</div>
+    </div>
+
+    <!-- Pasos -->
+    <div style="padding:18px 18px 6px;">
+
+      <!-- Paso 1 -->
+      <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:16px;">
+        <div style="width:36px;height:36px;border-radius:50%;background:#B84500;color:#FFD700;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">1</div>
+        <div>
+          <div style="font-size:0.85rem;font-weight:800;color:#1A3A1A;margin-bottom:3px;">👥 Configura tus socios</div>
+          <div style="font-size:0.72rem;color:#4A6A4A;line-height:1.6;">Ve a la pestaña <b>Socios</b> y agrega a cada familiar que participa. Indica si es <b>Socio</b> (recibe % de ganancia) o <b>Trabajador</b> (pago fijo). La suma de % de socios debe dar 100%.<br><span style="color:#D97706;">Ej: Papá 30% · Jerson 25% · Hermano 20%...</span></div>
+        </div>
+      </div>
+
+      <!-- Paso 2 -->
+      <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:16px;">
+        <div style="width:36px;height:36px;border-radius:50%;background:#B84500;color:#FFD700;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">2</div>
+        <div>
+          <div style="font-size:0.85rem;font-weight:800;color:#1A3A1A;margin-bottom:3px;">📅 Ingresa la fecha de siembra</div>
+          <div style="font-size:0.72rem;color:#4A6A4A;line-height:1.6;">En la misma pestaña <b>Socios</b>, abajo encontrarás <b>Configuración Campaña</b>. Ingresa la fecha exacta en que sembraste el maíz.<br><span style="color:#D97706;">Ej: 2026-06-01</span><br>Esto activa el calendario con alertas automáticas de riego, abono y plagas.</div>
+        </div>
+      </div>
+
+      <!-- Paso 3 -->
+      <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:16px;">
+        <div style="width:36px;height:36px;border-radius:50%;background:#B84500;color:#FFD700;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">3</div>
+        <div>
+          <div style="font-size:0.85rem;font-weight:800;color:#1A3A1A;margin-bottom:3px;">💸 Registra tu inversión inicial</div>
+          <div style="font-size:0.72rem;color:#4A6A4A;line-height:1.6;">Ve a <b>Gastos</b> y registra todo lo que ya gastaste: semilla, abono, combustible, preparación del terreno.<br>Selecciona tipo <b>"Inversión inicial"</b> para que se registre aparte.<br><span style="color:#D97706;">Ej: Semilla S/ 800 · Abono S/ 1,200 · Combustible S/ 400...</span></div>
+        </div>
+      </div>
+
+      <!-- Paso 4 -->
+      <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:16px;">
+        <div style="width:36px;height:36px;border-radius:50%;background:#B84500;color:#FFD700;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">4</div>
+        <div>
+          <div style="font-size:0.85rem;font-weight:800;color:#1A3A1A;margin-bottom:3px;">💰 Registra las ventas diarias</div>
+          <div style="font-size:0.72rem;color:#4A6A4A;line-height:1.6;">Cada vez que vendan chala, ve a <b>Ventas</b> y registra la fecha y el monto recibido. Puedes anotar quién vendió y a quién.<br><span style="color:#D97706;">Ej: 3 cargas a S/ 280 c/u = S/ 840</span></div>
+        </div>
+      </div>
+
+      <!-- Paso 5 -->
+      <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:20px;">
+        <div style="width:36px;height:36px;border-radius:50%;background:#F5C800;color:#1A3A1A;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">5</div>
+        <div>
+          <div style="font-size:0.85rem;font-weight:800;color:#1A3A1A;margin-bottom:3px;">📊 Revisa el Inicio</div>
+          <div style="font-size:0.72rem;color:#4A6A4A;line-height:1.6;">La pestaña <b>Inicio</b> muestra automáticamente:<br>
+          · Balance (ganando o perdiendo)<br>
+          · Las 4 bolsas con sus montos<br>
+          · Cuánto le toca a cada socio<br>
+          · Estado de la campaña<br><br>
+          La pestaña <b>🌱 Campaña</b> muestra las alertas de riego, abono y plagas según los días transcurridos.</div>
+        </div>
+      </div>
+
+      <!-- Las 4 bolsas explicación -->
+      <div style="background:#FFF0E8;border-radius:12px;padding:14px;margin-bottom:16px;border:1px solid #FFD9BC;">
+        <div style="font-size:0.75rem;font-weight:800;color:#B84500;margin-bottom:8px;">🏦 ¿Qué son las 4 Bolsas?</div>
+        <div style="font-size:0.68rem;color:#4A6A4A;line-height:1.8;">
+          La ganancia se divide automáticamente en 4 partes:<br>
+          <b>⚙️ Caja operativa (25%)</b> — para gastos del día a día<br>
+          <b>🌱 Reinversión (20%)</b> — para la próxima siembra<br>
+          <b>🚨 Emergencia (5%)</b> — para imprevistos<br>
+          <b>💵 Utilidad (50%)</b> — para repartir entre socios<br><br>
+          Puedes cambiar los % en <b>Finanzas → Las 4 Bolsas → Config</b>
+        </div>
+      </div>
+
+      <button onclick="cerrarGuia()" style="width:100%;background:linear-gradient(180deg,#FF8C42,#B84500);color:#fff;border:none;border-radius:12px;padding:14px;font-size:0.9rem;font-weight:800;cursor:pointer;margin-bottom:20px;font-family:'Inter',sans-serif;">
+        ✅ Entendido — ¡Empezar!
+      </button>
+    </div>
+
+  </div>
+</div>
+<!-- BALANCE BAR -->
+<div style="background:#5C1F00;padding:7px 16px;display:flex;justify-content:space-between;align-items:center;">
+  <button onclick="document.getElementById('guia-overlay').style.display='flex'" style="background:rgba(255,255,255,.12);border:none;border-radius:7px;padding:4px 9px;color:rgba(255,255,255,.65);font-size:0.6rem;cursor:pointer;font-family:'Inter',sans-serif;">❓ Guía</button>
+  <div style="text-align:center;">
+    <div style="font-size:0.45rem;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px;">Balance disponible</div>
+    <div id="hdr-bal" style="font-family:'JetBrains Mono',monospace;font-size:0.95rem;font-weight:800;color:#FFD700;">S/ 0</div>
+  </div>
+  <div id="admin-badge-mini" style="display:none;background:rgba(255,165,0,.2);border-radius:7px;padding:3px 8px;">
+    <div style="font-size:0.5rem;color:#FFD700;font-weight:700;">🔐 ADMIN</div>
+  </div>
+  <div id="admin-badge-mini-off" style="width:60px;"></div>
+</div>
+
+<div class="tabs">
+  <button class="tb on" onclick="go('resumen',this)">📊 Inicio</button>
+  <button class="tb" onclick="go('ventas',this)">💰 Ventas</button>
+  <button class="tb" onclick="go('gastos',this)">💸 Gastos</button>
+  <button class="tb" id="tb-finanzas" onclick="goAdmin('finanzas',this)" style="opacity:0.5;">🏦 Finanzas</button>
+  <button class="tb" id="tb-socios" onclick="goAdmin('socios',this)" style="opacity:0.5;">👥 Socios</button>
+  <button class="tb" onclick="go('calendario',this)">🌱 Campaña</button>
+</div>
+
+<div style="background:#5C1F00;padding:5px 14px;display:flex;justify-content:flex-end;gap:8px;border-top:1px solid rgba(255,255,255,.1);">
+  <button id="sync-btn" onclick="syncAll()" style="background:rgba(255,255,255,.12);border:none;border-radius:7px;padding:4px 10px;color:rgba(255,255,255,.8);font-size:0.6rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;">🔄 Sincronizar</button>
+  <button onclick="exportarExcel()" style="background:rgba(76,175,80,.25);border:none;border-radius:7px;padding:4px 10px;color:#4CAF50;font-size:0.6rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;">📊 Excel</button>
+  <button onclick="sincronizarSheets()" style="background:rgba(66,133,244,.25);border:none;border-radius:7px;padding:4px 10px;color:#4285F4;font-size:0.6rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;">📋 Sheets</button>
+</div>
+<div id="admin-badge" style="display:none;background:#7B2D00;padding:5px 14px;align-items:center;justify-content:space-between;">
+  <div style="font-size:0.65rem;font-weight:700;color:#fff;">🔐 Modo Administrador activo</div>
+  <button id="btn-salir-admin" onclick="cerrarSesionAdmin()" style="display:none;background:rgba(0,0,0,.3);border:none;border-radius:6px;padding:3px 8px;color:#fff;font-size:0.6rem;cursor:pointer;font-family:'Inter',sans-serif;">Salir</button>
+</div>
+
+<!-- ═══════════ INICIO ═══════════ -->
+<div class="pg on" id="pg-resumen">
+  <div class="kgrid" id="kpis-top"></div>
+  <div class="bolsas" id="bolsas-cont"></div>
+  <div class="card" id="res-socios-card" style="display:none">
+    <div class="ch"><div class="ch-t">👥 Reparto socios</div></div>
+    <div class="cb" id="res-socios-body"></div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ch-t">📅 Estado campaña</div></div>
+    <div class="cb" id="res-campana"></div>
+  </div>
+</div>
+
+<!-- ═══════════ VENTAS ═══════════ -->
+<div class="pg" id="pg-ventas">
+  <div class="card">
+    <div class="ch"><div class="ch-t">💰 Registrar Venta</div></div>
+    <div class="cb">
+      <div class="f2">
+        <div class="f"><label>Fecha</label><input type="date" id="v-fecha"></div>
+        <div class="f"><label>Monto (S/)</label><input type="number" id="v-monto" placeholder="0.00" step="0.5" min="0"></div>
+      </div>
+      <div class="f"><label>Quién vendió / Detalle</label><input type="text" id="v-obs" placeholder="Ej: 3 cargas, comprador Lima"></div>
+      <button class="btn btn-v" onclick="addVenta()">✅ Registrar Venta</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ch-t">📋 Ventas</div><span id="tot-ventas" style="font-size:0.7rem;color:var(--oro);font-weight:800;"></span></div>
+    <div class="cb" id="lista-ventas"><div class="empty">Sin ventas</div></div>
+  </div>
+</div>
+
+<!-- ═══════════ GASTOS ═══════════ -->
+<div class="pg" id="pg-gastos">
+  <div class="card">
+    <div class="ch"><div class="ch-t">💸 Registrar Gasto</div></div>
+    <div class="cb">
+      <div class="f2">
+        <div class="f"><label>Fecha</label><input type="date" id="g-fecha"></div>
+        <div class="f"><label>Monto (S/)</label><input type="number" id="g-monto" placeholder="0.00" step="0.5" min="0"></div>
+      </div>
+      <div class="f">
+        <label>Categoría</label>
+        <select id="g-cat">
+          <option value="combustible">⛽ Combustible / Gasolina</option>
+          <option value="mano_obra">👷 Mano de obra</option>
+          <option value="transporte">🚛 Transporte</option>
+          <option value="riego">💧 Riego / Motor</option>
+          <option value="abono">🌿 Abono / Fertilizante</option>
+          <option value="semilla">🌽 Semilla</option>
+          <option value="reparacion">🔧 Reparación / Herramienta</option>
+          <option value="otro">📦 Otro</option>
+        </select>
+      </div>
+      <div class="f"><label>Detalle</label><input type="text" id="g-obs" placeholder="Ej: 5 lts gasolina moto"></div>
+      <div class="f">
+        <label>Tipo</label>
+        <select id="g-tipo">
+          <option value="operativo">💸 Gasto operativo (caja)</option>
+          <option value="inversion">🌱 Inversión inicial</option>
+          <option value="emergencia">🚨 Emergencia</option>
+          <option value="trabajador">👷 Pago trabajador</option>
+        </select>
+      </div>
+      <div class="f" id="g-trab-campo" style="display:none">
+        <label>Trabajador / Quién</label>
+        <input type="text" id="g-trab" placeholder="Ej: Operador tractor · S/120/día">
+      </div>
+      <button class="btn btn-r" onclick="addGasto()">➕ Registrar Gasto</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ch-t">📋 Gastos</div><span id="tot-gastos" style="font-size:0.7rem;color:#FCA5A5;font-weight:800;"></span></div>
+    <div class="cb" id="lista-gastos"><div class="empty">Sin gastos</div></div>
+  </div>
+</div>
+
+<!-- ═══════════ FINANZAS ═══════════ -->
+<div class="pg" id="pg-finanzas">
+
+  <!-- KPIs financieros -->
+  <div class="kgrid" id="fin-kpis"></div>
+
+  <!-- 4 Bolsas -->
+  <div class="card">
+    <div class="ch"><div class="ch-t">🏦 Las 4 Bolsas</div><button class="btn-sm btn btn-a" onclick="editarBolsas()">⚙️ Config</button></div>
+    <div class="cb" id="bolsas-fin"></div>
+  </div>
+
+  <!-- Deudas -->
+  <div class="card">
+    <div class="ch"><div class="ch-t">📋 Deudas / Préstamos</div></div>
+    <div class="cb">
+      <div class="f3">
+        <div class="f"><label>Quién</label><input type="text" id="d-quien" placeholder="Nombre"></div>
+        <div class="f"><label>Monto S/</label><input type="number" id="d-monto" placeholder="0" min="0"></div>
+        <div class="f"><label>Fecha</label><input type="date" id="d-fecha"></div>
+      </div>
+      <div class="f"><label>Detalle</label><input type="text" id="d-obs" placeholder="Motivo del préstamo"></div>
+      <button class="btn btn-a" onclick="addDeuda()" style="margin-bottom:10px;">➕ Agregar Deuda</button>
+      <div id="lista-deudas"><div class="empty">Sin deudas registradas</div></div>
+    </div>
+  </div>
+
+  <!-- Retiros -->
+  <div class="card">
+    <div class="ch"><div class="ch-t">💵 Retiros Personales</div></div>
+    <div class="cb">
+      <div class="f2">
+        <div class="f"><label>Persona</label><input type="text" id="ret-quien" placeholder="Nombre socio"></div>
+        <div class="f"><label>Monto S/</label><input type="number" id="ret-monto" placeholder="0" min="0"></div>
+      </div>
+      <div class="f2">
+        <div class="f"><label>Fecha</label><input type="date" id="ret-fecha"></div>
+        <div class="f"><label>Motivo</label><input type="text" id="ret-obs" placeholder="Ej: gastos personales"></div>
+      </div>
+      <button class="btn btn-a" onclick="addRetiro()" style="margin-bottom:10px;">➕ Registrar Retiro</button>
+      <div id="lista-retiros"><div class="empty">Sin retiros</div></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════ SOCIOS ═══════════ -->
+<div class="pg" id="pg-socios">
+  <div class="card">
+    <div class="ch"><div class="ch-t">➕ Agregar Socio / Trabajador</div></div>
+    <div class="cb">
+      <div class="f2">
+        <div class="f"><label>Nombre</label><input type="text" id="s-nombre" placeholder="Ej: Papá, Jerson"></div>
+        <div class="f"><label>Rol</label><input type="text" id="s-rol" placeholder="Ej: dueño, operador"></div>
+      </div>
+      <div class="f">
+        <label>Tipo</label>
+        <select id="s-tipo" onchange="toggleSocioTipo()">
+          <option value="socio">🤝 Socio (recibe % de ganancia)</option>
+          <option value="trabajador">👷 Trabajador (pago fijo)</option>
+        </select>
+      </div>
+      <div id="s-pct-campo">
+        <div class="f"><label>% de la ganancia</label><input type="number" id="s-pct" placeholder="Ej: 25" min="1" max="100"></div>
+      </div>
+      <div id="s-pago-campo" style="display:none">
+        <div class="f"><label>Pago fijo (S/)</label><input type="number" id="s-pago" placeholder="Ej: 120 por día" min="0"></div>
+        <div class="f"><label>Unidad</label><input type="text" id="s-unidad" placeholder="por día / por viaje / por mes"></div>
+      </div>
+      <button class="btn btn-v" onclick="addSocio()">✅ Agregar</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch">
+      <div class="ch-t">👥 Socios y Trabajadores</div>
+      <span id="pct-badge" style="font-size:0.65rem;color:var(--oro);font-weight:700;"></span>
+    </div>
+    <div class="cb" id="lista-socios"><div class="empty">Sin socios registrados</div></div>
+  </div>
+
+  <!-- Configuración campaña -->
+  <div class="card">
+    <div class="ch"><div class="ch-t">⚙️ Configuración Campaña</div></div>
+    <div class="cb">
+      <div class="f"><label>Fecha de siembra</label><input type="date" id="cfg-siembra" onchange="guardarConfig()"></div>
+      <div class="f2">
+        <div class="f"><label>% Reinversión</label><input type="number" id="cfg-reinv" value="20" min="0" max="50" onchange="guardarConfig()"></div>
+        <div class="f"><label>% Emergencia</label><input type="number" id="cfg-emerg" value="5" min="0" max="20" onchange="guardarConfig()"></div>
+      </div>
+      <div class="f"><label>Inversión inicial estimada (S/)</label><input type="number" id="cfg-inversion" placeholder="Ej: 6000" onchange="guardarConfig()"></div>
+      <button class="btn btn-v" onclick="guardarConfig();toast2('✅ Configuración guardada')">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ CALENDARIO ═══════════ -->
+<div class="pg" id="pg-calendario">
+  <div class="card">
+    <div class="ch"><div class="ch-t">📅 Tu Campaña</div></div>
+    <div class="cb">
+      <div class="f"><label>Fecha de siembra</label><input type="date" id="cal-fecha" onchange="guardarConfig();renderCalendario()"></div>
+      <div id="cal-badge" style="display:none;background:var(--v4);border-radius:10px;padding:10px;text-align:center;margin-top:6px;">
+        <div style="font-size:0.6rem;color:var(--txt2);">Días transcurridos</div>
+        <div id="cal-dias" style="font-family:'JetBrains Mono',monospace;font-size:2.2rem;font-weight:900;color:var(--v2);"></div>
+        <div id="cal-eta" style="font-size:0.65rem;color:var(--txt2);margin-top:2px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alertas urgentes -->
+  <div id="cal-alertas"></div>
+
+  <!-- Timeline -->
+  <div class="card">
+    <div class="ch"><div class="ch-t">🗓️ Cronograma Completo</div></div>
+    <div class="cb" id="cal-timeline"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const SURL='https://rqvcvffyynpnighzwxju.supabase.co';
+const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdmN2ZmZ5eW5wbmlnaHp3eGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MjgyNDcsImV4cCI6MjA5MzMwNDI0N30.fFufNEdRvAzl6O6BqtTbx83O3Eg8Wd7gACNJDGQKga4';
+const GAS_URL='https://script.google.com/macros/s/AKfycbws_Tp4inWkHmUIOOcqwHAgE_crNGIYjZ_CLSDs8DCPZ2wtbO0IWMbtOfeosSrC6FC0Rw/exec';
+
+// ═══════ SUPABASE ═══════
+async function sbGet(tabla,order='created_at.asc'){
+  const r=await fetch(SURL+'/rest/v1/'+tabla+'?order='+order,{headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY}});
+  if(!r.ok)return[];
+  return r.json();
+}
+async function sbPost(tabla,data){
+  const r=await fetch(SURL+'/rest/v1/'+tabla,{method:'POST',headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(data)});
+  if(!r.ok)return null;
+  const j=await r.json();return Array.isArray(j)?j[0]:j;
+}
+async function sbDel(tabla,id){
+  await fetch(SURL+'/rest/v1/'+tabla+'?id=eq.'+id,{method:'DELETE',headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY}});
+}
+async function sbUpsert(tabla,data){
+  await fetch(SURL+'/rest/v1/'+tabla,{method:'POST',headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(data)});
+}
+
+// ═══════ GOOGLE SHEETS ═══════
+async function enviarASheet(tipo, fila){
+  try{
+    await fetch(GAS_URL, {
+      method:'POST',
+      body:JSON.stringify({tipo, fila}),
+      headers:{'Content-Type':'application/json'}
+    });
+  }catch(e){console.warn('Sheets sin conexión:',e);}
+}
+
+async function sincronizarSheets(){
+  const c=calculos();
+  const hoyStr=new Date().toLocaleString('es-PE');
+  // Enviar resumen
+  await enviarASheet('Resumen',[['Total Ventas',c.totV],['Total Gastos',c.totG],['Balance',c.bruto],['Capital Acumulado',c.capitalAcum],['Capital Objetivo',c.capitalObj],['Para Repartir',c.repartoAcum],['Emergencia',c.emergAcum],['Actualizado',hoyStr]]);
+  toast2('✅ Enviado a Google Sheets');
+}
+
+// ═══════════════════ ESTADO ═══════════════════
+let D={
+  ventas:[],gastos:[],socios:[],deudas:[],retiros:[],
+  cfg:{siembra:'',reinvPct:20,emergPct:5,inversionInicial:6000},
+  bolsasCfg:{capitalPct:30,repartoPct:60,emergPct:10}
+};
+
+function sv(){localStorage.setItem('cc2',JSON.stringify(D));}
+function ld(){try{const x=JSON.parse(localStorage.getItem('cc2'));if(x)D=x;}catch(e){}}
+
+// ═══════ SYNC SUPABASE ═══════
+let syncing=false;
+async function syncAll(){
+  if(syncing)return;
+  syncing=true;
+  const syncBtn=document.getElementById('sync-btn');
+  if(syncBtn){syncBtn.textContent='⏳';syncBtn.disabled=true;}
+  try{
+    const[v,g,s,d,r]=await Promise.all([
+      sbGet('chacra_ventas','fecha.desc'),
+      sbGet('chacra_gastos','fecha.desc'),
+      sbGet('chacra_socios','created_at.asc'),
+      sbGet('chacra_deudas','created_at.desc'),
+      sbGet('chacra_retiros','created_at.desc'),
+    ]);
+    D.ventas=v.map(x=>({id:x.id,fecha:x.fecha,monto:+x.monto,obs:x.obs||''}));
+    D.gastos=g.map(x=>({id:x.id,fecha:x.fecha,monto:+x.monto,cat:x.cat,obs:x.obs||'',tipo:x.tipo,trab:x.trab||''}));
+    D.socios=s.map(x=>({id:x.id,nombre:x.nombre,rol:x.rol||'',tipo:x.tipo,pct:+x.pct||0,pago:+x.pago||0,unidad:x.unidad||''}));
+    D.deudas=d.map(x=>({id:x.id,quien:x.quien,monto:+x.monto,fecha:x.fecha||'',obs:x.obs||''}));
+    D.retiros=r.map(x=>({id:x.id,quien:x.quien,monto:+x.monto,fecha:x.fecha||'',obs:x.obs||''}));
+    sv();
+    renderVentas();renderGastos();renderResumen();
+    toast2('✅ Sincronizado');
+  }catch(e){toast2('Sin conexión — modo local','err');}
+  finally{syncing=false;if(syncBtn){syncBtn.textContent='🔄';syncBtn.disabled=false;}}
+}
+
+// ═══════ EXPORTAR EXCEL ═══════
+function exportarExcel(){
+  const wb=XLSX.utils.book_new();
+  // Ventas
+  const v=[['Fecha','Monto S/','Detalle'],...D.ventas.map(x=>[x.fecha,x.monto,x.obs])];
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(v),'Ventas');
+  // Gastos
+  const g=[['Fecha','Monto S/','Categoría','Detalle','Tipo'],...D.gastos.map(x=>[x.fecha,x.monto,x.cat,x.obs,x.tipo])];
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(g),'Gastos');
+  // Socios
+  const s=[['Nombre','Rol','Tipo','% Ganancia','Pago fijo','Unidad'],...D.socios.map(x=>[x.nombre,x.rol,x.tipo,x.pct,x.pago,x.unidad])];
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(s),'Socios');
+  // Retiros
+  const ret=[['Persona','Monto S/','Fecha','Motivo'],...D.retiros.map(x=>[x.quien,x.monto,x.fecha,x.obs])];
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(ret),'Retiros');
+  // Resumen
+  const cal=calculos();
+  const res=[
+    ['RESUMEN CHACRA MUÑOZ'],
+    ['Total Ventas',cal.totV],
+    ['Total Gastos',cal.totG],
+    ['Balance Neto',cal.bruto],
+    ['Capital Acumulado',cal.capitalAcum],
+    ['Capital Objetivo',cal.capitalObj],
+    ['Capital Faltante',cal.capitalFaltante],
+    ['Para Repartir',cal.repartoAcum],
+    ['Fondo Emergencia',cal.emergAcum],
+  ];
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(res),'Resumen');
+  XLSX.writeFile(wb,'ChacraManoz_'+new Date().toISOString().split('T')[0]+'.xlsx');
+  toast2('✅ Excel descargado');
+}
+function toast2(m,e){
+  const el=document.getElementById('toast');
+  el.textContent=m;el.style.display='block';
+  el.style.background=e?'#DC2626':'#1A3A1A';
+  setTimeout(()=>el.style.display='none',2500);
+}
+function fmt(n){return'S/ '+(+n||0).toFixed(2);}
+function hoy(){return new Date().toISOString().split('T')[0];}
+
+// ═══════════════════ NAVEGACIÓN ═══════════════════
+function go(id,btn){
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
+  document.getElementById('pg-'+id).classList.add('on');
+  btn.classList.add('on');
+  if(id==='resumen')renderResumen();
+  if(id==='finanzas')renderFinanzas();
+  if(id==='socios')renderSocios();
+  if(id==='calendario')renderCalendario();
+  if(id==='ventas')renderVentas();
+  if(id==='gastos')renderGastos();
+}
+
+// ═══════════════════ CÁLCULOS FINANCIEROS ═══════════════════
+function calculos(){
+  const totV=D.ventas.reduce((s,x)=>s+x.monto,0);
+  const totG=D.gastos.reduce((s,x)=>s+x.monto,0);
+  const totRet=D.retiros.reduce((s,x)=>s+x.monto,0);
+  const totDeudas=D.deudas.reduce((s,x)=>s+x.monto,0);
+  const capitalObj=+D.cfg.inversionInicial||6000;
+
+  // Modelo capital rotativo — se aplica sobre ventas brutas
+  const capitalPct=D.bolsasCfg.capitalPct/100;
+  const repartoPct=D.bolsasCfg.repartoPct/100;
+  const emergPct=D.bolsasCfg.emergPct/100;
+
+  const capitalAcum=totV*capitalPct;       // capital recuperado
+  const repartoAcum=totV*repartoPct;       // ganancia socios
+  const emergAcum=totV*emergPct;           // fondo emergencia
+  const capitalFaltante=Math.max(0,capitalObj-capitalAcum);
+  const capitalPct100=Math.min(100,Math.round(capitalAcum/capitalObj*100));
+
+  // Balance operativo (ventas - gastos)
+  const bruto=totV-totG;
+  const utilidad=repartoAcum; // lo que les toca a socios
+
+  return{totV,totG,totRet,totDeudas,bruto,
+    capitalAcum,capitalObj,capitalFaltante,capitalPct100,
+    repartoAcum,emergAcum,utilidad};
+}
+
+// ═══════════════════ INICIO ═══════════════════
+function renderResumen(){
+  const c=calculos();
+  document.getElementById('hdr-bal').textContent=fmt(c.repartoAcum);
+  document.getElementById('hdr-bal').style.color='var(--oro)';
+
+  // KPIs principales
+  document.getElementById('kpis-top').innerHTML=`
+    <div class="kcard">
+      <div class="ki">💰</div><div class="kl">Total ventas</div>
+      <div class="kv" style="color:var(--v3)">${fmt(c.totV)}</div>
+      <div class="ks">${D.ventas.length} registros</div>
+    </div>
+    <div class="kcard">
+      <div class="ki">💸</div><div class="kl">Total gastos</div>
+      <div class="kv" style="color:var(--r)">${fmt(c.totG)}</div>
+      <div class="ks">${D.gastos.length} registros</div>
+    </div>
+    <div class="kcard">
+      <div class="ki">💵</div><div class="kl">Para repartir</div>
+      <div class="kv" style="color:var(--am)">${fmt(c.repartoAcum)}</div>
+      <div class="ks">${D.bolsasCfg.repartoPct}% de ventas</div>
+    </div>
+    <div class="kcard">
+      <div class="ki">📈</div><div class="kl">Balance neto</div>
+      <div class="kv" style="color:${c.bruto>=0?'var(--v3)':'var(--r)'}">${fmt(c.bruto)}</div>
+      <div class="ks">${c.bruto>=0?'positivo':'negativo'}</div>
+    </div>`;
+
+  // Capital rotativo — barra de progreso
+  const barColor=c.capitalPct100>=100?'#4CAF50':c.capitalPct100>=50?'#D97706':'#DC2626';
+  document.getElementById('bolsas-cont').innerHTML=`
+    <div style="grid-column:1/-1;background:#fff;border-radius:12px;padding:14px;border:2px solid ${barColor}33;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <div style="font-size:0.7rem;font-weight:800;color:${barColor};">🌱 Capital Rotativo</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;font-weight:800;color:${barColor};">${c.capitalPct100}%</div>
+      </div>
+      <div style="background:#E2E8F0;border-radius:10px;height:10px;margin-bottom:8px;">
+        <div style="background:${barColor};height:10px;border-radius:10px;width:${c.capitalPct100}%;transition:width .5s;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:0.62rem;">
+        <div><span style="color:var(--txt3);">Acumulado</span><br><b style="color:${barColor};font-family:monospace;">${fmt(c.capitalAcum)}</b></div>
+        <div style="text-align:center;"><span style="color:var(--txt3);">Objetivo</span><br><b style="font-family:monospace;">${fmt(c.capitalObj)}</b></div>
+        <div style="text-align:right;"><span style="color:var(--txt3);">Falta</span><br><b style="color:var(--r);font-family:monospace;">${fmt(c.capitalFaltante)}</b></div>
+      </div>
+      ${c.capitalPct100>=100?'<div style="text-align:center;margin-top:8px;font-size:0.7rem;font-weight:800;color:var(--v3);">✅ ¡Capital recuperado! Listo para nueva siembra</div>':''}
+    </div>
+
+    <div class="bolsa" style="background:#FEF9C3;border-color:#FDE68A;">
+      <div class="bname" style="color:#B45309;">🌱 Capital (${D.bolsasCfg.capitalPct}%)</div>
+      <div class="bval" style="color:#B45309;">${fmt(c.capitalAcum)}</div>
+      <div class="bpct" style="color:#B45309;">Para próxima siembra</div>
+    </div>
+    <div class="bolsa" style="background:var(--v4);border-color:#BBF7D0;">
+      <div class="bname" style="color:var(--v2);">💵 Reparto (${D.bolsasCfg.repartoPct}%)</div>
+      <div class="bval" style="color:var(--v2);">${fmt(c.repartoAcum)}</div>
+      <div class="bpct" style="color:var(--v2);">Para socios</div>
+    </div>
+    <div class="bolsa" style="background:var(--rc);border-color:#FCA5A5;">
+      <div class="bname" style="color:var(--r);">🚨 Emergencia (${D.bolsasCfg.emergPct}%)</div>
+      <div class="bval" style="color:var(--r);">${fmt(c.emergAcum)}</div>
+      <div class="bpct" style="color:var(--r);">Imprevistos</div>
+    </div>
+    <div class="bolsa" style="background:#F0F9FF;border-color:#BFDBFE;">
+      <div class="bname" style="color:#0369A1;">📊 Gastos (real)</div>
+      <div class="bval" style="color:#0369A1;">${fmt(c.totG)}</div>
+      <div class="bpct" style="color:#0369A1;">Operativo + trabajadores</div>
+    </div>`;
+
+  // Socios
+  const socios=D.socios.filter(s=>s.tipo==='socio');
+  if(socios.length&&c.repartoAcum>0){
+    document.getElementById('res-socios-card').style.display='block';
+    document.getElementById('res-socios-body').innerHTML=socios.map(s=>{
+      const le=c.repartoAcum*(s.pct/100);
+      const ret=D.retiros.filter(r=>r.quien.toLowerCase()===s.nombre.toLowerCase()).reduce((ss,r)=>ss+r.monto,0);
+      const pend=Math.max(0,le-ret);
+      return`<div class="socio-row">
+        <div>
+          <div style="font-size:0.78rem;font-weight:800;color:var(--txt)">${s.nombre}</div>
+          <div style="font-size:0.6rem;color:var(--txt2)">${s.rol} · ${s.pct}%</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.9rem;font-weight:800;color:var(--v2)">${fmt(le)}</div>
+          ${ret>0?`<div style="font-size:0.58rem;color:var(--r)">Retirado: ${fmt(ret)}</div>`:''}
+          <div style="font-size:0.58rem;color:${pend>0?'var(--am)':'var(--v3)'}">Pendiente: ${fmt(pend)}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }else{
+    document.getElementById('res-socios-card').style.display=socios.length?'block':'none';
+    if(socios.length)document.getElementById('res-socios-body').innerHTML='<div class="empty">Aún no hay ventas para repartir</div>';
+  }
+
+  // Campaña
+  let campHTML='<div class="empty">Sin fecha de siembra configurada</div>';
+  if(D.cfg.siembra){
+    const dias=Math.floor((new Date()-new Date(D.cfg.siembra))/(864e5));
+    const eta=Math.max(0,90-dias);
+    campHTML=`
+      <div class="it"><div class="it-l"><div class="it-tag" style="color:var(--v2)">Inicio siembra</div></div><div class="it-r"><div class="it-m">${D.cfg.siembra}</div></div></div>
+      <div class="it"><div class="it-l"><div class="it-tag" style="color:var(--a)">Días activos</div></div><div class="it-r"><div class="it-m" style="color:var(--a)">${dias} días</div></div></div>
+      <div class="it"><div class="it-l"><div class="it-tag" style="color:var(--am)">Días para cosecha</div></div><div class="it-r"><div class="it-m" style="color:var(--am)">${eta>0?eta+' días aprox.':'🌽 En época de cosecha'}</div></div></div>
+    `;
+  }
+  document.getElementById('res-campana').innerHTML=campHTML;
+}
+
+// ═══════════════════ VENTAS ═══════════════════
+function addVenta(){
+  const fecha=document.getElementById('v-fecha').value;
+  const monto=parseFloat(document.getElementById('v-monto').value)||0;
+  const obs=document.getElementById('v-obs').value.trim();
+  if(!fecha||!monto){toast2('Completa fecha y monto','err');return;}
+  D.ventas.push({id:Date.now(),fecha,monto,obs});
+  D.ventas.sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  sv();renderVentas();renderResumen();
+  document.getElementById('v-monto').value='';document.getElementById('v-obs').value='';
+  toast2('✅ Venta: '+fmt(monto));
+}
+// ═══════════════════ ROLES / PIN ═══════════════════
+const PIN_ADMIN='63394588';
+let esAdmin=false;
+
+function checkAdmin(){
+  if(esAdmin)return true;
+  const pin=prompt('🔐 PIN de administrador:');
+  if(pin===PIN_ADMIN){esAdmin=true;actualizarModoAdmin();return true;}
+  if(pin!==null)toast2('PIN incorrecto','err');
+  return false;
+}
+function cerrarSesionAdmin(){esAdmin=false;actualizarModoAdmin();toast2('Sesión admin cerrada');}
+function actualizarModoAdmin(){
+  const badge=document.getElementById('admin-badge');
+  if(badge){badge.style.display=esAdmin?'flex':'none';}
+  const mini=document.getElementById('admin-badge-mini');
+  const miniOff=document.getElementById('admin-badge-mini-off');
+  if(mini){mini.style.display=esAdmin?'block':'none';}
+  if(miniOff){miniOff.style.display=esAdmin?'none':'block';}
+  const salir=document.getElementById('btn-salir-admin');
+  if(salir)salir.style.display=esAdmin?'inline-block':'none';
+  const tf=document.getElementById('tb-finanzas');if(tf)tf.style.opacity=esAdmin?'1':'0.5';
+  const ts=document.getElementById('tb-socios');if(ts)ts.style.opacity=esAdmin?'1':'0.5';
+  if(document.getElementById('pg-ventas').classList.contains('on'))renderVentas();
+  if(document.getElementById('pg-gastos').classList.contains('on'))renderGastos();
+}
+function goAdmin(id,btn){
+  if((id==='finanzas'||id==='socios')&&!esAdmin){if(!checkAdmin())return;}
+  go(id,btn);
+}
+
+async function delVenta(id){if(!checkAdmin())return;if(!confirm('¿Eliminar?'))return;await sbDel('chacra_ventas',id);D.ventas=D.ventas.filter(x=>x.id!==id);sv();renderVentas();renderResumen();toast2('Eliminado');}
+function renderVentas(){
+  const tot=D.ventas.reduce((s,x)=>s+x.monto,0);
+  document.getElementById('tot-ventas').textContent=fmt(tot);
+  const c=document.getElementById('lista-ventas');
+  if(!D.ventas.length){c.innerHTML='<div class="empty">Sin ventas</div>';return;}
+  c.innerHTML=D.ventas.map(v=>`<div class="it">
+    <div class="it-l"><div class="it-tag"><span class="badge bv">Venta</span></div><div class="it-d">${v.obs||'Sin detalle'}</div><div class="it-dt">📅 ${v.fecha}</div></div>
+    <div class="it-r"><div class="it-m" style="color:var(--v3)">${fmt(v.monto)}</div>${esAdmin?`<button class="del" onclick="delVenta(${v.id})">🗑</button>`:''}</div>
+  </div>`).join('');
+}
+
+// ═══════════════════ GASTOS ═══════════════════
+document.getElementById('g-tipo').addEventListener('change',function(){
+  document.getElementById('g-trab-campo').style.display=this.value==='trabajador'?'block':'none';
+});
+const catLabel={combustible:'⛽ Combustible',mano_obra:'👷 Mano obra',transporte:'🚛 Transporte',riego:'💧 Riego',abono:'🌿 Abono',semilla:'🌽 Semilla',reparacion:'🔧 Reparación',otro:'📦 Otro'};
+async function addGasto(){
+  const fecha=document.getElementById('g-fecha').value;
+  const monto=parseFloat(document.getElementById('g-monto').value)||0;
+  const cat=document.getElementById('g-cat').value;
+  const obs=document.getElementById('g-obs').value.trim();
+  const tipo=document.getElementById('g-tipo').value;
+  const trab=document.getElementById('g-trab').value.trim();
+  if(!fecha||!monto){toast2('Completa fecha y monto','err');return;}
+  D.gastos.push({id:Date.now(),fecha,monto,cat,obs,tipo,trab});
+  D.gastos.sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  try{
+    const saved=await sbPost('chacra_gastos',{fecha,monto,cat,obs,tipo,trab});
+    D.gastos.unshift({id:saved?.id||Date.now(),fecha,monto,cat,obs,tipo,trab});
+    D.gastos.sort((a,b)=>b.fecha.localeCompare(a.fecha));
+    sv();renderGastos();renderResumen();
+    document.getElementById('g-monto').value='';document.getElementById('g-obs').value='';document.getElementById('g-trab').value='';
+    toast2('✅ Gasto guardado: '+fmt(monto));
+    enviarASheet('Gastos',[saved?.id||'',fecha,monto,cat,obs,tipo,trab,new Date().toLocaleString('es-PE')]);
+  }catch(e){toast2('Error al guardar','err');}
+}
+async function delGasto(id){if(!checkAdmin())return;if(!confirm('¿Eliminar?'))return;await sbDel('chacra_gastos',id);D.gastos=D.gastos.filter(x=>x.id!==id);sv();renderGastos();renderResumen();toast2('Eliminado');}
+function renderGastos(){
+  const tot=D.gastos.reduce((s,x)=>s+x.monto,0);
+  document.getElementById('tot-gastos').textContent=fmt(tot);
+  const c=document.getElementById('lista-gastos');
+  if(!D.gastos.length){c.innerHTML='<div class="empty">Sin gastos</div>';return;}
+  const tipCol={operativo:'bg2',inversion:'bi',emergencia:'badge',trabajador:'bg2'};
+  const tipLbl={operativo:'Gasto',inversion:'Inversión',emergencia:'Emergencia',trabajador:'Trabajador'};
+  c.innerHTML=D.gastos.map(g=>`<div class="it">
+    <div class="it-l">
+      <div class="it-tag"><span class="badge ${g.tipo==='inversion'?'bi':'bg2'}">${tipLbl[g.tipo]||'Gasto'}</span> <span style="font-size:0.55rem;color:var(--txt3)">${catLabel[g.cat]||g.cat}</span></div>
+      <div class="it-d">${g.obs||g.trab||'Sin detalle'}</div>
+      <div class="it-dt">📅 ${g.fecha}</div>
+    </div>
+    <div class="it-r"><div class="it-m" style="color:var(--r)">${fmt(g.monto)}</div>${esAdmin?`<button class="del" onclick="delGasto(${g.id})">🗑</button>`:''}</div>
+  </div>`).join('');
+}
+
+// ═══════════════════ FINANZAS ═══════════════════
+function renderFinanzas(){
+  const c=calculos();
+  const kpis=[
+    {icon:'💰',l:'Total ventas',v:fmt(c.totV),col:'var(--v3)'},
+    {icon:'💸',l:'Total gastos',v:fmt(c.totG),col:'var(--r)'},
+    {icon:'📈',l:'Balance bruto',v:fmt(c.bruto),col:c.bruto>=0?'var(--v3)':'var(--r)'},
+    {icon:'🌱',l:'Reinversión auto',v:fmt(c.reinvAuto),col:'var(--v2)'},
+    {icon:'🚨',l:'Fondo emergencia',v:fmt(c.emergAuto),col:'var(--r)'},
+    {icon:'🎯',l:'Utilidad neta',v:fmt(c.utilidad),col:'var(--am)'},
+    {icon:'💵',l:'Total retiros',v:fmt(c.totRet),col:'var(--mo)'},
+    {icon:'📋',l:'Total deudas',v:fmt(c.totDeudas),col:'#DC2626'},
+  ];
+  document.getElementById('fin-kpis').innerHTML=kpis.map(k=>`
+    <div class="kcard"><div class="ki">${k.icon}</div><div class="kl">${k.l}</div><div class="kv" style="color:${k.col}">${k.v}</div></div>`).join('');
+
+  // Bolsas detalle
+  const bolsas=[
+    {n:'⚙️ Caja Operativa',pct:D.bolsasCfg.operativaPct,col:'#0369A1',bg:'#EFF6FF',items:['Combustible','Mano de obra','Transporte','Riego','Reparaciones']},
+    {n:'🌱 Reinversión',pct:D.bolsasCfg.reinvPct,col:'#15803D',bg:'var(--v4)',items:['Semilla','Urea / Abono','Próxima campaña']},
+    {n:'🚨 Emergencia',pct:D.bolsasCfg.emergPct,col:'#DC2626',bg:'var(--rc)',items:['Motores / Bombas','Averías','Imprevistos']},
+    {n:'💵 Utilidad',pct:Math.max(0,100-D.bolsasCfg.operativaPct-D.bolsasCfg.reinvPct-D.bolsasCfg.emergPct),col:'#D97706',bg:'var(--amc)',items:['Reparto entre socios']},
+  ];
+  document.getElementById('bolsas-fin').innerHTML=bolsas.map(b=>{
+    const amt=Math.max(0,c.bruto)*(b.pct/100);
+    return`<div style="background:${b.bg};border-radius:10px;padding:10px 12px;margin-bottom:8px;border-left:3px solid ${b.col}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <div style="font-size:0.75rem;font-weight:800;color:${b.col}">${b.n} (${b.pct}%)</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.9rem;font-weight:800;color:${b.col}">${fmt(amt)}</div>
+      </div>
+      <div style="font-size:0.62rem;color:var(--txt2)">${b.items.join(' · ')}</div>
+    </div>`;
+  }).join('');
+
+  renderDeudas();renderRetiros();
+}
+
+function editarBolsas(){if(!checkAdmin())return;
+  const op=prompt('% Caja operativa (actual: '+D.bolsasCfg.operativaPct+')');
+  if(op===null)return;
+  const re=prompt('% Reinversión (actual: '+D.bolsasCfg.reinvPct+')');
+  if(re===null)return;
+  const em=prompt('% Emergencia (actual: '+D.bolsasCfg.emergPct+')');
+  if(em===null)return;
+  const tot=+(+op||0)+(+re||0)+(+em||0);
+  if(tot>100){toast2('El total supera 100%','err');return;}
+  D.bolsasCfg={operativaPct:+op||25,reinvPct:+re||20,emergPct:+em||5};
+  sv();renderFinanzas();renderResumen();toast2('✅ Bolsas actualizadas');
+}
+
+// Deudas
+async function addDeuda(){
+  const quien=document.getElementById('d-quien').value.trim();
+  const monto=parseFloat(document.getElementById('d-monto').value)||0;
+  const fecha=document.getElementById('d-fecha').value;
+  const obs=document.getElementById('d-obs').value.trim();
+  if(!quien||!monto){toast2('Completa quién y monto','err');return;}
+  const savedD=await sbPost('chacra_deudas',{quien,monto,fecha,obs});
+  D.deudas.push({id:savedD?.id||Date.now(),quien,monto,fecha,obs});
+  sv();renderDeudas();renderFinanzas();
+  document.getElementById('d-quien').value='';document.getElementById('d-monto').value='';document.getElementById('d-obs').value='';
+  toast2('✅ Deuda registrada');
+}
+async function delDeuda(id){if(!checkAdmin())return;if(!confirm('¿Eliminar?'))return;await sbDel('chacra_deudas',id);D.deudas=D.deudas.filter(x=>x.id!==id);sv();renderDeudas();}
+function renderDeudas(){
+  const c=document.getElementById('lista-deudas');
+  if(!D.deudas.length){c.innerHTML='<div class="empty">Sin deudas</div>';return;}
+  c.innerHTML=D.deudas.map(d=>`<div class="it">
+    <div class="it-l"><div class="it-d" style="font-weight:700">${d.quien}</div><div class="it-dt">${d.obs||''} · ${d.fecha||''}</div></div>
+    <div class="it-r"><div class="it-m" style="color:var(--r)">${fmt(d.monto)}</div><button class="del" onclick="delDeuda(${d.id})">🗑</button></div>
+  </div>`).join('');
+}
+
+// Retiros
+async function addRetiro(){
+  const quien=document.getElementById('ret-quien').value.trim();
+  const monto=parseFloat(document.getElementById('ret-monto').value)||0;
+  const fecha=document.getElementById('ret-fecha').value;
+  const obs=document.getElementById('ret-obs').value.trim();
+  if(!quien||!monto){toast2('Completa quién y monto','err');return;}
+  const savedR=await sbPost('chacra_retiros',{quien,monto,fecha,obs});
+  D.retiros.push({id:savedR?.id||Date.now(),quien,monto,fecha,obs});
+  sv();renderRetiros();renderResumen();
+  document.getElementById('ret-quien').value='';document.getElementById('ret-monto').value='';document.getElementById('ret-obs').value='';
+  toast2('✅ Retiro: '+fmt(monto));
+}
+async function delRetiro(id){if(!checkAdmin())return;if(!confirm('¿Eliminar?'))return;await sbDel('chacra_retiros',id);D.retiros=D.retiros.filter(x=>x.id!==id);sv();renderRetiros();}
+function renderRetiros(){
+  const c=document.getElementById('lista-retiros');
+  if(!D.retiros.length){c.innerHTML='<div class="empty">Sin retiros</div>';return;}
+  c.innerHTML=D.retiros.map(r=>`<div class="it">
+    <div class="it-l"><div class="it-d" style="font-weight:700">${r.quien}</div><div class="it-dt">${r.obs||''} · ${r.fecha||''}</div></div>
+    <div class="it-r"><div class="it-m" style="color:var(--mo)">${fmt(r.monto)}</div><button class="del" onclick="delRetiro(${r.id})">🗑</button></div>
+  </div>`).join('');
+}
+
+// ═══════════════════ SOCIOS ═══════════════════
+function toggleSocioTipo(){
+  const t=document.getElementById('s-tipo').value;
+  document.getElementById('s-pct-campo').style.display=t==='socio'?'block':'none';
+  document.getElementById('s-pago-campo').style.display=t==='trabajador'?'block':'none';
+}
+async function addSocio(){if(!checkAdmin())return;
+  const nombre=document.getElementById('s-nombre').value.trim();
+  const rol=document.getElementById('s-rol').value.trim();
+  const tipo=document.getElementById('s-tipo').value;
+  const pct=parseFloat(document.getElementById('s-pct').value)||0;
+  const pago=parseFloat(document.getElementById('s-pago').value)||0;
+  const unidad=document.getElementById('s-unidad').value.trim();
+  if(!nombre){toast2('Ingresa el nombre','err');return;}
+  if(tipo==='socio'){
+    const tot=D.socios.filter(s=>s.tipo==='socio').reduce((s,x)=>s+x.pct,0);
+    if(tot+pct>100){toast2('% socios supera 100%','err');return;}
+  }
+  const savedS=await sbPost('chacra_socios',{nombre,rol,tipo,pct,pago,unidad});
+  D.socios.push({id:savedS?.id||Date.now(),nombre,rol,tipo,pct,pago,unidad});
+  sv();renderSocios();
+  document.getElementById('s-nombre').value='';document.getElementById('s-rol').value='';document.getElementById('s-pct').value='';document.getElementById('s-pago').value='';document.getElementById('s-unidad').value='';
+  toast2('✅ '+nombre+' agregado');
+}
+async function delSocio(id){if(!checkAdmin())return;if(!confirm('¿Eliminar?'))return;await sbDel('chacra_socios',id);D.socios=D.socios.filter(x=>x.id!==id);sv();renderSocios();}
+function renderSocios(){
+  const socios=D.socios.filter(s=>s.tipo==='socio');
+  const trabajadores=D.socios.filter(s=>s.tipo==='trabajador');
+  const totPct=socios.reduce((s,x)=>s+x.pct,0);
+  document.getElementById('pct-badge').textContent=totPct+'% asignado';
+  document.getElementById('pct-badge').style.color=totPct===100?'#4ADE80':'var(--oro)';
+  const c=calculos();
+  let html='';
+  if(socios.length){
+    html+='<div style="font-size:0.65rem;font-weight:800;color:var(--a);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;padding:4px 0;border-bottom:1px solid var(--bdr);">🤝 Socios</div>';
+    html+=socios.map(s=>{
+      const le=c.utilidad*(s.pct/100);
+      return`<div class="socio-row">
+        <div><div style="font-size:0.78rem;font-weight:800">${s.nombre}</div><div style="font-size:0.6rem;color:var(--txt2)">${s.rol} · ${s.pct}%</div></div>
+        <div style="text-align:right;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.9rem;font-weight:800;color:var(--v2)">${fmt(le)}</div>
+          <button class="del" onclick="delSocio(${s.id})">🗑</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  if(trabajadores.length){
+    html+='<div style="font-size:0.65rem;font-weight:800;color:var(--r);text-transform:uppercase;letter-spacing:1px;margin:10px 0 6px;padding:4px 0;border-bottom:1px solid var(--bdr);">👷 Trabajadores (pago fijo)</div>';
+    html+=trabajadores.map(t=>`<div class="socio-row">
+      <div><div style="font-size:0.78rem;font-weight:800">${t.nombre}</div><div style="font-size:0.6rem;color:var(--txt2)">${t.rol}</div></div>
+      <div style="text-align:right;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;font-weight:800;color:var(--r)">${fmt(t.pago)}<span style="font-size:0.55rem;font-weight:400"> ${t.unidad}</span></div>
+        <button class="del" onclick="delSocio(${t.id})">🗑</button>
+      </div>
+    </div>`).join('');
+  }
+  if(!html)html='<div class="empty">Sin socios registrados</div>';
+  document.getElementById('lista-socios').innerHTML=html;
+
+  // Config
+  if(D.cfg.siembra)document.getElementById('cfg-siembra').value=D.cfg.siembra;
+  document.getElementById('cfg-reinv').value=D.cfg.reinvPct;
+  document.getElementById('cfg-emerg').value=D.cfg.emergPct;
+  if(D.cfg.inversionInicial)document.getElementById('cfg-inversion').value=D.cfg.inversionInicial;
+}
+
+function guardarConfig(){if(!esAdmin&&!document.getElementById('cal-fecha').value)return;
+  D.cfg.siembra=document.getElementById('cfg-siembra')?.value||document.getElementById('cal-fecha')?.value||D.cfg.siembra;
+  D.cfg.reinvPct=parseFloat(document.getElementById('cfg-reinv')?.value)||20;
+  D.cfg.emergPct=parseFloat(document.getElementById('cfg-emerg')?.value)||5;
+  D.cfg.inversionInicial=parseFloat(document.getElementById('cfg-inversion')?.value)||0;
+  // Sync calendario
+  if(D.cfg.siembra){
+    const cf=document.getElementById('cal-fecha');
+    if(cf)cf.value=D.cfg.siembra;
+  }
+  sv();
+}
+
+// ═══════════════════ CALENDARIO ═══════════════════
+const ACTS=[
+  {d1:3,  d2:5,  icon:'🌱',n:'Primer riego',      col:'#0369A1',bg:'#EFF6FF',det:'Riego ligero de germinación. Humedecer bien el surco para asegurar brotación.'},
+  {d1:7,  d2:10, icon:'💧',n:'Riegos siguientes',  col:'#0369A1',bg:'#EFF6FF',det:'Cada 7–10 días. Ajustar según clima y humedad del suelo. En calor fuerte: cada 5–7 días.'},
+  {d1:15, d2:20, icon:'🌿',n:'Primer abono (urea)',col:'#15803D',bg:'#F0FDF4',det:'Cuando la planta tenga 4–6 hojas. Aplicar urea o fertilizante nitrogenado al pie.'},
+  {d1:20, d2:25, icon:'🐛',n:'1er monitoreo plagas',col:'#7C3AED',bg:'#FAF5FF',det:'Revisar gusano cogollero, pulgones. Fumigar SOLO si se detecta daño — no por calendario.'},
+  {d1:25, d2:30, icon:'✂️',n:'Deshierbo',          col:'#B45309',bg:'#FFFBEB',det:'Eliminar maleza para evitar competencia por nutrientes. Hacerlo a mano o con herramienta.'},
+  {d1:30, d2:40, icon:'🌾',n:'Aporque',            col:'#8B5E3C',bg:'#FEF9C3',det:'Arrimar tierra al tallo para dar soporte y evitar volcamiento. Mejora anclaje de raíces.'},
+  {d1:35, d2:40, icon:'🌿',n:'Segundo abono',      col:'#15803D',bg:'#F0FDF4',det:'Aplicar NPK, sulfato de amonio u otro. Coincide con crecimiento vegetativo fuerte.'},
+  {d1:45, d2:50, icon:'🐛',n:'2do monitoreo plagas',col:'#7C3AED',bg:'#FAF5FF',det:'Revisar nuevamente hojas y cogollos. Fumigar solo si hay presencia activa de plagas.'},
+  {d1:55, d2:70, icon:'🌸',n:'Floración',          col:'#DB2777',bg:'#FDF2F8',det:'Etapa crítica. Mantener buen riego. Evitar fumigaciones fuertes durante polinización.'},
+  {d1:90, d2:110,icon:'🌽',n:'Cosecha chala',      col:'#D97706',bg:'#FFFBEB',det:'Cosechar cuando hojas estén verdes y mazorca tierna. No esperar más de día 110.'},
+];
+
+function renderCalendario(){
+  const fecha=document.getElementById('cal-fecha').value||D.cfg.siembra;
+  if(D.cfg.siembra&&!document.getElementById('cal-fecha').value)document.getElementById('cal-fecha').value=D.cfg.siembra;
+
+  if(!fecha){
+    document.getElementById('cal-badge').style.display='none';
+    document.getElementById('cal-alertas').innerHTML='<div class="card" style="margin-bottom:12px"><div class="cb"><div class="empty">Ingresa la fecha de siembra para ver el cronograma</div></div></div>';
+    document.getElementById('cal-timeline').innerHTML='<div class="empty">Sin fecha</div>';
+    return;
+  }
+
+  const hoyD=new Date();hoyD.setHours(0,0,0,0);
+  const siem=new Date(fecha);siem.setHours(0,0,0,0);
+  const dias=Math.floor((hoyD-siem)/864e5);
+  const cosecha=90-dias;
+
+  document.getElementById('cal-badge').style.display='block';
+  document.getElementById('cal-dias').textContent=dias;
+  document.getElementById('cal-eta').textContent=cosecha>0?'Cosecha estimada en ~'+cosecha+' días':'🌽 En época de cosecha (día '+dias+')';
+
+  // Alertas — actividades en rango -2 a +7 días
+  const urgentes=ACTS.filter(a=>a.d1-dias<=-2||a.d1-dias<=7).filter(a=>a.d2-dias>=-2);
+  let alertHTML='';
+  if(urgentes.length){
+    alertHTML='<div class="card" style="margin-bottom:12px;border:2px solid var(--oro)">';
+    alertHTML+='<div class="ch" style="background:#B45309"><div class="ch-t">🚨 Alertas esta semana</div></div><div class="cb">';
+    urgentes.forEach(a=>{
+      const diff=a.d1-dias;
+      const vencida=dias>a.d2;
+      const hoyAct=diff<=0&&!vencida;
+      const col=vencida?'#DC2626':hoyAct?'#D97706':'#15803D';
+      const estado=vencida?'⏰ Vencida':hoyAct?'🟡 Ahora':'🟢 En '+diff+' días';
+      alertHTML+=`<div class="alerta-card" style="background:${a.bg};border-color:${col}">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+          <div style="font-size:0.78rem;font-weight:800;color:${a.col}">${a.icon} ${a.n}</div>
+          <div style="font-size:0.65rem;font-weight:800;color:${col};background:${col}22;padding:2px 7px;border-radius:5px">${estado}</div>
+        </div>
+        <div style="font-size:0.65rem;color:var(--txt2)">${a.det}</div>
+        <div style="font-size:0.58rem;color:var(--txt3);margin-top:2px">Días ${a.d1}–${a.d2} del ciclo</div>
+      </div>`;
+    });
+    alertHTML+='</div></div>';
+  }else{
+    alertHTML='<div class="card" style="margin-bottom:12px"><div class="cb"><div style="text-align:center;padding:10px;color:var(--v3);font-weight:700">✅ Sin alertas urgentes esta semana</div></div></div>';
+  }
+  document.getElementById('cal-alertas').innerHTML=alertHTML;
+
+  // Timeline completo
+  function fmtFecha(d){const x=new Date(siem);x.setDate(x.getDate()+d);return x.toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit'});}
+  const tl=ACTS.map(a=>{
+    const activa=dias>=a.d1&&dias<=a.d2;
+    const pasada=dias>a.d2;
+    const futura=dias<a.d1;
+    const semaforo=pasada?'✅':activa?'🟡':'⏳';
+    const op=pasada?'0.5':'1';
+    return`<div class="cal-act" style="opacity:${op}">
+      <div class="cal-dot" style="background:${activa?a.col:pasada?'#E2E8F0':a.bg};border-color:${activa?a.col:'transparent'}">${a.icon}</div>
+      <div style="flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:0.75rem;font-weight:800;color:${pasada?'var(--txt3)':a.col}">${a.n}</div>
+          <div style="font-size:0.58rem;color:var(--txt3)">${semaforo}</div>
+        </div>
+        <div style="font-size:0.62rem;color:var(--txt2);margin-top:2px">${a.det}</div>
+        <div style="font-size:0.55rem;color:var(--txt3);margin-top:2px">Día ${a.d1}–${a.d2} · ${fmtFecha(a.d1)} al ${fmtFecha(a.d2)}</div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('cal-timeline').innerHTML=tl;
+}
+
+function cerrarGuia(){
+  document.getElementById('guia-overlay').style.display='none';
+  localStorage.setItem('cc2_guia','visto');
+}
+
+// ═══════════════════ INIT ═══════════════════
+window.addEventListener('load',async()=>{
+  ld();
+  const h=hoy();
+  document.getElementById('v-fecha').value=h;
+  document.getElementById('g-fecha').value=h;
+  document.getElementById('d-fecha').value=h;
+  document.getElementById('ret-fecha').value=h;
+  if(D.cfg.siembra)document.getElementById('cal-fecha').value=D.cfg.siembra;
+  if(localStorage.getItem('cc2_guia')==='visto'){
+    document.getElementById('guia-overlay').style.display='none';
+  }
+  renderVentas();renderGastos();renderResumen();
+  // Sync Supabase en background
+  await syncAll();
+});
+</script>
+</body>
+</html>
