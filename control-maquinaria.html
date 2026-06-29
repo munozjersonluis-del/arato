@@ -1,0 +1,3001 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Control de Maquinaria – Arato</title>
+<!-- PWA -->
+<meta name="theme-color" content="#0B1437"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Arato Maq."/>
+<link rel="manifest" href="maquinaria-manifest.json"/>
+<!-- Apple touch icon (SVG inline como data URI) -->
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%230B1437'/%3E%3Ctext x='256' y='320' font-size='280' text-anchor='middle'%3E🚜%3C/text%3E%3C/svg%3E"/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #080d1a;
+  --surface: #0f1729;
+  --surface2: #162035;
+  --border: rgba(255,255,255,0.08);
+  --orange: #f97316;
+  --orange2: #ea580c;
+  --blue: #38bdf8;
+  --green: #22c55e;
+  --red: #ef4444;
+  --yellow: #f59e0b;
+  --text: #f1f5f9;
+  --muted: #64748b;
+  --sub: #94a3b8;
+  --meta: 3.5;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh}
+/* HEADER */
+.header{
+  background:linear-gradient(135deg,#0a1020 0%,#111827 100%);
+  border-bottom:2px solid rgba(249,115,22,0.4);
+  padding:12px 16px;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;
+  position:sticky;top:0;z-index:100;
+}
+.brand .sup{font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--orange);letter-spacing:3px;text-transform:uppercase;font-weight:700}
+.brand .title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;letter-spacing:1px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab-btn{
+  font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;
+  border:none;border-radius:7px;padding:8px 16px;cursor:pointer;
+  background:rgba(255,255,255,0.05);color:var(--sub);transition:all .2s;
+}
+.tab-btn.active{background:var(--orange);color:#fff}
+.import-btn{
+  font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;
+  background:rgba(56,189,248,0.12);color:var(--blue);border:1px solid rgba(56,189,248,0.3);
+  border-radius:7px;padding:8px 14px;cursor:pointer;transition:all .2s;
+}
+.import-btn:hover{background:rgba(56,189,248,0.22)}
+/* MAIN */
+.main{padding:18px 14px;max-width:960px;margin:0 auto}
+/* PAGES */
+.page{display:none}.page.active{display:block}
+/* TOAST */
+.toast{
+  position:fixed;top:72px;right:16px;z-index:999;
+  border-radius:10px;padding:12px 18px;font-weight:600;font-size:14px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.5);animation:slideIn .25s ease;
+  pointer-events:none;
+}
+.toast.ok{background:#14532d;border:1px solid var(--green);color:var(--green)}
+.toast.err{background:#450a0a;border:1px solid var(--red);color:var(--red)}
+@keyframes slideIn{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+/* SECTION TITLE */
+.sec-title{
+  font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;
+  color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;
+}
+/* STAT CARDS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:22px}
+.stat-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  padding:14px 16px;border-left:3px solid var(--orange);
+}
+.stat-card.blue{border-left-color:var(--blue)}
+.stat-card.purple{border-left-color:#a78bfa}
+.stat-card.green{border-left-color:var(--green)}
+.stat-card.yellow{border-left-color:var(--yellow)}
+.stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;font-weight:600}
+.stat-value{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--text)}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:3px}
+/* MACHINE CARDS */
+.machines-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:22px}
+.machine-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:16px;border-top:3px solid var(--orange);
+}
+.machine-name{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;margin-bottom:10px}
+.machine-stats{display:grid;grid-template-columns:1fr 1fr;gap:7px;font-size:13px}
+.machine-stats span{color:var(--muted)}
+.machine-stats strong{color:var(--text)}
+.progress-bar-bg{background:rgba(255,255,255,0.07);border-radius:4px;height:6px;margin-top:12px}
+.progress-bar{height:6px;border-radius:4px;transition:width .6s ease}
+.progress-label{font-size:10px;color:var(--muted);margin-top:4px}
+/* BADGE */
+.badge{
+  display:inline-block;border-radius:5px;padding:2px 9px;
+  font-size:10px;font-weight:800;letter-spacing:1.5px;font-family:'Barlow Condensed',sans-serif;
+}
+.badge.BIEN{background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3)}
+.badge.MAL{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.badge.REGULAR{background:rgba(245,158,11,.15);color:var(--yellow);border:1px solid rgba(245,158,11,.3)}
+/* CHART */
+.chart-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:13px;
+  padding:18px 16px;
+}
+/* FORM */
+.form-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:13px;
+  padding:22px 18px;display:flex;flex-direction:column;gap:15px;max-width:460px;
+}
+.field label{display:block;font-size:11px;color:var(--sub);font-weight:600;letter-spacing:.5px;margin-bottom:6px;text-transform:uppercase}
+.field input,.field select{
+  width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);
+  border-radius:8px;padding:11px 13px;color:var(--text);font-size:15px;font-family:'Barlow',sans-serif;
+  outline:none;transition:border .2s;
+}
+.field input:focus,.field select:focus{border-color:var(--orange)}
+.field input::placeholder{color:#475569}
+.preview-box{
+  background:rgba(249,115,22,.07);border:1px solid rgba(249,115,22,.2);
+  border-radius:9px;padding:13px 15px;
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;
+}
+.preview-box span{color:var(--muted)}
+.submit-btn{
+  background:linear-gradient(135deg,var(--orange2),var(--orange));
+  color:#fff;border:none;border-radius:10px;padding:14px;
+  font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;letter-spacing:1px;
+  cursor:pointer;transition:opacity .2s;
+}
+.submit-btn:hover{opacity:.88}
+/* TABLE */
+.filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.filters select,.filters input{
+  background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);
+  border-radius:8px;padding:8px 13px;color:var(--text);font-size:13px;font-family:'Barlow',sans-serif;outline:none;
+}
+.filters select option{background:#1e293b}
+.record-count{font-size:12px;color:var(--muted)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{background:rgba(255,255,255,0.05)}
+th{
+  padding:9px 11px;text-align:left;font-family:'Barlow Condensed',sans-serif;
+  font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;
+  border-bottom:1px solid var(--border);white-space:nowrap;
+}
+td{padding:9px 11px;border-bottom:1px solid rgba(255,255,255,0.04);white-space:nowrap}
+tr:nth-child(even) td{background:rgba(255,255,255,0.015)}
+.td-maquina{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;color:var(--orange)}
+.td-num{font-family:monospace}
+.td-tnhr-ok{color:var(--green);font-weight:700;font-family:monospace}
+.td-tnhr-bad{color:var(--red);font-weight:700;font-family:monospace}
+.td-modulos{color:var(--sub);font-size:12px}
+/* EMPTY */
+.empty{text-align:center;padding:60px 20px;color:var(--muted)}
+.empty .icon{font-size:48px;margin-bottom:14px}
+.empty p{font-size:16px;font-weight:600;margin-bottom:6px;color:#475569}
+.empty small{font-size:13px}
+
+/* AUTOCOMPLETE */
+.sug-list{
+  position:absolute;top:100%;left:0;right:0;z-index:200;
+  background:#1e293b;border:1px solid rgba(249,115,22,.4);border-radius:0 0 8px 8px;
+  max-height:180px;overflow-y:auto;display:none;
+}
+.sug-item{
+  padding:10px 13px;font-size:14px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.05);
+  transition:background .15s;
+}
+.sug-item:hover,.sug-item.active{background:rgba(249,115,22,.15);color:var(--orange)}
+.sug-item small{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</head>
+<body>
+
+<!-- MENÚ PRINCIPAL MAQUINARIA -->
+<!-- PWA INSTALL BANNER -->
+<div id="pwa-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9998;background:linear-gradient(135deg,#0B1437,#1A3A8F);padding:12px 16px;align-items:center;gap:12px;box-shadow:0 -4px 20px rgba(0,0,0,.4);border-top:2px solid #F5C800;">
+  <div style="font-size:2rem;flex-shrink:0;">🚜</div>
+  <div style="flex:1;">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;color:#F5C800;letter-spacing:1px;">Instalar App</div>
+    <div style="font-size:10px;color:rgba(255,255,255,.6);">Agregar a pantalla principal para acceso rápido</div>
+  </div>
+  <button onclick="instalarApp()" style="background:#F5C800;border:none;border-radius:10px;padding:9px 18px;font-size:12px;font-weight:800;color:#0B1437;cursor:pointer;font-family:inherit;white-space:nowrap;">📲 Instalar</button>
+  <button onclick="cerrarBannerPwa()" style="background:rgba(255,255,255,.1);border:none;border-radius:8px;padding:9px;color:rgba(255,255,255,.6);cursor:pointer;font-size:14px;">✕</button>
+</div>
+<!-- iOS INSTRUCCIONES -->
+<div id="pwa-ios" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9998;background:#1E293B;padding:14px 16px;align-items:center;gap:10px;box-shadow:0 -4px 20px rgba(0,0,0,.4);border-top:2px solid #38BDF8;">
+  <div style="font-size:1.5rem;">📱</div>
+  <div style="font-size:11px;color:#E2E8F0;line-height:1.6;">En Safari: toca <b>Compartir</b> (□↑) → <b>"Agregar a pantalla de inicio"</b> → <b>Agregar</b></div>
+</div>
+
+<div id="menu-maquinaria" style="min-height:100vh;background:linear-gradient(180deg,#0A1628 0%,#0F1F3A 100%);">
+  <!-- Header menú -->
+  <div style="background:linear-gradient(135deg,#0A1020,#111827);border-bottom:2px solid rgba(249,115,22,.4);padding:14px 16px;">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;color:var(--orange);letter-spacing:3px;text-transform:uppercase;font-weight:700;">Arato Mission Produce</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;letter-spacing:1px;">🚜 Control de Maquinaria</div>
+    <div style="font-size:10px;color:var(--sub);margin-top:2px;">Selecciona un fundo para continuar</div>
+  </div>
+  <!-- Stats rápidos -->
+  <div id="menu-stats-wrap" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;background:rgba(0,0,0,.3);border-bottom:1px solid rgba(255,255,255,.05);">
+    <div style="padding:10px 8px;text-align:center;border-right:1px solid rgba(255,255,255,.05);">
+      <div style="font-size:9px;color:var(--sub);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;">A1 TN/Hr</div>
+      <div id="ms-a1-tnhr" style="font-family:monospace;font-size:1rem;font-weight:800;color:var(--orange);">—</div>
+    </div>
+    <div style="padding:10px 8px;text-align:center;border-right:1px solid rgba(255,255,255,.05);">
+      <div style="font-size:9px;color:var(--sub);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;">A2 TN/Hr</div>
+      <div id="ms-a2-tnhr" style="font-family:monospace;font-size:1rem;font-weight:800;color:#38bdf8;">—</div>
+    </div>
+    <div style="padding:10px 8px;text-align:center;">
+      <div style="font-size:9px;color:var(--sub);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;">Meta</div>
+      <div style="font-family:monospace;font-size:1rem;font-weight:800;color:#22c55e;">3.5</div>
+    </div>
+  </div>
+  <!-- Grid de íconos grandes -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:16px;">
+
+    <!-- ARATO 1 -->
+    <div onclick="abrirFundo('arato1')" style="background:linear-gradient(135deg,#1A0E00,#2D1800);border:2px solid var(--orange);border-radius:20px;padding:22px 14px;text-align:center;cursor:pointer;transition:transform .15s;-webkit-tap-highlight-color:transparent;" ontouchstart="" onmousedown="this.style.transform='scale(.96)'" onmouseup="this.style.transform=''" ontouchend="this.style.transform=''">
+      <div style="font-size:3rem;margin-bottom:6px;">🚜</div><div style="font-size:1.6rem;margin-bottom:6px;">🥑</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:800;color:var(--orange);letter-spacing:2px;margin-bottom:4px;">ARATO 1</div>
+      <div style="font-size:0.65rem;color:var(--sub);">Registrar y ver maquinaria</div>
+      <div id="ms-a1-badge" style="margin-top:10px;display:inline-block;background:rgba(249,115,22,.15);border:1px solid rgba(249,115,22,.3);border-radius:20px;padding:4px 12px;font-size:0.6rem;font-weight:700;color:var(--orange);">— registros</div>
+    </div>
+
+    <!-- ARATO 2 -->
+    <div onclick="abrirFundo('arato2')" style="background:linear-gradient(135deg,#00101A,#001829);border:2px solid #38bdf8;border-radius:20px;padding:22px 14px;text-align:center;cursor:pointer;transition:transform .15s;-webkit-tap-highlight-color:transparent;" ontouchstart="" onmousedown="this.style.transform='scale(.96)'" onmouseup="this.style.transform=''" ontouchend="this.style.transform=''">
+      <div style="font-size:3rem;margin-bottom:6px;">🚜</div><div style="font-size:1.6rem;margin-bottom:6px;">🥑</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:800;color:#38bdf8;letter-spacing:2px;margin-bottom:4px;">ARATO 2</div>
+      <div style="font-size:0.65rem;color:var(--sub);">Registrar y ver maquinaria</div>
+      <div id="ms-a2-badge" style="margin-top:10px;display:inline-block;background:rgba(56,189,248,.15);border:1px solid rgba(56,189,248,.3);border-radius:20px;padding:4px 12px;font-size:0.6rem;font-weight:700;color:#38bdf8;">— registros</div>
+    </div>
+
+
+    <!-- SYNC -->
+    <div onclick="syncDesdeMenu()" style="background:rgba(34,197,94,.08);border:1.5px solid rgba(34,197,94,.3);border-radius:16px;padding:16px 14px;text-align:center;cursor:pointer;-webkit-tap-highlight-color:transparent;">
+      <div style="font-size:2rem;margin-bottom:6px;">🔄</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;color:#22c55e;letter-spacing:1px;">SYNC</div>
+      <div style="font-size:0.58rem;color:var(--sub);">Actualizar datos</div>
+    </div>
+
+    <!-- EXCEL -->
+    <div onclick="exportarExcelCompleto()" style="background:rgba(245,158,11,.08);border:1.5px solid rgba(245,158,11,.3);border-radius:16px;padding:16px 14px;text-align:center;cursor:pointer;-webkit-tap-highlight-color:transparent;">
+      <div style="font-size:2rem;margin-bottom:6px;">📊</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;color:var(--yellow);letter-spacing:1px;">EXCEL</div>
+      <div style="font-size:0.58rem;color:var(--sub);">Descargar reporte</div>
+    </div>
+
+    <!-- INSTALAR APP -->
+    <div onclick="instalarApp()" style="grid-column:1/-1;background:linear-gradient(135deg,#0B1437,#1A3A8F);border:2px solid #F5C800;border-radius:20px;padding:14px 20px;cursor:pointer;display:flex;align-items:center;gap:14px;-webkit-tap-highlight-color:transparent;" id="btn-instalar-pwa">
+      <div style="font-size:2rem;flex-shrink:0;">📲</div>
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:800;color:#F5C800;letter-spacing:2px;">INSTALAR APP</div>
+        <div style="font-size:0.6rem;color:rgba(255,255,255,.5);">Agregar a pantalla principal del celular</div>
+      </div>
+    </div>
+
+  </div>
+  <div id="menu-conn" style="text-align:center;font-size:0.55rem;color:var(--sub);padding-bottom:20px;">Cargando...</div>
+</div>
+
+<!-- HEADER INTERNO (se muestra al entrar a un fundo) -->
+<div id="header-interno" style="display:none;">
+  <!-- Header compacto -->
+  <div style="background:linear-gradient(135deg,#0A1020,#111827);border-bottom:2px solid rgba(249,115,22,.4);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button onclick="volverMenuMaq()" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:7px 12px;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:1px;">⬅️</button>
+      <div>
+        <div style="font-size:9px;color:var(--orange);letter-spacing:2px;text-transform:uppercase;font-weight:700;font-family:'Barlow Condensed',sans-serif;">Arato Mission Produce</div>
+        <div id="header-title" style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;letter-spacing:1px;">Control de Maquinaria</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <span id="ultima-act" style="font-size:0.5rem;color:rgba(255,255,255,0.4);"></span>
+      <button onclick="syncMaquinaria()" style="background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);border-radius:7px;padding:6px 10px;color:#22c55e;font-size:12px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;">🔄</button>
+      <button onclick="exportarExcelCompleto()" style="background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);border-radius:7px;padding:6px 10px;color:var(--yellow);font-size:12px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;">📊</button>
+    </div>
+  </div>
+
+  <!-- MENÚ ÍCONOS INTERNOS del fundo -->
+  <div id="menu-fundo" style="background:var(--bg);padding:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+    <div onclick="setTab('dashboard')" class="fundo-menu-item" id="fi-dashboard" style="background:var(--surface);border:1.5px solid rgba(249,115,22,.4);border-radius:14px;padding:14px 8px;text-align:center;cursor:pointer;">
+      <div style="font-size:2rem;margin-bottom:6px;">📊</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.9rem;font-weight:800;color:var(--orange);letter-spacing:1px;">DASHBOARD</div>
+      <div style="font-size:0.5rem;color:var(--sub);">Resumen</div>
+    </div>
+    <div onclick="setTab('registro')" class="fundo-menu-item" id="fi-registro" style="background:var(--surface);border:1.5px solid rgba(34,197,94,.3);border-radius:14px;padding:14px 8px;text-align:center;cursor:pointer;">
+      <div style="font-size:2rem;margin-bottom:6px;">➕</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.9rem;font-weight:800;color:#22c55e;letter-spacing:1px;">REGISTRAR</div>
+      <div style="font-size:0.5rem;color:var(--sub);">Nueva entrada</div>
+    </div>
+    <div onclick="setTab('personal')" class="fundo-menu-item" id="fi-personal" style="background:var(--surface);border:1.5px solid rgba(56,189,248,.3);border-radius:14px;padding:14px 8px;text-align:center;cursor:pointer;">
+      <div style="font-size:2rem;margin-bottom:6px;">👷</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.9rem;font-weight:800;color:#38bdf8;letter-spacing:1px;">PERSONAL</div>
+      <div style="font-size:0.5rem;color:var(--sub);">Trabajadores</div>
+    </div>
+    <div onclick="setTab('tabla')" class="fundo-menu-item" id="fi-tabla" style="background:var(--surface);border:1.5px solid rgba(167,139,250,.3);border-radius:14px;padding:14px 8px;text-align:center;cursor:pointer;">
+      <div style="font-size:2rem;margin-bottom:6px;">📋</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.9rem;font-weight:800;color:#a78bfa;letter-spacing:1px;">TABLA</div>
+      <div style="font-size:0.5rem;color:var(--sub);">Todos los datos</div>
+    </div>
+    <div onclick="setTab('reporte')" class="fundo-menu-item" id="fi-reporte" style="background:var(--surface);border:1.5px solid rgba(245,158,11,.3);border-radius:14px;padding:14px 8px;text-align:center;cursor:pointer;">
+      <div style="font-size:2rem;margin-bottom:6px;">📄</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.9rem;font-weight:800;color:var(--yellow);letter-spacing:1px;">REPORTE</div>
+      <div style="font-size:0.5rem;color:var(--sub);">Semanual WhatsApp</div>
+    </div>
+    <div onclick="cargarRegistros()" style="background:var(--surface);border:1.5px solid rgba(255,255,255,.1);border-radius:14px;padding:14px 8px;text-align:center;cursor:pointer;">
+      <div style="font-size:2rem;margin-bottom:6px;">☁️</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.9rem;font-weight:800;color:var(--sub);letter-spacing:1px;">CARGAR</div>
+      <div style="font-size:0.5rem;color:var(--sub);">Desde nube</div>
+    </div>
+  </div>
+  <input type="file" id="xlsxInput" accept=".xlsx,.xls" style="display:none" onchange="importExcel(this)"/>
+</div>
+
+<div class="main" id="main-content" style="display:none;">
+  <!-- TOAST -->
+  <div id="toast" class="toast" style="display:none"></div>
+  <!-- PÁGINA COMPARACIÓN -->
+  <div id="page-comparar" style="display:none;">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--sub);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">⚖️ Comparación Arato 1 vs Arato 2</div>
+    <div id="pg-comparar-content"></div>
+  </div>
+
+  <!-- PÁGINA COMPARACIÓN -->
+  <div id="page-comparar" style="display:none;">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--sub);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">⚖️ Comparación Arato 1 vs Arato 2</div>
+    <div id="pg-comparar-content"></div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="page-dashboard" class="page active">
+    <div id="dash-empty" class="empty">
+      <div class="icon">📊</div>
+      <p>Sin datos todavía</p>
+      <small>Importa un Excel o registra manualmente</small>
+    </div>
+    <div id="dash-content" style="display:none">
+      <div class="sec-title">Resumen General</div>
+      <div class="stats-grid" id="stats-grid"></div>
+      <div class="sec-title">Por Máquina</div>
+      <div class="machines-grid" id="machines-grid"></div>
+      <div class="chart-card" id="chart-wrap" style="display:none">
+        <div class="sec-title">Evolución TN/Hr por Fecha</div>
+        <canvas id="myChart" height="90"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- REGISTRO -->
+  <div id="page-registro" class="page">
+    <div class="sec-title">Nuevo Registro</div>
+    <div class="form-card">
+      <div class="field">
+        <label>Tipo de Equipo *</label>
+        <select id="f-tipo" onchange="onTipoChange()" style="font-weight:700">
+          <option value="maquinaria">🚜 Maquinaria (Meta: 3.5 TN/Hr)</option>
+          <option value="montacargas">🏗️ Montacargas</option>
+        </select>
+      </div>
+      <div class="field" style="position:relative">
+        <label>Máquina / Equipo *</label>
+        <input id="f-maquina" type="text" placeholder="Ej: INC-VAL-01" autocomplete="off"
+          oninput="onMaquinaInput()" onblur="hideSug('sug-maquina')"/>
+        <div id="sug-maquina" class="sug-list"></div>
+      </div>
+      <div class="field">
+        <label>Fecha *</label>
+        <input id="f-fecha" type="text" placeholder="DD/MM/AAAA" oninput="updatePreview();autoCargarToneladasMaq()"/>
+      </div>
+      <div class="field">
+        <label>Horas Efectivas *</label>
+        <input id="f-hrsejec" type="number" step="0.1" min="0" placeholder="Ej: 8.5" oninput="updatePreview()"/>
+      </div>
+      <div class="field">
+        <label>Toneladas cosechadas *</label>
+        <input id="f-bins" type="number" step="0.1" placeholder="Ej: 12.5" oninput="updatePreview()"/>
+        <div style="font-size:0.6rem;color:#64748B;margin-top:3px" id="f-bins-calc"></div>
+      </div>
+      <div class="field" style="position:relative">
+        <label>Operador</label>
+        <input id="f-operador" type="text" placeholder="Nombre del operador" autocomplete="off"
+          oninput="onOperadorInput()" onblur="hideSug('sug-operador')"/>
+        <div id="sug-operador" class="sug-list"></div>
+      </div>
+      <div class="field">
+        <label>Módulos</label>
+        <input id="f-modulos" type="text" placeholder="Ej: M01, M07"/>
+      </div>
+      <div class="preview-box" id="preview" style="display:none">
+        <div><span>Horas: </span><strong id="maq-p-hrs">—</strong></div>
+        <div><span>Toneladas: </span><strong id="maq-p-tons">—</strong></div>
+        <div><span>TN/Hr: </span><strong id="maq-p-tnhr">—</strong></div>
+        <div><span>Estado: </span><span id="p-estado">—</span></div>
+      </div>
+      <button class="submit-btn" onclick="guardarRegistro()">Guardar Registro ➜</button>
+    </div>
+  </div>
+
+  <!-- TABLA -->
+  <div id="page-tabla" class="page">
+    <div class="filters">
+      <select id="filter-maquina" onchange="renderTabla()">
+        <option value="TODAS">Todas las máquinas</option>
+      </select>
+      <input id="filter-fecha" type="text" placeholder="Filtrar fecha DD/MM/AAAA" oninput="renderTabla()" style="width:200px"/>
+      <span class="record-count" id="record-count">0 registros</span>
+    </div>
+    <div id="tabla-empty" class="empty" style="display:none">
+      <div class="icon">📋</div>
+      <p>Sin registros</p>
+    </div>
+    <div class="table-wrap" id="tabla-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Máquina</th><th>Operador</th><th>Fecha</th><th>Inicio</th><th>Fin</th>
+            <th>Hrs</th><th>Bins</th><th>Toneladas</th><th>TN/Hr</th>
+            <th>Estado</th><th>Módulos</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+  <!-- REPORTE -->
+  <div id="page-reporte" class="page">
+    <!-- Selector de fundo para el reporte -->
+    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
+      <button id="rpt-fundo-a1" onclick="setRptFundo('arato1')" style="padding:7px 14px;background:var(--orange);border:none;border-radius:8px;color:#fff;font-size:0.7rem;font-weight:800;cursor:pointer;font-family:inherit;letter-spacing:1px;">🚜 ARATO 1</button>
+      <button id="rpt-fundo-a2" onclick="setRptFundo('arato2')" style="padding:7px 14px;background:#1e293b;border:1px solid #38bdf8;border-radius:8px;color:#38bdf8;font-size:0.7rem;font-weight:800;cursor:pointer;font-family:inherit;letter-spacing:1px;">🚜 ARATO 2</button>
+      <button id="rpt-fundo-global" onclick="setRptFundo('global_vs')" style="padding:7px 14px;background:#1e293b;border:1px solid #a78bfa;border-radius:8px;color:#a78bfa;font-size:0.7rem;font-weight:800;cursor:pointer;font-family:inherit;letter-spacing:1px;">🌐 GLOBAL A1+A2</button>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button id="rpt-btn-global" onclick="setVistaRpt('global')" style="padding:7px 12px;background:#f97316;border:none;border-radius:8px;color:#fff;font-size:0.7rem;font-weight:700;cursor:pointer;font-family:inherit">🌍 Global/Día</button>
+        <button id="rpt-btn-semanal" onclick="setVistaRpt('semanal')" style="padding:7px 12px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#94A3B8;font-size:0.7rem;font-weight:700;cursor:pointer;font-family:inherit">📅 Semanal</button>
+        <button id="rpt-btn-maq" onclick="setVistaRpt('maq')" style="padding:7px 12px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#94A3B8;font-size:0.7rem;font-weight:700;cursor:pointer;font-family:inherit">🚜 Por Máquina</button>
+        <button id="rpt-btn-monta" onclick="setVistaRpt('monta')" style="padding:7px 12px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#94A3B8;font-size:0.7rem;font-weight:700;cursor:pointer;font-family:inherit">🏗️ Montacargas</button>
+        <button id="rpt-btn-combo" onclick="setVistaRpt('combo')" style="padding:7px 12px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#94A3B8;font-size:0.7rem;font-weight:700;cursor:pointer;font-family:inherit">📋 Combinado</button>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button onclick="dlReporte()" style="padding:7px 12px;background:#D97706;border:none;border-radius:8px;color:#fff;font-size:0.7rem;font-weight:700;cursor:pointer;font-family:inherit">📸 Imagen</button>
+        <button onclick="waReporte()" style="padding:7px 12px;background:#16A34A;border:none;border-radius:8px;color:#fff;font-size:0.7rem;font-weight:700;cursor:pointer;font-family:inherit">📲 WhatsApp</button>
+      </div>
+    </div>
+    <div id="rpt-maq-outer" style="overflow-x:auto;overflow-y:visible;background:#F1F5F9;border-radius:12px;border:1px solid #CBD5E1;padding:6px;-webkit-overflow-scrolling:touch;">
+      <div id="rpt-maq-cont"></div>
+    </div>
+  </div>
+
+  <!-- PERSONAL -->
+  <div id="page-personal" class="page">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div class="form-card" style="grid-column:1/-1">
+        <div style="font-size:0.65rem;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">👷 Registrar Personal</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <div class="field">
+            <label>Fecha *</label>
+            <input id="prs-fecha" type="date" onchange="autoCargarToneladas()">
+          </div>
+          <div class="field">
+            <label>N° Trabajadores *</label>
+            <input id="prs-personal" type="number" min="1" placeholder="276" oninput="calcHrsTotal();prevPersonal()">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <div class="field">
+            <label>Toneladas <span id="prs-tons-lbl" style="color:#16A34A;font-size:0.55rem">(se carga automático de maquinaria)</span></label>
+            <input id="prs-tons" type="number" step="0.01" min="0" placeholder="Se carga automático..." oninput="prevPersonal()" style="font-family:'JetBrains Mono',monospace;font-weight:700">
+          </div>
+          <div class="field">
+            <label>Hrs por persona</label>
+            <input id="prs-hrs-pp" type="number" step="0.01" min="0" placeholder="10.46" oninput="calcHrsTotal()">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <div class="field">
+            <label>Horas totales *</label>
+            <input id="prs-hrs" type="number" step="0.01" min="0" placeholder="52.3" oninput="prevPersonal()">
+          </div>
+          <div class="field" style="display:flex;flex-direction:column;justify-content:flex-end">
+            <div style="font-size:0.6rem;color:#64748B;padding:6px 0">Se calcula automático si ingresas hrs/persona, o escribe el total directamente</div>
+          </div>
+        </div>
+        <div id="prs-prev" style="display:none;background:#1e293b;border-radius:8px;padding:10px;margin-bottom:10px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center">
+          <div><div style="font-size:8px;color:#94A3B8;text-transform:uppercase">TN/Hr</div><div id="prs-tnhr" style="font-size:1.4rem;font-weight:800;font-family:monospace;color:#F5C800">—</div></div>
+          <div><div style="font-size:8px;color:#94A3B8;text-transform:uppercase">TN/Persona</div><div id="prs-tnp" style="font-size:1.4rem;font-weight:800;font-family:monospace;color:#60A5FA">—</div></div>
+          <div><div style="font-size:8px;color:#94A3B8;text-transform:uppercase">Hrs/Persona</div><div id="prs-hrsp" style="font-size:1.4rem;font-weight:800;font-family:monospace;color:#A78BFA">—</div></div>
+        </div>
+        <div class="field" style="margin-bottom:10px">
+          <label>Observación</label>
+          <input id="prs-obs" type="text" placeholder="Opcional">
+        </div>
+        <button onclick="guardarPersonal()" style="width:100%;padding:11px;background:#16A34A;border:none;border-radius:8px;color:#fff;font-weight:700;font-size:0.85rem;cursor:pointer;font-family:inherit">✅ Guardar Registro de Personal</button>
+      </div>
+    </div>
+    <div id="personal-tabla-cont"></div>
+    <div style="text-align:right;margin-top:8px">
+      <button onclick="if(confirm('¿Borrar todo el historial de personal?')){personalRecords=[];svPersonal();renderPersonalTabla();showToast('Historial borrado');}" style="background:none;border:1px solid #DC2626;color:#DC2626;border-radius:7px;padding:6px 14px;font-size:0.7rem;cursor:pointer;font-family:inherit">🗑 Borrar historial</button>
+    </div>
+  </div>
+
+<!-- MODAL EDITAR -->
+<div id="modal-edit" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;align-items:flex-end;">
+  <div style="background:#0f1729;border-radius:16px 16px 0 0;padding:20px;width:100%;max-height:85vh;overflow-y:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:800;color:#fff;letter-spacing:1px;">✏️ EDITAR REGISTRO</div>
+      <button onclick="cerrarEdit()" style="background:none;border:none;color:#888;font-size:1.2rem;cursor:pointer;">✕</button>
+    </div>
+    <input type="hidden" id="edit-id">
+    <div class="field"><label>Máquina</label><input id="edit-maquina" type="text" style="text-transform:uppercase;"></div>
+    <div class="field"><label>Fecha</label><input id="edit-fecha" type="text" placeholder="DD/MM/AAAA"></div>
+    <div class="field"><label>Horas Efectivas</label><input id="edit-hrs" type="number" step="0.1" min="0"></div>
+    <div class="field"><label>Toneladas cosechadas</label><input id="edit-bins" type="number" step="0.1" min="0" placeholder="Ej: 12.5"></div>
+    <div class="field"><label>Operador</label><input id="edit-operador" type="text"></div>
+    <div class="field"><label>Módulos</label><input id="edit-modulos" type="text"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;">
+      <button onclick="guardarEdit()" style="padding:12px;background:#f97316;color:#fff;border:none;border-radius:10px;font-weight:700;font-size:0.85rem;cursor:pointer;font-family:inherit;">✅ Guardar</button>
+      <button onclick="cerrarEdit()" style="padding:12px;background:#1e293b;color:#888;border:none;border-radius:10px;font-weight:700;font-size:0.85rem;cursor:pointer;font-family:inherit;">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+const META = 3.5;
+const META_MONTA = 0; // Meta montacargas — definir cuando haya datos
+const KG_BIN = 435;
+const COLORS = ["#f97316","#38bdf8","#a78bfa","#34d399","#fb7185","#fbbf24"];
+let records = [];
+let fundoActual = 'arato1'; // 'arato1' | 'arato2' | 'comparar'
+let allRecords = []; // todos los registros sin filtrar
+let chartInstance = null;
+
+function exportarExcelCompleto() {
+  if(!allRecords.length){showToast('Sin datos para exportar','err');return;}
+  const _exportRecs=allRecords; // exportar TODOS los registros
+  const wb = XLSX.utils.book_new();
+  const META_VAL = META;
+
+  // ── HOJA 1: BASE DE DATOS ──
+  const bd = [
+    ['REGISTRO CONTINUO DE MAQUINARIA Y CAMPO','','','','','','','','','',''],
+    ['','','','','','','','','','',''],
+    ['','','','','','','','','','',''],
+    ['Maquina','Operador','Fecha','Hora Inicio','Hora Fin','Hrs Ejec','Bins','Toneladas','TN/Hr Real','Meta','Estado','Modulos']
+  ];
+  _exportRecs.forEach(r=>{
+    bd.push([r.maquina||'',r.operador||'',r.fecha||'',r.horaInicio||'',r.horaFin||'',
+      +r.hrsEjec.toFixed(1),+r.bins.toFixed(1),+r.toneladas.toFixed(1),+r.tnhr.toFixed(1),
+      META_VAL,r.estado||'',r.modulos||'']);
+  });
+  const ws1 = XLSX.utils.aoa_to_sheet(bd);
+  ws1['!cols']=[{wch:12},{wch:14},{wch:11},{wch:10},{wch:8},{wch:8},{wch:7},{wch:10},{wch:10},{wch:6},{wch:8},{wch:18}];
+  ws1['!merges']=[{s:{r:0,c:0},e:{r:0,c:11}}];
+
+  // Estilos hoja 1
+  const hdrS={font:{bold:true,color:{rgb:'FFFFFF'},sz:13},fill:{fgColor:{rgb:'1A5C38'}},alignment:{horizontal:'center',vertical:'center'}};
+  const colS={font:{bold:true,color:{rgb:'FFFFFF'},sz:10},fill:{fgColor:{rgb:'2D6A4F'}},alignment:{horizontal:'center'}};
+  if(ws1['A1'])ws1['A1'].s=hdrS;
+  ['A4','B4','C4','D4','E4','F4','G4','H4','I4','J4','K4','L4'].forEach(c=>{if(ws1[c])ws1[c].s=colS;});
+  _exportRecs.forEach((_,i)=>{
+    const row=i+5;const r=_exportRecs[i];const bg=i%2===0?'F8FAFC':'FFFFFF';
+    const isBien=(r.tnhr||0)>=META_VAL;const isReg=(r.tnhr||0)>=META_VAL*0.7;
+    ['A','B','C','D','E','F','G','H','L'].forEach(c=>{if(ws1[c+row])ws1[c+row].s={fill:{fgColor:{rgb:bg}},font:{sz:9},alignment:{horizontal:'center'}};});
+    if(ws1['I'+row])ws1['I'+row].s={font:{bold:true,color:{rgb:isBien?'15803D':isReg?'D97706':'DC2626'},sz:10},fill:{fgColor:{rgb:bg}},alignment:{horizontal:'center'}};
+    if(ws1['K'+row])ws1['K'+row].s={font:{bold:true,color:{rgb:isBien?'15803D':isReg?'D97706':'DC2626'},sz:9},fill:{fgColor:{rgb:isBien?'DCFCE7':isReg?'FEF3C7':'FEE2E2'}},alignment:{horizontal:'center'}};
+  });
+  XLSX.utils.book_append_sheet(wb, ws1, 'Base_Datos');
+
+  // ── HOJA 2: DASHBOARD ──
+  const maqMap={};
+  records.forEach(r=>{
+    if(!maqMap[r.maquina])maqMap[r.maquina]={bins:0,tons:0,hrs:0};
+    maqMap[r.maquina].bins+=r.bins||0;
+    maqMap[r.maquina].tons+=r.toneladas||0;
+    maqMap[r.maquina].hrs+=r.hrsEjec||0;
+  });
+  const maqNames=Object.keys(maqMap).sort();
+  const fechas=[...new Set(_exportRecs.map(r=>r.fecha))].sort((a,b)=>{
+    const pa=a.split('/'),pb=b.split('/');
+    return new Date(pa[2],pa[1]-1,pa[0])-new Date(pb[2],pb[1]-1,pb[0]);
+  });
+
+  const dash=[
+    ['PANEL DE CONTROL GENERAL Y FILTRADO POR FECHAS','','','','',''],
+    ['','','','','',''],['','','','','',''],
+    ['Resumen General por Maquina (Consolidado Historico)','','','','',''],
+    ['Maquina','Total Horas','Total Bins','Total Toneladas','TN/Hr Promedio','Estado Global'],
+  ];
+  maqNames.forEach(m=>{
+    const d=maqMap[m];
+    const prom=d.hrs>0?+(d.tons/d.hrs).toFixed(1):0;
+    const estado=prom>=META_VAL?'BIEN':prom>=META_VAL*0.7?'REGULAR':'MAL';
+    dash.push([m,+d.hrs.toFixed(1),+d.bins.toFixed(1),+d.tons.toFixed(1),prom,estado]);
+  });
+  dash.push(['','','','','','']);
+  dash.push(['','','','','','']);
+  dash.push(['Rendimiento Cronologico Diario (Evolucion por Fechas)','','','','','']);
+  dash.push(['Fecha',...maqNames.map(m=>'TN/Hr '+m),'Meta Minima']);
+  fechas.forEach(f=>{
+    const row=[f];
+    maqNames.forEach(m=>{
+      const rec=records.find(r=>r.fecha===f&&r.maquina===m);
+      row.push(rec?+(rec.tnhr||0).toFixed(1):0);
+    });
+    row.push(META_VAL);
+    dash.push(row);
+  });
+
+  const ws2=XLSX.utils.aoa_to_sheet(dash);
+  ws2['!cols']=[{wch:18},{wch:12},{wch:12},{wch:14},{wch:14},{wch:12}];
+  ws2['!merges']=[{s:{r:0,c:0},e:{r:0,c:5}},{s:{r:3,c:0},e:{r:3,c:5}}];
+
+  const hS2={font:{bold:true,color:{rgb:'FFFFFF'},sz:13},fill:{fgColor:{rgb:'1A5C38'}},alignment:{horizontal:'center',vertical:'center'}};
+  const h2S={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'2D6A4F'}},alignment:{horizontal:'center'}};
+  const colH2={font:{bold:true,color:{rgb:'FFFFFF'},sz:10},fill:{fgColor:{rgb:'1A5C38'}},alignment:{horizontal:'center'}};
+  if(ws2['A1'])ws2['A1'].s=hS2;
+  if(ws2['A4'])ws2['A4'].s=h2S;
+  ['A5','B5','C5','D5','E5','F5'].forEach(c=>{if(ws2[c])ws2[c].s=colH2;});
+  maqNames.forEach((_,i)=>{
+    const row=i+6;const m=maqNames[i];const d=maqMap[m];
+    const prom=d.hrs>0?+(d.tons/d.hrs).toFixed(1):0;
+    const isBien=prom>=META_VAL;const isReg=prom>=META_VAL*0.7;
+    const bg=i%2===0?'F8FAFC':'FFFFFF';
+    ['A','B','C','D'].forEach(c=>{if(ws2[c+row])ws2[c+row].s={fill:{fgColor:{rgb:bg}},font:{sz:10},alignment:{horizontal:'center'}};});
+    if(ws2['E'+row])ws2['E'+row].s={font:{bold:true,color:{rgb:isBien?'15803D':isReg?'D97706':'DC2626'},sz:11},fill:{fgColor:{rgb:bg}},alignment:{horizontal:'center'}};
+    if(ws2['F'+row])ws2['F'+row].s={font:{bold:true,color:{rgb:isBien?'15803D':isReg?'D97706':'DC2626'},sz:10},fill:{fgColor:{rgb:isBien?'DCFCE7':isReg?'FEF3C7':'FEE2E2'}},alignment:{horizontal:'center'}};
+  });
+
+  const cronStart=5+maqNames.length+4;
+  const cronHdrRow=cronStart+1;
+  if(ws2['A'+(cronStart-1)])ws2['A'+(cronStart-1)].s=h2S;
+  // Color cronologico rows
+  fechas.forEach((_,i)=>{
+    const row=cronHdrRow+1+i;const bg=i%2===0?'F8FAFC':'FFFFFF';
+    if(ws2['A'+row])ws2['A'+row].s={fill:{fgColor:{rgb:bg}},font:{sz:10},alignment:{horizontal:'center'}};
+    maqNames.forEach((m,mi)=>{
+      const rec=records.find(r=>r.fecha===fechas[i]&&r.maquina===m);
+      const tnhr=rec?rec.tnhr:0;
+      const isBien=tnhr>=META_VAL;const isReg=tnhr>=META_VAL*0.7;
+      const col=String.fromCharCode(66+mi);
+      if(ws2[col+row])ws2[col+row].s={font:{bold:true,color:{rgb:isBien?'15803D':isReg?'D97706':'DC2626'},sz:10},fill:{fgColor:{rgb:isBien?'DCFCE7':isReg?'FEF3C7':'FEE2E2'}},alignment:{horizontal:'center'}};
+    });
+    const metaCol=String.fromCharCode(66+maqNames.length);
+    if(ws2[metaCol+row])ws2[metaCol+row].s={fill:{fgColor:{rgb:bg}},font:{bold:true,color:{rgb:'2563EB'},sz:10},alignment:{horizontal:'center'}};
+  });
+
+  XLSX.utils.book_append_sheet(wb, ws2, 'Dashboard_Graficos');
+  const hoy=new Date();
+  const fecha=`${hoy.getDate().toString().padStart(2,'0')}_${(hoy.getMonth()+1).toString().padStart(2,'0')}_${hoy.getFullYear()}`;
+  XLSX.writeFile(wb,'Control_Maquinaria_Arato_'+fecha+'.xlsx');
+  showToast('✅ Excel descargado','ok');
+}
+
+async function syncMaquinaria(silent=false) {
+  try {
+    if(!silent)showToast('Sincronizando con Google Sheets...','ok');
+    const r = await fetch('/api/sheets-maquinaria', {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'});
+    const d = await r.json();
+    if(!silent){
+      if(d.ok) showToast('✅ Google Sheets actualizado','ok');
+      else showToast('Error: '+(d.error||'sin respuesta'),'err');
+    }
+  } catch(e) { if(!silent)showToast('Error: '+e.message,'err'); }
+}
+
+// ── Supabase ──
+const SURL='https://rqvcvffyynpnighzwxju.supabase.co';
+const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdmN2ZmZ5eW5wbmlnaHp3eGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MjgyNDcsImV4cCI6MjA5MzMwNDI0N30.fFufNEdRvAzl6O6BqtTbx83O3Eg8Wd7gACNJDGQKga4';
+
+async function supaFetch(path, method, body) {
+  const opts={method:method||'GET',headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json'}};
+  if(body)opts.body=JSON.stringify(body);
+  if(method==='POST')opts.headers['Prefer']='return=representation';
+  if(method==='PATCH')opts.headers['Prefer']='return=representation';
+  const r=await fetch(SURL+'/rest/v1/'+path,opts);
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  return method==='DELETE'?null:r.json();
+}
+
+async function cargarRegistros() {
+  try {
+    showToast('Cargando datos...','ok');
+    const rows = await supaFetch('maquinaria_registros?select=*&order=fecha.desc,created_at.desc');
+    allRecords = rows.map(r => ({
+      id: r.id,
+      maquina: r.maquina||'',
+      operador: r.operador||'',
+      fecha: r.fecha||'',
+      tipo: r.tipo||'maquinaria',
+      horaInicio: r.hora_inicio||'',
+      horaFin: r.hora_fin||'',
+      hrsEjec: r.hrs_ejec||0,
+      bins: r.bins||0,
+      toneladas: r.toneladas||0,
+      tnhr: r.tn_hr||0,
+      estado: r.estado||'',
+      modulos: r.modulos||'',
+      fundo: r.fundo||'arato1'
+    }));
+    aplicarFiltroFundo();
+    showToast('✓ '+allRecords.length+' registros cargados','ok');
+    updHora();
+    actualizarMenuMaq();
+  } catch(e) {
+    showToast('Error cargando: '+e.message,'err');
+  }
+}
+
+function aplicarFiltroFundo(){
+  if(fundoActual==='comparar'){
+    records=allRecords;
+    renderComparacion();
+  } else {
+    records=allRecords.filter(r=>r.fundo===fundoActual);
+    updateMaquinaFilter();
+    renderDashboard();
+  }
+}
+
+function abrirFundo(f){
+  fundoActual=f;
+  document.getElementById('menu-maquinaria').style.display='none';
+  document.getElementById('header-interno').style.display='block';
+  const ht=document.getElementById('header-title');
+  if(ht)ht.textContent=f==='arato1'?'🚜 ARATO 1':f==='arato2'?'🚜 ARATO 2':'⚖️ COMPARAR';
+  if(f==='comparar'){
+    const mf=document.getElementById('menu-fundo');
+    const mc=document.getElementById('main-content');
+    if(mf)mf.style.display='none';
+    if(mc){mc.style.display='block';}
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    const pc=document.getElementById('page-comparar');
+    if(pc)pc.style.display='block';
+    aplicarFiltroFundo();
+    renderComparacion();
+  } else {
+    // Mostrar menú de íconos del fundo
+    const mf=document.getElementById('menu-fundo');
+    const mc=document.getElementById('main-content');
+    if(mf)mf.style.display='grid';
+    if(mc)mc.style.display='none';
+    const pc=document.getElementById('page-comparar');
+    if(pc)pc.style.display='none';
+    aplicarFiltroFundo();
+  }
+}
+
+function volverMenuMaq(){
+  document.getElementById('menu-maquinaria').style.display='block';
+  document.getElementById('header-interno').style.display='none';
+  document.getElementById('main-content').style.display='none';
+  actualizarMenuMaq();
+}
+
+function actualizarMenuMaq(){
+  const r1=allRecords.filter(r=>r.fundo==='arato1'&&r.tipo==='maquinaria');
+  const r2=allRecords.filter(r=>r.fundo==='arato2'&&r.tipo==='maquinaria');
+  function tnhr(recs){
+    const h=recs.reduce((s,r)=>s+r.hrsEjec,0);
+    const t=recs.reduce((s,r)=>s+r.toneladas,0);
+    return h>0?(t/h).toFixed(2):'—';
+  }
+  const th1=tnhr(r1),th2=tnhr(r2);
+  const META=3.5;
+  const el1=document.getElementById('ms-a1-tnhr');
+  const el2=document.getElementById('ms-a2-tnhr');
+  const b1=document.getElementById('ms-a1-badge');
+  const b2=document.getElementById('ms-a2-badge');
+  const conn=document.getElementById('menu-conn');
+  if(el1){el1.textContent=th1;el1.style.color=th1!=='—'&&+th1>=META?'#22c55e':'#ef4444';}
+  if(el2){el2.textContent=th2;el2.style.color=th2!=='—'&&+th2>=META?'#22c55e':'#38bdf8';}
+  if(b1)b1.textContent=r1.length+' registros';
+  if(b2)b2.textContent=r2.length+' registros';
+  if(conn)conn.textContent=allRecords.length+' registros totales · Act: '+new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'});
+}
+
+async function syncDesdeMenu(){
+  const conn=document.getElementById('menu-conn');
+  if(conn)conn.textContent='Sincronizando...';
+  await cargarRegistros();
+  actualizarMenuMaq();
+}
+
+function setFundo(f){
+  abrirFundo(f);
+}
+
+
+
+function editarRegistro(id) {
+  const r = records.find(x=>x.id===id);
+  if(!r) return;
+  document.getElementById('edit-id').value = id;
+  document.getElementById('edit-maquina').value = r.maquina||'';
+  document.getElementById('edit-fecha').value = r.fecha||'';
+  document.getElementById('edit-hrs').value = r.hrsEjec||'';
+  document.getElementById('edit-bins').value = r.toneladas||''; // mostrar toneladas, no bins
+  document.getElementById('edit-operador').value = r.operador||'';
+  document.getElementById('edit-modulos').value = r.modulos||'';
+  const modal = document.getElementById('modal-edit');
+  modal.style.display = 'flex';
+}
+
+function cerrarEdit() {
+  document.getElementById('modal-edit').style.display = 'none';
+}
+
+async function guardarEdit() {
+  const id = parseInt(document.getElementById('edit-id').value);
+  const maquina = document.getElementById('edit-maquina').value.trim().toUpperCase();
+  const fecha = document.getElementById('edit-fecha').value.trim();
+  const hrsEjec = parseFloat(document.getElementById('edit-hrs').value)||0;
+  const tons = parseFloat(document.getElementById('edit-bins').value)||0; // campo es toneladas
+  const bins = +(tons*1000/KG_BIN).toFixed(1); // bins calculados
+  const operador = document.getElementById('edit-operador').value.trim();
+  const modulos = document.getElementById('edit-modulos').value.trim();
+  if(!maquina||!fecha||!hrsEjec||!tons){showToast('Completa los campos','err');return;}
+  const tnhr = hrsEjec>0 ? +(tons/hrsEjec).toFixed(2) : 0;
+  const estado = calcEstado(tnhr);
+  try {
+    await supaFetch('maquinaria_registros?id=eq.'+id,'PATCH',{
+      maquina, operador, fecha,
+      hrs_ejec: +hrsEjec.toFixed(1),
+      bins: +bins.toFixed(1),
+      toneladas: tons,
+      tn_hr: tnhr,
+      meta: META,
+      estado, modulos
+    });
+    // Update local records
+    const idx = records.findIndex(r=>r.id===id);
+    if(idx>=0) records[idx] = {...records[idx], maquina, operador, fecha, hrsEjec:+hrsEjec.toFixed(1), bins:+bins.toFixed(1), toneladas:tons, tnhr, estado, modulos};
+    cerrarEdit();
+    renderDashboard();
+    renderTabla();
+    showToast('✓ Registro actualizado','ok');
+    syncMaquinaria(true);
+  } catch(e) {
+    showToast('Error: '+e.message,'err');
+  }
+}
+
+async function eliminarRegistro(id) {
+  if(!confirm('¿Eliminar este registro?'))return;
+  try {
+    await supaFetch('maquinaria_registros?id=eq.'+id,'DELETE');
+    records = records.filter(r=>r.id!==id);
+    renderTabla();
+    renderDashboard();
+    showToast('Eliminado','ok');
+    syncMaquinaria(true);
+  } catch(e) { showToast('Error: '+e.message,'err'); }
+}
+
+// ── PERSONAL ────────────────────────────────────────────────
+var personalRecords = [];
+
+function svPersonal(){try{localStorage.setItem('arato_personal',JSON.stringify(personalRecords));}catch(e){}}
+async function ldPersonal(){
+  // Cargar desde caché local primero
+  try{const d=JSON.parse(localStorage.getItem('arato_personal'));if(Array.isArray(d)&&d.length)personalRecords=d;}catch(e){}
+  // Luego cargar desde Supabase
+  try{
+    const rows=await supaFetch('personal_acopio?order=fecha.desc,created_at.desc','GET');
+    if(Array.isArray(rows)&&rows.length){
+      personalRecords=rows.map(r=>({
+        id:r.id,fecha:r.fecha,personal:r.personal,
+        toneladas:r.toneladas,horas:r.horas,
+        tnhr:r.tnhr,tnp:r.tnp,hrsp:r.hrsp,obs:r.obs||''
+      }));
+      svPersonal();
+    }
+  }catch(e){console.warn('Personal desde localStorage');}
+  renderPersonalTabla();
+}
+
+function onTipoChange(){
+  updatePreview();
+  autoCargarToneladasMaq();
+}
+
+function autoCargarToneladasMaq(){
+  const tipo=document.getElementById('f-tipo')?.value;
+  const fecha=document.getElementById('f-fecha')?.value?.trim();
+  if(!fecha)return;
+  // Solo auto-cargar si es montacargas
+  if(tipo!=='montacargas')return;
+  // Sumar toneladas de maquinaria de esa fecha
+  const recsMaq=records.filter(r=>r.fecha===fecha&&(!r.tipo||r.tipo==='maquinaria'));
+  const totTons=recsMaq.reduce((s,r)=>s+(r.toneladas||0),0);
+  if(totTons>0){
+    document.getElementById('f-bins').value=totTons.toFixed(2);
+    document.getElementById('f-bins-calc').textContent='✅ '+totTons.toFixed(2)+' TN cargadas automáticamente de maquinaria del '+fecha;
+    document.getElementById('f-bins-calc').style.color='#16A34A';
+    updatePreview();
+  } else {
+    document.getElementById('f-bins-calc').textContent='⚠️ Sin datos de maquinaria para '+fecha+' — ingresa manualmente';
+    document.getElementById('f-bins-calc').style.color='#D97706';
+  }
+}
+
+function autoCargarToneladas(){
+  const fechaRaw=document.getElementById('prs-fecha').value;
+  if(!fechaRaw)return;
+  // Convertir YYYY-MM-DD → DD/MM/YYYY para comparar con records
+  const [y,m,d]=fechaRaw.split('-');
+  const fecha=`${d}/${m}/${y}`;
+  // Sumar toneladas de maquinaria de esa fecha
+  const recsMaq=records.filter(r=>r.fecha===fecha&&(!r.tipo||r.tipo==='maquinaria'));
+  const totTons=recsMaq.reduce((s,r)=>s+(r.toneladas||0),0);
+  if(totTons>0){
+    document.getElementById('prs-tons').value=totTons.toFixed(2);
+    document.getElementById('prs-tons-lbl').textContent='(✅ '+totTons.toFixed(2)+' TN cargadas de maquinaria '+fecha+')';
+    document.getElementById('prs-tons-lbl').style.color='#16A34A';
+    prevPersonal();
+  } else {
+    document.getElementById('prs-tons').value='';
+    document.getElementById('prs-tons-lbl').textContent='(sin datos de maquinaria para esta fecha — ingresa manualmente)';
+    document.getElementById('prs-tons-lbl').style.color='#D97706';
+  }
+}
+
+function calcHrsTotal(){
+  const pp=parseFloat(document.getElementById('prs-hrs-pp').value)||0;
+  const pers=parseFloat(document.getElementById('prs-personal').value)||0;
+  if(pp&&pers){
+    const total=+(pp*pers).toFixed(2);
+    document.getElementById('prs-hrs').value=total;
+  }
+  prevPersonal();
+}
+
+function prevPersonal(){
+  const tons=parseFloat(document.getElementById('prs-tons').value)||0;
+  const hrs=parseFloat(document.getElementById('prs-hrs').value)||0;
+  const pers=parseFloat(document.getElementById('prs-personal').value)||0;
+  if(!tons||!hrs||!pers){document.getElementById('prs-prev').style.display='none';return;}
+  const tnhr=+(tons/hrs).toFixed(2);
+  const tnp=+(tons/pers).toFixed(3);
+  const hrsp=+(hrs/pers).toFixed(3);
+  document.getElementById('prs-tnhr').textContent=tnhr;
+  document.getElementById('prs-tnp').textContent=tnp;
+  document.getElementById('prs-hrsp').textContent=hrsp;
+  document.getElementById('prs-prev').style.display='grid';
+}
+
+async function guardarPersonal(){
+  let fechaRaw=document.getElementById('prs-fecha').value.trim();
+  if(!fechaRaw) fechaRaw=new Date().toISOString().split('T')[0];
+
+  const pers=parseInt(document.getElementById('prs-personal').value)||0;
+  const tons=parseFloat(document.getElementById('prs-tons').value)||0;
+  const hrs=parseFloat(document.getElementById('prs-hrs').value)||0;
+  const obs=document.getElementById('prs-obs')?document.getElementById('prs-obs').value.trim():'';
+
+  // Debug - mostrar qué valores lee
+  showToast('Leyendo: '+pers+' pers, '+tons+'t, '+hrs+'h','ok');
+
+  if(!pers){showToast('⚠️ Falta: trabajadores','err');return;}
+  if(!tons){showToast('⚠️ Falta: toneladas','err');return;}
+  if(!hrs){showToast('⚠️ Falta: horas','err');return;}
+
+  let fecha=fechaRaw;
+  if(fechaRaw.includes('-')){
+    const [y,m,d]=fechaRaw.split('-');
+    fecha=`${d}/${m}/${y}`;
+  }
+
+  const existe=personalRecords.find(r=>r.fecha===fecha);
+  if(existe)showToast('Ya hay registro para '+fecha+' — agregando otro','ok');
+
+  const tnhr=+(tons/hrs).toFixed(2);
+  const tnp=+(tons/pers).toFixed(3);
+  const hrsp=+(hrs/pers).toFixed(3);
+  try{
+    showToast('Guardando en Supabase...','ok');
+    const saved=await supaFetch('personal_acopio','POST',{
+      fecha,personal:pers,toneladas:tons,horas:hrs,tnhr,tnp,hrsp,obs
+    });
+    const newId=Array.isArray(saved)?saved[0]?.id:saved?.id;
+    personalRecords.unshift({id:newId||'p'+Date.now(),fecha,personal:pers,toneladas:tons,horas:hrs,tnhr,tnp,hrsp,obs});
+    svPersonal();
+    renderPersonalTabla();
+    document.getElementById('prs-tons').value='';
+    document.getElementById('prs-hrs').value='';
+    document.getElementById('prs-hrs-pp').value='';
+    document.getElementById('prs-personal').value='';
+    if(document.getElementById('prs-obs'))document.getElementById('prs-obs').value='';
+    const prev=document.getElementById('prs-prev');
+    if(prev)prev.style.display='none';
+    showToast('✅ '+pers+' trab · '+tons+'t · '+tnhr+' TN/Hr guardado','ok');
+  }catch(e){
+    showToast('❌ Error Supabase: '+e.message,'err');
+    console.error('guardarPersonal error:',e);
+  }
+}
+
+function editarPersonal(id){
+  const r=personalRecords.find(x=>String(x.id)===String(id));
+  if(!r)return;
+  // Crear modal de edición
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  // Convertir fecha DD/MM/YYYY → YYYY-MM-DD para input date
+  let fechaInput=r.fecha;
+  if(r.fecha&&r.fecha.includes('/')){
+    const [d,m,y]=r.fecha.split('/');
+    fechaInput=`${y}-${m}-${d}`;
+  }
+  overlay.innerHTML=`<div style="background:#0d1526;border-radius:16px;padding:20px;width:100%;max-width:360px;border:1px solid #334155">
+    <div style="font-size:0.85rem;font-weight:800;color:#F5C800;margin-bottom:16px;text-align:center">✏️ Editar Registro de Personal</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div><label style="font-size:0.6rem;color:#64748B;display:block;margin-bottom:3px">Fecha</label>
+        <input id="ep-fecha" type="date" value="${fechaInput}" style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:8px;color:#fff;font-size:0.8rem;width:100%"></div>
+      <div><label style="font-size:0.6rem;color:#64748B;display:block;margin-bottom:3px">Trabajadores</label>
+        <input id="ep-pers" type="number" value="${r.personal}" style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:8px;color:#fff;font-size:0.8rem;width:100%"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div><label style="font-size:0.6rem;color:#64748B;display:block;margin-bottom:3px">Toneladas</label>
+        <input id="ep-tons" type="number" step="0.01" value="${r.toneladas}" style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:8px;color:#fff;font-size:0.8rem;width:100%"></div>
+      <div><label style="font-size:0.6rem;color:#64748B;display:block;margin-bottom:3px">Horas totales</label>
+        <input id="ep-hrs" type="number" step="0.01" value="${r.horas}" style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:8px;color:#fff;font-size:0.8rem;width:100%"></div>
+    </div>
+    <div style="margin-bottom:12px"><label style="font-size:0.6rem;color:#64748B;display:block;margin-bottom:3px">Observación</label>
+      <input id="ep-obs" type="text" value="${r.obs||''}" style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:8px;color:#fff;font-size:0.8rem;width:100%"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <button onclick="this.closest('div[style*=fixed]').remove()" style="padding:10px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#fff;font-size:0.8rem;cursor:pointer;font-family:inherit">✗ Cancelar</button>
+      <button onclick="guardarEdicionPersonal('${id}')" style="padding:10px;background:#3B82F6;border:none;border-radius:8px;color:#fff;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:inherit">✅ Guardar</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function guardarEdicionPersonal(id){
+  const fechaRaw=document.getElementById('ep-fecha').value;
+  const pers=parseInt(document.getElementById('ep-pers').value)||0;
+  const tons=parseFloat(document.getElementById('ep-tons').value)||0;
+  const hrs=parseFloat(document.getElementById('ep-hrs').value)||0;
+  const obs=document.getElementById('ep-obs').value.trim();
+  if(!fechaRaw||!pers||!tons||!hrs){showToast('Completa todos los campos','err');return;}
+  const [y,m,d]=fechaRaw.split('-');
+  const fecha=`${d}/${m}/${y}`;
+  const tnhr=+(tons/hrs).toFixed(2);
+  const tnp=+(tons/pers).toFixed(3);
+  const hrsp=+(hrs/pers).toFixed(3);
+  try{
+    // Actualizar en Supabase si tiene ID numérico
+    if(!String(id).startsWith('p')){
+      await supaFetch('personal_acopio?id=eq.'+id,'PATCH',{fecha,personal:pers,toneladas:tons,horas:hrs,tnhr,tnp,hrsp,obs});
+    }
+    const idx=personalRecords.findIndex(r=>String(r.id)===String(id));
+    if(idx>=0)personalRecords[idx]={...personalRecords[idx],fecha,personal:pers,toneladas:tons,horas:hrs,tnhr,tnp,hrsp,obs};
+    svPersonal();
+    renderPersonalTabla();
+    document.querySelector('div[style*="position:fixed"]')?.remove();
+    showToast('✅ Registro actualizado','ok');
+  }catch(e){showToast('Error: '+e.message,'err');}
+}
+
+async function eliminarPersonal(id){
+  if(!confirm('¿Eliminar este registro?'))return;
+  try{
+    if(typeof id==='number'||!String(id).startsWith('p')){
+      await supaFetch('personal_acopio?id=eq.'+id,'DELETE');
+    }
+    personalRecords=personalRecords.filter(r=>r.id!==id);
+    svPersonal();renderPersonalTabla();
+    showToast('Eliminado','ok');
+  }catch(e){showToast('Error: '+e.message,'err');}
+}
+
+function renderPersonalTabla(){
+  const cont=document.getElementById('personal-tabla-cont');
+  if(!personalRecords.length){cont.innerHTML='<div style="color:#64748B;text-align:center;padding:30px;font-size:0.8rem">Sin registros — agrega el primero arriba</div>';return;}
+  let h='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:0.75rem">';
+  h+='<thead><tr style="background:#0B1437;color:#F5C800">'
+    +'<th style="padding:8px;text-align:left;white-space:nowrap">📅 Fecha</th>'
+    +'<th style="padding:8px;text-align:center">👷 Pers.</th>'
+    +'<th style="padding:8px;text-align:center">⏱ Hrs Tot.</th>'
+    +'<th style="padding:8px;text-align:center">⏱ Hrs/Pers</th>'
+    +'<th style="padding:8px;text-align:center">⚖️ TN</th>'
+    +'<th style="padding:8px;text-align:center">⚡ TN/Hr</th>'
+    +'<th style="padding:8px;text-align:center">📦 TN/Pers</th>'
+    +'<th style="padding:8px;text-align:center"></th>'
+    +'</tr></thead><tbody>';
+  personalRecords.forEach((r,i)=>{
+    const bg=i%2===0?'#F8FAFC':'#FFFFFF';
+    const hrsp=r.hrsp||(r.horas&&r.personal?+(r.horas/r.personal).toFixed(2):0);
+    h+=`<tr style="background:${bg}">
+      <td style="padding:8px;color:#1E293B;font-weight:700;border:1px solid #E2E8F0">${r.fecha}</td>
+      <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;font-weight:800;font-size:1rem;color:#7C3AED">${r.personal}</td>
+      <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;font-weight:700;font-family:monospace;color:#1E293B">${r.horas}</td>
+      <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;color:#475569;font-family:monospace">${hrsp}</td>
+      <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;font-weight:700;font-family:monospace;color:#1E293B">${r.toneladas}</td>
+      <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;font-weight:800;font-size:1rem;color:#D97706;font-family:monospace">${r.tnhr}</td>
+      <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;font-weight:700;color:#16A34A;font-family:monospace">${r.tnp}</td>
+      <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;display:flex;gap:4px;justify-content:center">
+        <button onclick="editarPersonal('${r.id}')" style="background:none;border:1px solid #3B82F6;color:#3B82F6;border-radius:5px;padding:3px 8px;cursor:pointer;font-size:0.7rem">✏️</button>
+        <button onclick="eliminarPersonal('${r.id}')" style="background:none;border:1px solid #DC2626;color:#DC2626;border-radius:5px;padding:3px 8px;cursor:pointer;font-size:0.7rem">🗑</button>
+      </td>
+    </tr>`;
+    if(r.obs)h+=`<tr style="background:${bg}"><td colspan="8" style="padding:3px 8px 6px;font-size:9px;color:#6B7280;border:1px solid #E2E8F0;font-style:italic">📝 ${r.obs}</td></tr>`;
+  });
+  h+='</tbody></table></div>';
+  cont.innerHTML=h;
+}
+
+// ── Utils ──────────────────────────────────────────────────
+function horasEntre(ini, fin) {
+  if (!ini || !fin) return 0;
+  const [hI,mI] = ini.split(":").map(Number);
+  const [hF,mF] = fin.split(":").map(Number);
+  let mins = (hF*60+mF)-(hI*60+mI);
+  if (mins < 0) mins += 1440;
+  return +(mins/60).toFixed(2);
+}
+function calcEstado(tnhr) {
+  if (tnhr >= META) return "BIEN";
+  if (tnhr >= META*0.7) return "REGULAR";
+  return "MAL";
+}
+function badge(estado) {
+  return `<span class="badge ${estado}">${estado}</span>`;
+}
+function showToast(msg, type="ok") {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = `toast ${type}`;
+  t.style.display = "block";
+  setTimeout(() => t.style.display = "none", 3000);
+}
+function setTab(tab) {
+  // Ocultar menú de íconos del fundo, mostrar páginas
+  const mf=document.getElementById('menu-fundo');
+  const mc=document.getElementById('main-content');
+  if(mf)mf.style.display='none';
+  if(mc)mc.style.display='block';
+  // Highlight active icon
+  ['dashboard','registro','personal','tabla','reporte'].forEach(t=>{
+    const el=document.getElementById('fi-'+t);
+    if(el)el.style.opacity=t===tab?'1':'0.6';
+  });
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  const pg=document.getElementById("page-"+tab);
+  if(pg)pg.classList.add("active");
+  if (tab === "dashboard") renderDashboard();
+  if (tab === "tabla") renderTabla();
+  if (tab === "personal") renderPersonalTabla();
+  if (tab === "reporte") buildReporteMaq();
+}
+
+function volverMenuFundo(){
+  // Volver al menú de íconos del fundo (no al menú principal)
+  const mf=document.getElementById('menu-fundo');
+  const mc=document.getElementById('main-content');
+  if(mf)mf.style.display='grid';
+  if(mc)mc.style.display='none';
+  // Quitar active de todos los íconos
+  ['dashboard','registro','personal','tabla','reporte'].forEach(t=>{
+    const el=document.getElementById('fi-'+t);
+    if(el)el.style.opacity='1';
+  });
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+}
+
+// ── REPORTE TN/Hr POR DÍA ────────────────────────────────────
+var _vistaRpt = 'global';
+
+function setVistaRpt(v){
+  _vistaRpt = v;
+  ['global','semanal','maq','monta','combo'].forEach(function(id){
+    const btn=document.getElementById('rpt-btn-'+id);
+    if(!btn)return;
+    const act=id===v;
+    btn.style.background=act?'#f97316':'#1e293b';
+    btn.style.color=act?'#fff':'#94A3B8';
+    btn.style.border=act?'none':'1px solid #334155';
+  });
+  buildReporteMaq();
+}
+
+let _rptFundoActual = 'arato1'; // 'fundo' | 'arato1' | 'arato2' | 'global_vs'
+
+function setRptFundo(f){
+  _rptFundoActual=f;
+  // Highlight buttons
+  const b1=document.getElementById('rpt-fundo-a1');
+  const b2=document.getElementById('rpt-fundo-a2');
+  const bg=document.getElementById('rpt-fundo-global');
+  if(b1)b1.style.background=f==='arato1'?'var(--orange)':'#1e293b';
+  if(b2)b2.style.background=f==='arato2'?'#0369a1':'#1e293b';
+  if(bg)bg.style.background=f==='global_vs'?'#6d28d9':'#1e293b';
+  if(f==='global_vs'){
+    buildReporteGlobalVs();
+  } else {
+    // Usar registros del fundo seleccionado temporalmente para el reporte
+    const prevRecords=records;
+    records=allRecords.filter(r=>r.fundo===f);
+    buildReporteMaq();
+    records=prevRecords;
+  }
+}
+
+let _globalVsVista='resumen'; // 'resumen' | 'dia' | 'semana'
+let _globalFechaFiltro='';
+let _globalSemFiltro='';
+
+function setGlobalVsVista(v){
+  _globalVsVista=v;
+  _globalFechaFiltro='';
+  _globalSemFiltro='';
+  buildReporteGlobalVs();
+}
+function setGlobalFecha(f){_globalFechaFiltro=f;buildReporteGlobalVs();}
+function setGlobalSem(k){_globalSemFiltro=k;buildReporteGlobalVs();}
+function toggleDetalleDiario(){
+  const el=document.getElementById('detalle-diario-vs');
+  const ico=document.getElementById('ico-detalle-vs');
+  if(!el)return;const show=el.style.display==='none';
+  el.style.display=show?'block':'none';if(ico)ico.textContent=show?'▲':'▼';
+}
+
+function buildReporteGlobalVs(){
+  const ahora=new Date().toLocaleString('es-PE');
+  const META_=META||3.5;
+
+  // ── Datos ──
+  const r1maq=allRecords.filter(r=>r.fundo==='arato1'&&(!r.tipo||r.tipo==='maquinaria'));
+  const r2maq=allRecords.filter(r=>r.fundo==='arato2'&&(!r.tipo||r.tipo==='maquinaria'));
+  const r1mon=allRecords.filter(r=>r.fundo==='arato1'&&r.tipo==='montacargas');
+  const r2mon=allRecords.filter(r=>r.fundo==='arato2'&&r.tipo==='montacargas');
+  const p1=personalRecords.filter(r=>r.fundo==='arato1'||!r.fundo);
+  const p2=personalRecords.filter(r=>r.fundo==='arato2');
+
+  function cs(recs){
+    const h=recs.reduce((s,r)=>s+(r.hrsEjec||0),0);
+    const t=recs.reduce((s,r)=>s+(r.toneladas||0),0);
+    const b=recs.reduce((s,r)=>s+(r.bins||0),0);
+    return{h:+h.toFixed(1),t:+t.toFixed(1),b:Math.round(b),tnhr:h>0?+(t/h).toFixed(2):0};
+  }
+  function cpx(precs,trecs){
+    const pers=precs.reduce((s,r)=>s+(r.personal||0),0);
+    const tons=trecs.reduce((s,r)=>s+(r.toneladas||0),0);
+    return{pers,tons,tnp:pers>0&&tons>0?+(tons/pers).toFixed(2):0};
+  }
+  function cT(v){return v>=META_?'#15803D':v>=META_*0.85?'#D97706':'#DC2626';}
+  function bT(v){return v>=META_?'#DCFCE7':v>=META_*0.85?'#FEF3C7':'#FEE2E2';}
+  function smI(v){return v>=META_?'🟢':v>=META_*0.85?'🟡':'🔴';}
+  function pct(v){return META_>0?+(v/META_*100).toFixed(1):0;}
+
+  // ── Fechas ──
+  const allF=[...r1maq,...r2maq].map(r=>r.fecha);
+  const fechas=[...new Set(allF)].sort((a,b)=>{
+    const pa=a.split('/'),pb=b.split('/');
+    if(pa.length===3)return new Date(+pa[2],+pa[1]-1,+pa[0])-new Date(+pb[2],+pb[1]-1,+pb[0]);
+    return a.localeCompare(b);
+  });
+
+  // ── Semanas ──
+  function getSemKey(fecha){
+    const p=fecha.split('/');if(p.length!==3)return fecha;
+    const d=new Date(+p[2],+p[1]-1,+p[0]);
+    const day=d.getDay()===0?7:d.getDay();
+    const lunes=new Date(d);lunes.setDate(d.getDate()-(day-1));
+    return lunes.toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'numeric'});
+  }
+  function getSemLabel(key){
+    const p=key.split('/');if(p.length!==3)return key;
+    const lunes=new Date(+p[2],+p[1]-1,+p[0]);
+    const dom=new Date(lunes);dom.setDate(lunes.getDate()+6);
+    const wn=String(getWeekNumber(lunes)).padStart(2,'0');
+    return'SEM-'+wn+' · '+lunes.getDate().toString().padStart(2,'0')+'/'+(lunes.getMonth()+1).toString().padStart(2,'0')+' – '+dom.getDate().toString().padStart(2,'0')+'/'+(dom.getMonth()+1).toString().padStart(2,'0');
+  }
+  const semMap={};
+  fechas.forEach(f=>{const k=getSemKey(f);if(!semMap[k])semMap[k]=[];semMap[k].push(f);});
+  const semKeys=Object.keys(semMap);
+
+  if(!r1maq.length&&!r2maq.length){
+    document.getElementById('rpt-maq-cont').innerHTML='<div style="text-align:center;padding:40px;color:#64748B;">Sin registros en A1 ni A2</div>';
+    return;
+  }
+
+  // ── Helpers de tabla horizontal ──
+  // Cada fila = <tr><td>label</td><td>A1</td><td>A2</td><td>GLOBAL</td><td>🏆</td></tr>
+  function blk(txt,col,bg){
+    return'<tr><td colspan="5" style="padding:6px 10px 4px;font-size:8px;font-weight:800;color:'+col+';letter-spacing:1.5px;text-transform:uppercase;background:'+bg+';border-top:2px solid '+col+';border-bottom:1px solid #E2E8F0;">'+txt+'</td></tr>';
+  }
+  function fila(label,v1,v2,vG,fmt,destaca){
+    const has1=v1!=null&&v1>0,has2=v2!=null&&v2>0;
+    if(!has1&&!has2)return'';
+    const win=has1&&has2?(v1>=v2?'A1':'A2'):has1?'A1':has2?'A2':'';
+    const wc=win==='A1'?'#F97316':win==='A2'?'#38BDF8':'#94A3B8';
+    function td(v,has){
+      if(!has)return'<td style="padding:7px 10px;text-align:center;color:#CBD5E1;font-size:9px;">—</td>';
+      return'<td style="padding:7px 10px;text-align:center;font-family:monospace;font-weight:700;color:'+(destaca?cT(v):'#334155')+';background:'+(destaca?bT(v):'')+';font-size:11px;">'+fmt(v)+'</td>';
+    }
+    const tdG=vG>0
+      ?'<td style="padding:7px 10px;text-align:center;font-family:monospace;font-weight:800;color:'+(destaca?cT(vG):'#1e3a8a')+';background:'+(destaca?bT(vG):'#EEF2FF')+';font-size:12px;">'+fmt(vG)+'</td>'
+      :'<td style="padding:7px 10px;text-align:center;color:#94A3B8;background:#EEF2FF;font-size:9px;">—</td>';
+    return'<tr style="border-bottom:1px solid #F1F5F9;">'+
+      '<td style="padding:7px 10px;font-size:9px;font-weight:600;color:#475569;white-space:nowrap;">'+label+'</td>'+
+      td(v1,has1)+td(v2,has2)+tdG+
+      '<td style="padding:7px 8px;text-align:center;font-weight:800;font-size:11px;color:'+wc+';">'+win+'</td></tr>';
+  }
+  function filaTnhr(label,v1,v2,vG){
+    const has1=v1>0,has2=v2>0;
+    if(!has1&&!has2)return'';
+    const win=has1&&has2?(v1>=v2?'A1':'A2'):has1?'A1':has2?'A2':'';
+    const wc=win==='A1'?'#F97316':win==='A2'?'#38BDF8':'#94A3B8';
+    function td(v,has){
+      if(!has)return'<td style="padding:7px 10px;text-align:center;background:#1e293b;color:#475569;font-size:9px;">—</td>';
+      return'<td style="padding:7px 10px;text-align:center;font-family:monospace;font-weight:800;font-size:13px;color:'+cT(v)+';background:'+(v>=META_?'rgba(22,163,74,.15)':v>=META_*0.85?'rgba(217,119,6,.15)':'rgba(220,38,38,.15)')+';white-space:nowrap;">'+v+' <span style="font-size:10px;">'+smI(v)+'</span></td>';
+    }
+    const tdG=vG>0
+      ?'<td style="padding:7px 10px;text-align:center;font-family:monospace;font-weight:800;font-size:14px;color:'+cT(vG)+';background:'+(vG>=META_?'rgba(22,163,74,.2)':vG>=META_*0.85?'rgba(217,119,6,.2)':'rgba(220,38,38,.2)')+';white-space:nowrap;">'+vG+' <span style="font-size:10px;">'+smI(vG)+'</span></td>'
+      :'<td style="padding:7px 10px;text-align:center;color:#94A3B8;font-size:9px;">—</td>';
+    return'<tr style="background:#1e293b;">'+
+      '<td style="padding:7px 10px;font-size:9px;font-weight:800;color:#F5C800;white-space:nowrap;">'+label+'</td>'+
+      td(v1,has1)+td(v2,has2)+tdG+
+      '<td style="padding:7px 8px;text-align:center;font-weight:800;font-size:11px;color:'+wc+';">'+win+'</td></tr>';
+  }
+  function thead(){
+    return'<thead><tr style="background:#1E293B;">'+
+      '<th style="padding:8px 10px;text-align:left;font-size:8px;font-weight:700;color:#64748B;min-width:160px;">INDICADOR</th>'+
+      '<th style="padding:8px 10px;text-align:center;font-size:8px;font-weight:700;color:#F97316;">🚜 ARATO 1</th>'+
+      '<th style="padding:8px 10px;text-align:center;font-size:8px;font-weight:700;color:#38BDF8;">🚜 ARATO 2</th>'+
+      '<th style="padding:8px 10px;text-align:center;font-size:8px;font-weight:700;color:#F5C800;">🌐 GLOBAL</th>'+
+      '<th style="padding:8px 8px;text-align:center;font-size:8px;font-weight:700;color:#A78BFA;">🏆</th>'+
+      '</tr></thead>';
+  }
+  function tabla(body){
+    return'<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:10px;min-width:380px;">'+thead()+'<tbody>'+body+'</tbody></table></div>';
+  }
+  function buildTabla(s1,s2,sG,m1,m2,mG,p1s,p2s,pGs){
+    let b='';
+    b+=blk('📊 RESUMEN OPERATIVO','#1e3a8a','#F0F4FF');
+    // Orden Beggie exacto
+    b+=fila('🚜 TRACTOR (hrs)',s1.h||null,s2.h||null,sG.h,v=>v.toFixed(1)+'h',false);
+    if(mG.h>0)b+=fila('🏗️ MONTACARGAS (hrs)',m1.h||null,m2.h||null,mG.h,v=>v.toFixed(1)+'h',false);
+    if(pGs.pers>0)b+=fila('👷 PERS/ACOPIO',p1s.pers||null,p2s.pers||null,pGs.pers,v=>v+' p.',false);
+    if(sG.b>0)b+=fila('📦 BINES',s1.b||null,s2.b||null,sG.b,v=>''+v,false);
+    b+=fila('⚖️ TN/DIA',s1.t||null,s2.t||null,sG.t,v=>v.toFixed(1)+' TN',false);
+    b+=filaTnhr('⚡ TN/HORA/TRACTOR',s1.tnhr,s2.tnhr,sG.tnhr);
+    if(mG.h>0)b+=filaTnhr('🏗️ TN/HORA/MON',m1.tnhr,m2.tnhr,mG.tnhr);
+    if(p1s.tnp>0||p2s.tnp>0)b+=fila('👷 TN/PERSONA',p1s.tnp||null,p2s.tnp||null,pGs.tnp,v=>v.toFixed(2),false);
+    if(s1.t>0&&s2.t>0){
+      const a1=Math.round(s1.t/sG.t*100),a2=100-a1;
+      b+='<tr style="background:#F9FAFB;border-bottom:1px solid #F1F5F9;">'+
+        '<td style="padding:6px 10px;font-size:8px;color:#475569;">📊 Aporte %</td>'+
+        '<td style="padding:6px 10px;text-align:center;font-size:11px;font-weight:700;color:#F97316;">'+a1+'%</td>'+
+        '<td style="padding:6px 10px;text-align:center;font-size:11px;font-weight:700;color:#38BDF8;">'+a2+'%</td>'+
+        '<td style="padding:6px 10px;text-align:center;font-size:11px;font-weight:700;color:#64748B;background:#EEF2FF;">100%</td>'+
+        '<td style="padding:6px 8px;text-align:center;font-size:11px;font-weight:700;color:'+(a1>=a2?'#F97316':'#38BDF8')+'">'+(a1>=a2?'A1':'A2')+'</td></tr>';
+    }
+    const hayA1=s1.h>0,hayA2=s2.h>0;
+    if(!hayA1||!hayA2){
+      b+='<tr><td colspan="5" style="padding:7px 10px;background:#FFF7ED;border-top:1px solid #FDE68A;">'+
+        '<span style="font-size:9px;color:#92400E;font-weight:600;">⏸ '+(!hayA1?'Arato 1':'Arato 2')+' sin operación</span></td></tr>';
+    }
+    return tabla(b);
+  }
+
+  // ── Header común ──
+  function headerComun(titulo,subtitulo,badge){
+    return'<div style="background:linear-gradient(135deg,#0B1437 0%,#1A3A8F 55%,#1e40af 100%);padding:14px 16px 12px;">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'+
+      '<div>'+
+      '<div style="font-size:8px;color:rgba(255,255,255,.4);letter-spacing:3px;text-transform:uppercase;margin-bottom:2px;">ARATO MISSION PRODUCE · PERÚ</div>'+
+      '<div style="font-size:16px;font-weight:900;color:#F5C800;text-transform:uppercase;letter-spacing:2px;font-family:Arial Black,Arial;">'+titulo+'</div>'+
+      '<div style="font-size:8px;color:rgba(255,255,255,.5);margin-top:2px;">'+subtitulo+'</div>'+
+      '</div>'+
+      '<div style="background:#F5C800;color:#0B1437;font-size:9px;font-weight:800;padding:4px 10px;border-radius:6px;white-space:nowrap;">'+badge+'</div>'+
+      '</div></div>';
+  }
+
+  // ── Selector modo ──
+  function selectorModo(){
+    return'<div style="background:#F1F5F9;padding:10px 14px;border-bottom:1px solid #E2E8F0;display:flex;gap:8px;flex-wrap:wrap;">'+
+      [{v:'resumen',l:'🌐 Resumen'},{v:'dia',l:'📅 Por Día'},{v:'semana',l:'📊 Por Semana'}].map(it=>{
+        const act=_globalVsVista===it.v;
+        return'<button onclick="setGlobalVsVista(\''+it.v+'\')" style="padding:7px 14px;background:'+(act?'#1A3A8F':'#fff')+';border:1.5px solid #1A3A8F;border-radius:8px;color:'+(act?'#fff':'#1A3A8F')+';font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">'+it.l+'</button>';
+      }).join('')+
+      '<button onclick="editarGlobal()" style="padding:7px 10px;background:#fff;border:1px solid #94A3B8;border-radius:8px;color:#475569;font-size:11px;cursor:pointer;font-family:inherit;margin-left:auto;">✏️</button>'+
+      '</div>';
+  }
+
+  function pie(){
+    return'<div style="background:#0B1437;padding:7px 14px;display:flex;justify-content:space-between;">'+
+      '<div style="font-size:7px;color:rgba(255,255,255,.3);">ARATO MISSION PRODUCE · Meta: '+META_+' TN/Hr · '+ahora+'</div>'+
+      '</div></div>';
+  }
+
+  let gEdit={};try{gEdit=JSON.parse(localStorage.getItem('global_edit')||'{}');}catch(e){}
+  const responsable=gEdit.responsable||'Jerson Muñoz';
+  const version=gEdit.version||'v1.0';
+  const fechaMin=fechas[0]||'—',fechaMax=fechas[fechas.length-1]||'—';
+
+  // ════════════════════════════════════
+  // MODO 1: 🌐 GLOBAL RESUMEN
+  // ════════════════════════════════════
+  if(_globalVsVista==='resumen'){
+    const g1=cs(r1maq),g2=cs(r2maq),gAll=cs([...r1maq,...r2maq]);
+    const m1=cs(r1mon),m2=cs(r2mon),mAll=cs([...r1mon,...r2mon]);
+    const gp1=cpx(p1,r1maq),gp2=cpx(p2,r2maq),gpAll=cpx([...p1,...p2],[...r1maq,...r2maq]);
+    const cumplG=pct(gAll.tnhr);
+    const diasData=[...new Set([...r1maq,...r2maq].map(r=>r.fecha))].filter(f=>{
+      const s=cs([...r1maq,...r2maq].filter(r=>r.fecha===f));return s.h>0;
+    });
+    const diasSobre=diasData.filter(f=>{const s=cs([...r1maq,...r2maq].filter(r=>r.fecha===f));return s.tnhr>=META_;}).length;
+    const sortedDias=diasData.map(f=>({f,tnhr:cs([...r1maq,...r2maq].filter(r=>r.fecha===f)).tnhr})).sort((a,b)=>b.tnhr-a.tnhr);
+    const mejorDia=sortedDias[0]||{f:'—',tnhr:0};
+    const peorDia=sortedDias[sortedDias.length-1]||{f:'—',tnhr:0};
+
+    let h='<div style="font-family:Inter,Arial,sans-serif;background:#F8FAFC;width:100%;max-width:660px;margin:0 auto;border-radius:14px;overflow:hidden;box-shadow:0 6px 30px rgba(0,0,0,.15);" id="rpt-global-vs-wrap">';
+    h+=headerComun('🌐 GLOBAL A1+A2 · RESUMEN','ARATO MISSION PRODUCE · 2026 · '+fechaMin+' – '+fechaMax,diasData.length+' días');
+    h+=selectorModo();
+
+    // KPI principal
+    h+='<div style="background:#fff;padding:14px 16px;border-bottom:1px solid #E2E8F0;">';
+    h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">';
+    // Card TN/Hr
+    h+='<div style="background:'+(gAll.tnhr>=META_?'#F0FDF4':gAll.tnhr>=META_*0.85?'#FFFBEB':'#FEF2F2')+';border:2px solid '+cT(gAll.tnhr)+';border-radius:12px;padding:14px;">';
+    h+='<div style="font-size:8px;color:#64748B;text-transform:uppercase;font-weight:700;margin-bottom:4px;">🚜 TN/Hr Global</div>';
+    h+='<div style="font-family:monospace;font-size:2rem;font-weight:900;color:'+cT(gAll.tnhr)+';line-height:1;">'+gAll.tnhr+'</div>';
+    h+='<div style="font-size:9px;color:'+cT(gAll.tnhr)+';font-weight:700;margin-top:3px;">'+smI(gAll.tnhr)+' '+cumplG+'% de meta '+META_+'</div>';
+    h+='<div style="font-size:7.5px;color:#64748B;margin-top:5px;">✅ Mejor: '+mejorDia.f+' ('+mejorDia.tnhr+')<br>⚠️ Menor: '+peorDia.f+' ('+peorDia.tnhr+')</div>';
+    h+='</div>';
+    // Card producción
+    h+='<div style="background:#EFF6FF;border:2px solid #93C5FD;border-radius:12px;padding:14px;">';
+    h+='<div style="font-size:8px;color:#64748B;text-transform:uppercase;font-weight:700;margin-bottom:4px;">⚖️ Producción Global</div>';
+    h+='<div style="font-family:monospace;font-size:2rem;font-weight:900;color:#1e3a8a;line-height:1;">'+gAll.t+'</div>';
+    h+='<div style="font-size:9px;color:#1e3a8a;font-weight:700;margin-top:3px;">toneladas</div>';
+    h+='<div style="font-size:7.5px;color:#64748B;margin-top:5px;">📦 '+gAll.b+' bins &nbsp; ⏱ '+gAll.h+'h maq.</div>';
+    h+='<div style="font-size:7.5px;color:#64748B;margin-top:2px;">'+diasSobre+'/'+diasData.length+' días sobre meta</div>';
+    h+='</div></div>';
+    // Fila 4 KPIs
+    h+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">';
+    [{l:'⏱ Hrs Maq.',v:gAll.h+'h'},{l:'🏗️ TN/Hr MON',v:mAll.tnhr>0?mAll.tnhr:'N/D'},{l:'👷 TN/Persona',v:gpAll.tnp>0?gpAll.tnp:'N/D'},{l:'🎯 Cumplimiento',v:cumplG+'%'}].forEach(k=>{
+      h+='<div style="background:#F8FAFC;border-radius:10px;padding:10px 8px;text-align:center;border:1px solid #E2E8F0;">';
+      h+='<div style="font-size:7.5px;color:#64748B;font-weight:700;margin-bottom:4px;">'+k.l+'</div>';
+      h+='<div style="font-family:monospace;font-size:1rem;font-weight:800;color:#1e293b;">'+k.v+'</div>';
+      h+='</div>';
+    });
+    h+='</div></div>';
+    // Tabla resumen A1 vs A2
+    h+='<div style="background:#fff;padding:12px 14px;border-bottom:1px solid #E2E8F0;">';
+    h+='<div style="font-size:8px;font-weight:700;color:#334155;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">📋 COMPARACIÓN A1 vs A2 — ACUMULADO</div>';
+    h+=buildTabla(g1,g2,gAll,m1,m2,mAll,gp1,gp2,gpAll);
+    h+='</div>';
+    h+=pie();
+    document.getElementById('rpt-maq-cont').innerHTML=h;
+    return;
+  }
+
+  // ════════════════════════════════════
+  // MODO 2: 📅 GLOBAL DÍA
+  // ════════════════════════════════════
+  if(_globalVsVista==='dia'){
+    let h='<div style="font-family:Inter,Arial,sans-serif;background:#F8FAFC;width:100%;max-width:660px;margin:0 auto;border-radius:14px;overflow:hidden;box-shadow:0 6px 30px rgba(0,0,0,.15);" id="rpt-global-vs-wrap">';
+    h+=headerComun('📅 GLOBAL A1+A2 · POR DÍA','Comparación diaria ARATO 1 vs ARATO 2',fechas.length+' fechas');
+    h+=selectorModo();
+    // Selector fecha
+    h+='<div style="background:#F1F5F9;padding:10px 14px;border-bottom:1px solid #E2E8F0;display:flex;align-items:center;gap:10px;">';
+    h+='<span style="font-size:10px;font-weight:700;color:#475569;white-space:nowrap;">📅 Fecha:</span>';
+    h+='<select onchange="setGlobalFecha(this.value)" style="flex:1;padding:7px 10px;background:#fff;border:1.5px solid #CBD5E1;border-radius:8px;font-size:11px;font-weight:700;color:#1E293B;cursor:pointer;">';
+    h+='<option value="">— Selecciona una fecha —</option>';
+    fechas.slice().reverse().forEach(f=>{h+='<option value="'+f+'" '+(_globalFechaFiltro===f?'selected':'')+'>'+f+'</option>';});
+    h+='</select></div>';
+
+    if(!_globalFechaFiltro){
+      h+='<div style="background:#fff;padding:40px 16px;text-align:center;color:#94A3B8;font-size:12px;">Selecciona una fecha para ver la comparación</div>';
+      h+=pie();
+      document.getElementById('rpt-maq-cont').innerHTML=h;return;
+    }
+
+    const F=_globalFechaFiltro;
+    const d1m=r1maq.filter(r=>r.fecha===F),d2m=r2maq.filter(r=>r.fecha===F);
+    const d1mo=r1mon.filter(r=>r.fecha===F),d2mo=r2mon.filter(r=>r.fecha===F);
+    const dp1=p1.filter(r=>r.fecha===F),dp2=p2.filter(r=>r.fecha===F);
+    const s1=cs(d1m),s2=cs(d2m),sG=cs([...d1m,...d2m]);
+    const m1=cs(d1mo),m2=cs(d2mo),mG=cs([...d1mo,...d2mo]);
+    const fp1=cpx(dp1,d1m),fp2=cpx(dp2,d2m),fpG=cpx([...dp1,...dp2],[...d1m,...d2m]);
+
+    // Sub-header con TN/Hr de ese día
+    h+='<div style="background:#1E293B;padding:10px 14px;border-bottom:1px solid #334155;">';
+    h+='<div style="font-size:8px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Resultados del día</div>';
+    h+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">';
+    [{l:'🚜 ARATO 1',v:s1.tnhr,c:'#F97316',bg:'rgba(249,115,22,.1)',has:s1.h>0},
+     {l:'🚜 ARATO 2',v:s2.tnhr,c:'#38BDF8',bg:'rgba(56,189,248,.1)',has:s2.h>0},
+     {l:'🌐 GLOBAL',v:sG.tnhr,c:'#F5C800',bg:'rgba(245,200,0,.1)',has:sG.h>0}].forEach(k=>{
+      h+='<div style="background:'+k.bg+';border-radius:10px;padding:10px;text-align:center;border:1px solid rgba(255,255,255,.08);">';
+      h+='<div style="font-size:8px;font-weight:700;color:rgba(255,255,255,.5);margin-bottom:4px;">'+k.l+'</div>';
+      if(k.has){
+        h+='<div style="font-family:monospace;font-size:1.4rem;font-weight:900;color:'+cT(k.v)+';line-height:1;">'+k.v+'</div>';
+        h+='<div style="font-size:9px;margin-top:2px;">'+smI(k.v)+'</div>';
+      } else {
+        h+='<div style="font-size:11px;color:rgba(255,255,255,.25);font-style:italic;">⏸ Sin op.</div>';
+      }
+      h+='</div>';
+    });
+    h+='</div></div>';
+    // Tabla del día
+    h+='<div style="background:#fff;padding:12px 14px;border-bottom:1px solid #E2E8F0;">';
+    h+=buildTabla(s1,s2,sG,m1,m2,mG,fp1,fp2,fpG);
+    h+='</div>';
+    h+=pie();
+    document.getElementById('rpt-maq-cont').innerHTML=h;
+    return;
+  }
+
+  // ════════════════════════════════════
+  // MODO 3: 📊 GLOBAL SEMANA
+  // ════════════════════════════════════
+  if(_globalVsVista==='semana'){
+    let h='<div style="font-family:Inter,Arial,sans-serif;background:#F8FAFC;width:100%;max-width:660px;margin:0 auto;border-radius:14px;overflow:hidden;box-shadow:0 6px 30px rgba(0,0,0,.15);" id="rpt-global-vs-wrap">';
+    h+=headerComun('📊 GLOBAL A1+A2 · POR SEMANA','Comparación semanal ARATO 1 vs ARATO 2',semKeys.length+' semanas');
+    h+=selectorModo();
+    // Selector semana
+    h+='<div style="background:#F1F5F9;padding:10px 14px;border-bottom:1px solid #E2E8F0;display:flex;align-items:center;gap:10px;">';
+    h+='<span style="font-size:10px;font-weight:700;color:#475569;white-space:nowrap;">📊 Semana:</span>';
+    h+='<select onchange="setGlobalSem(this.value)" style="flex:1;padding:7px 10px;background:#fff;border:1.5px solid #CBD5E1;border-radius:8px;font-size:11px;font-weight:700;color:#1E293B;cursor:pointer;">';
+    h+='<option value="">— Selecciona una semana —</option>';
+    semKeys.slice().reverse().forEach(k=>{h+='<option value="'+k+'" '+(_globalSemFiltro===k?'selected':'')+'>'+getSemLabel(k)+'</option>';});
+    h+='</select></div>';
+
+    if(!_globalSemFiltro){
+      h+='<div style="background:#fff;padding:40px 16px;text-align:center;color:#94A3B8;font-size:12px;">Selecciona una semana para ver la comparación</div>';
+      h+=pie();
+      document.getElementById('rpt-maq-cont').innerHTML=h;return;
+    }
+
+    const semFechas=semMap[_globalSemFiltro]||[];
+    const d1m=r1maq.filter(r=>semFechas.includes(r.fecha));
+    const d2m=r2maq.filter(r=>semFechas.includes(r.fecha));
+    const d1mo=r1mon.filter(r=>semFechas.includes(r.fecha));
+    const d2mo=r2mon.filter(r=>semFechas.includes(r.fecha));
+    const dp1=p1.filter(r=>semFechas.includes(r.fecha));
+    const dp2=p2.filter(r=>semFechas.includes(r.fecha));
+    const s1=cs(d1m),s2=cs(d2m),sG=cs([...d1m,...d2m]);
+    const m1=cs(d1mo),m2=cs(d2mo),mG=cs([...d1mo,...d2mo]);
+    const fp1=cpx(dp1,d1m),fp2=cpx(dp2,d2m),fpG=cpx([...dp1,...dp2],[...d1m,...d2m]);
+
+    // Sub-header semana
+    h+='<div style="background:#1E293B;padding:10px 14px;border-bottom:1px solid #334155;">';
+    h+='<div style="font-size:8px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Resultados de la semana · '+semFechas.length+' días operados</div>';
+    h+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">';
+    [{l:'🚜 ARATO 1',v:s1.tnhr,c:'#F97316',bg:'rgba(249,115,22,.1)',has:s1.h>0},
+     {l:'🚜 ARATO 2',v:s2.tnhr,c:'#38BDF8',bg:'rgba(56,189,248,.1)',has:s2.h>0},
+     {l:'🌐 GLOBAL',v:sG.tnhr,c:'#F5C800',bg:'rgba(245,200,0,.1)',has:sG.h>0}].forEach(k=>{
+      h+='<div style="background:'+k.bg+';border-radius:10px;padding:10px;text-align:center;border:1px solid rgba(255,255,255,.08);">';
+      h+='<div style="font-size:8px;font-weight:700;color:rgba(255,255,255,.5);margin-bottom:4px;">'+k.l+'</div>';
+      if(k.has){
+        h+='<div style="font-family:monospace;font-size:1.4rem;font-weight:900;color:'+cT(k.v)+';line-height:1;">'+k.v+'</div>';
+        h+='<div style="font-size:9px;margin-top:2px;">'+smI(k.v)+'</div>';
+      } else {
+        h+='<div style="font-size:11px;color:rgba(255,255,255,.25);font-style:italic;">⏸ Sin op.</div>';
+      }
+      h+='</div>';
+    });
+    h+='</div></div>';
+    // Tabla semana
+    h+='<div style="background:#fff;padding:12px 14px;border-bottom:1px solid #E2E8F0;">';
+    h+=buildTabla(s1,s2,sG,m1,m2,mG,fp1,fp2,fpG);
+    h+='</div>';
+    h+=pie();
+    document.getElementById('rpt-maq-cont').innerHTML=h;
+    return;
+  }
+}
+
+function editarGlobal(){
+  let gEdit={};try{gEdit=JSON.parse(localStorage.getItem('global_edit')||'{}');}catch(e){}
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML='<div style="background:#0d1526;border-radius:14px;padding:18px;width:100%;max-width:300px;border:1px solid #334155;">'+
+    '<div style="font-size:0.82rem;font-weight:800;color:#F5C800;margin-bottom:14px;text-align:center;">✏️ Editar Reporte Global</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">'+
+    '<div><label style="font-size:0.55rem;color:#64748B;display:block;margin-bottom:3px;">Responsable</label><input id="glo-resp" value="'+(gEdit.responsable||'Jerson Muñoz')+'" style="background:#1e293b;border:1px solid #334155;border-radius:7px;padding:7px;color:#fff;font-size:0.72rem;width:100%;"></div>'+
+    '<div><label style="font-size:0.55rem;color:#64748B;display:block;margin-bottom:3px;">Versión</label><input id="glo-ver" value="'+(gEdit.version||'v1.0')+'" style="background:#1e293b;border:1px solid #334155;border-radius:7px;padding:7px;color:#fff;font-size:0.72rem;width:100%;"></div>'+
+    '</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+
+    '<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="padding:9px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#fff;font-size:0.78rem;cursor:pointer;font-family:inherit;">✗ Cancelar</button>'+
+    '<button onclick="guardarEditarGlobal()" style="padding:9px;background:#16A34A;border:none;border-radius:8px;color:#fff;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;">✅ Guardar</button>'+
+    '</div></div>';
+  document.body.appendChild(ov);
+}
+function guardarEditarGlobal(){
+  const data={responsable:document.getElementById('glo-resp').value.trim()||'Jerson Muñoz',version:document.getElementById('glo-ver').value.trim()||'v1.0'};
+  localStorage.setItem('global_edit',JSON.stringify(data));
+  document.querySelector('div[style*="position:fixed"]')?.remove();
+  buildReporteGlobalVs();
+}
+
+function buildReporteMaq(){
+  if(!records.length&&_vistaRpt!=='combo'){document.getElementById('rpt-maq-cont').innerHTML='<div style="color:#475569;text-align:center;padding:40px;font-size:0.85rem">Sin datos — importa o registra manualmente</div>';return;}
+  if(_vistaRpt==='global') buildReporteGlobal();
+  else if(_vistaRpt==='semanal') buildReporteSemanal();
+  else if(_vistaRpt==='monta') buildReporteMonta();
+  else if(_vistaRpt==='combo') buildReporteCombinado();
+  else buildReportePorMaq();
+}
+
+const _rptColors={ok:'#16A34A',bgOk:'#DCFCE7',reg:'#D97706',bgReg:'#FEF3C7',mal:'#DC2626',bgMal:'#FEE2E2'};
+function _rptCol(tnhr){return tnhr>=META?_rptColors.ok:tnhr>=META*0.7?_rptColors.reg:_rptColors.mal;}
+function _rptBg(tnhr){return tnhr>=META?_rptColors.bgOk:tnhr>=META*0.7?_rptColors.bgReg:_rptColors.bgMal;}
+function _rptEstado(tnhr){return tnhr>=META?'✅ BIEN':tnhr>=META*0.7?'⚠️ REGULAR':'❌ BAJO META';}
+function _rptRowBg(i){return i%2===0?'#F8FAFC':'#FFFFFF';}
+function _sortFechas(arr){
+  return [...new Set(arr.map(r=>r.fecha))].sort((a,b)=>{
+    const [da,ma,ya]=a.split('/').map(Number);
+    const [db,mb,yb]=b.split('/').map(Number);
+    return new Date(ya,ma-1,da)-new Date(yb,mb-1,db);
+  });
+}
+function _rptHeader(titulo,subtitulo,ahora){
+  return `<div style="background:linear-gradient(135deg,#0B1437,#1A3A8F);padding:14px 16px;display:flex;justify-content:space-between;align-items:center">
+    <div><div style="font-size:14px;font-weight:700;color:#F5C800;text-transform:uppercase;letter-spacing:2px;font-family:Arial Black,Arial">CONTROL DE MAQUINARIA</div>
+    <div style="font-size:8.5px;color:rgba(255,255,255,.8);letter-spacing:1px;margin-top:3px">ARATO · MISSION PRODUCE · PERÚ</div>
+    <div style="font-size:8.5px;color:#F5C800;margin-top:2px">${subtitulo}</div></div>
+    <div style="text-align:right"><div style="font-size:11px;font-weight:700;color:#fff">${titulo}</div>
+    <div style="font-size:8px;color:rgba(255,255,255,.7);margin-top:2px">${ahora}</div>
+    <div style="background:#F5C800;color:#0B1437;font-size:9px;font-weight:700;padding:2px 8px;border-radius:4px;margin-top:4px;display:inline-block">⚡ Meta maquinaria: ${META} TN/Hr</div></div>
+  </div>`;
+}
+
+// Vista 1: GLOBAL — filtrado por fecha, todas las máquinas de ese día
+function buildReporteGlobal(){
+  const ahora=new Date().toLocaleString('es-PE');
+  const fechas=_sortFechas(records);
+  if(!fechas.length){document.getElementById('rpt-maq-cont').innerHTML='<div style="color:#475569;text-align:center;padding:40px">Sin datos</div>';return;}
+
+  const selEl=document.getElementById('rpt-fecha-global');
+  const fechaSel=selEl?selEl.value:fechas[fechas.length-1];
+
+  let html=`<div style="margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+    <span style="font-size:0.7rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px">📅 Fecha:</span>
+    <select id="rpt-fecha-global" onchange="buildReporteGlobal()" style="padding:7px 12px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#fff;font-size:0.8rem;font-family:inherit;font-weight:700">
+      ${fechas.map(f=>`<option value="${f}" ${f===fechaSel?'selected':''}>${f}</option>`).join('')}
+    </select>
+  </div>`;
+
+  const recsDia=records.filter(r=>r.fecha===fechaSel&&(!r.tipo||r.tipo==='maquinaria'));  let totH=0,totT=0;
+  recsDia.forEach(r=>{totH+=r.hrsEjec||0;totT+=r.toneladas||0;});
+  const totTh=totH>0?totT/totH:0;
+
+  html+=`<table style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px;min-width:340px">`;
+  html+=`<tr><td colspan="5" style="padding:0;border:none">${_rptHeader('REPORTE DEL '+fechaSel,'🌍 '+recsDia.length+' máquina(s) — Resumen del día',ahora)}</td></tr>`;
+  html+=`<tr style="background:#1A3A8F">
+    <th style="padding:9px 12px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:left">🚜 Máquina</th>
+    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">👤 Operador</th>
+    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⏱ Horas</th>
+    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⚖️ Toneladas</th>
+    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center;background:#0B2D10">⚡ TN/Hr</th>
+  </tr>`;
+
+  if(!recsDia.length){
+    html+=`<tr><td colspan="5" style="padding:20px;text-align:center;color:#94A3B8;font-style:italic;font-size:10px">Sin registros para esta fecha</td></tr>`;
+  }else{
+    // Detectar mejor y peor equipo
+    const conDatos=recsDia.filter(r=>r.tnhr>0);
+    const mejorId=conDatos.length?conDatos.reduce((a,b)=>b.tnhr>a.tnhr?b:a).id:null;
+    const peorId=conDatos.length?conDatos.reduce((a,b)=>b.tnhr<a.tnhr?b:a).id:null;
+    recsDia.forEach((r,i)=>{
+      const bg=i%2===0?'#F8FAFC':'#FFFFFF';
+      const esMejor=conDatos.length>1&&r.id===mejorId;
+      const esPeor=conDatos.length>1&&r.id===peorId;
+      const resalte=esMejor?'border-left:4px solid #16A34A':esPeor?'border-left:4px solid #DC2626':'';
+      const badge=esMejor?'<span style="font-size:8px;background:#DCFCE7;color:#15803D;padding:1px 5px;border-radius:6px;font-weight:700;margin-left:4px">⭐ MEJOR</span>':
+                  esPeor?'<span style="font-size:8px;background:#FEE2E2;color:#DC2626;padding:1px 5px;border-radius:6px;font-weight:700;margin-left:4px">⚠️ CRÍTICO</span>':'';
+      html+=`<tr style="background:${bg};${resalte}">
+        <td style="padding:9px 12px;font-weight:700;color:#1E293B;border:1px solid #D0DCF4">${r.maquina}${badge}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;color:#475569;font-size:10px">${r.operador||'—'}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-family:monospace;font-size:15px;color:#0F172A">${(r.hrsEjec||0).toFixed(1)}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-family:monospace;font-size:15px;color:#0F172A">${(r.toneladas||0).toFixed(1)}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;background:${_rptBg(r.tnhr)}">
+          <div style="font-size:20px;font-weight:800;color:${_rptCol(r.tnhr)};font-family:monospace;line-height:1">${(r.tnhr||0).toFixed(2)}</div>
+          <div style="font-size:8px;color:${_rptCol(r.tnhr)};margin-top:2px">${_rptEstado(r.tnhr)}</div>
+        </td>
+      </tr>`;
+    });
+  }
+
+  html+=`<tr style="background:#1A3A8F">
+    <td colspan="2" style="padding:10px 12px;color:#F5C800;font-weight:700;font-size:11px;border:1px solid #C0D0F4">TOTAL DÍA — ${recsDia.length} máquina(s)</td>
+    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${totH.toFixed(1)}</td>
+    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${totT.toFixed(1)}</td>
+    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;background:${_rptBg(totTh)}">
+      <div style="font-size:26px;font-weight:800;color:${_rptCol(totTh)};font-family:monospace;line-height:1">${totTh.toFixed(2)}</div>
+      <div style="font-size:9px;color:${_rptCol(totTh)};margin-top:2px">${_rptEstado(totTh)}</div>
+    </td>
+  </tr>`;
+  html+=`<tr><td colspan="6" style="background:#EEF2FF;color:#64748B;font-size:8px;padding:7px 12px;text-align:center;border:none">ARATO · MISSION PRODUCE · Meta maquinaria: ${META} TN/Hr · ${ahora}</td></tr></table>`;
+  document.getElementById('rpt-maq-cont').innerHTML=html;
+  const newSel=document.getElementById('rpt-fecha-global');
+  if(newSel&&fechaSel)newSel.value=fechaSel;
+}
+
+// Vista 2: POR MÁQUINA — Hrs + TN + TN/Hr por máquina, totales por día
+function buildReportePorMaq(){
+  const ahora=new Date().toLocaleString('es-PE');
+  const recsMaq=records.filter(r=>!r.tipo||r.tipo==='maquinaria');
+  if(!recsMaq.length){document.getElementById('rpt-maq-cont').innerHTML='<div style="color:#475569;text-align:center;padding:40px;font-size:0.85rem">Sin registros de maquinaria</div>';return;}
+
+  const fechas=_sortFechas(recsMaq);
+
+  // Selector de fecha encima del reporte
+  let selHtml=`<div style="margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+    <span style="font-size:0.7rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px">📅 Fecha:</span>
+    <select id="rpt-fecha-sel" onchange="buildReportePorMaq()" style="padding:7px 12px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#fff;font-size:0.8rem;font-family:inherit;font-weight:700">
+      ${fechas.map(f=>`<option value="${f}">${f}</option>`).join('')}
+    </select>
+  </div>`;
+
+  // Recuperar fecha seleccionada (o la más reciente)
+  const selEl=document.getElementById('rpt-fecha-sel');
+  const fechaSel=selEl?selEl.value:fechas[fechas.length-1];
+
+  // Filtrar registros de esa fecha
+  const recsDia=recsMaq.filter(r=>r.fecha===fechaSel);
+  const maquinas=[...new Set(recsDia.map(r=>r.maquina))].sort();
+
+  let h=selHtml;
+  h+=`<table style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px;min-width:340px">`;
+  h+=`<tr><td colspan="5" style="padding:0;border:none">${_rptHeader('REPORTE DEL '+fechaSel,'🚜 Rendimiento por Máquina — '+maquinas.length+' máquina(s)',ahora)}</td></tr>`;
+
+  // Columnas
+  h+=`<tr style="background:#1A3A8F">
+    <th style="padding:9px 12px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:left">🚜 Máquina</th>
+    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">👤 Operador</th>
+    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⏱ Horas</th>
+    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⚖️ Toneladas</th>
+    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center;background:#0B2D10;min-width:100px">⚡ TN/Hr</th>
+  </tr>`;
+
+  let totH=0,totT=0;
+  recsDia.forEach((r,i)=>{
+    const bg=i%2===0?'#F8FAFC':'#FFFFFF';
+    totH+=r.hrsEjec||0; totT+=r.toneladas||0;
+    h+=`<tr style="background:${bg}">
+      <td style="padding:9px 12px;font-weight:700;color:#1E293B;border:1px solid #D0DCF4">${r.maquina}</td>
+      <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;color:#475569;font-size:10px">${r.operador||'—'}</td>
+      <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;font-weight:700;color:#1E293B;font-family:monospace">${(r.hrsEjec||0).toFixed(1)}</td>
+      <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;font-weight:700;color:#1E293B;font-family:monospace">${(r.toneladas||0).toFixed(1)}</td>
+      <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;background:${_rptBg(r.tnhr)};vertical-align:middle">
+        <div style="font-size:20px;font-weight:800;color:${_rptCol(r.tnhr)};font-family:monospace;line-height:1">${(r.tnhr||0).toFixed(2)}</div>
+        <div style="font-size:8px;color:${_rptCol(r.tnhr)};margin-top:2px">${_rptEstado(r.tnhr)}</div>
+      </td>
+    </tr>`;
+  });
+
+  // FILA TOTAL DEL DÍA
+  const totTh=totH>0?totT/totH:0;
+  h+=`<tr style="background:#1A3A8F">
+    <td colspan="2" style="padding:10px 12px;color:#F5C800;font-size:11px;font-weight:700;border:1px solid #C0D0F4">
+      TOTAL ${fechaSel} — ${maquinas.length} máquina(s)
+    </td>
+    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${totH.toFixed(1)}</td>
+    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${totT.toFixed(1)}</td>
+    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;background:${_rptBg(totTh)}">
+      <div style="font-size:26px;font-weight:800;color:${_rptCol(totTh)};font-family:monospace;line-height:1">${totTh.toFixed(2)}</div>
+      <div style="font-size:9px;color:${_rptCol(totTh)};margin-top:2px">${_rptEstado(totTh)}</div>
+    </td>
+  </tr>`;
+
+  h+=`<tr><td colspan="6" style="background:#EEF2FF;color:#64748B;font-size:8px;padding:7px 12px;text-align:center;border:none">ARATO · MISSION PRODUCE · Meta maquinaria: ${META} TN/Hr · ${ahora}</td></tr>`;
+  h+='</table>';
+  document.getElementById('rpt-maq-cont').innerHTML=h;
+
+  // Restaurar fecha seleccionada en el nuevo select generado
+  const newSel=document.getElementById('rpt-fecha-sel');
+  if(newSel&&fechaSel)newSel.value=fechaSel;
+}
+
+// ── Helper: get week key (lunes de la semana) ──
+function _weekKey(fecha){
+  const [d,m,y]=fecha.split('/').map(Number);
+  const dt=new Date(y,m-1,d);
+  const day=dt.getDay();
+  const diff=day===0?-6:1-day; // lunes
+  const lunes=new Date(dt);lunes.setDate(dt.getDate()+diff);
+  return lunes.toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+function _weekLabel(lunesStr){
+  const [d,m,y]=lunesStr.split('/').map(Number);
+  const lunes=new Date(y,m-1,d);
+  const domingo=new Date(lunes);domingo.setDate(lunes.getDate()+6);
+  return `${d}/${m} – ${domingo.getDate()}/${domingo.getMonth()+1}/${y}`;
+}
+
+// Vista 3: SEMANAL — TN/Hr global agrupado por semana (solo maquinaria)
+function buildReporteSemanal(){
+  const ahora=new Date().toLocaleString('es-PE');
+  const recsMaq=records.filter(r=>!r.tipo||r.tipo==='maquinaria');
+  const recsMonta=records.filter(r=>r.tipo==='montacargas');
+  if(!recsMaq.length){document.getElementById('rpt-maq-cont').innerHTML='<div style="color:#475569;text-align:center;padding:40px;">Sin registros</div>';return;}
+
+  const semKeys=[...new Set(recsMaq.map(r=>_weekKey(r.fecha)))].sort((a,b)=>{
+    const [da,ma,ya]=a.split('/').map(Number);const [db,mb,yb]=b.split('/').map(Number);
+    return new Date(ya,ma-1,da)-new Date(yb,mb-1,db);
+  });
+  const selEl=document.getElementById('rpt-sem-sel');
+  const semSel=selEl?selEl.value:semKeys[semKeys.length-1];
+  const [ds,ms,ys]=semSel.split('/').map(Number);
+  const lunes=new Date(ys,ms-1,ds);
+  const diasSem=[];
+  for(let i=0;i<7;i++){const d=new Date(lunes);d.setDate(lunes.getDate()+i);diasSem.push(d.toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'numeric'}));}
+  const diasConDatos=diasSem.filter(d=>recsMaq.some(r=>r.fecha===d));
+  const numDias=diasConDatos.length;
+  const semLabel=_weekLabel(semSel);
+  const semN=String(getWeekNumber(lunes)).padStart(2,'0');
+
+  // Semana anterior
+  const semAntKey=semKeys[semKeys.indexOf(semSel)-1]||null;
+  let vsAnt='';
+  if(semAntKey){
+    const [dsa,msa,ysa]=semAntKey.split('/').map(Number);
+    const lunesAnt=new Date(ysa,msa-1,dsa);
+    const diasAnt=[];for(let i=0;i<7;i++){const d=new Date(lunesAnt);d.setDate(lunesAnt.getDate()+i);diasAnt.push(d.toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'numeric'}));}
+    const dAnt=diasAnt.filter(d=>recsMaq.some(r=>r.fecha===d));
+    const hAnt=dAnt.reduce((s,d)=>{const r=recsMaq.filter(x=>x.fecha===d);return s+r.reduce((ss,x)=>ss+(x.hrsEjec||0),0);},0);
+    const tAnt=dAnt.reduce((s,d)=>{const r=recsMaq.filter(x=>x.fecha===d);return s+r.reduce((ss,x)=>ss+(x.toneladas||0),0);},0);
+    const tnhrAnt=hAnt>0?tAnt/hAnt:0;
+    if(tnhrAnt>0){
+      const saN=String(getWeekNumber(lunesAnt)).padStart(2,'0');
+      const diff=0; vsAnt=`SEM-${saN}: ${tnhrAnt.toFixed(2)} TN/Hr`;
+    }
+  }
+
+  function dD(dia,recs){
+    const r=recs.filter(x=>x.fecha===dia);
+    const hrs=r.reduce((s,x)=>s+(x.hrsEjec||0),0);
+    const bins=r.reduce((s,x)=>s+(x.bins||0),0);
+    const tons=r.reduce((s,x)=>s+(x.toneladas||0),0);
+    return{hrs,bins,tons,tnhr:hrs>0?tons/hrs:0};
+  }
+  const mD=diasConDatos.map(d=>dD(d,recsMaq));
+  const moD=diasConDatos.map(d=>dD(d,recsMonta));
+  const pD=diasConDatos.map(d=>{
+    const r=personalRecords.filter(x=>x.fecha===d);
+    return{pers:r.reduce((s,x)=>s+(x.personal||0),0),tons:r.reduce((s,x)=>s+(x.toneladas||0),0),hrs:r.reduce((s,x)=>s+(x.horas||0),0)};
+  });
+
+  const totMaqH=mD.reduce((s,d)=>s+d.hrs,0);
+  const totMaqT=mD.reduce((s,d)=>s+d.tons,0);
+  const totMaqB=mD.reduce((s,d)=>s+d.bins,0);
+  const totMontaH=moD.reduce((s,d)=>s+d.hrs,0);
+  const totMontaT=moD.reduce((s,d)=>s+d.tons,0);
+  const totPersP=pD.reduce((s,d)=>s+d.pers,0);
+  const totPersT=pD.reduce((s,d)=>s+d.tons,0);
+  const totTnhrMaq=totMaqH>0?totMaqT/totMaqH:0;
+  const totTnhrMonta=totMontaH>0?totMontaT/totMontaH:0;
+  const totTnp=totPersP&&totPersT?totPersT/totPersP:0;
+  const avgPers=numDias>0&&totPersP>0?Math.round(totPersP/numDias):0;
+  const cumplimiento=META>0?Math.round(totTnhrMaq/META*100):0;
+
+  const tnhrsPorDia=mD.map((d,i)=>({dia:diasConDatos[i],tnhr:d.tnhr})).filter(x=>x.tnhr>0);
+  const mejorDia=tnhrsPorDia.length?tnhrsPorDia.reduce((a,b)=>b.tnhr>a.tnhr?b:a):{dia:'—',tnhr:0};
+  const peorDia=tnhrsPorDia.length?tnhrsPorDia.reduce((a,b)=>b.tnhr<a.tnhr?b:a):{dia:'—',tnhr:0};
+
+  const kpiC=v=>v>=META?'#15803D':v>=META*0.9?'#D97706':'#DC2626';
+  const kpiBg=v=>v>=META?'rgba(21,128,61,.15)':v>=META*0.9?'rgba(217,119,6,.15)':'rgba(220,38,38,.15)';
+  const kpiBorder=v=>v>=META?'rgba(134,239,172,.5)':v>=META*0.9?'rgba(253,230,138,.5)':'rgba(252,165,165,.5)';
+  const cumIcon=cumplimiento>=100?'🟢':cumplimiento>=90?'🟡':'🔴';
+
+  // Edición
+  const editKey='sem_edit_'+semSel;
+  let semEdit={};try{semEdit=JSON.parse(localStorage.getItem(editKey)||'{}');}catch(e){}
+  const responsable=semEdit.responsable||'Jerson Muñoz';
+  const version=semEdit.version||'v1.0';
+
+  // Causas/acciones automáticas compactas
+  const causasLines=tnhrsPorDia.filter(x=>x.tnhr<META*0.9).map(x=>`• ${x.dia.substring(0,5)}: ${x.tnhr.toFixed(2)} (-${Math.round((1-x.tnhr/META)*100)}%)`);
+  if(causasLines.length===0)causasLines.push('• Sin desviaciones');
+  const accionesLines=totTnhrMaq<META?['• Revisar tiempos muertos',`• Analizar ${peorDia.dia.substring(0,5)} con supervisores`]:['• Mantener condiciones actuales'];
+  const causasTexto=semEdit.causas||causasLines.join('\n');
+  const accionesTexto=semEdit.acciones||accionesLines.join('\n');
+
+  // SVG
+  const chartH=80;const chartPadL=26;
+  const barW=Math.min(36,Math.floor(180/Math.max(numDias,1)));
+  const barGap=8;const svgW=chartPadL+numDias*(barW+barGap)+6;
+  const yMax=Math.max(Math.ceil(Math.max(...mD.map(d=>d.tnhr),META)*1.1),4);
+  let svgG='',svgY='',svgB='';
+  [0,1,2,3,yMax].forEach(v=>{
+    const y=chartH-(v/yMax*chartH*0.88);
+    svgG+=`<line x1="${chartPadL}" y1="${y}" x2="${svgW}" y2="${y}" stroke="#E2E8F0" stroke-width="0.6" stroke-dasharray="2,3"/>`;
+    svgY+=`<text x="${chartPadL-3}" y="${y+3}" text-anchor="end" font-size="6.5" fill="#94A3B8">${v}</text>`;
+  });
+  const metaY=chartH-(META/yMax*chartH*0.88);
+  const svgMeta=`<line x1="${chartPadL}" y1="${metaY}" x2="${svgW}" y2="${metaY}" stroke="#F5C800" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <rect x="${svgW-38}" y="${metaY-8}" width="36" height="9" rx="2" fill="#F5C800"/>
+    <text x="${svgW-20}" y="${metaY-1.5}" text-anchor="middle" font-size="6" fill="#0B1437" font-weight="bold">META ${META}</text>`;
+  diasConDatos.forEach((dia,i)=>{
+    const tnhr=mD[i].tnhr;if(!tnhr)return;
+    const bH=Math.max(6,Math.round(tnhr/yMax*chartH*0.88));
+    const x=chartPadL+i*(barW+barGap);const y=chartH-bH;
+    const col=tnhr>=META?'#16A34A':tnhr>=META*0.9?'#D97706':'#DC2626';
+    const dow=['D','L','M','X','J','V','S'][new Date(+dia.split('/')[2],+dia.split('/')[1]-1,+dia.split('/')[0]).getDay()];
+    svgB+=`<rect x="${x+2}" y="${y}" width="${barW-4}" height="${bH}" fill="${col}" rx="3" opacity=".85"/>`;
+    if(bH>14)svgB+=`<text x="${x+barW/2}" y="${y+bH/2+3.5}" text-anchor="middle" font-size="8.5" fill="#fff" font-weight="bold">${tnhr.toFixed(2)}</text>`;
+    else svgB+=`<text x="${x+barW/2}" y="${y-3}" text-anchor="middle" font-size="7.5" fill="${col}" font-weight="bold">${tnhr.toFixed(2)}</text>`;
+    svgB+=`<text x="${x+barW/2}" y="${chartH+10}" text-anchor="middle" font-size="7" fill="#64748B">${dia.substring(0,5)}</text>`;
+    svgB+=`<text x="${x+barW/2}" y="${chartH+19}" text-anchor="middle" font-size="6" fill="#94A3B8">${dow}</text>`;
+  });
+
+  let h='';
+
+  // SELECTOR
+  h+=`<div style="margin-bottom:10px;display:flex;align-items:center;gap:8px;">
+    <select id="rpt-sem-sel" onchange="buildReporteSemanal()" style="padding:6px 10px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#fff;font-size:0.78rem;font-family:inherit;font-weight:700;flex:1;">${semKeys.map(k=>`<option value="${k}" ${k===semSel?'selected':''}>${_weekLabel(k)}</option>`).join('')}</select>
+    <button onclick="editarSemanal('${semSel}')" style="background:#334155;border:none;border-radius:8px;padding:6px 10px;color:#94A3B8;font-size:0.65rem;cursor:pointer;white-space:nowrap;">✏️ Editar</button>
+  </div>`;
+
+  h+=`<div style="background:#F8FAFC;border-radius:14px;overflow:hidden;font-family:'Inter',Arial,sans-serif;">`;
+
+  // 1. HEADER MÍNIMO
+  h+=`<div style="background:linear-gradient(135deg,#0B1437,#1e3a8a);padding:14px 18px 12px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div>
+        <div style="font-size:13px;font-weight:800;color:#F5C800;letter-spacing:1.5px;">MAQUINARIA ACOPIO — ${fundoActual==='arato2'?'ARATO 2':'ARATO 1'} 2026</div>
+        <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.7);margin-top:2px;letter-spacing:1px;">HORAS MAQUINARIA SEM-${semN}</div>
+        <div style="font-size:7px;color:rgba(255,255,255,.45);margin-top:2px;">📅 ${semLabel} &nbsp;·&nbsp; 👤 ${responsable} &nbsp;·&nbsp; ${version} &nbsp;·&nbsp; ${numDias}/7 días</div>
+      </div>
+      <div style="background:#F5C800;color:#0B1437;font-size:9px;font-weight:800;padding:3px 9px;border-radius:6px;">${numDias}/7 días</div>
+    </div>
+
+    <!-- 2. KPI PRINCIPAL -->
+    <div style="background:${kpiBg(totTnhrMaq)};border:1.5px solid ${kpiBorder(totTnhrMaq)};border-radius:10px;padding:10px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div style="font-size:6px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.8px;margin-bottom:2px;">🚜 TN/Hr Maquinaria</div>
+        <div style="font-size:2.4rem;font-weight:900;color:${kpiC(totTnhrMaq)};font-family:monospace;line-height:1;">${totTnhrMaq.toFixed(2)}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:11px;font-weight:800;color:${kpiC(totTnhrMaq)};">${cumIcon} ${cumplimiento}%</div>
+        <div style="font-size:8px;color:rgba(255,255,255,.5);margin-top:3px;">meta ${META} TN/Hr</div>
+        ${vsAnt?`<div style="font-size:7.5px;color:rgba(255,255,255,.35);margin-top:2px;">${vsAnt}</div>`:''}
+        <div style="font-size:8px;color:rgba(255,255,255,.55);margin-top:3px;">✅ ${mejorDia.dia.substring(0,5)} ${mejorDia.tnhr.toFixed(2)} &nbsp; ⚠️ ${peorDia.dia.substring(0,5)} ${peorDia.tnhr.toFixed(2)}</div>
+      </div>
+    </div>
+
+    <!-- 3. KPIs SECUNDARIOS -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:12px;">
+      <div style="background:rgba(255,255,255,.07);border-radius:8px;padding:7px 5px;text-align:center;">
+        <div style="font-size:7px;color:rgba(255,255,255,.4);margin-bottom:2px;">⚖️ Producción</div>
+        <div style="font-size:13px;font-weight:800;color:#fff;font-family:monospace;">${totMaqT.toFixed(1)}</div>
+        <div style="font-size:6px;color:rgba(255,255,255,.3);">TN · ${totMaqB|0} bins</div>
+      </div>
+      <div style="background:rgba(217,119,6,.12);border:1px solid rgba(253,230,138,.25);border-radius:8px;padding:7px 5px;text-align:center;">
+        <div style="font-size:7px;color:rgba(255,255,255,.4);margin-bottom:2px;">🏗️ TN/Hr Monta</div>
+        <div style="font-size:13px;font-weight:800;color:#FDE68A;font-family:monospace;">${totTnhrMonta>0?totTnhrMonta.toFixed(2):'N/D'}</div>
+        <div style="font-size:6px;color:rgba(255,255,255,.3);">${totMontaT>0?totMontaT.toFixed(1)+' TN':'—'}</div>
+      </div>
+      <div style="background:rgba(124,58,237,.12);border:1px solid rgba(196,181,253,.25);border-radius:8px;padding:7px 5px;text-align:center;">
+        <div style="font-size:7px;color:rgba(255,255,255,.4);margin-bottom:2px;">👷 TN/Persona</div>
+        <div style="font-size:13px;font-weight:800;color:#C4B5FD;font-family:monospace;">${totTnp>0?totTnp.toFixed(2):'N/D'}</div>
+        <div style="font-size:6px;color:rgba(255,255,255,.3);">${avgPers>0?'~'+avgPers+' p/día':'—'}</div>
+      </div>
+      <div style="background:${cumplimiento>=100?'rgba(21,128,61,.15)':cumplimiento>=90?'rgba(217,119,6,.15)':'rgba(220,38,38,.15)'};border:1px solid ${cumplimiento>=100?'rgba(74,222,128,.3)':cumplimiento>=90?'rgba(253,230,138,.3)':'rgba(252,165,165,.3)'};border-radius:8px;padding:7px 5px;text-align:center;">
+        <div style="font-size:7px;color:rgba(255,255,255,.4);margin-bottom:2px;">🎯 Cumplimiento</div>
+        <div style="font-size:13px;font-weight:800;color:${cumplimiento>=100?'#4ADE80':cumplimiento>=90?'#FDE68A':'#FCA5A5'};font-family:monospace;">${cumplimiento}%</div>
+        <div style="font-size:6px;color:rgba(255,255,255,.3);">meta ${META} TN/Hr</div>
+      </div>
+    </div>
+
+    <!-- 4. GRÁFICO -->
+    ${numDias>=2?`<div style="background:rgba(255,255,255,.04);border-radius:10px;padding:12px 10px 8px;border:1px solid rgba(255,255,255,.07);">
+      <svg width="100%" viewBox="0 0 ${svgW} ${chartH+24}" style="overflow:visible;">${svgG}${svgY}${svgMeta}${svgB}
+        <line x1="${chartPadL}" y1="0" x2="${chartPadL}" y2="${chartH}" stroke="#334155" stroke-width="1"/>
+        <line x1="${chartPadL}" y1="${chartH}" x2="${svgW}" y2="${chartH}" stroke="#334155" stroke-width="1"/>
+      </svg>
+    </div>`:''}
+  </div>`; // cierra header azul
+
+  // ── TABLA ORGANIZADA POR BLOQUES ──
+  const totPersH=pD.reduce((s,d)=>s+(d.hrs||0),0);
+  const hrsPP=totPersH>0&&totPersP>0?+(totPersH/totPersP).toFixed(2):0;
+
+  function row(icon,label,c,bg,bgTotal,vals,fmt){
+    let r=`<tr><td style="padding:8px 10px;font-size:9px;font-weight:700;color:${c};border-bottom:1px solid #F1F5F9;white-space:nowrap;background:${bg};">${icon} ${label}</td>`;
+    vals.forEach(v=>r+=v!==null&&v!==undefined&&v!==0?`<td style="padding:8px 5px;text-align:center;border-bottom:1px solid #F1F5F9;font-family:monospace;font-weight:700;color:${c};background:${bg};">${fmt(v)}</td>`:`<td style="padding:8px;text-align:center;border-bottom:1px solid #F1F5F9;background:${bg};color:#D1D5DB;font-size:9px;">—</td>`);
+    const tot=vals.reduce((s,v)=>s+(v||0),0);
+    r+=`<td style="padding:8px 5px;text-align:center;border-bottom:1px solid #F1F5F9;font-family:monospace;font-weight:800;color:${c};background:${bgTotal};">${fmt(tot)}</td></tr>`;
+    return r;
+  }
+  function blk(txt,c,bg){return`<tr><td colspan="${numDias+2}" style="padding:7px 10px 4px;font-size:7.5px;font-weight:800;color:${c};letter-spacing:1.5px;text-transform:uppercase;background:${bg};border-top:2px solid ${c};border-bottom:1px solid #E2E8F0;">${txt}</td></tr>`;}
+
+  h+=`<div style="background:#fff;padding:12px 14px 10px;">
+    <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-family:'Inter',Arial,sans-serif;font-size:10px;">
+      <thead><tr style="background:#F1F5F9;">
+        <th style="padding:8px 10px;text-align:left;font-size:7.5px;font-weight:700;color:#94A3B8;border-bottom:2px solid #E2E8F0;white-space:nowrap;min-width:140px;"></th>
+        ${diasConDatos.map(d=>{
+          const p=d.split('/');
+          const dow=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][new Date(+p[2],+p[1]-1,+p[0]).getDay()];
+          return`<th style="padding:8px 5px;text-align:center;font-size:8px;font-weight:700;color:#475569;border-bottom:2px solid #E2E8F0;white-space:nowrap;">${p[0]}/${p[1]}<span style="display:block;font-size:6.5px;font-weight:500;color:#94A3B8;">${dow}</span></th>`;
+        }).join('')}
+        <th style="padding:8px 6px;text-align:center;font-size:8px;font-weight:800;color:#1e3a8a;border-bottom:2px solid #1e3a8a;background:#EEF2FF;white-space:nowrap;">Total sem.</th>
+      </tr></thead>
+      <tbody>`;
+
+  // ── BLOQUE ÚNICO orden Beggie ──
+  h+=blk('📊 RESUMEN OPERATIVO','#1e3a8a','#F0F4FF');
+  h+=row('🚜','TRACTOR (hrs)','#1e3a8a','#F8FAFF','#EEF2FF',mD.map(d=>d.hrs||null),v=>`${v.toFixed(1)}h`);
+  if(totMontaH>0)h+=row('🏗️','MONTACARGAS (hrs)','#B45309','#FEF9C3','#FDE68A',moD.map(d=>d.hrs||null),v=>`${v.toFixed(1)}h`);
+  h+=row('👷','PERS/ACOPIO','#15803D','#F0FDF4','#DCFCE7',pD.map(d=>d.pers||null),v=>`${v} p.`);
+  h+=row('📦','BINES','#0369A1','#EFF6FF','#DBEAFE',mD.map(d=>d.bins||null),v=>`${Math.round(v)}`);
+  h+=row('⚖️','TN/DIA','#15803D','#F0FDF4','#DCFCE7',mD.map(d=>d.tons||null),v=>`${v.toFixed(1)} TN`);
+
+
+  // ── RATIOS ──
+  // TN/HORA/TRACTOR — fila destacada
+  h+=`<tr style="background:#1e293b;">
+    <td style="padding:8px 10px;font-size:9px;font-weight:800;color:#F5C800;border-bottom:1px solid #334155;white-space:nowrap;">⚡ TN/HORA/TRACTOR</td>`;
+  let totTnhrSum=0,countTnhr=0;
+  mD.forEach(d=>{
+    if(!d.hrs){h+=`<td style="padding:8px;text-align:center;border-bottom:1px solid #334155;background:#1e293b;color:#475569;">—</td>`;return;}
+    const col=kpiC(d.tnhr);const bg=d.tnhr>=META?'rgba(22,163,74,.22)':d.tnhr>=META*0.9?'rgba(217,119,6,.22)':'rgba(220,38,38,.22)';
+    const est=d.tnhr>=META?'🟢':d.tnhr>=META*0.9?'🟡':'🔴';
+    h+=`<td style="padding:8px 5px;text-align:center;border-bottom:1px solid #334155;background:${bg};">
+      <div style="font-size:13px;font-weight:800;color:${col};font-family:monospace;">${d.tnhr.toFixed(2)}</div>
+      <div style="font-size:8px;">${est}</div>
+    </td>`;
+    totTnhrSum+=d.tnhr;countTnhr++;
+  });
+  h+=`<td style="padding:8px 6px;text-align:center;border-bottom:1px solid #334155;background:${kpiBg(totTnhrMaq)};">
+    <div style="font-size:14px;font-weight:900;color:${kpiC(totTnhrMaq)};font-family:monospace;">${totTnhrMaq.toFixed(2)}</div>
+    <div style="font-size:8px;color:${kpiC(totTnhrMaq)};font-weight:700;">${cumIcon}${cumplimiento}%</div>
+  </td></tr>`;
+
+  // TN/HORA/MONTACARGAS
+  if(totMontaH>0){
+    h+=`<tr><td style="padding:8px 10px;font-size:9px;font-weight:700;color:#D97706;border-bottom:1px solid #F1F5F9;background:#FEF9C3;white-space:nowrap;">🏗️ TN/HORA/MON</td>`;
+    moD.forEach(d=>h+=d.hrs?`<td style="padding:8px 5px;text-align:center;border-bottom:1px solid #FDE68A;font-family:monospace;font-weight:800;color:#D97706;background:#FEF9C3;font-size:12px;">${d.tnhr.toFixed(2)}</td>`:`<td style="padding:8px;text-align:center;border-bottom:1px solid #FDE68A;background:#FEFCE8;color:#D1D5DB;">—</td>`);
+    h+=`<td style="padding:8px 6px;text-align:center;border-bottom:1px solid #FDE68A;font-family:monospace;font-weight:900;color:#D97706;background:#FEF3C7;font-size:13px;">${totTnhrMonta.toFixed(2)}</td></tr>`;
+  }
+
+  // TN/PERSONA
+  if(totTnp>0){
+    h+=`<tr><td style="padding:8px 10px;font-size:9px;font-weight:700;color:#7C3AED;border-bottom:1px solid #F1F5F9;background:#FAF5FF;white-space:nowrap;">👷 TN/PERSONA</td>`;
+    pD.forEach(d=>{
+      const tnp=d.pers&&d.tons?+(d.tons/d.pers).toFixed(2):0;
+      h+=tnp?`<td style="padding:8px 5px;text-align:center;border-bottom:1px solid #F1F5F9;font-family:monospace;font-weight:700;color:#7C3AED;background:#FAF5FF;">${tnp}</td>`:`<td style="padding:8px;text-align:center;border-bottom:1px solid #F1F5F9;background:#FAF5FF;color:#D1D5DB;">—</td>`;
+    });
+    h+=`<td style="padding:8px 6px;text-align:center;border-bottom:1px solid #F1F5F9;font-family:monospace;font-weight:800;color:#7C3AED;background:#EDE9FE;">${totTnp.toFixed(2)}</td></tr>`;
+  }
+
+  h+='</tbody></table></div>';
+
+  h+=`</div>`; // cierra padding blanco
+
+  // PIE MÍNIMO
+  h+=`<div style="background:#0B1437;padding:6px 16px;text-align:center;">
+    <div style="font-size:7px;color:rgba(255,255,255,.35);">ARATO · SEM-${semN} · ${semLabel} · ${responsable} · ${version}</div>
+  </div>`;
+
+  h+=`</div>`; // contenedor
+
+  document.getElementById('rpt-maq-cont').innerHTML=h;
+  const nS=document.getElementById('rpt-sem-sel');
+  if(nS&&semSel)nS.value=semSel;
+}
+
+function editarSemanal(semSel){
+  const editKey='sem_edit_'+semSel;
+  let semEdit={};try{semEdit=JSON.parse(localStorage.getItem(editKey)||'{}');}catch(e){}
+  const recsMaq=records.filter(r=>!r.tipo||r.tipo==='maquinaria');
+  const [ds,ms,ys]=semSel.split('/').map(Number);
+  const lunes=new Date(ys,ms-1,ds);
+  const diasSem=[];for(let i=0;i<7;i++){const d=new Date(lunes);d.setDate(lunes.getDate()+i);diasSem.push(d.toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'numeric'}));}
+  const diasConDatos=diasSem.filter(d=>recsMaq.some(r=>r.fecha===d));
+  const mD=diasConDatos.map(d=>{const r=recsMaq.filter(x=>x.fecha===d);const hrs=r.reduce((s,x)=>s+(x.hrsEjec||0),0);const tons=r.reduce((s,x)=>s+(x.toneladas||0),0);return{hrs,tons,tnhr:hrs>0?tons/hrs:0,dia:d};});
+  const totH=mD.reduce((s,d)=>s+d.hrs,0);const totT=mD.reduce((s,d)=>s+d.tons,0);
+  const tnhrG=totH>0?totT/totH:0;
+  const causasAuto=mD.filter(d=>d.tnhr>0&&d.tnhr<META*0.9).map(d=>`• ${d.dia.substring(0,5)}: ${d.tnhr.toFixed(2)} (-${Math.round((1-d.tnhr/META)*100)}%)`);
+  if(!causasAuto.length)causasAuto.push('• Sin desviaciones');
+  const accionesAuto=tnhrG<META?['• Revisar tiempos muertos',`• Analizar días críticos`]:['• Mantener condiciones actuales'];
+
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML=`<div style="background:#0d1526;border-radius:14px;padding:18px;width:100%;max-width:380px;max-height:88vh;overflow-y:auto;border:1px solid #334155;">
+    <div style="font-size:0.82rem;font-weight:800;color:#F5C800;margin-bottom:14px;text-align:center;">✏️ Editar SEM-${String(getWeekNumber(lunes)).padStart(2,'0')}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+      <div><label style="font-size:0.58rem;color:#64748B;display:block;margin-bottom:3px;">Responsable</label>
+        <input id="ed-resp" value="${semEdit.responsable||'Jerson Muñoz'}" style="background:#1e293b;border:1px solid #334155;border-radius:7px;padding:7px;color:#fff;font-size:0.72rem;width:100%;"></div>
+      <div><label style="font-size:0.58rem;color:#64748B;display:block;margin-bottom:3px;">Versión</label>
+        <input id="ed-ver" value="${semEdit.version||'v1.0'}" style="background:#1e293b;border:1px solid #334155;border-radius:7px;padding:7px;color:#fff;font-size:0.72rem;width:100%;"></div>
+    </div>
+    <div style="margin-bottom:10px;">
+      <label style="font-size:0.58rem;color:#FDE68A;display:block;margin-bottom:3px;">⚠️ Desviaciones</label>
+      <textarea id="ed-causas" rows="4" style="background:#1e293b;border:1px solid #D97706;border-radius:7px;padding:7px;color:#FDE68A;font-size:0.7rem;width:100%;resize:vertical;">${semEdit.causas||causasAuto.join('\n')}</textarea>
+    </div>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:0.58rem;color:#93C5FD;display:block;margin-bottom:3px;">✅ Acciones</label>
+      <textarea id="ed-acciones" rows="4" style="background:#1e293b;border:1px solid #3B82F6;border-radius:7px;padding:7px;color:#93C5FD;font-size:0.7rem;width:100%;resize:vertical;">${semEdit.acciones||accionesAuto.join('\n')}</textarea>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <button onclick="this.closest('div[style*=fixed]').remove()" style="padding:9px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#fff;font-size:0.78rem;cursor:pointer;font-family:inherit;">✗ Cancelar</button>
+      <button onclick="guardarEdicionSemanal('${semSel}')" style="padding:9px;background:#16A34A;border:none;border-radius:8px;color:#fff;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;">✅ Guardar</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+}
+
+function guardarEdicionSemanal(semSel){
+  const editKey='sem_edit_'+semSel;
+  const data={
+    responsable:document.getElementById('ed-resp').value.trim()||'Jerson Muñoz',
+    version:document.getElementById('ed-ver').value.trim()||'v1.0',
+    causas:document.getElementById('ed-causas').value.trim(),
+    acciones:document.getElementById('ed-acciones').value.trim()
+  };
+  localStorage.setItem(editKey,JSON.stringify(data));
+  document.querySelector('div[style*="position:fixed"]')?.remove();
+  showToast('✅ Reporte actualizado','ok');
+  buildReporteSemanal();
+}
+
+function getWeekNumber(d){
+  const date=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+  const dayNum=date.getUTCDay()||7;
+  date.setUTCDate(date.getUTCDate()+4-dayNum);
+  const yearStart=new Date(Date.UTC(date.getUTCFullYear(),0,1));
+  return Math.ceil((((date-yearStart)/86400000)+1)/7);
+}
+
+// Vista 4: MONTACARGAS — por día
+function buildReporteMonta(){
+  const ahora=new Date().toLocaleString('es-PE');
+  const recsMonta=records.filter(r=>r.tipo==='montacargas');
+  if(!recsMonta.length){
+    document.getElementById('rpt-maq-cont').innerHTML=`<div style="color:#475569;text-align:center;padding:40px;font-size:0.85rem">Sin registros de montacargas.<br><span style="font-size:0.75rem">Registra seleccionando "🏗️ Montacargas" en el formulario.</span></div>`;
+    return;
+  }
+  const fechas=_sortFechas(recsMonta);
+  const selEl=document.getElementById('rpt-fecha-monta');
+  const fechaSel=selEl?selEl.value:fechas[fechas.length-1];
+  const recsDia=recsMonta.filter(r=>r.fecha===fechaSel);
+
+  let totH=0,totT=0;
+  recsDia.forEach(r=>{totH+=r.hrsEjec||0;totT+=r.toneladas||0;});
+  const totTh=totH>0?totT/totH:0;
+
+  let html=`<div style="margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+    <span style="font-size:0.7rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px">📅 Fecha:</span>
+    <select id="rpt-fecha-monta" onchange="buildReporteMonta()" style="padding:7px 12px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#fff;font-size:0.8rem;font-family:inherit;font-weight:700">
+      ${fechas.map(f=>`<option value="${f}" ${f===fechaSel?'selected':''}>${f}</option>`).join('')}
+    </select>
+  </div>`;
+
+  html+=`<table style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px;min-width:340px">`;
+  html+=`<tr><td colspan="6" style="padding:0;border:none">${_rptHeader('REPORTE DEL '+fechaSel,'🏗️ '+recsDia.length+' montacargas — Resumen del día',ahora)}</td></tr>`;
+  html+=`<tr style="background:#B45309">
+    <th style="padding:9px 12px;color:#FEF9C3;font-size:9px;border:1px solid #FDE68A;text-align:left">🏗️ Equipo</th>
+    <th style="padding:9px 8px;color:#FEF9C3;font-size:9px;border:1px solid #FDE68A;text-align:center">👤 Operador</th>
+    <th style="padding:9px 8px;color:#FEF9C3;font-size:9px;border:1px solid #FDE68A;text-align:center">⏱ Horas</th>
+    <th style="padding:9px 8px;color:#FEF9C3;font-size:9px;border:1px solid #FDE68A;text-align:center">⚖️ Toneladas</th>
+    <th style="padding:9px 8px;color:#FEF9C3;font-size:9px;border:1px solid #FDE68A;text-align:center">⚡ TN/Hr</th>
+    <th style="padding:9px 8px;color:#FEF9C3;font-size:9px;border:1px solid #FDE68A;text-align:center">📊 Estado</th>
+  </tr>`;
+
+  if(!recsDia.length){
+    html+=`<tr><td colspan="6" style="padding:20px;text-align:center;color:#94A3B8;font-style:italic;font-size:10px">Sin registros de montacargas para esta fecha</td></tr>`;
+  }else{
+    recsDia.forEach((r,i)=>{
+      const bg=i%2===0?'#FFFBEB':'#FEF9C3';
+      const col=META_MONTA>0?_rptCol(r.tnhr):'#D97706';
+      const bg2=META_MONTA>0?_rptBg(r.tnhr):'#FEF3C7';
+      const estado=META_MONTA>0?(r.tnhr>=META_MONTA?'🟢 BIEN':r.tnhr>=META_MONTA*0.7?'🟡 REGULAR':'🔴 BAJO META'):'🟡 SIN META';
+      html+=`<tr style="background:${bg}">
+        <td style="padding:9px 12px;font-weight:700;color:#1E293B;border:1px solid #FDE68A">${r.maquina}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #FDE68A;color:#475569;font-size:10px">${r.operador||'—'}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.hrsEjec||0).toFixed(1)}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.toneladas||0).toFixed(1)}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #FDE68A;background:${bg2}">
+          <div style="font-size:20px;font-weight:800;color:${col};font-family:monospace;line-height:1">${(r.tnhr||0).toFixed(2)}</div>
+        </td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #FDE68A;font-size:10px;font-weight:700;color:${col}">${estado}</td>
+      </tr>`;
+    });
+  }
+
+  // TOTAL DEL DÍA
+  html+=`<tr style="background:#B45309">
+    <td colspan="2" style="padding:10px 12px;color:#FEF9C3;font-weight:700;font-size:11px;border:1px solid #FDE68A">TOTAL DÍA — ${recsDia.length} equipo(s)</td>
+    <td style="padding:10px;text-align:center;border:1px solid #FDE68A;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${totH.toFixed(1)}</td>
+    <td style="padding:10px;text-align:center;border:1px solid #FDE68A;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${totT.toFixed(1)}</td>
+    <td style="padding:10px;text-align:center;border:1px solid #FDE68A;background:#FEF3C7">
+      <div style="font-size:26px;font-weight:800;color:#D97706;font-family:monospace;line-height:1">${totTh.toFixed(2)}</div>
+    </td>
+    <td style="padding:10px;text-align:center;border:1px solid #FDE68A;font-size:10px;font-weight:700;color:#D97706">${META_MONTA>0?(totTh>=META_MONTA?'🟢 BIEN':totTh>=META_MONTA*0.7?'🟡 REGULAR':'🔴 BAJO META'):'🟡 SIN META'}</td>
+  </tr>`;
+
+  if(META_MONTA===0){html+=`<tr><td colspan="6" style="background:#FEF9C3;color:#B45309;font-size:8.5px;padding:6px 12px;text-align:center;border:none">⚠️ Meta de montacargas pendiente de definir</td></tr>`;}
+
+  html+=`<tr><td colspan="6" style="background:#FEF3C7;color:#92400E;font-size:8px;padding:7px 12px;text-align:center;border:none">ARATO · MISSION PRODUCE · ${ahora}</td></tr>`;
+  html+='</table>';
+  document.getElementById('rpt-maq-cont').innerHTML=html;
+  const newSel=document.getElementById('rpt-fecha-monta');
+  if(newSel&&fechaSel)newSel.value=fechaSel;
+}
+
+// Vista COMBINADO — Maquinaria + Montacargas + Personal en un solo reporte por fecha
+function buildReporteCombinado(){
+  const ahora=new Date().toLocaleString('es-PE');
+  const todasFechas=new Set([
+    ...(records.map(r=>r.fecha)),
+    ...(personalRecords.map(r=>r.fecha))
+  ]);
+  const fechas=_sortFechas([...todasFechas].map(f=>({fecha:f})));
+  if(!fechas.length){document.getElementById('rpt-maq-cont').innerHTML='<div style="color:#475569;text-align:center;padding:40px">Sin datos en ninguna sección</div>';return;}
+
+  const selEl=document.getElementById('rpt-fecha-combo');
+  const fechaSel=selEl?selEl.value:fechas[fechas.length-1];
+
+  let html='';
+  // Pre-calcular totales para resumen ejecutivo
+  const recsMaqPre=records.filter(r=>r.fecha===fechaSel&&(!r.tipo||r.tipo==='maquinaria'));
+  const recsMontaPre=records.filter(r=>r.fecha===fechaSel&&r.tipo==='montacargas');
+  const recsPersPre=personalRecords.filter(r=>r.fecha===fechaSel);
+  const maqH=recsMaqPre.reduce((s,r)=>s+(r.hrsEjec||0),0);
+  const maqT=recsMaqPre.reduce((s,r)=>s+(r.toneladas||0),0);
+  const maqTH=maqH>0?maqT/maqH:0;
+  const montaH=recsMontaPre.reduce((s,r)=>s+(r.hrsEjec||0),0);
+  const montaT=recsMontaPre.reduce((s,r)=>s+(r.toneladas||0),0);
+  const montaTH=montaH>0?montaT/montaH:0;
+  const persT=recsPersPre.reduce((s,r)=>s+(r.toneladas||0),0);
+  const persP=recsPersPre.reduce((s,r)=>s+(r.personal||0),0);
+  const totalTN=maqT; // Producción total = maquinaria (montacargas mueve la misma fruta, no se suma)
+  const estadoGral=maqTH>=META?'✅ BIEN':maqTH>=META*0.7?'⚠️ REGULAR':'❌ BAJO META';
+
+  html+=`<table id="rpt-combo-table" style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px;min-width:340px">`;
+
+  // ENCABEZADO
+  html+=`<tr><td colspan="6" style="padding:0;border:none">
+    <div style="background:linear-gradient(135deg,#0B1437,#1A3A8F);padding:16px 16px 12px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+        <div>
+          <div style="font-size:16px;font-weight:700;color:#F5C800;text-transform:uppercase;letter-spacing:2px;font-family:Arial Black,Arial">REPORTE DIARIO</div>
+          <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,.9);margin-top:3px;letter-spacing:1px">ARATO · MISSION PRODUCE · PERÚ</div>
+          <div style="font-size:8px;color:rgba(255,255,255,.6);margin-top:2px">Maquinaria · Montacargas · Personal</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:20px;font-weight:800;color:#F5C800;font-family:monospace">${fechaSel}</div>
+        <div style="font-size:7px;color:rgba(255,255,255,.75);margin-top:2px">Generado: ${ahora}</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.08);border-radius:8px;padding:8px 12px;margin-bottom:12px">
+        <span style="font-size:10px;font-weight:700;color:#F5C800;white-space:nowrap">📅 FECHA EVALUADA:</span>
+        <select id="rpt-fecha-combo" onchange="buildReporteCombinado()" style="flex:1;padding:7px 10px;border-radius:6px;border:1.5px solid #F5C800;background:#0B1437;color:#F5C800;font-size:12px;font-family:monospace;font-weight:800;cursor:pointer">
+          ${fechas.map(f=>`<option value="${f}" ${f===fechaSel?'selected':''}>${f}</option>`).join('')}
+        </select>
+      </div>
+      <div style="background:rgba(0,0,0,.3);border-radius:8px;padding:10px 12px">
+        <div style="font-size:8px;font-weight:700;color:#F5C800;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">📊 RESUMEN EJECUTIVO</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center">
+          <div style="background:rgba(255,255,255,.08);border-radius:6px;padding:7px 4px">
+            <div style="font-size:7px;color:rgba(255,255,255,.6);text-transform:uppercase;margin-bottom:3px">Producción total</div>
+            <div style="font-size:15px;font-weight:800;color:#fff;font-family:monospace">${totalTN.toFixed(1)}</div>
+            <div style="font-size:7px;color:rgba(255,255,255,.5)">toneladas</div>
+          </div>
+          <div style="background:${maqTH>=META?'rgba(22,163,74,.3)':maqTH>=META*0.7?'rgba(217,119,6,.3)':'rgba(220,38,38,.3)'};border-radius:6px;padding:7px 4px">
+            <div style="font-size:7px;color:rgba(255,255,255,.6);text-transform:uppercase;margin-bottom:3px">🚜 TN/Hr Maq.</div>
+            <div style="font-size:15px;font-weight:800;color:${_rptCol(maqTH)};font-family:monospace">${maqTH.toFixed(2)}</div>
+            <div style="font-size:7px;color:${_rptCol(maqTH)}">${estadoGral}</div>
+          </div>
+          <div style="background:rgba(255,255,255,.08);border-radius:6px;padding:7px 4px">
+            <div style="font-size:7px;color:rgba(255,255,255,.6);text-transform:uppercase;margin-bottom:3px">🏗️ TN/Hr Monta.</div>
+            <div style="font-size:15px;font-weight:800;color:#D97706;font-family:monospace">${montaTH>0?montaTH.toFixed(2):'—'}</div>
+            <div style="font-size:7px;color:rgba(255,255,255,.5)">${montaT>0?montaT.toFixed(1)+' TN':'N/D'}</div>
+          </div>
+          <div style="background:rgba(255,255,255,.08);border-radius:6px;padding:7px 4px">
+            <div style="font-size:7px;color:rgba(255,255,255,.6);text-transform:uppercase;margin-bottom:3px">👷 Personal</div>
+            <div style="font-size:15px;font-weight:800;color:#A78BFA;font-family:monospace">${persP||'—'}</div>
+            <div style="font-size:7px;color:rgba(255,255,255,.7)">${persP&&persT?+(persT/persP).toFixed(2)+' TN/persona':persP?persP+' trabajadores':'N/D'}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </td></tr>`;
+
+  function seccionHeader(icon,titulo,color){
+    return `<tr><td colspan="6" style="background:${color};padding:7px 12px;font-size:10px;font-weight:700;color:#fff;letter-spacing:1px;text-transform:uppercase;border:none">${icon} ${titulo}</td></tr>`;
+  }
+  function colHeader(){
+    return `<tr style="background:#1A3A8F">
+      <th style="padding:8px 12px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:left">Equipo</th>
+      <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">👤 Operador</th>
+      <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⏱ Horas</th>
+      <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⚖️ Toneladas</th>
+      <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⚡ TN/Hr</th>
+      <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">📊 Estado</th>
+    </tr>`;
+  }
+  function totalRow(label,h,t,colspan2label){
+    const th=h>0?t/h:0;
+    return `<tr style="background:#1A3A8F">
+      <td colspan="2" style="padding:9px 12px;color:#F5C800;font-weight:700;font-size:10px;border:1px solid #C0D0F4">${label}</td>
+      <td style="padding:9px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:16px">${h.toFixed(1)}</td>
+      <td style="padding:9px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:16px">${t.toFixed(1)}</td>
+      <td style="padding:9px;text-align:center;border:1px solid #C0D0F4;background:${_rptBg(th)}">
+        <div style="font-size:18px;font-weight:800;color:${_rptCol(th)};font-family:monospace;line-height:1">${th.toFixed(2)}</div>
+        <div style="font-size:8px;color:${_rptCol(th)};margin-top:1px">${_rptEstado(th)}</div>
+      </td>
+    </tr>`;
+  }
+
+  // ── SECCIÓN MAQUINARIA ──
+  const recsMaq=records.filter(r=>r.fecha===fechaSel&&(!r.tipo||r.tipo==='maquinaria'));
+  html+=seccionHeader('🚜','MAQUINARIA','#1A5C38');
+  if(recsMaq.length){
+    html+=colHeader();
+    let totH=0,totT=0;
+    recsMaq.forEach((r,i)=>{
+      const bg=i%2===0?'#F8FAFC':'#FFFFFF';
+      totH+=r.hrsEjec||0;totT+=r.toneladas||0;
+      const estadoIcon=r.tnhr>=META?'🟢 BIEN':r.tnhr>=META*0.7?'🟡 REGULAR':'🔴 BAJO META';
+      html+=`<tr style="background:${bg}">
+        <td style="padding:8px 12px;font-weight:700;color:#1E293B;border:1px solid #D0DCF4">${r.maquina}</td>
+        <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;color:#475569;font-size:10px">${r.operador||'—'}</td>
+        <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.hrsEjec||0).toFixed(1)}</td>
+        <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.toneladas||0).toFixed(1)}</td>
+        <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;background:${_rptBg(r.tnhr)}">
+          <div style="font-size:16px;font-weight:800;color:${_rptCol(r.tnhr)};font-family:monospace">${(r.tnhr||0).toFixed(2)}</div>
+        </td>
+        <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;font-size:10px;font-weight:700;color:${_rptCol(r.tnhr)}">${estadoIcon}</td>
+      </tr>`;
+    });
+    html+=totalRow(`TOTAL MAQUINARIA — ${recsMaq.length} equipo(s)`,totH,totT);
+  } else {
+    html+=`<tr><td colspan="6" style="padding:10px;text-align:center;color:#94A3B8;font-style:italic;font-size:10px;background:#F8FAFC">Sin registros de maquinaria para esta fecha</td></tr>`;
+  }
+
+  // ── SECCIÓN MONTACARGAS ──
+  const recsMonta=records.filter(r=>r.fecha===fechaSel&&r.tipo==='montacargas');
+  html+=`<tr><td colspan="6" style="height:6px;background:#E2E8F0;border:none"></td></tr>`;
+  html+=seccionHeader('🏗️','MONTACARGAS','#B45309');
+  if(recsMonta.length){
+    html+=colHeader();
+    let totH=0,totT=0;
+    recsMonta.forEach((r,i)=>{
+      const bg=i%2===0?'#FFFBEB':'#FEF9C3';
+      totH+=r.hrsEjec||0;totT+=r.toneladas||0;
+      const montaEstado=META_MONTA>0?(r.tnhr>=META_MONTA?'🟢 BIEN':r.tnhr>=META_MONTA*0.7?'🟡 REGULAR':'🔴 BAJO META'):'🟡 SIN META';
+      html+=`<tr style="background:${bg}">
+        <td style="padding:8px 12px;font-weight:700;color:#1E293B;border:1px solid #FDE68A">${r.maquina}</td>
+        <td style="padding:8px;text-align:center;border:1px solid #FDE68A;color:#475569;font-size:10px">${r.operador||'—'}</td>
+        <td style="padding:8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.hrsEjec||0).toFixed(1)}</td>
+        <td style="padding:8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.toneladas||0).toFixed(1)}</td>
+        <td style="padding:8px;text-align:center;border:1px solid #FDE68A;background:#FEF3C7">
+          <div style="font-size:16px;font-weight:800;color:#D97706;font-family:monospace">${(r.tnhr||0).toFixed(2)}</div>
+        </td>
+        <td style="padding:8px;text-align:center;border:1px solid #FDE68A;font-size:10px;font-weight:700;color:#B45309">${montaEstado}</td>
+      </tr>`;
+    });
+    html+=totalRow(`TOTAL MONTACARGAS — ${recsMonta.length} equipo(s)`,totH,totT);
+  } else {
+    html+=`<tr><td colspan="6" style="padding:10px;text-align:center;color:#94A3B8;font-style:italic;font-size:10px;background:#FFFBEB">Sin registros de montacargas para esta fecha</td></tr>`;
+  }
+
+  // ── SECCIÓN PERSONAL ──
+  const recsPers=personalRecords.filter(r=>r.fecha===fechaSel);
+  html+=`<tr><td colspan="6" style="height:6px;background:#E2E8F0;border:none"></td></tr>`;
+  html+=seccionHeader('👷','PERSONAL / MANO DE OBRA','#5B21B6');
+  if(recsPers.length){
+    html+=`<tr style="background:#1A3A8F">
+      <th style="padding:8px 12px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">👷 Trabajadores</th>
+      <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⏱ Hrs Totales</th>
+      <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⏱ Hrs/Persona</th>
+      <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⚖️ Toneladas</th>
+      <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center" colspan="2">📦 TN/Persona</th>
+    </tr>`;
+    recsPers.forEach((r,i)=>{
+      const bg=i%2===0?'#F5F3FF':'#EDE9FE';
+      const hrsp=r.hrsp||(r.horas&&r.personal?+(r.horas/r.personal).toFixed(2):0);
+      html+=`<tr style="background:${bg}">
+        <td style="padding:9px;text-align:center;font-size:18px;font-weight:800;color:#7C3AED;border:1px solid #DDD6FE">${r.personal}</td>
+        <td style="padding:9px;text-align:center;font-weight:700;font-family:monospace;font-size:14px;border:1px solid #DDD6FE;color:#1E293B">${r.horas}</td>
+        <td style="padding:9px;text-align:center;font-family:monospace;font-size:13px;border:1px solid #DDD6FE;color:#475569">${hrsp}</td>
+        <td style="padding:9px;text-align:center;font-weight:700;font-family:monospace;font-size:14px;border:1px solid #DDD6FE;color:#1E293B">${r.toneladas}</td>
+        <td style="padding:9px;text-align:center;font-size:20px;font-weight:800;color:#16A34A;font-family:monospace;border:1px solid #DDD6FE" colspan="2">${r.tnp}</td>
+      </tr>`;
+      if(r.obs)html+=`<tr style="background:${bg}"><td colspan="6" style="padding:4px 12px;font-size:9px;color:#6B7280;border:1px solid #DDD6FE;font-style:italic">📝 ${r.obs}</td></tr>`;
+    });
+  } else {
+    html+=`<tr><td colspan="6" style="padding:10px;text-align:center;color:#94A3B8;font-style:italic;font-size:10px;background:#F5F3FF">Sin registros de personal — agrégalos en la pestaña 👷 Personal</td></tr>`;
+  }
+
+  html+=`<tr><td colspan="6" style="background:#0B1437;color:rgba(255,255,255,.75);font-size:9px;font-weight:600;padding:9px 14px;text-align:center;border:none;letter-spacing:.5px">ARATO · MISSION PRODUCE PERÚ &nbsp;|&nbsp; Meta maquinaria: ${META} TN/Hr &nbsp;|&nbsp; ${ahora}</td></tr>`;
+  html+='</table>';
+  document.getElementById('rpt-maq-cont').innerHTML=html;
+  const newSel=document.getElementById('rpt-fecha-combo');
+  if(newSel&&fechaSel)newSel.value=fechaSel;
+}
+
+async function _capturarReporte(){
+  const outer=document.getElementById('rpt-maq-outer');
+  const cont=document.getElementById('rpt-maq-cont');
+
+  // Reemplazar selects y botones ✏️ por texto estático
+  const sels=cont.querySelectorAll('select,button');
+  const selVals=[];
+  sels.forEach(s=>{
+    if(s.tagName==='BUTTON'){s._origDisplay=s.style.display;s.style.display='none';selVals.push({type:'hide',el:s});return;}
+    selVals.push({type:'select',el:s,display:s.style.display});
+    const span=document.createElement('span');
+    span.textContent=s.options[s.selectedIndex]?s.options[s.selectedIndex].text:s.value;
+    span.style.cssText='padding:5px 10px;border-radius:6px;border:1.5px solid #F5C800;background:#0B1437;color:#F5C800;font-size:11px;font-family:monospace;font-weight:800;display:inline-block;';
+    s.parentNode.insertBefore(span,s);s.style.display='none';
+    selVals[selVals.length-1].span=span;
+  });
+
+  // Quitar overflow de TODOS los contenedores anidados para captura completa
+  const allOverflow=[];
+  [outer,cont,...cont.querySelectorAll('div')].forEach(el=>{
+    const ov=el.style.overflow,mh=el.style.maxHeight,ow=el.style.overflowX;
+    allOverflow.push({el,ov,mh,ow});
+    el.style.overflow='visible';
+    el.style.maxHeight='none';
+    el.style.overflowX='visible';
+  });
+
+  await new Promise(r=>setTimeout(r,200));
+
+  // Calcular dimensiones reales del contenido
+  const fullW=cont.scrollWidth+40;
+  const fullH=cont.scrollHeight+40;
+
+  const cv=await html2canvas(cont,{
+    scale:2.5,
+    useCORS:true,
+    backgroundColor:'#F8FAFC',
+    logging:false,
+    scrollY:0,scrollX:0,
+    windowWidth:fullW,
+    windowHeight:fullH,
+    width:fullW,
+    height:fullH,
+    allowTaint:true
+  });
+
+  // Restaurar overflow
+  allOverflow.forEach(({el,ov,mh,ow})=>{
+    el.style.overflow=ov;el.style.maxHeight=mh;el.style.overflowX=ow;
+  });
+  selVals.forEach(s=>{
+    if(s.type==='hide'){s.el.style.display=s.el._origDisplay||'';return;}
+    s.el.style.display='';if(s.span)s.span.remove();
+  });
+  return cv;
+}
+
+async function dlReporte(){
+  try{
+    showToast('Generando imagen...');
+    const cv=await _capturarReporte();
+    const a=document.createElement('a');
+    a.download='maquinaria-'+new Date().toLocaleDateString('es-PE').replace(/\//g,'-')+'.png';
+    a.href=cv.toDataURL('image/png');a.click();
+    showToast('✅ Imagen descargada');
+  }catch(e){showToast('Error: '+e.message);}
+}
+async function waReporte(){
+  try{
+    showToast('Preparando imagen...');
+    const cv=await _capturarReporte();
+    cv.toBlob(async function(blob){
+      const f=new File([blob],'maquinaria.png',{type:'image/png'});
+      if(navigator.canShare&&navigator.canShare({files:[f]})){
+        await navigator.share({files:[f],title:'Control de Maquinaria — Arato'});
+      }else{
+        const a=document.createElement('a');a.download='maquinaria.png';
+        a.href=cv.toDataURL('image/png');a.click();
+        setTimeout(()=>window.open('https://web.whatsapp.com/','_blank'),800);
+      }
+    },'image/png');
+  }catch(e){if(e.name!=='AbortError')showToast('Error: '+e.message);}
+}
+
+// ── Build record ───────────────────────────────────────────
+function buildRecord(maquina,operador,fecha,ini,fin,bins,modulos) {
+  const b = parseFloat(bins)||0;
+  const tons = +(b*KG_BIN/1000).toFixed(1);
+  const hrs = horasEntre(ini,fin);
+  const tnhr = hrs>0 ? +(tons/hrs).toFixed(1) : 0;
+  return {maquina,operador,fecha,horaInicio:ini,horaFin:fin,hrsEjec:hrs,bins:b,toneladas:tons,tnhr,estado:calcEstado(tnhr),modulos};
+}
+
+// ── Form ───────────────────────────────────────────────────
+function updatePreview() {
+  const hrs = parseFloat(document.getElementById("f-hrsejec")?.value)||0;
+  const tonsInput = document.getElementById("f-bins").value;
+  if (!hrs||!tonsInput) { document.getElementById("preview").style.display="none"; return; }
+  const tons = parseFloat(tonsInput)||0;
+  const bins = +(tons*1000/KG_BIN).toFixed(1); // toneladas → bins
+  const tnhr = hrs>0 ? +(tons/hrs).toFixed(2) : 0;
+  const estado = calcEstado(tnhr);
+  // Mostrar bins calculados debajo del campo
+  const calcEl=document.getElementById("f-bins-calc");
+  if(calcEl)calcEl.textContent=`≈ ${bins} bins (a ${KG_BIN} kg/bin)`;
+  document.getElementById("maq-p-hrs").textContent = hrs.toFixed(1)+" hrs";
+  document.getElementById("maq-p-tons").textContent = tons+" t → "+bins+" bins";
+  document.getElementById("maq-p-tnhr").innerHTML = `<span style="color:${tnhr>=META?'var(--green)':'var(--red)'}">${tnhr} TN/Hr</span>`;
+  document.getElementById("p-estado").innerHTML = badge(estado);
+  document.getElementById("preview").style.display = "grid";
+}
+async function guardarRegistro() {
+  const tipo     = document.getElementById("f-tipo")?.value||"maquinaria";
+  const maquina  = document.getElementById("f-maquina").value.trim().toUpperCase();
+  const operador = document.getElementById("f-operador").value.trim();
+  const fecha    = document.getElementById("f-fecha").value.trim();
+  const hrsEjec  = parseFloat(document.getElementById("f-hrsejec").value)||0;
+  const tonsInput= parseFloat(document.getElementById("f-bins").value)||0; // campo ahora es toneladas
+  const modulos  = document.getElementById("f-modulos").value.trim();
+  if (!maquina||!fecha||!hrsEjec||!tonsInput) { showToast("Completa los campos obligatorios","err"); return; }
+  const tons = +tonsInput.toFixed(1);
+  const bins = +(tons*1000/KG_BIN).toFixed(1); // bins calculados automáticamente
+  const metaUsada = tipo==='montacargas'?META_MONTA:META;
+  const tnhr = hrsEjec>0 ? +(tons/hrsEjec).toFixed(2) : 0;
+  const estado = metaUsada>0?(tnhr>=metaUsada?"BIEN":"MAL"):"—";
+  const rec = {
+    maquina, operador, fecha, tipo,
+    horaInicio:'—', horaFin:'—',
+    hrsEjec:+hrsEjec.toFixed(1),
+    bins:+bins.toFixed(1), toneladas:tons, tnhr, estado, modulos,
+    fundo: fundoActual==='comparar'?'arato1':fundoActual
+  };
+  try {
+    const saved = await supaFetch('maquinaria_registros','POST',{
+      maquina: rec.maquina,
+      operador: rec.operador||'',
+      fecha: rec.fecha,
+      tipo: rec.tipo,
+      hora_inicio: '—',
+      hora_fin: '—',
+      hrs_ejec: rec.hrsEjec,
+      bins: rec.bins,
+      toneladas: rec.toneladas,
+      tn_hr: rec.tnhr,
+      meta: metaUsada,
+      estado: rec.estado,
+      modulos: rec.modulos,
+      fundo: fundoActual==='comparar'?'arato1':fundoActual
+    });
+    rec.id = Array.isArray(saved)?saved[0].id:saved.id;
+    records.unshift(rec);
+    document.getElementById("f-bins").value="";
+    document.getElementById("f-hrsejec").value="";
+    document.getElementById("f-modulos").value="";
+    document.getElementById("preview").style.display="none";
+    showToast("✓ Registro guardado — sincronizando Sheets...","ok");
+    updateMaquinaFilter();
+    volverMenuFundo();
+    syncMaquinaria(true); // sync silencioso en segundo plano
+  } catch(e) {
+    showToast("Error guardando: "+e.message,"err");
+  }
+}
+
+// ── Import Excel ───────────────────────────────────────────
+function fmtHora(v) {
+  if (!v) return "";
+  if (typeof v === "number") {
+    const totalMins = Math.round(v*24*60);
+    const h = Math.floor(totalMins/60)%24;
+    const m = totalMins%60;
+    return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
+  }
+  return String(v).trim();
+}
+function fmtFecha(v) {
+  if (!v) return "";
+  if (typeof v === "number") {
+    const d = XLSX.SSF.parse_date_code(v);
+    return `${String(d.d).padStart(2,"0")}/${String(d.m).padStart(2,"0")}/${d.y}`;
+  }
+  return String(v).trim();
+}
+async function importExcel(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const wb = XLSX.read(e.target.result, {type:"array"});
+      const ws = wb.Sheets["Base_Datos"] || wb.Sheets[wb.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json(ws, {header:1});
+      let hi = json.findIndex(r => r.some(c => String(c||"").toLowerCase().includes("maquina")));
+      if (hi<0) hi=1;
+      const headers = json[hi].map(h=>String(h||"").toLowerCase());
+      const rows = json.slice(hi+1).filter(r=>r[0]&&String(r[0]).trim());
+      const get = (r,key) => { const i=headers.findIndex(h=>h.includes(key)); return i>=0?r[i]:""; };
+      let imported=0;
+      rows.forEach(r=>{
+        const maquina = String(get(r,"maquina")||"").trim().toUpperCase();
+        if (!maquina) return;
+        const operador = String(get(r,"operador")||get(r,"oper")||"").trim();
+        const fecha = fmtFecha(get(r,"fecha"));
+        const ini   = fmtHora(get(r,"inicio"));
+        const fin   = fmtHora(get(r,"fin"));
+        const bins  = parseFloat(get(r,"bins"))||0;
+        const hrs   = parseFloat(get(r,"hrs"))||parseFloat(get(r,"ejec"))||horasEntre(ini,fin);
+        const tons  = parseFloat(get(r,"ton"))||+(bins*KG_BIN/1000).toFixed(1);
+        const tnhr  = hrs>0 ? +(tons/hrs).toFixed(1) : 0;
+        const modulos = String(get(r,"modulo")||"").trim();
+        const dup = records.find(x=>x.maquina===maquina&&x.fecha===fecha&&x.horaInicio===ini);
+        const tipo   = String(get(r,"tipo")||"").trim().toLowerCase()||'maquinaria';
+        if (!dup) { records.push({maquina,operador,fecha,tipo,horaInicio:ini,horaFin:fin,hrsEjec:hrs,bins,toneladas:tons,tnhr,estado:calcEstado(tnhr),modulos}); imported++; }
+      });
+      showToast(`✓ ${imported} registros importados`,"ok");
+      updateMaquinaFilter();
+      setTab("dashboard");
+    } catch(err) { showToast("Error al leer el Excel","err"); console.error(err); }
+  };
+  reader.readAsArrayBuffer(file);
+  input.value="";
+}
+
+// ── Filter helpers ─────────────────────────────────────────
+function updateMaquinaFilter() {
+  const sel = document.getElementById("filter-maquina");
+  const cur = sel.value;
+  const maquinas = [...new Set(records.map(r=>r.maquina))].sort();
+  sel.innerHTML = '<option value="TODAS">Todas las máquinas</option>';
+  maquinas.forEach(m=>{ const o=document.createElement("option"); o.value=m; o.textContent=m; sel.appendChild(o); });
+  if (maquinas.includes(cur)) sel.value=cur;
+}
+function filteredRecords() {
+  const m = document.getElementById("filter-maquina").value;
+  const f = document.getElementById("filter-fecha").value.trim();
+  return records.filter(r=>(m==="TODAS"||r.maquina===m)&&(!f||r.fecha===f));
+}
+
+// ── Dashboard ──────────────────────────────────────────────
+function renderDashboard() {
+  const empty = document.getElementById("dash-empty");
+  const content = document.getElementById("dash-content");
+  if (records.length===0) { empty.style.display="block"; content.style.display="none"; return; }
+  empty.style.display="none"; content.style.display="block";
+
+  // Solo maquinaria en el dashboard — montacargas es aparte
+  const recsMaq = records.filter(r=>!r.tipo||r.tipo==='maquinaria');
+  const recsMonta = records.filter(r=>r.tipo==='montacargas');
+
+  const totalBins = recsMaq.reduce((s,r)=>s+r.bins,0);
+  const totalTons = recsMaq.reduce((s,r)=>s+r.toneladas,0);
+  const totalHrs  = recsMaq.reduce((s,r)=>s+r.hrsEjec,0);
+  const maquinas  = [...new Set(recsMaq.map(r=>r.maquina))].sort();
+
+  document.getElementById("stats-grid").innerHTML = `
+    <div class="stat-card"><div class="stat-label">Registros 🚜</div><div class="stat-value">${recsMaq.length}</div></div>
+    <div class="stat-card blue"><div class="stat-label">Máquinas</div><div class="stat-value">${maquinas.length}</div></div>
+    <div class="stat-card purple"><div class="stat-label">Total Bins</div><div class="stat-value">${totalBins.toFixed(1)}</div></div>
+    <div class="stat-card green"><div class="stat-label">Total Toneladas</div><div class="stat-value">${totalTons.toFixed(1)}<span style="font-size:14px">t</span></div></div>
+    <div class="stat-card yellow"><div class="stat-label">Meta TN/Hr</div><div class="stat-value">${META}</div><div class="stat-sub">mínimo requerido</div></div>
+    ${recsMonta.length?`<div class="stat-card" style="border-top-color:#D97706"><div class="stat-label">🏗️ Montacargas</div><div class="stat-value" style="color:#D97706">${recsMonta.length}</div><div class="stat-sub">registros</div></div>`:''}
+  `;
+
+  const mg = document.getElementById("machines-grid");
+  mg.innerHTML = maquinas.map((m,i)=>{
+    const recs = recsMaq.filter(r=>r.maquina===m);
+    const tHrs  = recs.reduce((s,r)=>s+r.hrsEjec,0);
+    const tBins = recs.reduce((s,r)=>s+r.bins,0);
+    const tTons = recs.reduce((s,r)=>s+r.toneladas,0);
+    const avg   = tHrs>0 ? +(tTons/tHrs).toFixed(1) : 0;
+    const est   = calcEstado(avg);
+    const pct   = Math.min(100,(avg/META)*100).toFixed(0);
+    const col   = COLORS[i%COLORS.length];
+    const isBien = avg >= META;
+    const barColor = isBien ? '#22c55e' : '#ef4444';
+    const bgColor = isBien ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)';
+    // Last 5 registros para mini historial
+    const ultimos = recs.slice(-5).reverse();
+    return `<div class="machine-card" style="border-top-color:${col};background:${bgColor};">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <div class="machine-name" style="color:${col};font-size:0.95rem;">${m}</div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:1.1rem;font-weight:900;color:${barColor};">${avg}</span>
+          <span style="font-size:0.6rem;color:#888;">TN/Hr</span>
+          ${badge(est)}
+        </div>
+      </div>
+      <!-- Barra principal -->
+      <div style="background:#1e293b;border-radius:6px;height:10px;margin-bottom:4px;overflow:hidden;position:relative;">
+        <div style="height:100%;width:${pct}%;background:${barColor};border-radius:6px;transition:width 0.5s;"></div>
+        <div style="position:absolute;top:0;left:${Math.min(96,(META/Math.max(avg,META+0.1))*parseFloat(pct))}%;height:100%;width:2px;background:#f59e0b;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:0.6rem;color:#888;margin-bottom:10px;">
+        <span>0</span><span style="color:#f59e0b;">Meta: ${META}</span><span>${(META*1.5).toFixed(1)}</span>
+      </div>
+      <!-- Stats -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;">
+        <div style="text-align:center;background:rgba(255,255,255,0.05);border-radius:6px;padding:5px;">
+          <div style="font-size:1rem;font-weight:800;color:#fff;">${tHrs.toFixed(1)}</div>
+          <div style="font-size:0.5rem;color:#888;text-transform:uppercase;">Hrs</div>
+        </div>
+        <div style="text-align:center;background:rgba(255,255,255,0.05);border-radius:6px;padding:5px;">
+          <div style="font-size:1rem;font-weight:800;color:#fff;">${tBins.toFixed(1)}</div>
+          <div style="font-size:0.5rem;color:#888;text-transform:uppercase;">Bins</div>
+        </div>
+        <div style="text-align:center;background:rgba(255,255,255,0.05);border-radius:6px;padding:5px;">
+          <div style="font-size:1rem;font-weight:800;color:#fff;">${tTons.toFixed(1)}</div>
+          <div style="font-size:0.5rem;color:#888;text-transform:uppercase;">Tons</div>
+        </div>
+      </div>
+      <!-- Mini historial por dia -->
+      <div style="font-size:0.58rem;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Últimos registros</div>
+      ${ultimos.map(r=>{
+        const ib=r.tnhr>=META;
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+          <span style="font-size:0.65rem;color:#888;">${r.fecha}</span>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:0.65rem;color:#ccc;">${r.bins.toFixed(1)} bins · ${r.hrsEjec.toFixed(1)}h</span>
+            <span style="font-size:0.7rem;font-weight:800;color:${ib?'#22c55e':'#ef4444'};">${r.tnhr.toFixed(1)}</span>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join("");
+
+  // Chart
+  const fechas = [...new Set(records.map(r=>r.fecha))].sort((a,b)=>{
+    const pa=a.split("/"),pb=b.split("/");
+    return new Date(pa[2],pa[1]-1,pa[0])-new Date(pb[2],pb[1]-1,pb[0]);
+  });
+  if (fechas.length>1) {
+    document.getElementById("chart-wrap").style.display="block";
+    const datasets = maquinas.map((m,i)=>({
+      label:m,
+      data:fechas.map(f=>{
+        const recs=records.filter(r=>r.maquina===m&&r.fecha===f);
+        if (!recs.length) return null;
+        const avg=recs.reduce((s,r)=>s+r.tnhr,0)/recs.length;
+        return +avg.toFixed(3);
+      }),
+      borderColor:COLORS[i%COLORS.length],
+      backgroundColor:COLORS[i%COLORS.length]+"33",
+      pointRadius:5,borderWidth:2,tension:0.3,spanGaps:true
+    }));
+    datasets.push({
+      label:"Meta "+META,data:fechas.map(()=>META),
+      borderColor:"#f59e0b",borderDash:[6,4],borderWidth:1.5,
+      pointRadius:0,fill:false
+    });
+    const ctx = document.getElementById("myChart").getContext("2d");
+    if (chartInstance) chartInstance.destroy();
+    chartInstance = new Chart(ctx,{
+      type:"line",
+      data:{labels:fechas,datasets},
+      options:{
+        responsive:true,
+        plugins:{legend:{labels:{color:"#94a3b8",font:{family:"Barlow Condensed",size:13}}}},
+        scales:{
+          x:{ticks:{color:"#64748b"},grid:{color:"rgba(255,255,255,0.05)"}},
+          y:{ticks:{color:"#64748b"},grid:{color:"rgba(255,255,255,0.05)"},beginAtZero:true}
+        }
+      }
+    });
+  } else {
+    document.getElementById("chart-wrap").style.display="none";
+  }
+}
+
+// ── Tabla ──────────────────────────────────────────────────
+function renderTabla() {
+  const data = [...filteredRecords()].reverse();
+  document.getElementById("record-count").textContent = data.length+" registros";
+  const empty = document.getElementById("tabla-empty");
+  const wrap  = document.getElementById("tabla-wrap");
+  if (data.length===0) { empty.style.display="block"; wrap.style.display="none"; return; }
+  empty.style.display="none"; wrap.style.display="block";
+  document.getElementById("tabla-body").innerHTML = data.map(r=>`
+    <tr>
+      <td class="td-maquina">${r.maquina}</td>
+      <td style="color:var(--sub);font-size:13px">${r.operador||"—"}</td>
+      <td>${r.fecha}</td>
+      <td>${r.horaInicio}</td>
+      <td>${r.horaFin}</td>
+      <td class="td-num">${r.hrsEjec}</td>
+      <td class="td-num">${r.bins}</td>
+      <td class="td-num">${r.toneladas} t</td>
+      <td class="${r.tnhr>=META?'td-tnhr-ok':'td-tnhr-bad'}">${r.tnhr}</td>
+      <td>${badge(r.estado)}</td>
+      <td class="td-modulos">${r.modulos||"—"}</td>
+      <td style="white-space:nowrap;">
+        <button onclick="editarRegistro(${r.id})" style="background:none;border:1px solid #2563EB;color:#2563EB;border-radius:5px;padding:3px 7px;font-size:0.65rem;cursor:pointer;margin-right:3px;">✏️</button>
+        <button onclick="eliminarRegistro(${r.id})" style="background:none;border:1px solid #DC2626;color:#DC2626;border-radius:5px;padding:3px 7px;font-size:0.65rem;cursor:pointer;">🗑️</button>
+      </td>
+    </tr>`).join("");
+}
+
+
+// ── Autocomplete cruzado Máquina <-> Operador ──────────
+function getPairs() {
+  // retorna array de {maquina, operador} únicos del historial
+  const seen = new Set();
+  const pairs = [];
+  records.forEach(r => {
+    if (!r.maquina) return;
+    const key = r.maquina + '||' + (r.operador||'');
+    if (!seen.has(key)) { seen.add(key); pairs.push({maquina:r.maquina, operador:r.operador||''}); }
+  });
+  return pairs;
+}
+function showSug(id, items) {
+  const el = document.getElementById(id);
+  if (!items.length) { el.style.display='none'; return; }
+  el.innerHTML = items.map((it,i) =>
+    `<div class="sug-item" onmousedown="pickSug('${id}',${i})" data-i="${i}">
+      ${it.label}<small>${it.sub}</small>
+    </div>`
+  ).join('');
+  el.style.display = 'block';
+  el._items = items;
+}
+function hideSug(id) {
+  setTimeout(() => { const el=document.getElementById(id); if(el) el.style.display='none'; }, 150);
+}
+function pickSug(sugId, idx) {
+  const items = document.getElementById(sugId)._items;
+  if (!items || !items[idx]) return;
+  const it = items[idx];
+  document.getElementById('f-maquina').value  = it.maquina;
+  document.getElementById('f-operador').value = it.operador;
+  document.getElementById(sugId).style.display = 'none';
+  updatePreview();
+}
+function onMaquinaInput() {
+  updatePreview();
+  const val = document.getElementById('f-maquina').value.trim().toUpperCase();
+  if (!val) { hideSug('sug-maquina'); return; }
+  const pairs = getPairs();
+  const matches = pairs
+    .filter(p => p.maquina.includes(val))
+    .map(p => ({maquina:p.maquina, operador:p.operador, label:p.maquina, sub:p.operador||'Sin operador registrado'}));
+  showSug('sug-maquina', matches);
+}
+function onOperadorInput() {
+  const val = document.getElementById('f-operador').value.trim().toLowerCase();
+  if (!val) { hideSug('sug-operador'); return; }
+  const pairs = getPairs();
+  const matches = pairs
+    .filter(p => p.operador.toLowerCase().includes(val))
+    .map(p => ({maquina:p.maquina, operador:p.operador, label:p.operador, sub:p.maquina}));
+  showSug('sug-operador', matches);
+}
+
+// init
+document.getElementById("f-fecha").value = new Date().toLocaleDateString("es-PE",{day:"2-digit",month:"2-digit",year:"numeric"}).replace(/\//g,"/");
+document.getElementById("prs-fecha").value = new Date().toISOString().split('T')[0];
+updateMaquinaFilter();
+ldPersonal();
+cargarRegistros();
+
+// Auto-refresh cada 30 segundos
+setInterval(function(){ cargarRegistros(); }, 30000);
+
+// ── PWA INSTALL ──
+let _pwaPrompt=null;
+window.addEventListener('beforeinstallprompt',function(e){
+  e.preventDefault();
+  _pwaPrompt=e;
+  // Mostrar banner de instalación
+  const banner=document.getElementById('pwa-banner');
+  if(banner)banner.style.display='flex';
+});
+window.addEventListener('appinstalled',function(){
+  const banner=document.getElementById('pwa-banner');
+  if(banner)banner.style.display='none';
+  showToast('✅ App instalada en pantalla principal');
+});
+
+function instalarApp(){
+  if(_pwaPrompt){
+    _pwaPrompt.prompt();
+    _pwaPrompt.userChoice.then(function(r){
+      if(r.outcome==='accepted')showToast('✅ Instalando app...');
+      _pwaPrompt=null;
+      const banner=document.getElementById('pwa-banner');
+      if(banner)banner.style.display='none';
+    });
+  } else {
+    // iOS — instrucciones manuales
+    showToast('En Safari: toca Compartir → "Agregar a inicio"');
+    const banner=document.getElementById('pwa-ios');
+    if(banner){banner.style.display='flex';setTimeout(()=>banner.style.display='none',6000);}
+  }
+}
+function cerrarBannerPwa(){
+  const b=document.getElementById('pwa-banner');if(b)b.style.display='none';
+}
+
+// Service Worker
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('maquinaria-sw.js').catch(function(){});
+}
+
+function updHora(){
+  var el=document.getElementById('ultima-act');
+  if(el)el.textContent='Act: '+new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'});
+}
+
+function renderComparacion(){
+  const pg=document.getElementById('pg-comparar-content');
+  if(!pg)return;
+  const r1=allRecords.filter(r=>r.fundo==='arato1'&&r.tipo==='maquinaria');
+  const r2=allRecords.filter(r=>r.fundo==='arato2'&&r.tipo==='maquinaria');
+  function stats(recs){
+    if(!recs.length)return{hrs:0,tons:0,tnhr:0,registros:0};
+    const hrs=recs.reduce((s,r)=>s+r.hrsEjec,0);
+    const tons=recs.reduce((s,r)=>s+r.toneladas,0);
+    const tnhr=hrs>0?tons/hrs:0;
+    return{hrs:+hrs.toFixed(1),tons:+tons.toFixed(1),tnhr:+tnhr.toFixed(3),registros:recs.length};
+  }
+  const s1=stats(r1),s2=stats(r2);
+  const META=3.5;
+  function semaforo(v){return v>=META?'var(--green)':'var(--red)';}
+  pg.innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;">
+      <!-- ARATO 1 -->
+      <div style="background:var(--surface);border-radius:14px;padding:16px;border:2px solid var(--orange);">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color:var(--orange);margin-bottom:12px;letter-spacing:1px;">🏠 ARATO 1</div>
+        <div style="margin-bottom:8px;"><div style="font-size:10px;color:var(--sub);text-transform:uppercase;">TN/Hr</div><div style="font-family:monospace;font-size:1.8rem;font-weight:800;color:${semaforo(s1.tnhr)};">${s1.tnhr}</div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+          <div style="background:var(--surface2);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:9px;color:var(--sub);">Horas</div><div style="font-size:1rem;font-weight:800;">${s1.hrs}</div></div>
+          <div style="background:var(--surface2);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:9px;color:var(--sub);">Toneladas</div><div style="font-size:1rem;font-weight:800;">${s1.tons}</div></div>
+        </div>
+        <div style="margin-top:8px;font-size:10px;color:var(--sub);">${s1.registros} registros</div>
+      </div>
+      <!-- ARATO 2 -->
+      <div style="background:var(--surface);border-radius:14px;padding:16px;border:2px solid #38bdf8;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color:#38bdf8;margin-bottom:12px;letter-spacing:1px;">🏠 ARATO 2</div>
+        <div style="margin-bottom:8px;"><div style="font-size:10px;color:var(--sub);text-transform:uppercase;">TN/Hr</div><div style="font-family:monospace;font-size:1.8rem;font-weight:800;color:${semaforo(s2.tnhr)};">${s2.tnhr}</div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+          <div style="background:var(--surface2);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:9px;color:var(--sub);">Horas</div><div style="font-size:1rem;font-weight:800;">${s2.hrs}</div></div>
+          <div style="background:var(--surface2);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:9px;color:var(--sub);">Toneladas</div><div style="font-size:1rem;font-weight:800;">${s2.tons}</div></div>
+        </div>
+        <div style="margin-top:8px;font-size:10px;color:var(--sub);">${s2.registros} registros</div>
+      </div>
+    </div>
+    <!-- GANADOR -->
+    <div style="background:var(--surface);border-radius:12px;padding:14px;margin-bottom:16px;text-align:center;border:1px solid var(--border);">
+      ${s1.tnhr===0&&s2.tnhr===0?
+        '<div style="color:var(--sub);font-size:14px;">Sin datos suficientes para comparar</div>':
+        s1.tnhr>=s2.tnhr?
+        `<div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:var(--green);">🏆 ARATO 1 LIDERA · ${s1.tnhr} TN/Hr vs ${s2.tnhr} TN/Hr</div>`:
+        `<div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:#38bdf8;">🏆 ARATO 2 LIDERA · ${s2.tnhr} TN/Hr vs ${s1.tnhr} TN/Hr</div>`
+      }
+      <div style="font-size:11px;color:var(--sub);margin-top:4px;">Meta: ${META} TN/Hr · ${s1.tnhr>=META&&s2.tnhr>=META?'✅ Ambos cumplen meta':s1.tnhr>=META?'✅ A1 cumple · ❌ A2 no cumple':s2.tnhr>=META?'❌ A1 no cumple · ✅ A2 cumple':'❌ Ninguno cumple meta'}</div>
+    </div>
+    <!-- TABLA COMPARATIVA POR FECHA -->
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--sub);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">Comparación por fecha</div>
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead><tr style="background:var(--surface2);">
+          <th style="padding:8px;text-align:left;color:var(--sub);">Fecha</th>
+          <th style="padding:8px;text-align:center;color:var(--orange);">A1 TN/Hr</th>
+          <th style="padding:8px;text-align:center;color:var(--orange);">A1 Tons</th>
+          <th style="padding:8px;text-align:center;color:#38bdf8;">A2 TN/Hr</th>
+          <th style="padding:8px;text-align:center;color:#38bdf8;">A2 Tons</th>
+          <th style="padding:8px;text-align:center;color:var(--sub);">Ganador</th>
+        </tr></thead>
+        <tbody>
+          ${[...new Set([...r1,...r2].map(r=>r.fecha))].sort((a,b)=>b.localeCompare(a)).map(fecha=>{
+            const d1=r1.filter(r=>r.fecha===fecha);const d2=r2.filter(r=>r.fecha===fecha);
+            const h1=d1.reduce((s,r)=>s+r.hrsEjec,0);const t1=d1.reduce((s,r)=>s+r.toneladas,0);const th1=h1>0?(t1/h1).toFixed(2):'-';
+            const h2=d2.reduce((s,r)=>s+r.hrsEjec,0);const t2=d2.reduce((s,r)=>s+r.toneladas,0);const th2=h2>0?(t2/h2).toFixed(2):'-';
+            const ganador=th1==='-'&&th2==='-'?'—':th1==='-'?'A2':th2==='-'?'A1':+th1>=+th2?'A1':'A2';
+            return`<tr style="border-bottom:1px solid var(--border);">
+              <td style="padding:8px;font-weight:700;">${fecha}</td>
+              <td style="padding:8px;text-align:center;color:${th1!=='-'&&+th1>=META?'var(--green)':'var(--red)'};">${th1}</td>
+              <td style="padding:8px;text-align:center;">${t1.toFixed(1)}</td>
+              <td style="padding:8px;text-align:center;color:${th2!=='-'&&+th2>=META?'var(--green)':'var(--red)'};">${th2}</td>
+              <td style="padding:8px;text-align:center;">${t2.toFixed(1)}</td>
+              <td style="padding:8px;text-align:center;font-weight:800;color:${ganador==='A1'?'var(--orange)':ganador==='A2'?'#38bdf8':'var(--sub)'};">${ganador}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+</script>
+</body>
+</html>
