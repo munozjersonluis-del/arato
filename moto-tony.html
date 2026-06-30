@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#0F172A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Moto Tony">
+<link rel="manifest" href="moto-manifest.json">
+<title>Moto Tony</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#020818;--bg2:#040D24;--bg3:#071030;
+  --card:#050E20;--bdr:#0F2040;
+  --txt:#FFFFFF;--txt2:#B8A060;--txt3:#5A6080;
+  --oro:#FFD700;--verde:#00FFB0;--rojo:#FF4444;--azul:#4488FF;--morado:#AA88FF;
+}
+html,body{background:#020818 !important;}
+body{font-family:'Inter',sans-serif;background:#020818;color:#FFFFFF;min-height:100vh;}
+
+/* HEADER */
+.hdr{
+  background:linear-gradient(135deg,#020818,#040D24,#071030);
+  border-bottom:1px solid rgba(255,215,0,.1);
+  padding:14px 16px 10px;
+  position:sticky;top:0;z-index:100;
+  box-shadow:0 2px 20px rgba(0,0,0,.7);
+}
+.hdr-nombre{font-size:0.52rem;color:#FFD700;text-transform:uppercase;letter-spacing:2px;font-weight:700;margin-bottom:2px;}
+.hdr-top{display:flex;justify-content:space-between;align-items:center;}
+.hdr-marca{font-size:1.3rem;font-weight:900;color:var(--txt);text-shadow:0 2px 8px rgba(0,0,0,.5);}
+.hdr-marca span{background:linear-gradient(135deg,#FFE066,#FFD700,#FFA500);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.hdr-sub{font-size:0.44rem;color:var(--txt3);letter-spacing:1px;text-transform:uppercase;}
+.hdr-bal-lbl{font-size:0.44rem;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;text-align:right;}
+.hdr-bal-val{font-family:'JetBrains Mono',monospace;font-size:1.1rem;font-weight:800;color:var(--rojo);text-align:right;}
+
+/* MENU ICONS */
+.menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:16px 14px 20px;}
+.menu-card{background:var(--card);border-radius:22px;border:1px solid rgba(255,215,0,.15);padding:24px 16px;text-align:center;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .15s,box-shadow .15s;position:relative;overflow:hidden;}
+.menu-card:active{transform:scale(.96) translateY(2px);box-shadow:0 1px 8px rgba(0,0,0,.6) !important;}
+.menu-card::before{content:'';position:absolute;inset:0;border-radius:22px;opacity:0;transition:opacity .2s;}
+.menu-card:active::before{opacity:1;}
+.menu-ico{font-size:3.2rem;margin-bottom:10px;display:block;line-height:1;filter:drop-shadow(0 4px 8px rgba(0,0,0,.6));}
+.menu-lbl{font-size:0.72rem;font-weight:900;text-transform:uppercase;letter-spacing:1.5px;text-shadow:0 1px 0 rgba(0,0,0,.8),0 2px 4px rgba(0,0,0,.6);}
+.menu-sub{font-size:0.5rem;margin-top:4px;opacity:.6;}
+/* Pages */
+.pg{display:none;padding:14px;padding-bottom:30px;}
+.pg.on{display:block;}
+/* Back button */
+.back-btn{display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#040D24,#071030);border:1px solid rgba(255,215,0,.15);border-radius:12px;padding:10px 14px;color:#FFD700;font-size:0.72rem;font-weight:700;cursor:pointer;margin-bottom:14px;font-family:'Inter',sans-serif;text-shadow:0 1px 4px rgba(0,0,0,.5);}
+.back-btn:active{opacity:.7;}
+
+/* PAGES */
+.pg{display:none;padding:14px;padding-bottom:90px;}
+.pg.on{display:block;}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.kpi{background:linear-gradient(145deg,#050E20,#071030);border-radius:18px;padding:18px 12px;border:1px solid rgba(255,215,0,.12);text-align:center;cursor:default;box-shadow:0 4px 16px rgba(0,0,0,.4);}
+.kpi-ico{font-size:2.6rem;margin-bottom:8px;display:block;}
+.kpi-lbl{font-size:0.5rem;color:var(--txt3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;font-weight:700;}
+.kpi-val{font-family:'JetBrains Mono',monospace;font-size:1.3rem;font-weight:900;text-shadow:0 2px 8px rgba(0,0,0,.6);}
+.kpi-sub{font-size:0.5rem;color:var(--txt3);margin-top:3px;}
+
+/* CARD */
+.card{background:linear-gradient(145deg,#050E20,#071030);border-radius:16px;border:1px solid rgba(255,215,0,.1);margin-bottom:12px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.4);}
+.card-hdr{background:linear-gradient(135deg,#071030,#050E20);padding:11px 14px;border-top:1px solid rgba(255,215,0,.06);display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,215,0,.08);}
+.card-hdr-t{font-size:0.88rem;font-weight:800;color:#FFD700;letter-spacing:.5px;text-shadow:0 0 8px rgba(255,215,0,.3);}
+.cb{padding:13px 14px;}
+
+/* CATEGORÍAS — GRID GRANDE */
+.cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;}
+.cat-item{background:#040D24;border:1.5px solid rgba(255,215,0,.12);border-radius:16px;padding:18px 8px;text-align:center;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent;}
+.cat-item:active{transform:scale(.95);}
+.cat-item.sel{border-color:var(--oro);background:rgba(255,215,0,.1);}
+.cat-item .ci{font-size:2.4rem;margin-bottom:7px;display:block;}
+.cat-item .cl{font-size:0.58rem;font-weight:700;color:var(--txt2);line-height:1.2;}
+.cat-item.sel .cl{color:var(--oro);}
+
+/* FORMS */
+.f{margin-bottom:12px;}
+.f label{font-size:0.56rem;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;}
+.f input,.f select,.f textarea{width:100%;background:#040D24;border:1.5px solid rgba(255,215,0,.15);border-radius:12px;padding:12px 14px;font-size:0.92rem;color:var(--txt);font-family:'Inter',sans-serif;transition:border-color .2s;-webkit-appearance:none;}
+.f input:focus,.f select:focus{outline:none;border-color:#FFD700;box-shadow:0 0 0 2px rgba(255,215,0,.1);}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.btn{border:none;border-radius:13px;padding:14px;font-size:0.85rem;font-weight:800;cursor:pointer;width:100%;font-family:'Inter',sans-serif;text-transform:uppercase;letter-spacing:.5px;transition:transform .15s;}
+.btn:active{transform:scale(.97);}
+.btn-oro{background:linear-gradient(135deg,#FFD700,#FFA500,#FF8C00);color:#020818;box-shadow:0 4px 18px rgba(255,215,0,.35);letter-spacing:1px;font-weight:900;}
+.btn-sm{padding:6px 12px;font-size:0.6rem;border-radius:9px;width:auto;display:inline-block;}
+.btn-gris{background:var(--bg3);color:var(--txt2);border:1px solid var(--bdr);}
+
+/* LISTA */
+.it{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid rgba(255,215,0,.08);}
+.it:last-child{border:none;}
+.it-ico{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;margin-right:10px;}
+.it-info{flex:1;min-width:0;}
+.it-cat{font-size:0.72rem;font-weight:700;color:var(--txt);}
+.it-sub{font-size:0.54rem;color:var(--txt3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.it-right{text-align:right;flex-shrink:0;}
+.it-monto{font-family:'JetBrains Mono',monospace;font-size:0.95rem;font-weight:800;color:var(--rojo);}
+.it-fecha{font-size:0.5rem;color:var(--txt3);margin-top:2px;}
+.del{background:none;border:none;color:var(--rojo);font-size:0.7rem;cursor:pointer;padding:4px;opacity:.45;}
+.del:active{opacity:1;}
+.empty{text-align:center;padding:28px;color:var(--txt3);font-size:0.78rem;}
+
+/* BARRA */
+.barra-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.barra-lbl{font-size:0.58rem;color:var(--txt2);width:100px;flex-shrink:0;text-align:right;}
+.barra-bg{flex:1;background:var(--bg3);border-radius:4px;height:24px;overflow:hidden;}
+.barra-fill{height:100%;border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:0.58rem;font-weight:700;color:#fff;transition:width .5s;min-width:40px;}
+
+/* BANNER PWA */
+#pwa-banner{display:none;position:fixed;bottom:0;left:0;right:0;z-index:9998;background:linear-gradient(135deg,#111827,#1C2536);padding:12px 16px;align-items:center;gap:12px;box-shadow:0 -4px 20px rgba(0,0,0,.5);border-top:2px solid var(--oro);}
+#pwa-ios{display:none;position:fixed;bottom:0;left:0;right:0;z-index:9998;background:#040D24;padding:14px 16px;align-items:center;gap:10px;box-shadow:0 -4px 20px rgba(0,0,0,.4);border-top:2px solid var(--azul);}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--bg2);color:var(--txt);padding:10px 22px;border-radius:20px;font-size:0.72rem;font-weight:700;display:none;z-index:9999;white-space:nowrap;border:1px solid var(--bdr);box-shadow:0 4px 20px rgba(0,0,0,.5);}
+
+/* FILTRO RÁPIDO */
+.filtros{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;}
+.filtros::-webkit-scrollbar{display:none;}
+.fbtn{white-space:nowrap;flex-shrink:0;padding:7px 14px;border-radius:20px;font-size:0.6rem;font-weight:700;cursor:pointer;border:1.5px solid rgba(255,215,0,.15);background:#040D24;color:rgba(255,215,0,.5);font-family:'Inter',sans-serif;}
+.fbtn.on{background:#FFD700;color:#020818;border-color:#FFD700;}
+</style>
+</head>
+<body>
+
+<!-- PWA BANNERS -->
+<div id="pwa-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9998;background:linear-gradient(135deg,#111827,#1C2536);padding:12px 16px;align-items:center;gap:12px;box-shadow:0 -4px 20px rgba(0,0,0,.5);border-top:2px solid #FF6B00;">
+  <div style="font-size:2rem;">🏍️</div>
+  <div style="flex:1;">
+    <div style="font-size:0.72rem;font-weight:800;color:#FFD700;letter-spacing:1px;">Instalar App en pantalla</div>
+    <div style="font-size:0.55rem;color:#94A3B8;margin-top:2px;">Acceso rápido desde tu celular</div>
+  </div>
+  <button onclick="instalarApp()" style="background:linear-gradient(135deg,#FFD700,#FFA500);border:none;border-radius:10px;padding:9px 16px;font-size:0.7rem;font-weight:800;color:#000;cursor:pointer;white-space:nowrap;">📲 Instalar</button>
+  <button onclick="cerrarPwa()" style="background:rgba(255,255,255,.08);border:none;border-radius:8px;padding:9px;color:#94A3B8;cursor:pointer;">✕</button>
+</div>
+<div id="pwa-ios" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9998;background:#040D24;padding:12px 16px;align-items:center;gap:10px;border-top:2px solid #FFD700;box-shadow:0 -4px 20px rgba(0,0,0,.4);">
+  <div style="font-size:1.4rem;">📱</div>
+  <div style="font-size:0.6rem;color:#E2E8F0;line-height:1.7;">En Safari toca <b>Compartir</b> (□↑) → <b>"Agregar a pantalla de inicio"</b> → <b>Agregar</b></div>
+</div>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-nombre">🏍️ Anthony Deivy Muñoz Amaya</div>
+  <div class="hdr-top">
+    <div>
+      <div class="hdr-marca">Moto<span>Control</span></div>
+      <div class="hdr-sub">Control de gastos · Moto lineal <span id="hdr-seccion" style="color:var(--oro);"></span></div>
+    </div>
+    <div>
+      <div class="hdr-bal-lbl">Gasto del mes</div>
+      <div class="hdr-bal-val" id="hdr-total">S/ 0.00</div>
+    </div>
+  </div>
+</div>
+
+<!-- MENÚ PRINCIPAL -->
+<div id="pg-menu">
+  <div class="menu-grid">
+    <div class="menu-card" onclick="go('inicio')" style="background:linear-gradient(145deg,#050E20,#081428);border-color:#FFD70030;box-shadow:0 4px 20px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,215,0,.08);">
+      <div style="position:absolute;inset:0;border-radius:22px;background:radial-gradient(circle at 30% 20%,rgba(255,215,0,.06),transparent 60%);pointer-events:none;"></div>
+      <span class="menu-ico">🏠</span>
+      <div class="menu-lbl" style="color:#FFD700;text-shadow:0 0 10px rgba(255,215,0,.4),0 2px 4px rgba(0,0,0,.8);">Inicio</div>
+      <div class="menu-sub" style="color:rgba(255,215,0,.5);">Resumen del mes</div>
+    </div>
+    <div class="menu-card" onclick="go('registrar')" style="background:linear-gradient(145deg,#050E20,#081428);border-color:#FFD70030;box-shadow:0 4px 20px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,215,0,.08);">
+      <div style="position:absolute;inset:0;border-radius:22px;background:radial-gradient(circle at 70% 20%,rgba(255,215,0,.06),transparent 60%);pointer-events:none;"></div>
+      <span class="menu-ico">➕</span>
+      <div class="menu-lbl" style="color:#FFD700;text-shadow:0 0 10px rgba(255,215,0,.4),0 2px 4px rgba(0,0,0,.8);">Registrar</div>
+      <div class="menu-sub" style="color:rgba(255,215,0,.5);">Nuevo gasto</div>
+    </div>
+    <div class="menu-card" onclick="go('historial')" style="background:linear-gradient(145deg,#050E20,#081428);border-color:#FFD70030;box-shadow:0 4px 20px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,215,0,.08);">
+      <div style="position:absolute;inset:0;border-radius:22px;background:radial-gradient(circle at 30% 80%,rgba(255,215,0,.06),transparent 60%);pointer-events:none;"></div>
+      <span class="menu-ico">📋</span>
+      <div class="menu-lbl" style="color:#FFD700;text-shadow:0 0 10px rgba(255,215,0,.4),0 2px 4px rgba(0,0,0,.8);">Historial</div>
+      <div class="menu-sub" style="color:rgba(255,215,0,.5);">Todos mis gastos</div>
+    </div>
+    <div class="menu-card" onclick="go('resumen')" style="background:linear-gradient(145deg,#050E20,#081428);border-color:#FFD70030;box-shadow:0 4px 20px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,215,0,.08);">
+      <div style="position:absolute;inset:0;border-radius:22px;background:radial-gradient(circle at 70% 80%,rgba(255,215,0,.06),transparent 60%);pointer-events:none;"></div>
+      <span class="menu-ico">📊</span>
+      <div class="menu-lbl" style="color:#FFD700;text-shadow:0 0 10px rgba(255,215,0,.4),0 2px 4px rgba(0,0,0,.8);">Resumen</div>
+      <div class="menu-sub" style="color:rgba(255,215,0,.5);">Estadísticas</div>
+    </div>
+    <div class="menu-card" onclick="instalarApp()" style="grid-column:1/-1;background:linear-gradient(135deg,#050E20,#081428);border-color:#FFD70050;display:flex;align-items:center;gap:16px;text-align:left;padding:18px 20px;box-shadow:0 4px 20px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,215,0,.1);">
+      <span style="font-size:2.2rem;flex-shrink:0;">📲</span>
+      <div>
+        <div class="menu-lbl" style="color:#FFD700;text-shadow:0 0 10px rgba(255,215,0,.5),0 2px 4px rgba(0,0,0,.8);">Instalar App</div>
+        <div class="menu-sub" style="color:rgba(255,215,0,.5);">Agregar a pantalla principal</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ INICIO ══ -->
+<div class="pg" id="pg-inicio" style="display:none;">
+  <button class="back-btn" onclick="volverMenu()"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg> Volver al menú</button>
+  <div class="kpi-grid" id="kpi-grid"></div>
+  <div class="card">
+    <div class="card-hdr"><div class="card-hdr-t">📊 Este mes por categoría</div></div>
+    <div class="cb" id="chart-mes"></div>
+  </div>
+  <div class="card">
+    <div class="card-hdr"><div class="card-hdr-t">🕐 Últimos registros</div></div>
+    <div class="cb" id="ultimos"></div>
+  </div>
+  <!-- Botón instalar -->
+  <div style="margin-top:8px;">
+    <button onclick="instalarApp()" class="btn btn-gris" style="display:flex;align-items:center;justify-content:center;gap:8px;">
+      <span style="font-size:1.2rem;">📲</span>
+      <span>Instalar app en pantalla principal</span>
+    </button>
+  </div>
+</div>
+
+<!-- ══ REGISTRAR ══ -->
+<div class="pg" id="pg-registrar" style="display:none;">
+  <button class="back-btn" onclick="volverMenu()"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg> Volver al menú</button>
+  <div class="card">
+    <div class="card-hdr"><div class="card-hdr-t">¿Qué tipo de gasto?</div></div>
+    <div class="cb">
+      <div class="cat-grid">
+        <div class="cat-item sel" onclick="selCat('gasolina',this)"><span class="ci">⛽</span><span class="cl">Gasolina</span></div>
+        <div class="cat-item" onclick="selCat('aceite',this)"><span class="ci">🛢️</span><span class="cl">Aceite</span></div>
+        <div class="cat-item" onclick="selCat('cambio_aceite',this)"><span class="ci">🔄</span><span class="cl">Cambio de aceite</span></div>
+        <div class="cat-item" onclick="selCat('picadura',this)"><span class="ci">🔩</span><span class="cl">Picadura / llanta</span></div>
+        <div class="cat-item" onclick="selCat('camara',this)"><span class="ci">🏍️</span><span class="cl">Cámara nueva</span></div>
+        <div class="cat-item" onclick="selCat('llanta',this)"><span class="ci">⭕</span><span class="cl">Llanta nueva</span></div>
+        <div class="cat-item" onclick="selCat('frenos',this)"><span class="ci">🛑</span><span class="cl">Frenos / pastillas</span></div>
+        <div class="cat-item" onclick="selCat('cadena',this)"><span class="ci">⛓️</span><span class="cl">Cadena / piñón</span></div>
+        <div class="cat-item" onclick="selCat('filtro',this)"><span class="ci">🌀</span><span class="cl">Filtro</span></div>
+        <div class="cat-item" onclick="selCat('bujia',this)"><span class="ci">⚡</span><span class="cl">Bujía</span></div>
+        <div class="cat-item" onclick="selCat('bateria',this)"><span class="ci">🔋</span><span class="cl">Batería</span></div>
+        <div class="cat-item" onclick="selCat('taller',this)"><span class="ci">🏪</span><span class="cl">Taller / mano obra</span></div>
+        <div class="cat-item" onclick="selCat('lavado',this)"><span class="ci">🚿</span><span class="cl">Lavado</span></div>
+        <div class="cat-item" onclick="selCat('soat',this)"><span class="ci">📄</span><span class="cl">SOAT</span></div>
+        <div class="cat-item" onclick="selCat('repuesto',this)"><span class="ci">⚙️</span><span class="cl">Repuesto / pieza</span></div>
+        <div class="cat-item" onclick="selCat('otro',this)"><span class="ci">📝</span><span class="cl">Otro</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr"><div class="card-hdr-t" id="form-titulo">⛽ Gasolina</div></div>
+    <div class="cb">
+      <!-- Campos especiales gasolina -->
+      <div id="campos-gasolina">
+        <div class="f2">
+          <div class="f"><label>Soles S/</label><input type="number" id="gl-monto" placeholder="0.00" step="0.5" min="0"></div>
+          <div class="f"><label>Litros (opcional)</label><input type="number" id="gl-litros" placeholder="0.0" step="0.5" min="0"></div>
+        </div>
+        <div class="f"><label>Grifo / Lugar</label><input type="text" id="gl-lugar" placeholder="Ej: Grifo Repsol, Pecsa..."></div>
+      </div>
+      <!-- Campos generales -->
+      <div id="campos-general" style="display:none;">
+        <div class="f"><label>Monto S/</label><input type="number" id="g-monto" placeholder="0.00" step="0.5" min="0"></div>
+        <div class="f"><label>Detalle / descripción</label><input type="text" id="g-detalle" placeholder="Ej: cambio pastillas delanteras"></div>
+      </div>
+      <div class="f2">
+        <div class="f"><label>Fecha</label><input type="date" id="g-fecha"></div>
+        <div class="f"><label>Uso moto</label>
+          <select id="g-uso">
+            <option value="trabajo">🏢 Trabajo</option>
+            <option value="personal">👤 Personal</option>
+            <option value="ambos">🔄 Ambos</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-oro" onclick="addGasto()">✅ Guardar Gasto</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ HISTORIAL ══ -->
+<div class="pg" id="pg-historial" style="display:none;">
+  <button class="back-btn" onclick="volverMenu()"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg> Volver al menú</button>
+  <div class="filtros" id="filtro-tiempo">
+    <button class="fbtn on" onclick="setFT('todo',this)">Todos</button>
+    <button class="fbtn" onclick="setFT('mes',this)">Este mes</button>
+    <button class="fbtn" onclick="setFT('semana',this)">Esta semana</button>
+  </div>
+  <div class="filtros" id="filtro-cat">
+    <button class="fbtn on" onclick="setFC('',this)">Todas</button>
+    <button class="fbtn" onclick="setFC('gasolina',this)">⛽ Gasolina</button>
+    <button class="fbtn" onclick="setFC('aceite',this)">🛢️ Aceite</button>
+    <button class="fbtn" onclick="setFC('cambio_aceite',this)">🔄 Cambio aceite</button>
+    <button class="fbtn" onclick="setFC('picadura',this)">🔩 Picadura</button>
+    <button class="fbtn" onclick="setFC('camara',this)">🏍️ Cámara</button>
+    <button class="fbtn" onclick="setFC('llanta',this)">⭕ Llanta</button>
+    <button class="fbtn" onclick="setFC('frenos',this)">🛑 Frenos</button>
+    <button class="fbtn" onclick="setFC('taller',this)">🏪 Taller</button>
+    <button class="fbtn" onclick="setFC('repuesto',this)">⚙️ Repuesto</button>
+  </div>
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-hdr-t">📋 Gastos</div>
+      <span id="hist-tot" style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--rojo);font-weight:800;"></span>
+    </div>
+    <div class="cb" id="lista-hist"><div class="empty">Sin gastos</div></div>
+  </div>
+</div>
+
+<!-- ══ RESUMEN ══ -->
+<div class="pg" id="pg-resumen" style="display:none;">
+  <button class="back-btn" onclick="volverMenu()"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg> Volver al menú</button>
+  <div class="filtros">
+    <button class="fbtn on" id="rf-mes" onclick="setFR('mes',this)">Este mes</button>
+    <button class="fbtn" id="rf-3m" onclick="setFR('3meses',this)">3 meses</button>
+    <button class="fbtn" id="rf-todo" onclick="setFR('todo',this)">Todo</button>
+  </div>
+  <div id="resumen-wrap"></div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+// ── CATEGORÍAS ──
+var CATS={
+  gasolina:{ico:'⛽',lbl:'Gasolina',col:'#FFD700'},
+  aceite:{ico:'🛢️',lbl:'Aceite',col:'#F97316'},
+  cambio_aceite:{ico:'🔄',lbl:'Cambio aceite',col:'#FB923C'},
+  picadura:{ico:'🔩',lbl:'Picadura/llanta',col:'#A78BFA'},
+  camara:{ico:'🏍️',lbl:'Cámara nueva',col:'#C084FC'},
+  llanta:{ico:'⭕',lbl:'Llanta nueva',col:'#E879F9'},
+  frenos:{ico:'🛑',lbl:'Frenos/pastillas',col:'#EF4444'},
+  cadena:{ico:'⛓️',lbl:'Cadena/piñón',col:'#F87171'},
+  filtro:{ico:'🌀',lbl:'Filtro',col:'#22D3EE'},
+  bujia:{ico:'⚡',lbl:'Bujía',col:'#FCD34D'},
+  bateria:{ico:'🔋',lbl:'Batería',col:'#4ADE80'},
+  taller:{ico:'🏪',lbl:'Taller/mano obra',col:'#60A5FA'},
+  lavado:{ico:'🚿',lbl:'Lavado',col:'#34D399'},
+  soat:{ico:'📄',lbl:'SOAT',col:'#A3E635'},
+  repuesto:{ico:'⚙️',lbl:'Repuesto/pieza',col:'#94A3B8'},
+  otro:{ico:'📝',lbl:'Otro',col:'#64748B'},
+};
+
+var gastos=[];
+var catSel='gasolina';
+var filtroT='todo',filtroC='',filtroR_='mes';
+
+// ── STORAGE — localStorage + IndexedDB backup ──
+function sv(){
+  try{localStorage.setItem('motogastos_tony',JSON.stringify(gastos));}catch(e){}
+}
+function ld(){
+  try{
+    var x=localStorage.getItem('motogastos_tony');
+    if(x)gastos=JSON.parse(x);
+  }catch(e){gastos=[];}
+}
+
+function fmt(n){return'S/ '+(+n||0).toFixed(2);}
+function hoy(){return new Date().toISOString().split('T')[0];}
+function getMes(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+function getSem(){var d=new Date();var day=d.getDay()||7;var l=new Date(d);l.setDate(d.getDate()-(day-1));return l.toISOString().split('T')[0];}
+
+function toast(m,err){
+  var el=document.getElementById('toast');
+  el.textContent=m;el.style.display='block';
+  el.style.background=err?'#2D0808':'#040D24';
+  setTimeout(function(){el.style.display='none';},2500);
+}
+
+// ── NAVEGACIÓN ──
+function go(id){
+  // Hide all
+  document.querySelectorAll('.pg,#pg-menu').forEach(function(p){p.style.display='none';});
+  var pg=document.getElementById('pg-'+id);
+  if(pg)pg.style.display='block';
+  // Update header
+  var hdr=document.getElementById('hdr-seccion');
+  var names={inicio:'🏠 Inicio',registrar:'➕ Registrar',historial:'📋 Historial',resumen:'📊 Resumen'};
+  if(hdr)hdr.textContent=names[id]||'';
+  var renders={inicio:renderInicio,historial:renderHistorial,resumen:renderResumen};
+  if(renders[id])renders[id]();
+}
+function volverMenu(){
+  document.querySelectorAll('.pg').forEach(function(p){p.style.display='none';});
+  document.getElementById('pg-menu').style.display='block';
+  var hdr=document.getElementById('hdr-seccion');
+  if(hdr)hdr.textContent='';
+  renderMenuStats();
+}
+
+// ── SELECCIONAR CATEGORÍA ──
+function selCat(cat,btn){
+  catSel=cat;
+  document.querySelectorAll('.cat-item').forEach(function(b){b.classList.remove('sel');});
+  if(btn)btn.classList.add('sel');
+  var m=CATS[cat]||{ico:'📝',lbl:cat};
+  var t=document.getElementById('form-titulo');
+  if(t)t.textContent=m.ico+' '+m.lbl;
+  var cg=document.getElementById('campos-gasolina');
+  var gg=document.getElementById('campos-general');
+  if(cat==='gasolina'){
+    if(cg)cg.style.display='block';
+    if(gg)gg.style.display='none';
+  } else {
+    if(cg)cg.style.display='none';
+    if(gg)gg.style.display='block';
+  }
+}
+
+// ── AGREGAR GASTO ──
+function addGasto(){
+  var fecha=document.getElementById('g-fecha').value;
+  var uso=document.getElementById('g-uso').value;
+  if(!fecha){toast('Selecciona la fecha','err');return;}
+  var monto=0;var extra={};
+  if(catSel==='gasolina'){
+    monto=parseFloat(document.getElementById('gl-monto').value)||0;
+    var lit=parseFloat(document.getElementById('gl-litros').value)||0;
+    var lugar=document.getElementById('gl-lugar').value.trim();
+    if(lit)extra.litros=lit;
+    if(lugar)extra.lugar=lugar;
+  } else {
+    monto=parseFloat(document.getElementById('g-monto').value)||0;
+    var det=document.getElementById('g-detalle').value.trim();
+    if(det)extra.detalle=det;
+  }
+  if(!monto||monto<=0){toast('Ingresa el monto','err');return;}
+  var g={id:Date.now(),cat:catSel,monto:monto,fecha:fecha,uso:uso,...extra};
+  gastos.unshift(g);
+  sv();
+  // Limpiar
+  document.getElementById('gl-monto').value='';
+  document.getElementById('gl-litros').value='';
+  document.getElementById('gl-lugar').value='';
+  document.getElementById('g-monto').value='';
+  document.getElementById('g-detalle').value='';
+  toast('✅ Guardado: '+fmt(monto));
+  actualizarHeader();
+  go('inicio');
+}
+
+// ── ELIMINAR ──
+function delGasto(id){
+  if(!confirm('¿Eliminar este gasto?'))return;
+  gastos=gastos.filter(function(g){return g.id!==id;});
+  sv();renderHistorial();renderInicio();actualizarHeader();toast('Eliminado');
+}
+
+// ── HEADER ──
+function actualizarHeader(){
+  var mes=getMes();
+  var tot=gastos.filter(function(g){return(g.fecha||'').startsWith(mes);}).reduce(function(s,g){return s+g.monto;},0);
+  var el=document.getElementById('hdr-total');
+  if(el)el.textContent=fmt(tot);
+}
+
+// ── FILTROS ──
+function setFT(f,btn){
+  filtroT=f;
+  document.querySelectorAll('#filtro-tiempo .fbtn').forEach(function(b){b.classList.remove('on');});
+  if(btn)btn.classList.add('on');
+  renderHistorial();
+}
+function setFC(c,btn){
+  filtroC=c;
+  document.querySelectorAll('#filtro-cat .fbtn').forEach(function(b){b.classList.remove('on');});
+  if(btn)btn.classList.add('on');
+  renderHistorial();
+}
+function setFR(f,btn){
+  filtroR_=f;
+  document.querySelectorAll('#pg-resumen .fbtn').forEach(function(b){b.classList.remove('on');});
+  if(btn)btn.classList.add('on');
+  renderResumen();
+}
+
+function filtrar(ft,fc){
+  var r=gastos;
+  if(ft==='mes'){var m=getMes();r=r.filter(function(g){return(g.fecha||'').startsWith(m);});}
+  else if(ft==='semana'){var s=getSem();r=r.filter(function(g){return(g.fecha||'')>=s;});}
+  else if(ft==='3meses'){var d3=new Date();d3.setMonth(d3.getMonth()-3);var s3=d3.toISOString().split('T')[0];r=r.filter(function(g){return(g.fecha||'')>=s3;});}
+  if(fc)r=r.filter(function(g){return g.cat===fc;});
+  return r;
+}
+
+// ── ITEM HTML ──
+function itemHTML(g,del){
+  var m=CATS[g.cat]||{ico:'📝',lbl:g.cat,col:'#94A3B8'};
+  var usoLbl={trabajo:'🏢 Trabajo',personal:'👤 Personal',ambos:'🔄 Ambos'};
+  var sub=[usoLbl[g.uso]||'',g.detalle||'',g.litros?g.litros+'L':'',g.lugar||''].filter(Boolean).join(' · ');
+  return'<div class="it">'+
+    '<div style="display:flex;align-items:center;flex:1;min-width:0;">'+
+    '<div class="it-ico" style="background:'+m.col+'22;border:1px solid '+m.col+'44;">'+m.ico+'</div>'+
+    '<div class="it-info">'+
+    '<div class="it-cat">'+m.lbl+'</div>'+
+    '<div class="it-sub">'+sub+'</div>'+
+    '</div></div>'+
+    '<div class="it-right">'+
+    '<div class="it-monto">−'+fmt(g.monto)+'</div>'+
+    '<div class="it-fecha">'+g.fecha+'</div>'+
+    (del?'<button class="del" onclick="delGasto('+g.id+')">🗑</button>':'')+
+    '</div></div>';
+}
+
+// ── RENDER INICIO ──
+function renderInicio(){
+  var mes=getMes();
+  var gMes=gastos.filter(function(g){return(g.fecha||'').startsWith(mes);});
+  var totMes=gMes.reduce(function(s,g){return s+g.monto;},0);
+  var totGas=gMes.filter(function(g){return g.cat==='gasolina';}).reduce(function(s,g){return s+g.monto;},0);
+  var nGas=gMes.filter(function(g){return g.cat==='gasolina';}).length;
+  var totMant=gMes.filter(function(g){return['aceite','cambio_aceite','filtro','bujia','cadena'].includes(g.cat);}).reduce(function(s,g){return s+g.monto;},0);
+  var totRep=gMes.filter(function(g){return['frenos','llanta','camara','picadura','repuesto','taller','bateria'].includes(g.cat);}).reduce(function(s,g){return s+g.monto;},0);
+
+  var kg=document.getElementById('kpi-grid');
+  if(kg)kg.innerHTML=
+    kCard('💰','Total mes',fmt(totMes),'var(--rojo)',gastos.length+' registros totales')+
+    kCard('⛽','Gasolina',fmt(totGas),'var(--oro)',nGas+' cargas este mes')+
+    kCard('🔧','Mantenimiento',fmt(totMant),'var(--azul)','')+
+    kCard('🛠️','Reparaciones',fmt(totRep),'var(--morado)','');
+
+  // Gráfico mes
+  var cc=document.getElementById('chart-mes');
+  if(cc){
+    var porCat={};
+    Object.keys(CATS).forEach(function(c){
+      var v=gMes.filter(function(g){return g.cat===c;}).reduce(function(s,g){return s+g.monto;},0);
+      if(v>0)porCat[c]=v;
+    });
+    var sorted=Object.entries(porCat).sort(function(a,b){return b[1]-a[1];});
+    var maxV=sorted.length?sorted[0][1]:1;
+    if(!sorted.length){cc.innerHTML='<div class="empty">Sin gastos este mes</div>';return;}
+    var h='';
+    sorted.forEach(function(e){
+      var m=CATS[e[0]];var pct=Math.round(e[1]/maxV*100);
+      h+='<div class="barra-row"><div class="barra-lbl">'+m.ico+' '+m.lbl+'</div>'+
+        '<div class="barra-bg"><div class="barra-fill" style="width:'+pct+'%;background:'+m.col+';">'+fmt(e[1])+'</div></div></div>';
+    });
+    cc.innerHTML=h;
+  }
+
+  // Últimos
+  var ul=document.getElementById('ultimos');
+  if(ul){
+    var ult=gastos.slice(0,5);
+    ul.innerHTML=ult.length?ult.map(function(g){return itemHTML(g,false);}).join(''):'<div class="empty">Sin gastos registrados</div>';
+  }
+}
+
+function kCard(ico,lbl,val,col,sub){
+  return'<div class="kpi" style="border-color:'+col+'33;">'+
+    '<div class="kpi-ico" style="text-shadow:0 0 20px '+col+'55;">'+ico+'</div>'+
+    '<div class="kpi-lbl">'+lbl+'</div>'+
+    '<div class="kpi-val" style="color:'+col+';">'+val+'</div>'+
+    (sub?'<div class="kpi-sub">'+sub+'</div>':'')+
+    '</div>';
+}
+
+// ── RENDER HISTORIAL ──
+function renderHistorial(){
+  var lista=filtrar(filtroT,filtroC);
+  var tot=lista.reduce(function(s,g){return s+g.monto;},0);
+  var lbl=document.getElementById('hist-tot');if(lbl)lbl.textContent=fmt(tot);
+  var c=document.getElementById('lista-hist');if(!c)return;
+  c.innerHTML=lista.length?lista.map(function(g){return itemHTML(g,true);}).join(''):'<div class="empty">Sin gastos en este período</div>';
+}
+
+// ── RENDER RESUMEN ──
+function renderResumen(){
+  var ft=filtroR_==='3meses'?'3meses':filtroR_==='mes'?'mes':'todo';
+  var lista=filtrar(ft,'');
+  var tot=lista.reduce(function(s,g){return s+g.monto;},0);
+  var rc=document.getElementById('resumen-wrap');if(!rc)return;
+  if(!lista.length){rc.innerHTML='<div class="card"><div class="cb"><div class="empty">Sin datos</div></div></div>';return;}
+
+  var porCat={};
+  Object.keys(CATS).forEach(function(c){
+    var v=lista.filter(function(g){return g.cat===c;}).reduce(function(s,g){return s+g.monto;},0);
+    if(v>0)porCat[c]=v;
+  });
+  var sorted=Object.entries(porCat).sort(function(a,b){return b[1]-a[1];});
+  var maxV=sorted.length?sorted[0][1]:1;
+
+  var h='';
+  // Total
+  h+='<div class="card" style="border-color:rgba(239,68,68,.4);">';
+  h+='<div class="card-hdr"><div class="card-hdr-t">💰 Total gastado</div></div>';
+  h+='<div class="cb" style="text-align:center;">';
+  h+='<div style="font-family:monospace;font-size:2.2rem;font-weight:900;color:var(--rojo);">'+fmt(tot)+'</div>';
+  h+='<div style="font-size:0.6rem;color:var(--txt3);margin-top:4px;">'+lista.length+' gastos · '+[...new Set(lista.map(function(g){return(g.fecha||'').substring(0,7);}))].length+' mes(es)</div>';
+  h+='</div></div>';
+
+  // Por categoría
+  h+='<div class="card"><div class="card-hdr"><div class="card-hdr-t">📊 Por categoría</div></div><div class="cb">';
+  sorted.forEach(function(e){
+    var m=CATS[e[0]];var pct=Math.round(e[1]/maxV*100);var pctTot=tot>0?Math.round(e[1]/tot*100):0;
+    var n=lista.filter(function(g){return g.cat===e[0];}).length;
+    h+='<div class="barra-row"><div class="barra-lbl">'+m.ico+' '+m.lbl+'</div>'+
+      '<div class="barra-bg"><div class="barra-fill" style="width:'+pct+'%;background:'+m.col+';">'+fmt(e[1])+' ('+pctTot+'%)</div></div></div>';
+  });
+  h+='</div></div>';
+
+  // Por uso
+  var usos={trabajo:0,personal:0,ambos:0};
+  lista.forEach(function(g){if(usos[g.uso]!==undefined)usos[g.uso]+=g.monto;});
+  h+='<div class="card"><div class="card-hdr"><div class="card-hdr-t">🔄 Por uso</div></div><div class="cb">';
+  var uL={trabajo:'🏢 Trabajo',personal:'👤 Personal',ambos:'🔄 Ambos'};
+  var uC={trabajo:'var(--azul)',personal:'var(--morado)',ambos:'var(--oro)'};
+  Object.entries(usos).forEach(function(e){
+    if(!e[1])return;
+    var pct=tot>0?Math.round(e[1]/tot*100):0;
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,215,0,.08);">';
+    h+='<div style="font-size:0.78rem;font-weight:700;color:'+uC[e[0]]+';">'+uL[e[0]]+'</div>';
+    h+='<div style="text-align:right;"><div style="font-family:monospace;font-size:0.9rem;font-weight:800;color:var(--rojo);">'+fmt(e[1])+'</div>';
+    h+='<div style="font-size:0.52rem;color:var(--txt3);">'+pct+'%</div></div></div>';
+  });
+  h+='</div></div>';
+
+  // Stats
+  var montos=lista.map(function(g){return g.monto;});
+  var nMeses=[...new Set(lista.map(function(g){return(g.fecha||'').substring(0,7);}))].length||1;
+  h+='<div class="card"><div class="card-hdr"><div class="card-hdr-t">📈 Estadísticas</div></div><div class="cb">';
+  [
+    ['Promedio mensual',fmt(tot/nMeses),'var(--oro)'],
+    ['Gasto mayor',fmt(Math.max.apply(null,montos)),'var(--rojo)'],
+    ['Gasto menor',fmt(Math.min.apply(null,montos)),'var(--verde)'],
+    ['Total registros',lista.length+' gastos','var(--txt2)'],
+  ].forEach(function(s){
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,215,0,.08);">';
+    h+='<div style="font-size:0.75rem;color:var(--txt2);">'+s[0]+'</div>';
+    h+='<div style="font-family:monospace;font-size:0.9rem;font-weight:800;color:'+s[2]+';">'+s[1]+'</div></div>';
+  });
+  h+='</div></div>';
+
+  rc.innerHTML=h;
+}
+
+// ── PWA ──
+var _pwaPrompt=null;
+window.addEventListener('beforeinstallprompt',function(e){
+  e.preventDefault();_pwaPrompt=e;
+  var b=document.getElementById('pwa-banner');if(b)b.style.display='flex';
+});
+window.addEventListener('appinstalled',function(){
+  var b=document.getElementById('pwa-banner');if(b)b.style.display='none';
+  toast('✅ App instalada en pantalla principal');
+});
+function instalarApp(){
+  if(_pwaPrompt){
+    _pwaPrompt.prompt();
+    _pwaPrompt.userChoice.then(function(r){
+      if(r.outcome==='accepted')toast('✅ Instalando...');
+      _pwaPrompt=null;
+      var b=document.getElementById('pwa-banner');if(b)b.style.display='none';
+    });
+  } else {
+    // iOS
+    var b=document.getElementById('pwa-ios');
+    if(b){b.style.display='flex';setTimeout(function(){b.style.display='none';},7000);}
+  }
+}
+function cerrarPwa(){var b=document.getElementById('pwa-banner');if(b)b.style.display='none';}
+
+// Service Worker
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('moto-sw.js').catch(function(){});
+}
+
+function renderMenuStats(){
+  actualizarHeader();
+}
+// ── INIT ──
+document.addEventListener('DOMContentLoaded',function(){
+  ld();
+  var hf=document.getElementById('g-fecha');if(hf)hf.value=hoy();
+  selCat('gasolina',document.querySelector('.cat-item'));
+  actualizarHeader();
+  // Show menu
+  document.getElementById('pg-menu').style.display='block';
+});
+</script>
+</body>
+</html>

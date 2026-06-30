@@ -1,0 +1,25 @@
+{
+  "name": "MotoControl — Anthony Deivy Muñoz Amaya",
+  "short_name": "Moto Tony",
+  "description": "Control de gastos de moto lineal",
+  "start_url": "/moto-tony.html",
+  "display": "standalone",
+  "background_color": "#0A0F1A",
+  "theme_color": "#0F172A",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='100' fill='%230A0F1A'/%3E%3Crect width='512' height='512' rx='100' fill='url(%23g)'/%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23111827'/%3E%3Cstop offset='1' stop-color='%231C2536'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ctext x='256' y='340' font-size='280' text-anchor='middle'%3E🏍️%3C/text%3E%3Ctext x='256' y='440' font-size='60' text-anchor='middle' fill='%23F59E0B' font-family='Arial' font-weight='900'%3ETONY%3C/text%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='100' fill='%230A0F1A'/%3E%3Ctext x='256' y='340' font-size='280' text-anchor='middle'%3E🏍️%3C/text%3E%3Ctext x='256' y='440' font-size='60' text-anchor='middle' fill='%23F59E0B' font-family='Arial' font-weight='900'%3ETONY%3C/text%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance", "utilities"],
+  "lang": "es"
+}
