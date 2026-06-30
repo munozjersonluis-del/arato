@@ -1,5 +1,8 @@
-const CACHE = 'moto-tony-v2';
-const ASSETS = ['/moto-tony.html', '/moto-manifest.json'];
+const CACHE = 'moto-tony-v3';
+const ASSETS = [
+  '/arato/moto-tony.html',
+  '/arato/moto-manifest.json'
+];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS).catch(() => {})));
@@ -24,6 +27,6 @@ self.addEventListener('fetch', e => {
         caches.open(CACHE).then(c => c.put(e.request, clone));
         return res;
       })
-      .catch(() => caches.match(e.request))
+      .catch(() => caches.match(e.request).then(r => r || caches.match('/arato/moto-tony.html')))
   );
 });
