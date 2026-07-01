@@ -1175,7 +1175,11 @@ function App(){
       headers:{"apikey":_SK,"Authorization":"Bearer "+_SK}
     }).then(r=>r.json()).then(rows=>{
       if(rows&&rows.length){
-        const loaded=rows.map(r=>r.data).filter(Boolean);
+        const loaded=rows.map(r=>({
+          ...r.ficha,
+          id:r.record_id,
+          decl:r.decl
+        })).filter(r=>r.id);
         if(loaded.length){setRecords(loaded);setActiveId(loaded[loaded.length-1].id);}
       }
       setLoadingInit(false);
@@ -1261,7 +1265,7 @@ function App(){
       // Verificar si ya existe en Supabase
       const res=await fetch(SU+"/rest/v1/fichas_medicas?record_id=eq."+active.id,{headers:{...sbHeaders}});
       const ex=await res.json();
-      const body=JSON.stringify({record_id:active.id,data:active});
+      const body=JSON.stringify({record_id:active.id,ficha:active,decl:active.decl||{}});
       if(ex&&ex.length){
         await fetch(SU+"/rest/v1/fichas_medicas?record_id=eq."+active.id,{method:"PATCH",headers:sbHeaders,body});
       }else{
