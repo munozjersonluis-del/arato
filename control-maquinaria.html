@@ -1885,7 +1885,9 @@ function buildReporteSemanal(){
   const totPersT=pD.reduce((s,d)=>s+d.tons,0);
   const totTnhrMaq=totMaqH>0?totMaqT/totMaqH:0;
   const totTnhrMonta=totMontaH>0?totMontaT/totMontaH:0;
-  const totTnp=totPersP&&totPersT?totPersT/totPersP:0;
+  // TN/PERSONA: si personal tiene sus propias toneladas úsalas, si no usa las de maquinaria
+  const tonsParaTnp=totPersT>0?totPersT:totMaqT;
+  const totTnp=totPersP>0&&tonsParaTnp>0?+(tonsParaTnp/totPersP).toFixed(2):0;
   const avgPers=numDias>0&&totPersP>0?Math.round(totPersP/numDias):0;
   const cumplimiento=META>0?Math.round(totTnhrMaq/META*100):0;
 
@@ -2070,14 +2072,16 @@ function buildReporteSemanal(){
     h+=`<td style="padding:8px 6px;text-align:center;border-bottom:1px solid #FDE68A;font-family:monospace;font-weight:900;color:#D97706;background:#FEF3C7;font-size:13px;">${totTnhrMonta.toFixed(2)}</td></tr>`;
   }
 
-  // TN/PERSONA
-  if(totTnp>0){
+  // TN/PERSONA — mostrar siempre que haya personal registrado, aunque no haya tons aún
+  if(totPersP>0){
     h+=`<tr><td style="padding:8px 10px;font-size:9px;font-weight:700;color:#7C3AED;border-bottom:1px solid #F1F5F9;background:#FAF5FF;white-space:nowrap;">👷 TN/PERSONA</td>`;
-    pD.forEach(d=>{
-      const tnp=d.pers&&d.tons?+(d.tons/d.pers).toFixed(2):0;
-      h+=tnp?`<td style="padding:8px 5px;text-align:center;border-bottom:1px solid #F1F5F9;font-family:monospace;font-weight:700;color:#7C3AED;background:#FAF5FF;">${tnp}</td>`:`<td style="padding:8px;text-align:center;border-bottom:1px solid #F1F5F9;background:#FAF5FF;color:#D1D5DB;">—</td>`;
+    pD.forEach((d,i)=>{
+      const tonsD=d.tons>0?d.tons:(mD[i]?mD[i].tons:0);
+      const tnp=d.pers>0&&tonsD>0?+(tonsD/d.pers).toFixed(2):0;
+      h+=tnp?`<td style="padding:8px 5px;text-align:center;border-bottom:1px solid #F1F5F9;font-family:monospace;font-weight:700;color:#7C3AED;background:#FAF5FF;">${tnp}</td>`:`<td style="padding:8px;text-align:center;border-bottom:1px solid #F1F5F9;background:#FAF5FF;color:#D1D5DB;">${d.pers>0?'—':'·'}</td>`;
     });
-    h+=`<td style="padding:8px 6px;text-align:center;border-bottom:1px solid #F1F5F9;font-family:monospace;font-weight:800;color:#7C3AED;background:#EDE9FE;">${totTnp.toFixed(2)}</td></tr>`;
+    const totalLabel=totTnp>0?totTnp.toFixed(2):'—';
+    h+=`<td style="padding:8px 6px;text-align:center;border-bottom:1px solid #F1F5F9;font-family:monospace;font-weight:800;color:#7C3AED;background:#EDE9FE;">${totalLabel}</td></tr>`;
   }
 
   h+='</tbody></table></div>';
