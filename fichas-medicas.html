@@ -1175,15 +1175,22 @@ function App(){
       headers:{"apikey":_SK,"Authorization":"Bearer "+_SK}
     }).then(r=>r.json()).then(rows=>{
       if(rows&&rows.length){
-        const loaded=rows.map(r=>({
-          ...r.ficha,
-          id:r.record_id,
-          decl:r.decl
-        })).filter(r=>r.id);
-        if(loaded.length){setRecords(loaded);setActiveId(loaded[loaded.length-1].id);}
+        const loaded=rows.map(r=>{
+          const f=r.ficha||{};
+          return {
+            ...f,
+            id: r.record_id,
+            decl: r.decl||{},
+            empresa: r.empresa||f.empresa||'EL ROCIO',
+          };
+        });
+        if(loaded.length){
+          setRecords(loaded);
+          setActiveId(loaded[loaded.length-1].id);
+        }
       }
       setLoadingInit(false);
-    }).catch(()=>setLoadingInit(false));
+    }).catch(e=>{console.error(e);setLoadingInit(false);});
   },[]);
   const [screen,setScreen]=useState("list");
   const [activeId,setActiveId]=useState(null);
