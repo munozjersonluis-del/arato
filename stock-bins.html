@@ -279,6 +279,41 @@ padding:12px;
 
 <div class="main">
 
+  <!-- TARJETA SALDO PRÉSTAMOS ARATO 1 ↔ ARATO 2 -->
+  <div id="prestamo-card" style="background:linear-gradient(135deg,#0F1A2E,#1A2540);border:1px solid rgba(56,189,248,.2);border-radius:14px;padding:14px;margin-bottom:12px;">
+    <div style="font-size:0.65rem;font-weight:800;color:#38BDF8;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">🔄 SALDO PRÉSTAMOS — Arato 1 ↔ Arato 2</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+      <div style="background:rgba(56,189,248,.08);border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-size:0.52rem;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">Presté a Arato 2</div>
+        <div id="prest-di-a2" style="font-family:monospace;font-size:1.3rem;font-weight:900;color:#38BDF8;">0</div>
+        <div style="font-size:0.5rem;color:#64748B;margin-top:2px;">bins enviados</div>
+      </div>
+      <div style="background:rgba(168,85,247,.08);border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-size:0.52rem;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">Me devolvió A2</div>
+        <div id="prest-ret-a2" style="font-family:monospace;font-size:1.3rem;font-weight:900;color:#A855F7;">0</div>
+        <div style="font-size:0.5rem;color:#64748B;margin-top:2px;">bins retornados</div>
+      </div>
+      <div style="background:rgba(245,158,11,.08);border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-size:0.52rem;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">A2 me prestó</div>
+        <div id="prest-de-a2" style="font-family:monospace;font-size:1.3rem;font-weight:900;color:#F59E0B;">0</div>
+        <div style="font-size:0.5rem;color:#64748B;margin-top:2px;">bins recibidos</div>
+      </div>
+      <div style="background:rgba(34,197,94,.08);border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-size:0.52rem;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">Le devolví a A2</div>
+        <div id="prest-dev-a2" style="font-family:monospace;font-size:1.3rem;font-weight:900;color:#22C55E;">0</div>
+        <div style="font-size:0.5rem;color:#64748B;margin-top:2px;">bins devueltos</div>
+      </div>
+    </div>
+    <!-- Saldo neto -->
+    <div id="saldo-neto-box" style="border-top:1px solid rgba(56,189,248,.15);padding-top:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div style="font-size:0.65rem;font-weight:700;color:#94A3B8;">Saldo neto de préstamos:</div>
+        <div id="saldo-neto-val" style="font-family:monospace;font-size:1.1rem;font-weight:900;color:#38BDF8;">0</div>
+      </div>
+      <div id="saldo-neto-lbl" style="font-size:0.58rem;color:#64748B;margin-top:3px;text-align:right;">Sin saldo pendiente</div>
+    </div>
+  </div>
+
   <!-- KPIs -->
   <div class="kpi-row">
     <div class="kpi g">
@@ -302,6 +337,7 @@ padding:12px;
   <div class="tabs">
     <button class="tab-btn on" onclick="goTab('mov',this)">Movimientos</button>
     <button class="tab-btn" onclick="goTab('mod',this);cargarModulos()">Por Módulo</button>
+    <button class="tab-btn" onclick="goTab('prest',this);renderPrestamos()">🔄 Préstamos</button>
   </div>
 
   <!-- TAB MOVIMIENTOS -->
@@ -323,9 +359,36 @@ padding:12px;
           <div class="tipo-opt" id="opt-sal" onclick="setTipo('salida')">
             <div class="tipo-opt-icon">🚛</div>
             <div class="tipo-opt-lbl" style="color:var(--r);">SALIDA</div>
-            <div class="tipo-opt-sub">Sale a planta<br>avocado</div>
+            <div class="tipo-opt-sub">Sale a planta<br>o a Arato 2</div>
           </div>
         </div>
+
+        <!-- DESTINO — solo visible cuando es salida -->
+        <div id="destino-box" style="display:none;margin-bottom:12px;">
+          <label style="font-size:0.6rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px;">Destino de los bins</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+            <div class="dest-opt sel" id="dest-planta" onclick="setDestino('planta',this)" style="background:#1e293b;border:1.5px solid #22C55E;border-radius:10px;padding:9px 6px;text-align:center;cursor:pointer;">
+              <div style="font-size:1.2rem;">🏭</div>
+              <div style="font-size:0.58rem;font-weight:700;color:#22C55E;margin-top:3px;">Planta<br>Avocado</div>
+            </div>
+            <div class="dest-opt" id="dest-arato2" onclick="setDestino('arato2',this)" style="background:#1e293b;border:1.5px solid #334155;border-radius:10px;padding:9px 6px;text-align:center;cursor:pointer;">
+              <div style="font-size:1.2rem;">🚜</div>
+              <div style="font-size:0.58rem;font-weight:700;color:#38BDF8;margin-top:3px;">Arato 2<br>(traslado)</div>
+            </div>
+            <div class="dest-opt" id="dest-prestamo" onclick="setDestino('prestamo',this)" style="background:#1e293b;border:1.5px solid #334155;border-radius:10px;padding:9px 6px;text-align:center;cursor:pointer;">
+              <div style="font-size:1.2rem;">🔄</div>
+              <div style="font-size:0.58rem;font-weight:700;color:#F59E0B;margin-top:3px;">Préstamo<br>a Arato 2</div>
+            </div>
+          </div>
+          <!-- Opción retorno visible en INGRESO -->
+          <div style="margin-top:8px;padding:8px 10px;background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.3);border-radius:10px;" id="retorno-box" style="display:none;">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" id="es-retorno" style="width:16px;height:16px;accent-color:#A855F7;">
+              <span style="font-size:0.7rem;font-weight:700;color:#A855F7;">🔄 Es devolución de Arato 2 (retorno de bins prestados)</span>
+            </label>
+          </div>
+        </div><!-- /destino-box -->
+
         <div class="row2">
           <div class="field-grp">
             <label>Fecha</label>
@@ -666,8 +729,69 @@ padding:12px;
 
   </div>
 
-</div>
+  <!-- TAB PRÉSTAMOS -->
+  <div class="tab-content" id="tab-prest" style="display:none;">
 
+    <!-- Registrar nuevo préstamo o devolución -->
+    <div class="form-card" style="margin-bottom:12px;">
+      <div class="form-header">
+        <div class="form-header-dot" style="background:#38BDF8;"></div>
+        <div class="form-header-title">Registrar Préstamo / Devolución</div>
+      </div>
+      <div class="form-body">
+        <label style="font-size:0.6rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px;">Tipo de movimiento</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px;">
+          <div id="p-opt-presto" onclick="setPrestTipo('presto')" style="background:rgba(56,189,248,.12);border:1.5px solid #38BDF8;border-radius:10px;padding:10px 6px;text-align:center;cursor:pointer;">
+            <div style="font-size:1.3rem;">🚜</div>
+            <div style="font-size:0.6rem;font-weight:800;color:#38BDF8;margin-top:3px;">Le presté a Arato 2</div>
+          </div>
+          <div id="p-opt-devuelvo" onclick="setPrestTipo('devuelvo')" style="background:var(--field);border:1.5px solid #334155;border-radius:10px;padding:10px 6px;text-align:center;cursor:pointer;">
+            <div style="font-size:1.3rem;">✅</div>
+            <div style="font-size:0.6rem;font-weight:800;color:#22C55E;margin-top:3px;">Le devolví a Arato 2</div>
+          </div>
+          <div id="p-opt-recibi" onclick="setPrestTipo('recibi')" style="background:var(--field);border:1.5px solid #334155;border-radius:10px;padding:10px 6px;text-align:center;cursor:pointer;">
+            <div style="font-size:1.3rem;">📥</div>
+            <div style="font-size:0.6rem;font-weight:800;color:#F59E0B;margin-top:3px;">A2 me prestó</div>
+          </div>
+          <div id="p-opt-devolvio" onclick="setPrestTipo('devolvio')" style="background:var(--field);border:1.5px solid #334155;border-radius:10px;padding:10px 6px;text-align:center;cursor:pointer;">
+            <div style="font-size:1.3rem;">🔄</div>
+            <div style="font-size:0.6rem;font-weight:800;color:#A855F7;margin-top:3px;">A2 me devolvió</div>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field-grp">
+            <label>Cantidad bins</label>
+            <input type="number" id="p-cantidad" min="1" placeholder="0">
+          </div>
+          <div class="field-grp">
+            <label>Fecha</label>
+            <input type="date" id="p-fecha">
+          </div>
+        </div>
+        <div class="field-grp">
+          <label>Observación</label>
+          <input type="text" id="p-obs" placeholder="Quién, placa, motivo...">
+        </div>
+        <button class="btn-reg" id="p-btn" onclick="guardarPrestamo()" style="background:linear-gradient(135deg,#38BDF8,#0EA5E9);color:#fff;border:none;border-radius:12px;padding:13px;font-size:0.8rem;font-weight:800;cursor:pointer;width:100%;font-family:inherit;text-transform:uppercase;letter-spacing:.5px;">
+          ✅ Registrar
+        </button>
+      </div>
+    </div>
+
+    <!-- Historial de préstamos -->
+    <div class="form-card">
+      <div class="form-header">
+        <div class="form-header-dot" style="background:#A855F7;"></div>
+        <div class="form-header-title">Historial de préstamos</div>
+      </div>
+      <div class="form-body" id="prestamos-lista" style="padding:0;">
+        <div style="text-align:center;padding:24px;color:#64748B;font-size:0.75rem;">Sin préstamos registrados</div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
 <script>
 const SURL='https://rqvcvffyynpnighzwxju.supabase.co';
 const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdmN2ZmZ5eW5wbmlnaHp3eGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MjgyNDcsImV4cCI6MjA5MzMwNDI0N30.fFufNEdRvAzl6O6BqtTbx83O3Eg8Wd7gACNJDGQKga4';
@@ -689,19 +813,51 @@ setTimeout(()=>el.style.display='none',2500);
 }
 
 function goTab(name,btn){
-document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('on'));
+document.querySelectorAll('.tab-content').forEach(t=>{t.classList.remove('on');t.style.display='none';});
 document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('on'));
-document.getElementById('tab-'+name).classList.add('on');
+var el=document.getElementById('tab-'+name);
+if(el){el.classList.add('on');el.style.display='block';}
 btn.classList.add('on');
 }
 
+function renderPrestamosTab(){updSaldoPrestamos();renderPrestamos();}
+
+var destinoSel='planta'; // 'planta' | 'arato2' | 'prestamo'
+
+function setDestino(d,btn){
+  destinoSel=d;
+  ['dest-planta','dest-arato2','dest-prestamo'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(!el)return;
+    el.style.borderColor='#334155';
+  });
+  if(d==='planta'){document.getElementById('dest-planta').style.borderColor='#22C55E';}
+  else if(d==='arato2'){document.getElementById('dest-arato2').style.borderColor='#38BDF8';}
+  else{document.getElementById('dest-prestamo').style.borderColor='#F59E0B';}
+  // Actualizar placeholder de observación según destino
+  var obs=document.getElementById('f-obs');
+  if(obs){
+    if(d==='planta')obs.placeholder='Placa del camión, chofer...';
+    else if(d==='arato2')obs.placeholder='Responsable en Arato 2...';
+    else obs.placeholder='Quien recibe el préstamo en Arato 2...';
+  }
+}
+
 function setTipo(t){
-tipo=t;
-document.getElementById('opt-ing').className='tipo-opt'+(t==='ingreso'?' active-g':'');
-document.getElementById('opt-sal').className='tipo-opt'+(t==='salida'?' active-r':'');
-const btn=document.getElementById('btn-reg');
-btn.className='btn-reg '+(t==='ingreso'?'btn-g-fill':'btn-r-fill');
-btn.textContent=t==='ingreso'?'Registrar Ingreso':'Registrar Salida';
+  tipo=t;
+  document.getElementById('opt-ing').className='tipo-opt'+(t==='ingreso'?' active-g':'');
+  document.getElementById('opt-sal').className='tipo-opt'+(t==='salida'?' active-r':'');
+  const btn=document.getElementById('btn-reg');
+  btn.className='btn-reg '+(t==='ingreso'?'btn-g-fill':'btn-r-fill');
+  btn.textContent=t==='ingreso'?'Registrar Ingreso':'Registrar Salida';
+  // Mostrar/ocultar selector de destino y retorno
+  var destBox=document.getElementById('destino-box');
+  var retBox=document.getElementById('retorno-box');
+  if(destBox)destBox.style.display=t==='salida'?'block':'none';
+  if(retBox)retBox.style.display=t==='ingreso'?'block':'none';
+  // Reset
+  if(t==='salida')setDestino('planta',null);
+  if(t==='ingreso'){var cb=document.getElementById('es-retorno');if(cb)cb.checked=false;}
 }
 
 async function cargar(){
@@ -717,7 +873,14 @@ const qty=parseInt(document.getElementById('f-cantidad').value)||0;
 const fecha=document.getElementById('f-fecha').value;
 const obs=document.getElementById('f-obs').value.trim();
 if(!qty||qty<=0){toast('Ingresa la cantidad','err');return;}
-const mov={tipo,cantidad:qty,fecha,obs,created_at:new Date().toISOString()};
+
+const destino=tipo==='salida'?destinoSel:'planta';
+const esRetorno=tipo==='ingreso'&&document.getElementById('es-retorno')?.checked;
+const destinoLabel={planta:'Planta Avocado',arato2:'Traslado a Arato 2',prestamo:'Préstamo a Arato 2'}[destino]||'Planta';
+const retornoLabel=esRetorno?'Devolución de Arato 2':'';
+const obsCompleta=tipo==='salida'?(destinoLabel+(obs?' · '+obs:'')):(esRetorno?(retornoLabel+(obs?' · '+obs:'')):(obs||''));
+
+const mov={tipo,cantidad:qty,fecha,obs:obsCompleta,destino:tipo==='salida'?destino:(esRetorno?'retorno':''),created_at:new Date().toISOString()};
 try{
 const r=await db.from('stock_movimientos').insert(mov).select();
 if(r.error)throw r.error;
@@ -726,8 +889,8 @@ movs.push(r.data[0]);
 mov.id=Date.now();movs.push(mov);
 localStorage.setItem('arato_stk',JSON.stringify(movs));
 }
-// Si es salida (camión sale con bins llenos a planta), descontar también de "Acopio Lleno"
-if(tipo==='salida'){
+// Si es salida a planta, descontar también de "Acopio Lleno"
+if(tipo==='salida'&&destino==='planta'){
 try{
 await fetch(SURL+'/rest/v1/stock_campo',{
 method:'POST',
@@ -737,6 +900,11 @@ body:JSON.stringify({grupo:'',subgrupo:'',modulo:'',portabinero:obs,cantidad:qty
 actualizarStockCampo();
 }catch(e){}
 }
+// Si es traslado o préstamo a Arato 2 — mostrar aviso
+if(tipo==='salida'&&(destino==='arato2'||destino==='prestamo')){
+const tipoTxt=destino==='prestamo'?'préstamo':'traslado';
+toast('✅ '+qty+' bins registrados como '+tipoTxt+' a Arato 2');
+}
 document.getElementById('f-cantidad').value='';
 document.getElementById('f-obs').value='';
 toast('✅ Registrado','ok');
@@ -745,6 +913,158 @@ render();updKPIs();
 
 function calcStock(){
 return movs.reduce((s,m)=>m.tipo==='ingreso'?s+(m.cantidad||0):s-(m.cantidad||0),0);
+}
+
+// ══════════════════════════════
+// PRÉSTAMOS ARATO 1 ↔ ARATO 2
+// ══════════════════════════════
+var prestamos=[];
+var prestTipo='presto'; // 'presto'|'devuelvo'|'recibi'|'devolvio'
+try{prestamos=JSON.parse(localStorage.getItem('arato_prestamos')||'[]');}catch(e){}
+
+function svPrestamos(){
+  try{localStorage.setItem('arato_prestamos',JSON.stringify(prestamos));}catch(e){}
+}
+
+function setPrestTipo(t){
+  prestTipo=t;
+  var cols={presto:'#38BDF8',devuelvo:'#22C55E',recibi:'#F59E0B',devolvio:'#A855F7'};
+  var ids=['presto','devuelvo','recibi','devolvio'];
+  ids.forEach(function(id){
+    var el=document.getElementById('p-opt-'+id);
+    if(!el)return;
+    if(id===t){
+      el.style.background='rgba('+hexToRgb(cols[t])+',0.12)';
+      el.style.borderColor=cols[t];
+    } else {
+      el.style.background='var(--field)';
+      el.style.borderColor='#334155';
+    }
+  });
+  var labels={
+    presto:'Registrar préstamo a Arato 2',
+    devuelvo:'Registrar devolución a Arato 2',
+    recibi:'Registrar préstamo recibido de Arato 2',
+    devolvio:'Registrar devolución de Arato 2'
+  };
+  var btn=document.getElementById('p-btn');
+  if(btn)btn.textContent='✅ '+labels[t];
+}
+
+function hexToRgb(hex){
+  var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return r+','+g+','+b;
+}
+
+function guardarPrestamo(){
+  var qty=parseInt(document.getElementById('p-cantidad').value)||0;
+  var fecha=document.getElementById('p-fecha').value||hoy();
+  var obs=document.getElementById('p-obs').value.trim();
+  if(!qty||qty<=0){toast('Ingresa la cantidad','err');return;}
+  var labels={presto:'Le presté a Arato 2',devuelvo:'Le devolví a Arato 2',recibi:'A2 me prestó',devolvio:'A2 me devolvió'};
+  var p={id:Date.now(),tipo:prestTipo,cantidad:qty,fecha:fecha,obs:obs,label:labels[prestTipo]};
+  prestamos.unshift(p);
+  svPrestamos();
+  document.getElementById('p-cantidad').value='';
+  document.getElementById('p-obs').value='';
+  toast('✅ '+labels[prestTipo]+': '+qty+' bins');
+  updSaldoPrestamos();
+  renderPrestamos();
+}
+
+function updSaldoPrestamos(){
+  // Sumar por tipo
+  var presteDiA2=0,devolvioA2=0,a2MePrest=0,devolviA2=0;
+
+  // Datos del historial de préstamos manual
+  prestamos.forEach(function(p){
+    if(p.tipo==='presto')presteDiA2+=p.cantidad;
+    else if(p.tipo==='devolvio')devolvioA2+=p.cantidad;
+    else if(p.tipo==='recibi')a2MePrest+=p.cantidad;
+    else if(p.tipo==='devuelvo')devolviA2+=p.cantidad;
+  });
+
+  // También leer movs principales (destino=prestamo/arato2/retorno)
+  if(typeof movs!=='undefined'){
+    movs.forEach(function(m){
+      if(m.destino==='prestamo')presteDiA2+=m.cantidad||0;
+      else if(m.destino==='arato2')presteDiA2+=m.cantidad||0;
+      else if(m.destino==='retorno')devolvioA2+=m.cantidad||0;
+    });
+    // También leer observaciones antiguas que mencionen préstamo a A2
+    movs.forEach(function(m){
+      if(!m.destino&&m.obs){
+        var obs=(m.obs||'').toLowerCase();
+        if((obs.includes('prestamo')||obs.includes('préstamo')||obs.includes('presto')||obs.includes('presté'))&&
+           (obs.includes('rato 2')||obs.includes('arato2')||obs.includes('arato 2'))){
+          if(m.tipo==='salida')presteDiA2+=m.cantidad||0;
+        }
+        if((obs.includes('devol')||obs.includes('retorno'))&&
+           (obs.includes('rato 2')||obs.includes('arato2')||obs.includes('arato 2'))){
+          if(m.tipo==='ingreso')devolvioA2+=m.cantidad||0;
+        }
+      }
+    });
+  }
+
+  // Actualizar tarjeta
+  var el1=document.getElementById('prest-di-a2');
+  var el2=document.getElementById('prest-ret-a2');
+  var el3=document.getElementById('prest-de-a2');
+  var el4=document.getElementById('prest-dev-a2');
+  if(el1)el1.textContent=presteDiA2;
+  if(el2)el2.textContent=devolvioA2;
+  if(el3)el3.textContent=a2MePrest;
+  if(el4)el4.textContent=devolviA2;
+
+  // Saldo neto
+  // Positivo = A2 me debe a mí | Negativo = yo le debo a A2
+  var saldoAFavor=presteDiA2-devolvioA2; // lo que me debe A2 por préstamos que les di
+  var saldoEnContra=a2MePrest-devolviA2; // lo que yo le debo a A2
+  var saldoNeto=saldoAFavor-saldoEnContra;
+
+  var valEl=document.getElementById('saldo-neto-val');
+  var lblEl=document.getElementById('saldo-neto-lbl');
+  if(valEl){
+    valEl.textContent=(saldoNeto>=0?'+':'')+saldoNeto+' bins';
+    valEl.style.color=saldoNeto>0?'#38BDF8':saldoNeto<0?'#EF4444':'#64748B';
+  }
+  if(lblEl){
+    if(saldoNeto>0)lblEl.textContent='✅ Arato 2 te debe '+saldoNeto+' bins';
+    else if(saldoNeto<0)lblEl.textContent='⚠️ Tú le debes '+Math.abs(saldoNeto)+' bins a Arato 2';
+    else lblEl.textContent='✅ Sin saldo pendiente entre Aratos';
+  }
+}
+
+function renderPrestamos(){
+  var lista=document.getElementById('prestamos-lista');
+  if(!lista)return;
+  if(!prestamos.length){
+    lista.innerHTML='<div style="text-align:center;padding:24px;color:#64748B;font-size:0.75rem;">Sin préstamos registrados</div>';
+    return;
+  }
+  var cols={presto:'#38BDF8',devuelvo:'#22C55E',recibi:'#F59E0B',devolvio:'#A855F7'};
+  var icos={presto:'🚜',devuelvo:'✅',recibi:'📥',devolvio:'🔄'};
+  lista.innerHTML=prestamos.map(function(p){
+    return'<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid #1E2D45;">'+
+      '<div>'+
+      '<div style="font-size:0.72rem;font-weight:700;color:'+cols[p.tipo]+';">'+icos[p.tipo]+' '+p.label+'</div>'+
+      '<div style="font-size:0.55rem;color:#64748B;margin-top:2px;">'+p.fecha+(p.obs?' · '+p.obs:'')+'</div>'+
+      '</div>'+
+      '<div style="display:flex;align-items:center;gap:8px;">'+
+      '<div style="font-family:monospace;font-size:0.95rem;font-weight:800;color:'+cols[p.tipo]+';">'+p.cantidad+' bins</div>'+
+      '<button onclick="eliminarPrestamo('+p.id+')" style="background:none;border:none;color:#EF4444;font-size:0.7rem;cursor:pointer;opacity:.5;">✕</button>'+
+      '</div></div>';
+  }).join('');
+}
+
+function eliminarPrestamo(id){
+  if(!confirm('¿Eliminar este registro de préstamo?'))return;
+  prestamos=prestamos.filter(function(p){return p.id!==id;});
+  svPrestamos();
+  updSaldoPrestamos();
+  renderPrestamos();
+  toast('Eliminado');
 }
 
 function updKPIs(){
@@ -759,6 +1079,7 @@ const max=Math.max(ing,1);
 document.getElementById('bar-ing').style.width='100%';
 document.getElementById('bar-sal').style.width=Math.round(sal/max*100)+'%';
 document.getElementById('bar-stk').style.width=Math.round(stk/max*100)+'%';
+updSaldoPrestamos();
 }
 
 var filtroActual='hoy';
@@ -797,12 +1118,33 @@ if(!rows.length){
 el.innerHTML='<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-txt">Sin movimientos para esta fecha</div></div>';
 return;
 }
-el.innerHTML=rows.slice().reverse().map(({m,stk,i})=>`
-<div class="mov-row">
+el.innerHTML=rows.slice().reverse().map(({m,stk,i})=>{
+  // Etiqueta y color según destino
+  const destino=m.destino||'planta';
+  let tipoLabel,tipoBadge='';
+  if(m.tipo==='ingreso'){
+    if(m.destino==='retorno'){
+      tipoLabel='🔄 Devolución de Arato 2';
+      tipoBadge='<span style="display:inline-block;font-size:0.48rem;font-weight:700;padding:2px 7px;border-radius:5px;background:rgba(168,85,247,.15);color:#A855F7;margin-left:6px;">RETORNO</span>';
+    } else {
+      tipoLabel='📥 Ingreso de Planta';
+      tipoBadge='';
+    }
+  } else if(destino==='arato2'){
+    tipoLabel='🚜 Traslado a Arato 2';
+    tipoBadge='<span style="display:inline-block;font-size:0.48rem;font-weight:700;padding:2px 7px;border-radius:5px;background:rgba(56,189,248,.15);color:#38BDF8;margin-left:6px;">ARATO 2</span>';
+  } else if(destino==='prestamo'){
+    tipoLabel='🔄 Préstamo a Arato 2';
+    tipoBadge='<span style="display:inline-block;font-size:0.48rem;font-weight:700;padding:2px 7px;border-radius:5px;background:rgba(245,158,11,.15);color:#F59E0B;margin-left:6px;">PRÉSTAMO</span>';
+  } else {
+    tipoLabel='🏭 Salida a Planta Avocado';
+    tipoBadge='';
+  }
+  return`<div class="mov-row">
 <div class="mov-dot ${m.tipo==='ingreso'?'g':'r'}"></div>
 <div class="mov-info">
 <div class="mov-fecha">${m.fecha||''} · #${i}</div>
-<div class="mov-tipo">${m.tipo==='ingreso'?'Ingreso Acopio':'Salida Avocado'}</div>
+<div class="mov-tipo">${tipoLabel}${tipoBadge}</div>
 ${m.obs?`<div class="mov-obs">${m.obs}</div>`:''}
 </div>
 <div class="mov-right">
@@ -810,9 +1152,8 @@ ${m.obs?`<div class="mov-obs">${m.obs}</div>`:''}
 <div class="mov-stock">stk: ${stk}</div>
 </div>
 <button class="mov-del" onclick="eliminar('${m.id}')">✕</button>
-</div>
-${i>1?'':''}
-`).join('');
+</div>`;
+}).join('');
 }
 
 async function eliminar(id){
@@ -1553,6 +1894,10 @@ if(btn){btn.textContent='📋 Sheets';btn.disabled=false;}
 }
 
 cargar();
+// Init fecha préstamo
+var pf=document.getElementById('p-fecha');if(pf)pf.value=new Date().toISOString().split('T')[0];
+// Tab prest display none initially
+var tp=document.getElementById('tab-prest');if(tp)tp.style.display='none';
 cargarCampo();
 actualizarStockCampo();
 
