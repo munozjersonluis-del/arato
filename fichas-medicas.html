@@ -1175,22 +1175,11 @@ function App(){
       headers:{"apikey":_SK,"Authorization":"Bearer "+_SK}
     }).then(r=>r.json()).then(rows=>{
       if(rows&&rows.length){
-        const loaded=rows.map(r=>{
-          const f=r.ficha||{};
-          return {
-            ...f,
-            id: r.record_id,
-            decl: r.decl||{},
-            empresa: r.empresa||f.empresa||'EL ROCIO',
-          };
-        });
-        if(loaded.length){
-          setRecords(loaded);
-          setActiveId(loaded[loaded.length-1].id);
-        }
+        const loaded=rows.map(r=>r.data).filter(Boolean);
+        if(loaded.length){setRecords(loaded);setActiveId(loaded[loaded.length-1].id);}
       }
       setLoadingInit(false);
-    }).catch(e=>{console.error(e);setLoadingInit(false);});
+    }).catch(()=>setLoadingInit(false));
   },[]);
   const [screen,setScreen]=useState("list");
   const [activeId,setActiveId]=useState(null);
@@ -1200,7 +1189,7 @@ function App(){
   const [search,setSearch]=useState("");
   const [showSync,setShowSync]=useState(false);
   const [syncTab,setSyncTab]=useState("gs");
-  const [gsUrl,setGsUrl]=useState(()=>localStorage.getItem('fichas_gs_url')||"https://script.google.com/macros/s/AKfycbzZgCFv5-1pKqOI0xHsTiwhd-3i_H5om3slC0DEnHhK0lFP11fAX9Wk8MuWR_cSq-hyoQ/exec");
+  const [gsUrl,setGsUrl]=useState("");
   const [gsStatus,setGsStatus]=useState("");
 
   const showToast=(msg,ok=true)=>{setToast({msg,ok});setTimeout(()=>setToast(null),2800)};
@@ -1257,10 +1246,8 @@ function App(){
   const sbHeaders={"apikey":SK,"Authorization":"Bearer "+SK,"Content-Type":"application/json","Prefer":"return=minimal"};
 
   const syncSheets= async (updatedRecords)=>{
-    const url=gsUrl||localStorage.getItem('fichas_gs_url')||'';
-    if(!url)return; // sin URL configurada, silencioso
     try{
-      await fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({records:updatedRecords})});
+      await fetch('/api/sheets-fichas',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({records:updatedRecords})});
     }catch(e){console.warn('Sheets sync error:',e);}
   };
 
@@ -1272,7 +1259,7 @@ function App(){
       // Verificar si ya existe en Supabase
       const res=await fetch(SU+"/rest/v1/fichas_medicas?record_id=eq."+active.id,{headers:{...sbHeaders}});
       const ex=await res.json();
-      const body=JSON.stringify({record_id:active.id,ficha:active,decl:active.decl||{}});
+      const body=JSON.stringify({record_id:active.id,data:active});
       if(ex&&ex.length){
         await fetch(SU+"/rest/v1/fichas_medicas?record_id=eq."+active.id,{method:"PATCH",headers:sbHeaders,body});
       }else{
@@ -1318,7 +1305,7 @@ function App(){
   // ── GOOGLE SHEETS SYNC ──────────────────────────────────────────────
   const saveGsUrl = (url) => {
     setGsUrl(url);
-    localStorage.setItem('fichas_gs_url', url);
+    
   };
 
   // ── SINCRONIZAR RÁPIDO (subir + descargar en 1 botón) ──
@@ -1437,20 +1424,22 @@ function App(){
               const SU="https://rqvcvffyynpnighzwxju.supabase.co";
               const recs=records;
               if(!recs.length){showToast("Sin fichas");return;}
-              let n=0;
+              showToast("Guardando "+recs.length+" fichas...");
+              let n=0,err=0;
               recs.forEach(r=>{
-                const p={record_id:String(r.id),ficha:r.ficha||{},decl:r.decl||{},empresa:(r.ficha&&r.ficha.empresa)||""};
-                fetch(SU+"/rest/v1/fichas_medicas?record_id=eq."+r.id,{headers:{"apikey":SK,"Authorization":"Bearer "+SK}})
+                const ficha=r.ficha&&r.ficha.apellidosNombres?r.ficha:{...r};
+                const decl=r.decl||{};
+                const empresa=ficha.empresa||r.empresa||"EL ROCIO";
+                const rid=String(r.id||r.record_id||Date.now());
+                const p={record_id:rid,ficha:ficha,decl:decl,empresa:empresa};
+                const hdrs={"apikey":SK,"Authorization":"Bearer "+SK,"Content-Type":"application/json","Prefer":"return=minimal"};
+                fetch(SU+"/rest/v1/fichas_medicas?record_id=eq."+rid,{headers:{"apikey":SK,"Authorization":"Bearer "+SK}})
                 .then(res=>res.json()).then(ex=>{
                   const method=ex&&ex.length?"PATCH":"POST";
-                  const url=ex&&ex.length?SU+"/rest/v1/fichas_medicas?record_id=eq."+r.id:SU+"/rest/v1/fichas_medicas";
-                  return fetch(url,{method,headers:{"apikey":SK,"Authorization":"Bearer "+SK,"Content-Type":"application/json","Prefer":"return=minimal"},body:JSON.stringify(p)});
-                }).then(()=>{n++;if(n===recs.length){
-                  showToast("Guardadas "+n+" fichas en la nube");
-                  // Also sync to Google Sheets
-                  fetch("/api/sheets-fichas",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({records:recs})}).catch(()=>{});
-                }})
-                .catch(e=>console.warn(e));
+                  const url=ex&&ex.length?SU+"/rest/v1/fichas_medicas?record_id=eq."+rid:SU+"/rest/v1/fichas_medicas";
+                  return fetch(url,{method,headers:hdrs,body:JSON.stringify(p)});
+                }).then(res=>{n++;if(n+err===recs.length)showToast("✅ "+n+" fichas guardadas en Supabase");})
+                .catch(e=>{err++;if(n+err===recs.length)showToast("⚠️ "+n+" ok, "+err+" errores");});
               });
             }}>Guardar en Nube ({records.length} fichas)</button>
             <button className="sync-btn" style={{width:"100%",marginBottom:8,background:"#2563EB",color:"#fff"}} onClick={()=>{
