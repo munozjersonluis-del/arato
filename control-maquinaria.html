@@ -406,11 +406,24 @@ tr:nth-child(even) td{background:rgba(255,255,255,0.015)}
         </div>
         <div style="font-size:0.6rem;color:#64748B;margin-top:3px" id="f-bins-calc"></div>
       </div>
-      <div class="field" style="position:relative">
-        <label>Operador</label>
-        <input id="f-operador" type="text" placeholder="Nombre del operador" autocomplete="off"
-          oninput="onOperadorInput()" onblur="hideSug('sug-operador')"/>
-        <div id="sug-operador" class="sug-list"></div>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:start;">
+        <div class="field" style="position:relative">
+          <label>Operador</label>
+          <input id="f-operador" type="text" placeholder="Nombre del operador" autocomplete="off"
+            oninput="onOperadorInput()" onblur="hideSug('sug-operador')"/>
+          <div id="sug-operador" class="sug-list"></div>
+        </div>
+        <div class="field" style="width:80px;">
+          <label>Grupo</label>
+          <select id="f-grupo" style="font-weight:800;text-align:center;">
+            <option value="">—</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+            <option value="E">E</option>
+          </select>
+        </div>
       </div>
       <div class="field">
         <label>Módulos</label>
@@ -558,7 +571,7 @@ tr:nth-child(even) td{background:rgba(255,255,255,0.015)}
 <script>
 const META = 3.5;
 const META_MONTA = 0; // Meta montacargas — definir cuando haya datos
-const KG_BIN = 435;
+const KG_BIN = 430;
 const COLORS = ["#f97316","#38bdf8","#a78bfa","#34d399","#fb7185","#fbbf24"];
 let records = [];
 let fundoActual = 'arato1'; // 'arato1' | 'arato2' | 'comparar'
@@ -1683,7 +1696,7 @@ function buildReporteGlobal(){
   html+=`<tr><td colspan="5" style="padding:0;border:none">${_rptHeader('REPORTE DEL '+fechaSel,'🌍 '+recsDia.length+' máquina(s) — Resumen del día',ahora)}</td></tr>`;
   html+=`<tr style="background:#1A3A8F">
     <th style="padding:9px 12px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:left">🚜 Máquina</th>
-    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">👤 Operador</th>
+    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">👤 Operador / Grp</th>
     <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⏱ Horas</th>
     <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⚖️ Toneladas</th>
     <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center;background:#0B2D10">⚡ TN/Hr</th>
@@ -1705,7 +1718,7 @@ function buildReporteGlobal(){
                   esPeor?'<span style="font-size:8px;background:#FEE2E2;color:#DC2626;padding:1px 5px;border-radius:6px;font-weight:700;margin-left:4px">⚠️ CRÍTICO</span>':'';
       html+=`<tr style="background:${bg};${resalte}">
         <td style="padding:9px 12px;font-weight:700;color:#1E293B;border:1px solid #D0DCF4">${r.maquina}${badge}</td>
-        <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;color:#475569;font-size:10px">${r.operador||'—'}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;color:#475569;font-size:10px">${r.operador||'—'}${r.grupo?` <span style="background:#1e3a8a;color:#F5C800;font-size:7px;font-weight:800;padding:1px 5px;border-radius:4px;margin-left:3px;">Grp ${r.grupo}</span>`:''}</td>
         <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-family:monospace;font-size:15px;color:#0F172A">${(r.hrsEjec||0).toFixed(1)}</td>
         <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-family:monospace;font-size:15px;color:#0F172A">${(r.toneladas||0).toFixed(1)}</td>
         <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;background:${_rptBg(r.tnhr)}">
@@ -1762,7 +1775,7 @@ function buildReportePorMaq(){
   // Columnas
   h+=`<tr style="background:#1A3A8F">
     <th style="padding:9px 12px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:left">🚜 Máquina</th>
-    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">👤 Operador</th>
+    <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">👤 Operador / Grp</th>
     <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⏱ Horas</th>
     <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⚖️ Toneladas</th>
     <th style="padding:9px 8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center;background:#0B2D10;min-width:100px">⚡ TN/Hr</th>
@@ -1774,7 +1787,7 @@ function buildReportePorMaq(){
     totH+=r.hrsEjec||0; totT+=r.toneladas||0;
     h+=`<tr style="background:${bg}">
       <td style="padding:9px 12px;font-weight:700;color:#1E293B;border:1px solid #D0DCF4">${r.maquina}</td>
-      <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;color:#475569;font-size:10px">${r.operador||'—'}</td>
+      <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;color:#475569;font-size:10px">${r.operador||'—'}${r.grupo?` <span style="background:#1e3a8a;color:#F5C800;font-size:7px;font-weight:800;padding:1px 5px;border-radius:4px;margin-left:3px;">Grp ${r.grupo}</span>`:''}</td>
       <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;font-weight:700;color:#1E293B;font-family:monospace">${(r.hrsEjec||0).toFixed(1)}</td>
       <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;font-weight:700;color:#1E293B;font-family:monospace">${(r.toneladas||0).toFixed(1)}</td>
       <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;background:${_rptBg(r.tnhr)};vertical-align:middle">
@@ -1859,6 +1872,7 @@ function buildReporteSemanal(){
     if(tnhrAnt>0){
       const saN=String(getWeekNumber(lunesAnt)).padStart(2,'0');
       const diff=0; vsAnt=`SEM-${saN}: ${tnhrAnt.toFixed(2)} TN/Hr`;
+      window._prevTnhr=tnhrAnt;
     }
   }
 
@@ -1933,7 +1947,7 @@ function buildReporteSemanal(){
     const bH=Math.max(6,Math.round(tnhr/yMax*chartH*0.88));
     const x=chartPadL+i*(barW+barGap);const y=chartH-bH;
     const col=tnhr>=META?'#16A34A':tnhr>=META*0.9?'#D97706':'#DC2626';
-    const dow=['D','L','M','X','J','V','S'][new Date(+dia.split('/')[2],+dia.split('/')[1]-1,+dia.split('/')[0]).getDay()];
+    const p2=dia.split('/');const dow=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][new Date(parseInt(p2[2]),parseInt(p2[1])-1,parseInt(p2[0])).getDay()];
     svgB+=`<rect x="${x+2}" y="${y}" width="${barW-4}" height="${bH}" fill="${col}" rx="3" opacity=".85"/>`;
     if(bH>14)svgB+=`<text x="${x+barW/2}" y="${y+bH/2+3.5}" text-anchor="middle" font-size="8.5" fill="#fff" font-weight="bold">${tnhr.toFixed(2)}</text>`;
     else svgB+=`<text x="${x+barW/2}" y="${y-3}" text-anchor="middle" font-size="7.5" fill="${col}" font-weight="bold">${tnhr.toFixed(2)}</text>`;
@@ -1951,62 +1965,76 @@ function buildReporteSemanal(){
 
   h+=`<div style="background:#F8FAFC;border-radius:14px;overflow:hidden;font-family:'Inter',Arial,sans-serif;">`;
 
-  // 1. HEADER MÍNIMO
-  h+=`<div style="background:linear-gradient(135deg,#0B1437,#1e3a8a);padding:14px 18px 12px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <div>
-        <div style="font-size:13px;font-weight:800;color:#F5C800;letter-spacing:1.5px;">MAQUINARIA ACOPIO — ${fundoActual==='arato2'?'ARATO 2':'ARATO 1'} 2026</div>
-        <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.7);margin-top:2px;letter-spacing:1px;">HORAS MAQUINARIA SEM-${semN}</div>
-        <div style="font-size:7px;color:rgba(255,255,255,.45);margin-top:2px;">📅 ${semLabel} &nbsp;·&nbsp; 👤 ${responsable} &nbsp;·&nbsp; ${version} &nbsp;·&nbsp; ${numDias}/7 días</div>
-      </div>
-      <div style="background:#F5C800;color:#0B1437;font-size:9px;font-weight:800;padding:3px 9px;border-radius:6px;">${numDias}/7 días</div>
+  // ── 1. HEADER MEJORADO ──
+  const [semLabelDe,semLabelA]=semLabel.split('–').map(s=>s.trim());
+  h+=`<div style="background:linear-gradient(135deg,#0B1437,#1e3a8a);padding:16px 18px 14px;">
+
+    <!-- ENCABEZADO PRINCIPAL -->
+    <div style="margin-bottom:4px;">
+      <div style="font-size:11px;font-weight:700;color:rgba(255,215,0,.55);text-transform:uppercase;letter-spacing:2px;margin-bottom:3px;">MAQUINARIA ACOPIO — ${fundoActual==='arato2'?'ARATO 2':'ARATO 1'}</div>
+      <div style="font-size:16px;font-weight:900;color:#F5C800;letter-spacing:.5px;line-height:1.1;">Rendimiento Maquinaria</div>
+      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.65);margin-top:2px;">Semana ${semN}</div>
     </div>
 
-    <!-- 2. KPI PRINCIPAL -->
-    <div style="background:${kpiBg(totTnhrMaq)};border:1.5px solid ${kpiBorder(totTnhrMaq)};border-radius:10px;padding:10px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
-      <div>
-        <div style="font-size:6px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.8px;margin-bottom:2px;">🚜 TN/Hr Maquinaria</div>
-        <div style="font-size:2.4rem;font-weight:900;color:${kpiC(totTnhrMaq)};font-family:monospace;line-height:1;">${totTnhrMaq.toFixed(2)}</div>
-      </div>
-      <div style="text-align:right;">
-        <div style="font-size:11px;font-weight:800;color:${kpiC(totTnhrMaq)};">${cumIcon} ${cumplimiento}%</div>
-        <div style="font-size:8px;color:rgba(255,255,255,.5);margin-top:3px;">meta ${META} TN/Hr</div>
-        ${vsAnt?`<div style="font-size:7.5px;color:rgba(255,255,255,.35);margin-top:2px;">${vsAnt}</div>`:''}
-        <div style="font-size:8px;color:rgba(255,255,255,.55);margin-top:3px;">✅ ${mejorDia.dia.substring(0,5)} ${mejorDia.tnhr.toFixed(2)} &nbsp; ⚠️ ${peorDia.dia.substring(0,5)} ${peorDia.tnhr.toFixed(2)}</div>
+    <!-- SUBTÍTULO DOS LÍNEAS -->
+    <div style="margin-bottom:14px;margin-top:8px;border-top:1px solid rgba(255,255,255,.08);padding-top:8px;">
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.8);">📅 ${semLabel}</div>
+      <div style="font-size:10px;color:rgba(255,255,255,.5);margin-top:2px;">👤 ${responsable} &nbsp;|&nbsp; Día ${numDias} de 7</div>
+    </div>
+
+    <!-- KPI PRINCIPAL SIMPLIFICADO -->
+    <div style="background:${kpiBg(totTnhrMaq)};border:1px solid ${kpiBorder(totTnhrMaq)};border-radius:12px;padding:12px 16px;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:7px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">🚜 TN/Hr Maquinaria</div>
+          <div style="font-size:2.6rem;font-weight:900;color:${kpiC(totTnhrMaq)};font-family:monospace;line-height:1;">${totTnhrMaq.toFixed(2)}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:13px;font-weight:800;color:${kpiC(totTnhrMaq)};margin-bottom:6px;">${cumIcon} ${cumplimiento}%</div>
+          <div style="font-size:9px;color:rgba(255,255,255,.45);">Meta: ${META}</div>
+          ${vsAnt?`<div style="font-size:9px;color:rgba(255,255,255,.35);margin-top:2px;">Sem. anterior: ${(window._prevTnhr||0).toFixed(2)}</div>`:''}
+          <div style="font-size:9px;color:rgba(255,255,255,.5);margin-top:4px;">✅ ${mejorDia.tnhr.toFixed(2)} &nbsp; ⚠️ ${peorDia.tnhr.toFixed(2)}</div>
+        </div>
       </div>
     </div>
 
-    <!-- 3. KPIs SECUNDARIOS -->
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:12px;">
+    <!-- KPIs SECUNDARIOS -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:14px;">
       <div style="background:rgba(255,255,255,.07);border-radius:8px;padding:7px 5px;text-align:center;">
         <div style="font-size:7px;color:rgba(255,255,255,.4);margin-bottom:2px;">⚖️ Producción</div>
         <div style="font-size:13px;font-weight:800;color:#fff;font-family:monospace;">${totMaqT.toFixed(1)}</div>
         <div style="font-size:6px;color:rgba(255,255,255,.3);">TN · ${totMaqB|0} bins</div>
       </div>
-      <div style="background:rgba(217,119,6,.12);border:1px solid rgba(253,230,138,.25);border-radius:8px;padding:7px 5px;text-align:center;">
+      <div style="background:rgba(217,119,6,.12);border:1px solid rgba(253,230,138,.2);border-radius:8px;padding:7px 5px;text-align:center;">
         <div style="font-size:7px;color:rgba(255,255,255,.4);margin-bottom:2px;">🏗️ TN/Hr Monta</div>
         <div style="font-size:13px;font-weight:800;color:#FDE68A;font-family:monospace;">${totTnhrMonta>0?totTnhrMonta.toFixed(2):'N/D'}</div>
         <div style="font-size:6px;color:rgba(255,255,255,.3);">${totMontaT>0?totMontaT.toFixed(1)+' TN':'—'}</div>
       </div>
-      <div style="background:rgba(124,58,237,.12);border:1px solid rgba(196,181,253,.25);border-radius:8px;padding:7px 5px;text-align:center;">
+      <div style="background:rgba(124,58,237,.12);border:1px solid rgba(196,181,253,.2);border-radius:8px;padding:7px 5px;text-align:center;">
         <div style="font-size:7px;color:rgba(255,255,255,.4);margin-bottom:2px;">👷 TN/Persona</div>
         <div style="font-size:13px;font-weight:800;color:#C4B5FD;font-family:monospace;">${totTnp>0?totTnp.toFixed(2):'N/D'}</div>
         <div style="font-size:6px;color:rgba(255,255,255,.3);">${avgPers>0?'~'+avgPers+' p/día':'—'}</div>
       </div>
-      <div style="background:${cumplimiento>=100?'rgba(21,128,61,.15)':cumplimiento>=90?'rgba(217,119,6,.15)':'rgba(220,38,38,.15)'};border:1px solid ${cumplimiento>=100?'rgba(74,222,128,.3)':cumplimiento>=90?'rgba(253,230,138,.3)':'rgba(252,165,165,.3)'};border-radius:8px;padding:7px 5px;text-align:center;">
+      <div style="background:${cumplimiento>=100?'rgba(21,128,61,.15)':cumplimiento>=90?'rgba(217,119,6,.15)':'rgba(220,38,38,.15)'};border:1px solid ${cumplimiento>=100?'rgba(74,222,128,.25)':cumplimiento>=90?'rgba(253,230,138,.25)':'rgba(252,165,165,.25)'};border-radius:8px;padding:7px 5px;text-align:center;">
         <div style="font-size:7px;color:rgba(255,255,255,.4);margin-bottom:2px;">🎯 Cumplimiento</div>
         <div style="font-size:13px;font-weight:800;color:${cumplimiento>=100?'#4ADE80':cumplimiento>=90?'#FDE68A':'#FCA5A5'};font-family:monospace;">${cumplimiento}%</div>
         <div style="font-size:6px;color:rgba(255,255,255,.3);">meta ${META} TN/Hr</div>
       </div>
     </div>
 
-    <!-- 4. GRÁFICO -->
+    <!-- GRÁFICO -->
     ${numDias>=2?`<div style="background:rgba(255,255,255,.04);border-radius:10px;padding:12px 10px 8px;border:1px solid rgba(255,255,255,.07);">
       <svg width="100%" viewBox="0 0 ${svgW} ${chartH+24}" style="overflow:visible;">${svgG}${svgY}${svgMeta}${svgB}
         <line x1="${chartPadL}" y1="0" x2="${chartPadL}" y2="${chartH}" stroke="#334155" stroke-width="1"/>
         <line x1="${chartPadL}" y1="${chartH}" x2="${svgW}" y2="${chartH}" stroke="#334155" stroke-width="1"/>
       </svg>
     </div>`:''}
+
+    <!-- FOOTER sutil -->
+    <div style="text-align:right;margin-top:8px;">
+      <span style="font-size:6px;color:rgba(255,255,255,.15);">${version}</span>
+    </div>
+
   </div>`; // cierra header azul
 
   // ── TABLA ORGANIZADA POR BLOQUES ──
@@ -2029,8 +2057,10 @@ function buildReporteSemanal(){
         <th style="padding:8px 10px;text-align:left;font-size:7.5px;font-weight:700;color:#94A3B8;border-bottom:2px solid #E2E8F0;white-space:nowrap;min-width:140px;"></th>
         ${diasConDatos.map(d=>{
           const p=d.split('/');
-          const dow=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][new Date(+p[2],+p[1]-1,+p[0]).getDay()];
-          return`<th style="padding:8px 5px;text-align:center;font-size:8px;font-weight:700;color:#475569;border-bottom:2px solid #E2E8F0;white-space:nowrap;">${p[0]}/${p[1]}<span style="display:block;font-size:6.5px;font-weight:500;color:#94A3B8;">${dow}</span></th>`;
+          // formato es-PE puede ser d/m/yyyy o dd/mm/yyyy
+          const dia=parseInt(p[0]),mes=parseInt(p[1])-1,anio=parseInt(p[2]);
+          const dow=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][new Date(anio,mes,dia).getDay()];
+          return`<th style="padding:8px 5px;text-align:center;font-size:8px;font-weight:700;color:#475569;border-bottom:2px solid #E2E8F0;white-space:nowrap;">${String(dia).padStart(2,'0')}/${String(mes+1).padStart(2,'0')}<span style="display:block;font-size:6.5px;font-weight:500;color:#94A3B8;">${dow}</span></th>`;
         }).join('')}
         <th style="padding:8px 6px;text-align:center;font-size:8px;font-weight:800;color:#1e3a8a;border-bottom:2px solid #1e3a8a;background:#EEF2FF;white-space:nowrap;">Total sem.</th>
       </tr></thead>
@@ -2191,7 +2221,7 @@ function buildReporteMonta(){
   html+=`<tr><td colspan="6" style="padding:0;border:none">${_rptHeader('REPORTE DEL '+fechaSel,'🏗️ '+recsDia.length+' montacargas — Resumen del día',ahora)}</td></tr>`;
   html+=`<tr style="background:#B45309">
     <th style="padding:9px 12px;color:#FEF9C3;font-size:9px;border:1px solid #FDE68A;text-align:left">🏗️ Equipo</th>
-    <th style="padding:9px 8px;color:#FEF9C3;font-size:9px;border:1px solid #FDE68A;text-align:center">👤 Operador</th>
+    <th style="padding:9px 8px;color:#FEF9C3;font-size:9px;border:1px solid #FDE68A;text-align:center">👤 Operador / Grp</th>
     <th style="padding:9px 8px;color:#FEF9C3;font-size:9px;border:1px solid #FDE68A;text-align:center">⏱ Horas</th>
     <th style="padding:9px 8px;color:#FEF9C3;font-size:9px;border:1px solid #FDE68A;text-align:center">⚖️ Toneladas</th>
     <th style="padding:9px 8px;color:#FEF9C3;font-size:9px;border:1px solid #FDE68A;text-align:center">⚡ TN/Hr</th>
@@ -2208,7 +2238,7 @@ function buildReporteMonta(){
       const estado=META_MONTA>0?(r.tnhr>=META_MONTA?'🟢 BIEN':r.tnhr>=META_MONTA*0.7?'🟡 REGULAR':'🔴 BAJO META'):'🟡 SIN META';
       html+=`<tr style="background:${bg}">
         <td style="padding:9px 12px;font-weight:700;color:#1E293B;border:1px solid #FDE68A">${r.maquina}</td>
-        <td style="padding:9px 8px;text-align:center;border:1px solid #FDE68A;color:#475569;font-size:10px">${r.operador||'—'}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #FDE68A;color:#475569;font-size:10px">${r.operador||'—'}${r.grupo?` <span style="background:#78350f;color:#FDE68A;font-size:7px;font-weight:800;padding:1px 5px;border-radius:4px;margin-left:3px;">Grp ${r.grupo}</span>`:''}</td>
         <td style="padding:9px 8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.hrsEjec||0).toFixed(1)}</td>
         <td style="padding:9px 8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.toneladas||0).toFixed(1)}</td>
         <td style="padding:9px 8px;text-align:center;border:1px solid #FDE68A;background:${bg2}">
@@ -2607,6 +2637,7 @@ async function guardarRegistro() {
   const hrsEjec  = getHorasTotal();
   const tonsInput= getTonsTotal();
   const modulos  = document.getElementById("f-modulos").value.trim();
+  const grupo    = document.getElementById("f-grupo").value.trim();
   if (!maquina||!fecha||!hrsEjec||!tonsInput) { showToast("Completa los campos obligatorios","err"); return; }
   const tons = +tonsInput.toFixed(1);
   const bins = +(tons*1000/KG_BIN).toFixed(1); // bins calculados automáticamente
@@ -2617,7 +2648,7 @@ async function guardarRegistro() {
     maquina, operador, fecha, tipo,
     horaInicio:'—', horaFin:'—',
     hrsEjec:+hrsEjec.toFixed(1),
-    bins:+bins.toFixed(1), toneladas:tons, tnhr, estado, modulos,
+    bins:+bins.toFixed(1), toneladas:tons, tnhr, estado, modulos, grupo,
     fundo: fundoActual==='comparar'?'arato1':fundoActual
   };
   try {
@@ -2635,12 +2666,14 @@ async function guardarRegistro() {
       meta: metaUsada,
       estado: rec.estado,
       modulos: rec.modulos,
+      grupo: rec.grupo||'',
       fundo: fundoActual==='comparar'?'arato1':fundoActual
     });
     rec.id = Array.isArray(saved)?saved[0].id:saved.id;
     records.unshift(rec);
     limpiarCasillerosMultiples();
     document.getElementById("f-modulos").value="";
+    document.getElementById("f-grupo").value="";
     document.getElementById("preview").style.display="none";
     showToast("✓ Registro guardado — sincronizando Sheets...","ok");
     updateMaquinaFilter();
