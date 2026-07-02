@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sync Fichas → Sheets</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:Arial,sans-serif;background:#0F172A;color:#fff;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+h2{color:#22C55E;margin-bottom:8px;font-size:1.3rem;}
+p{color:#94A3B8;font-size:0.82rem;margin-bottom:28px;text-align:center;line-height:1.6;}
+.btn{background:linear-gradient(135deg,#22C55E,#16A34A);border:none;border-radius:14px;padding:18px 32px;font-size:1rem;font-weight:800;color:#fff;cursor:pointer;width:100%;max-width:320px;display:block;margin:0 auto 12px;}
+.btn:active{opacity:.8;}
+#log{background:#1E293B;border-radius:12px;padding:16px;width:100%;max-width:320px;font-size:0.75rem;color:#94A3B8;min-height:100px;white-space:pre-wrap;margin-top:8px;}
+.ok{color:#22C55E;font-weight:700;}
+.err{color:#EF4444;font-weight:700;}
+.info{color:#60A5FA;}
+</style>
+</head>
+<body>
+<h2>📋 Fichas Médicas → Sheets</h2>
+<p>Carga todos los registros de Supabase<br>y los envía al Google Sheets automáticamente</p>
+<button class="btn" onclick="sincronizar()">🔄 Sincronizar ahora</button>
+<div id="log">Listo — toca el botón para sincronizar</div>
+
+<script>
+const SU='https://rqvcvffyynpnighzwxju.supabase.co';
+const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdmN2ZmZ5eW5wbmlnaHp3eGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MjgyNDcsImV4cCI6MjA5MzMwNDI0N30.fFufNEdRvAzl6O6BqtTbx83O3Eg8Wd7gACNJDGQKga4';
+const GS='https://script.google.com/macros/s/AKfycbzZgCFv5-1pKqOI0xHsTiwhd-3i_H5om3slC0DEnHhK0lFP11fAX9Wk8MuWR_cSq-hyoQ/exec';
+
+const log=document.getElementById('log');
+function addLog(msg,tipo){log.innerHTML+='<span class="'+(tipo||'')+'">'+msg+'\n</span>';}
+function clearLog(){log.innerHTML='';}
+
+async function sincronizar(){
+  clearLog();
+  addLog('1️⃣ Conectando a Supabase...','info');
+  try{
+    const res=await fetch(SU+'/rest/v1/fichas_medicas?select=*&order=created_at.asc',{
+      headers:{'apikey':SK,'Authorization':'Bearer '+SK}
+    });
+    if(!res.ok) throw new Error('Error '+res.status);
+    const rows=await res.json();
+    const validos=rows.filter(r=>r.ficha&&r.ficha.apellidosNombres);
+    addLog('✅ '+validos.length+' fichas obtenidas de Supabase','ok');
+
+    if(!validos.length){addLog('⚠️ Sin fichas válidas','err');return;}
+
+    addLog('\n2️⃣ Enviando al Google Sheets...','info');
+    const records=validos.map(r=>({ficha:r.ficha,decl:r.decl||{}}));
+
+    await fetch(GS,{
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({records})
+    });
+
+    // Con no-cors no podemos leer la respuesta, pero si no tira error llegó
+    addLog('✅ Datos enviados al Sheets','ok');
+    addLog('⏳ Espera 5 segundos y abre el Sheets para verificar','info');
+    addLog('\nhttps://docs.google.com/spreadsheets/d/1a1MGpVTZOeB6YHoP9pVzSUuYABpAru-wlfqc-Uuck7g');
+  }catch(e){
+    addLog('❌ Error: '+e.message,'err');
+  }
+}
+</script>
+</body>
+</html>
