@@ -247,6 +247,13 @@ tr:nth-child(even) td{background:rgba(255,255,255,0.015)}
     </div>
 
 
+    <!-- REGISTRO RÁPIDO -->
+    <div onclick="abrirRegistroRapido(fundoActual||'arato1')" style="background:rgba(168,85,247,.08);border:1.5px solid rgba(168,85,247,.3);border-radius:16px;padding:16px 14px;text-align:center;cursor:pointer;-webkit-tap-highlight-color:transparent;grid-column:span 2;">
+      <div style="font-size:2rem;margin-bottom:6px;">⚡</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;color:#A855F7;letter-spacing:1px;">REGISTRO RÁPIDO</div>
+      <div style="font-size:0.58rem;color:var(--sub);">Todas las máquinas de una vez</div>
+    </div>
+
     <!-- SYNC -->
     <div onclick="syncDesdeMenu()" style="background:rgba(34,197,94,.08);border:1.5px solid rgba(34,197,94,.3);border-radius:16px;padding:16px 14px;text-align:center;cursor:pointer;-webkit-tap-highlight-color:transparent;">
       <div style="font-size:2rem;margin-bottom:6px;">🔄</div>
@@ -415,14 +422,7 @@ tr:nth-child(even) td{background:rgba(255,255,255,0.015)}
         </div>
         <div class="field" style="width:80px;">
           <label>Grupo</label>
-          <select id="f-grupo" style="font-weight:800;text-align:center;">
-            <option value="">—</option>
-            <option value="A">A</option>
-            <option value="B">B</option>
-            <option value="C">C</option>
-            <option value="D">D</option>
-            <option value="E">E</option>
-          </select>
+          <input id="f-grupo" type="text" placeholder="A-Z" maxlength="3" style="font-weight:800;text-align:center;text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
         </div>
       </div>
       <div class="field">
@@ -2301,7 +2301,7 @@ function buildReporteCombinado(){
   html+=`<table id="rpt-combo-table" style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px;min-width:340px">`;
 
   // ENCABEZADO
-  html+=`<tr><td colspan="6" style="padding:0;border:none">
+  html+=`<tr><td colspan="7" style="padding:0;border:none">
     <div style="background:linear-gradient(135deg,#0B1437,#1A3A8F);padding:16px 16px 12px;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
         <div>
@@ -2349,12 +2349,13 @@ function buildReporteCombinado(){
   </td></tr>`;
 
   function seccionHeader(icon,titulo,color){
-    return `<tr><td colspan="6" style="background:${color};padding:7px 12px;font-size:10px;font-weight:700;color:#fff;letter-spacing:1px;text-transform:uppercase;border:none">${icon} ${titulo}</td></tr>`;
+    return `<tr><td colspan="7" style="background:${color};padding:7px 12px;font-size:10px;font-weight:700;color:#fff;letter-spacing:1px;text-transform:uppercase;border:none">${icon} ${titulo}</td></tr>`;
   }
   function colHeader(){
     return `<tr style="background:#1A3A8F">
       <th style="padding:8px 12px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:left">Equipo</th>
       <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">👤 Operador</th>
+      <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">🏷️ Grupo</th>
       <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⏱ Horas</th>
       <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⚖️ Toneladas</th>
       <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⚡ TN/Hr</th>
@@ -2364,7 +2365,7 @@ function buildReporteCombinado(){
   function totalRow(label,h,t,colspan2label){
     const th=h>0?t/h:0;
     return `<tr style="background:#1A3A8F">
-      <td colspan="2" style="padding:9px 12px;color:#F5C800;font-weight:700;font-size:10px;border:1px solid #C0D0F4">${label}</td>
+      <td colspan="3" style="padding:9px 12px;color:#F5C800;font-weight:700;font-size:10px;border:1px solid #C0D0F4">${label}</td>
       <td style="padding:9px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:16px">${h.toFixed(1)}</td>
       <td style="padding:9px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:16px">${t.toFixed(1)}</td>
       <td style="padding:9px;text-align:center;border:1px solid #C0D0F4;background:${_rptBg(th)}">
@@ -2386,7 +2387,8 @@ function buildReporteCombinado(){
       const estadoIcon=r.tnhr>=META?'🟢 BIEN':r.tnhr>=META*0.7?'🟡 REGULAR':'🔴 BAJO META';
       html+=`<tr style="background:${bg}">
         <td style="padding:8px 12px;font-weight:700;color:#1E293B;border:1px solid #D0DCF4">${r.maquina}</td>
-        <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;color:#475569;font-size:10px">${r.operador||'—'}</td>
+        <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;color:#475569;font-size:10px">${r.operador||'—'}${r.grupo?` <span style="background:#1e3a8a;color:#F5C800;font-size:7px;font-weight:800;padding:1px 5px;border-radius:4px;margin-left:3px;">Grp ${r.grupo}</span>`:''}</td>
+        <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-size:11px;color:#1A3A8F">${r.grupo||'—'}</td>
         <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.hrsEjec||0).toFixed(1)}</td>
         <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.toneladas||0).toFixed(1)}</td>
         <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;background:${_rptBg(r.tnhr)}">
@@ -2397,12 +2399,12 @@ function buildReporteCombinado(){
     });
     html+=totalRow(`TOTAL MAQUINARIA — ${recsMaq.length} equipo(s)`,totH,totT);
   } else {
-    html+=`<tr><td colspan="6" style="padding:10px;text-align:center;color:#94A3B8;font-style:italic;font-size:10px;background:#F8FAFC">Sin registros de maquinaria para esta fecha</td></tr>`;
+    html+=`<tr><td colspan="7" style="padding:10px;text-align:center;color:#94A3B8;font-style:italic;font-size:10px;background:#F8FAFC">Sin registros de maquinaria para esta fecha</td></tr>`;
   }
 
   // ── SECCIÓN MONTACARGAS ──
   const recsMonta=records.filter(r=>r.fecha===fechaSel&&r.tipo==='montacargas');
-  html+=`<tr><td colspan="6" style="height:6px;background:#E2E8F0;border:none"></td></tr>`;
+  html+=`<tr><td colspan="7" style="height:6px;background:#E2E8F0;border:none"></td></tr>`;
   html+=seccionHeader('🏗️','MONTACARGAS','#B45309');
   if(recsMonta.length){
     html+=colHeader();
@@ -2424,12 +2426,12 @@ function buildReporteCombinado(){
     });
     html+=totalRow(`TOTAL MONTACARGAS — ${recsMonta.length} equipo(s)`,totH,totT);
   } else {
-    html+=`<tr><td colspan="6" style="padding:10px;text-align:center;color:#94A3B8;font-style:italic;font-size:10px;background:#FFFBEB">Sin registros de montacargas para esta fecha</td></tr>`;
+    html+=`<tr><td colspan="7" style="padding:10px;text-align:center;color:#94A3B8;font-style:italic;font-size:10px;background:#FFFBEB">Sin registros de montacargas para esta fecha</td></tr>`;
   }
 
   // ── SECCIÓN PERSONAL ──
   const recsPers=personalRecords.filter(r=>r.fecha===fechaSel);
-  html+=`<tr><td colspan="6" style="height:6px;background:#E2E8F0;border:none"></td></tr>`;
+  html+=`<tr><td colspan="7" style="height:6px;background:#E2E8F0;border:none"></td></tr>`;
   html+=seccionHeader('👷','PERSONAL / MANO DE OBRA','#5B21B6');
   if(recsPers.length){
     html+=`<tr style="background:#1A3A8F">
@@ -2449,13 +2451,13 @@ function buildReporteCombinado(){
         <td style="padding:9px;text-align:center;font-weight:700;font-family:monospace;font-size:14px;border:1px solid #DDD6FE;color:#1E293B">${r.toneladas}</td>
         <td style="padding:9px;text-align:center;font-size:20px;font-weight:800;color:#16A34A;font-family:monospace;border:1px solid #DDD6FE" colspan="2">${r.tnp}</td>
       </tr>`;
-      if(r.obs)html+=`<tr style="background:${bg}"><td colspan="6" style="padding:4px 12px;font-size:9px;color:#6B7280;border:1px solid #DDD6FE;font-style:italic">📝 ${r.obs}</td></tr>`;
+      if(r.obs)html+=`<tr style="background:${bg}"><td colspan="7" style="padding:4px 12px;font-size:9px;color:#6B7280;border:1px solid #DDD6FE;font-style:italic">📝 ${r.obs}</td></tr>`;
     });
   } else {
-    html+=`<tr><td colspan="6" style="padding:10px;text-align:center;color:#94A3B8;font-style:italic;font-size:10px;background:#F5F3FF">Sin registros de personal — agrégalos en la pestaña 👷 Personal</td></tr>`;
+    html+=`<tr><td colspan="7" style="padding:10px;text-align:center;color:#94A3B8;font-style:italic;font-size:10px;background:#F5F3FF">Sin registros de personal — agrégalos en la pestaña 👷 Personal</td></tr>`;
   }
 
-  html+=`<tr><td colspan="6" style="background:#0B1437;color:rgba(255,255,255,.75);font-size:9px;font-weight:600;padding:9px 14px;text-align:center;border:none;letter-spacing:.5px">ARATO · MISSION PRODUCE PERÚ &nbsp;|&nbsp; Meta maquinaria: ${META} TN/Hr &nbsp;|&nbsp; ${ahora}</td></tr>`;
+  html+=`<tr><td colspan="7" style="background:#0B1437;color:rgba(255,255,255,.75);font-size:9px;font-weight:600;padding:9px 14px;text-align:center;border:none;letter-spacing:.5px">ARATO · MISSION PRODUCE PERÚ &nbsp;|&nbsp; Meta maquinaria: ${META} TN/Hr &nbsp;|&nbsp; ${ahora}</td></tr>`;
   html+='</table>';
   document.getElementById('rpt-maq-cont').innerHTML=html;
   const newSel=document.getElementById('rpt-fecha-combo');
@@ -3106,5 +3108,262 @@ function renderComparacion(){
     </div>`;
 }
 </script>
+<!-- ══════════════════════════════════════════════ -->
+<!-- PANTALLA REGISTRO RÁPIDO -->
+<!-- ══════════════════════════════════════════════ -->
+<div id="pantalla-rapido" style="display:none;position:fixed;inset:0;background:#0A1628;z-index:8000;overflow-y:auto;">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#1A0040,#2D0060);border-bottom:2px solid #A855F7;padding:14px 16px;position:sticky;top:0;z-index:10;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button onclick="cerrarRegistroRapido()" style="background:rgba(255,255,255,.1);border:none;border-radius:8px;padding:8px 12px;color:#fff;font-size:0.75rem;cursor:pointer;font-family:inherit;">⬅️ Volver</button>
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.2rem;font-weight:800;color:#A855F7;letter-spacing:1px;">⚡ REGISTRO RÁPIDO</div>
+        <div style="font-size:0.6rem;color:rgba(255,255,255,.5);">Todas las máquinas de una vez</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding:14px;">
+
+    <!-- Fecha + Fundo -->
+    <div style="background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.25);border-radius:12px;padding:12px;margin-bottom:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div>
+        <div style="font-size:0.6rem;color:#A855F7;font-weight:700;text-transform:uppercase;margin-bottom:4px;">Fundo</div>
+        <select id="rr-fundo" style="width:100%;background:#1E293B;border:1px solid #334155;border-radius:8px;padding:8px;color:#fff;font-size:0.8rem;font-family:inherit;">
+          <option value="arato1">🚜 Arato 1</option>
+          <option value="arato2">🌊 Arato 2</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-size:0.6rem;color:#A855F7;font-weight:700;text-transform:uppercase;margin-bottom:4px;">Fecha</div>
+        <input type="date" id="rr-fecha" style="width:100%;background:#1E293B;border:1px solid #334155;border-radius:8px;padding:8px;color:#fff;font-size:0.8rem;font-family:inherit;">
+      </div>
+    </div>
+
+    <!-- Lista de máquinas -->
+    <div id="rr-maquinas-lista" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;"></div>
+
+    <!-- Botón agregar máquina -->
+    <button onclick="rrAgregarMaquina()" style="width:100%;background:rgba(168,85,247,.1);border:1.5px dashed rgba(168,85,247,.4);border-radius:12px;padding:12px;color:#A855F7;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:14px;">
+      ➕ Agregar máquina
+    </button>
+
+    <!-- Botón guardar todo -->
+    <button onclick="rrGuardarTodo()" style="width:100%;background:linear-gradient(135deg,#A855F7,#7C3AED);border:none;border-radius:14px;padding:16px;color:#fff;font-size:1rem;font-weight:800;cursor:pointer;font-family:inherit;letter-spacing:.5px;">
+      ✅ Guardar Todo
+    </button>
+
+    <div id="rr-resultado" style="margin-top:10px;text-align:center;font-size:0.75rem;color:#A855F7;min-height:20px;"></div>
+
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// REGISTRO RÁPIDO
+// ══════════════════════════════════════════════
+var rrMaquinas = [];
+var rrIdCounter = 1;
+
+var RR_PLANTILLAS_KEY = 'rr_plantillas'; // base, se agrega _arato1 o _arato2
+
+function rrCargarPlantillas(fundo){
+  try{ return JSON.parse(localStorage.getItem(RR_PLANTILLAS_KEY+'_'+fundo)||'[]'); }catch(e){ return []; }
+}
+function rrGuardarPlantillas(data, fundo){
+  try{ localStorage.setItem(RR_PLANTILLAS_KEY+'_'+(fundo||'arato1'), JSON.stringify(data)); }catch(e){}
+}
+
+function abrirRegistroRapido(fundoInicial){
+  document.getElementById('pantalla-rapido').style.display='block';
+  var fi=document.getElementById('rr-fecha');
+  if(fi&&!fi.value) fi.value=new Date().toISOString().split('T')[0];
+  // Preseleccionar fundo
+  if(fundoInicial){
+    var sel=document.getElementById('rr-fundo');
+    if(sel) sel.value=fundoInicial;
+  }
+  var fundo=document.getElementById('rr-fundo').value||fundoInicial||'arato1';
+  rrCargarMaquinas(fundo);
+  // Cuando cambia el fundo, recargar máquinas
+  document.getElementById('rr-fundo').onchange=function(){
+    rrCargarMaquinas(this.value);
+  };
+}
+
+function rrCargarMaquinas(fundo){
+  var plantillas=rrCargarPlantillas(fundo);
+  if(plantillas.length){
+    rrMaquinas=plantillas.map(function(p){ return Object.assign({},p,{id:rrIdCounter++,hrs:'',bins:''}); });
+  } else {
+    // Plantillas por defecto según fundo
+    if(fundo==='arato2'){
+      rrMaquinas=[
+        {id:rrIdCounter++,maquina:'',operador:'',grupo:'A',tipo:'maquinaria',hrs:'',bins:''},
+        {id:rrIdCounter++,maquina:'',operador:'',grupo:'B',tipo:'maquinaria',hrs:'',bins:''},
+        {id:rrIdCounter++,maquina:'MONTACARGA',operador:'',grupo:'',tipo:'montacargas',hrs:'',bins:''},
+      ];
+    } else {
+      rrMaquinas=[
+        {id:rrIdCounter++,maquina:'LT-LN-364',operador:'JORGE UCEDA',grupo:'A',tipo:'maquinaria',hrs:'',bins:''},
+        {id:rrIdCounter++,maquina:'LT-LN-383',operador:'ANGEL DE LA CRUZ',grupo:'B',tipo:'maquinaria',hrs:'',bins:''},
+        {id:rrIdCounter++,maquina:'LT-LN-385',operador:'CHAYANE OLIVARES',grupo:'C',tipo:'maquinaria',hrs:'',bins:''},
+        {id:rrIdCounter++,maquina:'LT-LN-386',operador:'NESTOR JUAREZ',grupo:'D',tipo:'maquinaria',hrs:'',bins:''},
+        {id:rrIdCounter++,maquina:'MONTACARGA-07',operador:'VICTOR CÓRDOBA',grupo:'',tipo:'montacargas',hrs:'',bins:''},
+      ];
+    }
+  }
+  rrRenderMaquinas();
+}
+
+function cerrarRegistroRapido(){
+  document.getElementById('pantalla-rapido').style.display='none';
+}
+
+function rrRenderMaquinas(){
+  var lista=document.getElementById('rr-maquinas-lista');
+  lista.innerHTML=rrMaquinas.map(function(m){
+    var colBorde=m.tipo==='montacargas'?'#F59E0B':'#A855F7';
+    var colTitulo=m.tipo==='montacargas'?'#F59E0B':'#C4B5FD';
+    var icon=m.tipo==='montacargas'?'🏗️':'🚜';
+    return '<div style="background:#111827;border:1.5px solid '+colBorde+';border-radius:14px;padding:12px;" id="rr-card-'+m.id+'">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'+
+        '<div>'+
+          '<div style="font-size:0.7rem;font-weight:800;color:'+colTitulo+';">'+icon+' '+m.maquina+'</div>'+
+          '<div style="font-size:0.6rem;color:#64748B;margin-top:1px;">'+m.operador+(m.grupo?' · Grp '+m.grupo:'')+'</div>'+
+        '</div>'+
+        '<div style="display:flex;gap:6px;">'+
+          '<button onclick="rrEditarConfig('+m.id+')" style="background:rgba(255,255,255,.05);border:1px solid #334155;border-radius:6px;padding:4px 8px;color:#94A3B8;font-size:0.6rem;cursor:pointer;">✏️ Config</button>'+
+          '<button onclick="rrEliminar('+m.id+')" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:6px;padding:4px 8px;color:#EF4444;font-size:0.6rem;cursor:pointer;">✕</button>'+
+        '</div>'+
+      '</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+
+        '<div>'+
+          '<div style="font-size:0.58rem;color:#64748B;font-weight:700;text-transform:uppercase;margin-bottom:3px;">Horas trabajadas</div>'+
+          '<input type="number" step="0.1" min="0" placeholder="0.0" value="'+m.hrs+'" oninput="rrActualizar('+m.id+',\'hrs\',this.value)" style="width:100%;background:#1E293B;border:1px solid #334155;border-radius:8px;padding:10px;color:#fff;font-size:1rem;font-family:monospace;font-weight:700;text-align:center;">'+
+        '</div>'+
+        '<div>'+
+          '<div style="font-size:0.58rem;color:#64748B;font-weight:700;text-transform:uppercase;margin-bottom:3px;">Bins cosechados</div>'+
+          '<input type="number" step="1" min="0" placeholder="0" value="'+m.bins+'" oninput="rrActualizar('+m.id+',\'bins\',this.value)" style="width:100%;background:#1E293B;border:1px solid #334155;border-radius:8px;padding:10px;color:#fff;font-size:1rem;font-family:monospace;font-weight:700;text-align:center;">'+
+        '</div>'+
+      '</div>'+
+      '<div id="rr-preview-'+m.id+'" style="margin-top:8px;text-align:center;font-size:0.7rem;color:#64748B;"></div>'+
+    '</div>';
+  }).join('');
+}
+
+function rrActualizar(id, campo, val){
+  var m=rrMaquinas.find(function(x){return x.id===id;});
+  if(!m) return;
+  m[campo]=val;
+  // Preview TN/Hr
+  var hrs=parseFloat(m.hrs)||0;
+  var bins=parseFloat(m.bins)||0;
+  var KG=430;
+  var tons=+(bins*KG/1000).toFixed(1);
+  var tnhr=hrs>0?+(tons/hrs).toFixed(2):0;
+  var prev=document.getElementById('rr-preview-'+id);
+  if(prev&&hrs>0&&bins>0){
+    var col=tnhr>=3.5?'#22C55E':tnhr>=2.5?'#F59E0B':'#EF4444';
+    prev.innerHTML='<span style="color:'+col+';font-weight:700;">'+tons+' TN · '+tnhr+' TN/Hr</span>';
+  } else if(prev){
+    prev.innerHTML='';
+  }
+}
+
+function rrAgregarMaquina(){
+  rrMaquinas.push({id:rrIdCounter++,maquina:'',operador:'',grupo:'',tipo:'maquinaria',hrs:'',bins:''});
+  rrRenderMaquinas();
+  // Abrir config de la nueva
+  rrEditarConfig(rrMaquinas[rrMaquinas.length-1].id);
+}
+
+function rrEliminar(id){
+  rrMaquinas=rrMaquinas.filter(function(m){return m.id!==id;});
+  rrRenderMaquinas();
+}
+
+function rrEditarConfig(id){
+  var m=rrMaquinas.find(function(x){return x.id===id;});
+  if(!m) return;
+  // Modal simple usando prompt
+  var maq=prompt('Código de máquina:',m.maquina);
+  if(maq===null) return;
+  var op=prompt('Operador:',m.operador);
+  if(op===null) return;
+  var grp=prompt('Grupo (A,B,C...):',m.grupo);
+  if(grp===null) return;
+  var tipo=confirm('¿Es montacargas? (OK=Sí, Cancelar=Maquinaria)')?'montacargas':'maquinaria';
+  m.maquina=maq.toUpperCase().trim();
+  m.operador=op.trim();
+  m.grupo=grp.toUpperCase().trim();
+  m.tipo=tipo;
+  // Guardar plantilla por fundo
+  var fundo=document.getElementById('rr-fundo').value||'arato1';
+  var plantillas=rrMaquinas.map(function(x){return {maquina:x.maquina,operador:x.operador,grupo:x.grupo,tipo:x.tipo};});
+  rrGuardarPlantillas(plantillas, fundo);
+  rrRenderMaquinas();
+}
+
+async function rrGuardarTodo(){
+  var fecha=document.getElementById('rr-fecha').value;
+  var fundo=document.getElementById('rr-fundo').value;
+  if(!fecha){showToast('Pon la fecha','err');return;}
+
+  var validos=rrMaquinas.filter(function(m){return m.maquina&&(parseFloat(m.hrs)>0||parseFloat(m.bins)>0);});
+  if(!validos.length){showToast('Llena al menos horas o bins de una máquina','err');return;}
+
+  var btn=document.querySelector('#pantalla-rapido button[onclick="rrGuardarTodo()"]');
+  if(btn){btn.textContent='⏳ Guardando...';btn.disabled=true;}
+
+  var KG=430;var META_VAL=3.5;
+  var ok=0,err=0;
+
+  for(var i=0;i<validos.length;i++){
+    var m=validos[i];
+    var hrs=parseFloat(m.hrs)||0;
+    var bins=parseFloat(m.bins)||0;
+    var tons=+(bins*KG/1000).toFixed(1);
+    var tnhr=hrs>0?+(tons/hrs).toFixed(2):0;
+    var estado=tnhr>=META_VAL?'ok':tnhr>=META_VAL*0.7?'regular':'bajo';
+
+    var payload={
+      maquina:m.maquina,
+      operador:m.operador||'',
+      grupo:m.grupo||'',
+      fecha:fecha,
+      tipo:m.tipo||'maquinaria',
+      hora_inicio:'—',hora_fin:'—',
+      hrs_ejec:hrs,bins:bins,toneladas:tons,tn_hr:tnhr,
+      meta:META_VAL,estado:estado,modulos:'',
+      fundo:fundo
+    };
+    try{
+      await supaFetch('maquinaria_registros','POST',payload);
+      ok++;
+    }catch(e){err++;}
+  }
+
+  if(btn){btn.textContent='✅ Guardar Todo';btn.disabled=false;}
+
+  var res=document.getElementById('rr-resultado');
+  if(res) res.textContent='✅ '+ok+' registros guardados'+(err?' · ⚠️ '+err+' errores':'');
+
+  // Guardar plantillas para próxima vez
+  var plantillas=rrMaquinas.map(function(x){return {maquina:x.maquina,operador:x.operador,grupo:x.grupo,tipo:x.tipo};});
+  rrGuardarPlantillas(plantillas, fundo);
+
+  showToast('✅ '+ok+' registros guardados','ok');
+
+  // Limpiar inputs
+  rrMaquinas.forEach(function(m){m.hrs='';m.bins='';});
+  rrRenderMaquinas();
+
+  // Sincronizar registros principales
+  try{await cargarRegistros();}catch(e){}
+}
+</script>
+
 </body>
 </html>
