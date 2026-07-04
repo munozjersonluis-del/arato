@@ -729,22 +729,31 @@ async function cargarRegistros() {
   try {
     showToast('Cargando datos...','ok');
     const rows = await supaFetch('maquinaria_registros?select=*&order=fecha.desc,created_at.desc');
-    allRecords = rows.map(r => ({
-      id: r.id,
-      maquina: r.maquina||'',
-      operador: r.operador||'',
-      fecha: r.fecha||'',
-      tipo: r.tipo||'maquinaria',
-      horaInicio: r.hora_inicio||'',
-      horaFin: r.hora_fin||'',
-      hrsEjec: r.hrs_ejec||0,
-      bins: r.bins||0,
-      toneladas: r.toneladas||0,
-      tnhr: r.tn_hr||0,
-      estado: r.estado||'',
-      modulos: r.modulos||'',
-      fundo: r.fundo||'arato1'
-    }));
+    allRecords = rows.map(r => {
+      // Convertir fecha de YYYY-MM-DD a DD/MM/YYYY para el dashboard
+      let fechaFmt = r.fecha||'';
+      if(fechaFmt && fechaFmt.includes('-') && fechaFmt.length===10){
+        const p=fechaFmt.split('-');
+        fechaFmt=p[2]+'/'+p[1]+'/'+p[0];
+      }
+      return {
+        id: r.id,
+        maquina: r.maquina||'',
+        operador: r.operador||'',
+        grupo: r.grupo||'',
+        fecha: fechaFmt,
+        tipo: r.tipo||'maquinaria',
+        horaInicio: r.hora_inicio||'',
+        horaFin: r.hora_fin||'',
+        hrsEjec: r.hrs_ejec||0,
+        bins: r.bins||0,
+        toneladas: r.toneladas||0,
+        tnhr: r.tn_hr||0,
+        estado: r.estado||'',
+        modulos: r.modulos||'',
+        fundo: r.fundo||'arato1'
+      };
+    });
     aplicarFiltroFundo();
     showToast('✓ '+allRecords.length+' registros cargados','ok');
     updHora();
@@ -3244,8 +3253,8 @@ function rrRenderMaquinas(){
           '<input type="number" step="0.1" min="0" placeholder="0.0" value="'+m.hrs+'" oninput="rrActualizar('+m.id+',\'hrs\',this.value)" style="width:100%;background:#1E293B;border:1px solid #334155;border-radius:8px;padding:10px;color:#fff;font-size:1rem;font-family:monospace;font-weight:700;text-align:center;">'+
         '</div>'+
         '<div>'+
-          '<div style="font-size:0.58rem;color:#64748B;font-weight:700;text-transform:uppercase;margin-bottom:3px;">Bins cosechados</div>'+
-          '<input type="number" step="1" min="0" placeholder="0" value="'+m.bins+'" oninput="rrActualizar('+m.id+',\'bins\',this.value)" style="width:100%;background:#1E293B;border:1px solid #334155;border-radius:8px;padding:10px;color:#fff;font-size:1rem;font-family:monospace;font-weight:700;text-align:center;">'+
+          '<div style="font-size:0.58rem;color:#64748B;font-weight:700;text-transform:uppercase;margin-bottom:3px;">Toneladas</div>'+
+          '<input type="number" step="0.1" min="0" placeholder="0.0" value="'+m.bins+'" oninput="rrActualizar('+m.id+',\'bins\',this.value)" style="width:100%;background:#1E293B;border:1px solid #334155;border-radius:8px;padding:10px;color:#fff;font-size:1rem;font-family:monospace;font-weight:700;text-align:center;">'+
         '</div>'+
       '</div>'+
       '<div id="rr-preview-'+m.id+'" style="margin-top:8px;text-align:center;font-size:0.7rem;color:#64748B;"></div>'+
@@ -3257,11 +3266,9 @@ function rrActualizar(id, campo, val){
   var m=rrMaquinas.find(function(x){return x.id===id;});
   if(!m) return;
   m[campo]=val;
-  // Preview TN/Hr
+  // Preview TN/Hr — bins ahora son toneladas directamente
   var hrs=parseFloat(m.hrs)||0;
-  var bins=parseFloat(m.bins)||0;
-  var KG=430;
-  var tons=+(bins*KG/1000).toFixed(1);
+  var tons=parseFloat(m.bins)||0; // bins field ahora guarda toneladas
   var tnhr=hrs>0?+(tons/hrs).toFixed(2):0;
   var prev=document.getElementById('rr-preview-'+id);
   if(prev&&hrs>0&&bins>0){
@@ -3307,9 +3314,12 @@ function rrEditarConfig(id){
 }
 
 async function rrGuardarTodo(){
-  var fecha=document.getElementById('rr-fecha').value;
+  var fechaRaw=document.getElementById('rr-fecha').value;
   var fundo=document.getElementById('rr-fundo').value;
-  if(!fecha){showToast('Pon la fecha','err');return;}
+  if(!fechaRaw){showToast('Pon la fecha','err');return;}
+  // Convertir YYYY-MM-DD → DD/MM/YYYY para consistencia con el resto del sistema
+  var fp=fechaRaw.split('-');
+  var fecha=fp[2]+'/'+fp[1]+'/'+fp[0];
 
   var validos=rrMaquinas.filter(function(m){return m.maquina&&(parseFloat(m.hrs)>0||parseFloat(m.bins)>0);});
   if(!validos.length){showToast('Llena al menos horas o bins de una máquina','err');return;}
@@ -3323,8 +3333,8 @@ async function rrGuardarTodo(){
   for(var i=0;i<validos.length;i++){
     var m=validos[i];
     var hrs=parseFloat(m.hrs)||0;
-    var bins=parseFloat(m.bins)||0;
-    var tons=+(bins*KG/1000).toFixed(1);
+    var tons=parseFloat(m.bins)||0; // bins field = toneladas ingresadas directamente
+    var bins=tons>0?Math.round(tons*1000/430):0; // calcular bins aproximados
     var tnhr=hrs>0?+(tons/hrs).toFixed(2):0;
     var estado=tnhr>=META_VAL?'ok':tnhr>=META_VAL*0.7?'regular':'bajo';
 
@@ -3332,7 +3342,7 @@ async function rrGuardarTodo(){
       maquina:m.maquina,
       operador:m.operador||'',
       grupo:m.grupo||'',
-      fecha:fecha,
+      fecha:fechaRaw,  // YYYY-MM-DD para Supabase
       tipo:m.tipo||'maquinaria',
       hora_inicio:'—',hora_fin:'—',
       hrs_ejec:hrs,bins:bins,toneladas:tons,tn_hr:tnhr,
