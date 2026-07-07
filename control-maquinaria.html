@@ -819,6 +819,11 @@ function actualizarMenuMaq(){
   }
   const th1=tnhr(r1),th2=tnhr(r2);
   const META=3.5;
+
+function fmt1(v){
+  var n=parseFloat(v)||0;
+  return n===Math.round(n)?String(Math.round(n)):n.toFixed(1);
+}
   const el1=document.getElementById('ms-a1-tnhr');
   const el2=document.getElementById('ms-a2-tnhr');
   const b1=document.getElementById('ms-a1-badge');
@@ -2478,10 +2483,10 @@ function buildReporteCombinado(){
       const hrsp=r.hrsp||(r.horas&&r.personal?+(r.horas/r.personal).toFixed(2):0);
       html+=`<tr style="background:${bg}">
         <td style="padding:9px;text-align:center;font-size:18px;font-weight:800;color:#7C3AED;border:1px solid #DDD6FE">${r.personal}</td>
-        <td style="padding:9px;text-align:center;font-weight:700;font-family:monospace;font-size:14px;border:1px solid #DDD6FE;color:#1E293B">${r.horas}</td>
-        <td style="padding:9px;text-align:center;font-family:monospace;font-size:13px;border:1px solid #DDD6FE;color:#475569">${hrsp}</td>
-        <td style="padding:9px;text-align:center;font-weight:700;font-family:monospace;font-size:14px;border:1px solid #DDD6FE;color:#1E293B">${r.toneladas}</td>
-        <td style="padding:9px;text-align:center;font-size:20px;font-weight:800;color:#16A34A;font-family:monospace;border:1px solid #DDD6FE" colspan="3">${r.tnp}</td>
+        <td style="padding:9px;text-align:center;font-weight:700;font-family:monospace;font-size:14px;border:1px solid #DDD6FE;color:#1E293B">${fmt1(r.horas)}</td>
+        <td style="padding:9px;text-align:center;font-family:monospace;font-size:13px;border:1px solid #DDD6FE;color:#475569">${fmt1(hrsp)}</td>
+        <td style="padding:9px;text-align:center;font-weight:700;font-family:monospace;font-size:14px;border:1px solid #DDD6FE;color:#1E293B">${fmt1(r.toneladas)}</td>
+        <td style="padding:9px;text-align:center;font-size:20px;font-weight:800;color:#16A34A;font-family:monospace;border:1px solid #DDD6FE" colspan="3">${fmt1(r.tnp)}</td>
       </tr>`;
       if(r.obs)html+=`<tr style="background:${bg}"><td colspan="7" style="padding:4px 12px;font-size:9px;color:#6B7280;border:1px solid #DDD6FE;font-style:italic">📝 ${r.obs}</td></tr>`;
     });
