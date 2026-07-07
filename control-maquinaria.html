@@ -1937,9 +1937,10 @@ function buildReporteSemanal(){
   const accionesTexto=semEdit.acciones||accionesLines.join('\n');
 
   // SVG
-  const chartH=80;const chartPadL=26;
-  const barW=Math.min(36,Math.floor(180/Math.max(numDias,1)));
-  const barGap=8;const svgW=chartPadL+numDias*(barW+barGap)+6;
+  const chartH=100;const chartPadL=26;
+  const svgW=380; // ancho fijo siempre — llena el contenedor
+  const barGap=Math.max(4,Math.floor(20/Math.max(numDias,1)));
+  const barW=Math.floor((svgW-chartPadL-10-barGap*(numDias-1))/Math.max(numDias,1));
   const yMax=Math.max(Math.ceil(Math.max(...mD.map(d=>d.tnhr),META)*1.1),4);
   let svgG='',svgY='',svgB='';
   [0,1,2,3,yMax].forEach(v=>{
@@ -2032,8 +2033,8 @@ function buildReporteSemanal(){
     </div>
 
     <!-- GRÁFICO -->
-    ${numDias>=2?`<div style="background:rgba(255,255,255,.04);border-radius:10px;padding:12px 10px 8px;border:1px solid rgba(255,255,255,.07);">
-      <svg width="100%" viewBox="0 0 ${svgW} ${chartH+24}" style="overflow:visible;">${svgG}${svgY}${svgMeta}${svgB}
+    ${numDias>=2?`<div id="rr-chart-box" style="background:rgba(255,255,255,.04);border-radius:10px;padding:12px 10px 8px;border:1px solid rgba(255,255,255,.07);">
+      <svg id="rr-chart-svg" width="100%" viewBox="0 0 ${svgW} ${chartH+28}" preserveAspectRatio="xMidYMid meet" style="overflow:visible;display:block;">${svgG}${svgY}${svgMeta}${svgB}
         <line x1="${chartPadL}" y1="0" x2="${chartPadL}" y2="${chartH}" stroke="#334155" stroke-width="1"/>
         <line x1="${chartPadL}" y1="${chartH}" x2="${svgW}" y2="${chartH}" stroke="#334155" stroke-width="1"/>
       </svg>
@@ -2137,6 +2138,27 @@ function buildReporteSemanal(){
   document.getElementById('rpt-maq-cont').innerHTML=h;
   const nS=document.getElementById('rpt-sem-sel');
   if(nS&&semSel)nS.value=semSel;
+
+  // Ajustar SVG del gráfico al ancho real del contenedor
+  setTimeout(()=>{
+    const box=document.getElementById('rr-chart-box');
+    const svg=document.getElementById('rr-chart-svg');
+    if(box&&svg){
+      const W=box.clientWidth-20; // descontar padding
+      if(W>svgW){
+        // Escalar viewBox para que llene el ancho real
+        const scale=W/svgW;
+        const newH=Math.round((chartH+28)*scale);
+        svg.setAttribute('viewBox',`0 0 ${W} ${newH}`);
+        svg.setAttribute('height',newH);
+        // Escalar todos los elementos internos
+        const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+        g.setAttribute('transform',`scale(${scale})`);
+        while(svg.firstChild)g.appendChild(svg.firstChild);
+        svg.appendChild(g);
+      }
+    }
+  },50);
 }
 
 function editarSemanal(semSel){
@@ -2502,6 +2524,18 @@ async function _capturarReporte(){
 
   await new Promise(r=>setTimeout(r,200));
 
+  // Forzar dimensiones fijas en SVGs para que html2canvas los capture bien
+  const svgs=cont.querySelectorAll('svg');
+  const svgOrigSizes=[];
+  svgs.forEach(svg=>{
+    const rect=svg.getBoundingClientRect();
+    svgOrigSizes.push({svg,w:svg.getAttribute('width'),h:svg.getAttribute('height')});
+    svg.setAttribute('width',Math.max(rect.width,280));
+    svg.setAttribute('height',Math.max(rect.height,60));
+  });
+
+  await new Promise(r=>setTimeout(r,100));
+
   // Calcular dimensiones reales del contenido
   const fullW=cont.scrollWidth+40;
   const fullH=cont.scrollHeight+40;
@@ -2522,6 +2556,11 @@ async function _capturarReporte(){
   // Restaurar overflow
   allOverflow.forEach(({el,ov,mh,ow})=>{
     el.style.overflow=ov;el.style.maxHeight=mh;el.style.overflowX=ow;
+  });
+  // Restaurar SVGs
+  svgOrigSizes.forEach(({svg,w,h})=>{
+    if(w)svg.setAttribute('width',w);else svg.removeAttribute('width');
+    if(h)svg.setAttribute('height',h);else svg.removeAttribute('height');
   });
   selVals.forEach(s=>{
     if(s.type==='hide'){s.el.style.display=s.el._origDisplay||'';return;}
