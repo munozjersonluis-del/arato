@@ -2401,8 +2401,8 @@ function buildReporteCombinado(){
       <td style="padding:9px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:16px">${t.toFixed(1)}</td>
       <td style="padding:9px;text-align:center;border:1px solid #C0D0F4;background:${_rptBg(th)}">
         <div style="font-size:18px;font-weight:800;color:${_rptCol(th)};font-family:monospace;line-height:1">${th.toFixed(2)}</div>
-        <div style="font-size:8px;color:${_rptCol(th)};margin-top:1px">${_rptEstado(th)}</div>
       </td>
+      <td style="padding:9px;text-align:center;border:1px solid #C0D0F4;font-size:9px;font-weight:700;color:${_rptCol(th)}">${_rptEstado(th)}</td>
     </tr>`;
   }
 
@@ -2447,6 +2447,7 @@ function buildReporteCombinado(){
       html+=`<tr style="background:${bg}">
         <td style="padding:8px 12px;font-weight:700;color:#1E293B;border:1px solid #FDE68A">${r.maquina}</td>
         <td style="padding:8px;text-align:center;border:1px solid #FDE68A;color:#475569;font-size:10px">${r.operador||'—'}</td>
+        <td style="padding:8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-size:11px;color:#B45309">${r.grupo||'—'}</td>
         <td style="padding:8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.hrsEjec||0).toFixed(1)}</td>
         <td style="padding:8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.toneladas||0).toFixed(1)}</td>
         <td style="padding:8px;text-align:center;border:1px solid #FDE68A;background:#FEF3C7">
@@ -2470,7 +2471,7 @@ function buildReporteCombinado(){
       <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⏱ Hrs Totales</th>
       <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⏱ Hrs/Persona</th>
       <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center">⚖️ Toneladas</th>
-      <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center" colspan="2">📦 TN/Persona</th>
+      <th style="padding:8px;color:#F5C800;font-size:9px;border:1px solid #C0D0F4;text-align:center" colspan="3">📦 TN/Persona</th>
     </tr>`;
     recsPers.forEach((r,i)=>{
       const bg=i%2===0?'#F5F3FF':'#EDE9FE';
@@ -2480,7 +2481,7 @@ function buildReporteCombinado(){
         <td style="padding:9px;text-align:center;font-weight:700;font-family:monospace;font-size:14px;border:1px solid #DDD6FE;color:#1E293B">${r.horas}</td>
         <td style="padding:9px;text-align:center;font-family:monospace;font-size:13px;border:1px solid #DDD6FE;color:#475569">${hrsp}</td>
         <td style="padding:9px;text-align:center;font-weight:700;font-family:monospace;font-size:14px;border:1px solid #DDD6FE;color:#1E293B">${r.toneladas}</td>
-        <td style="padding:9px;text-align:center;font-size:20px;font-weight:800;color:#16A34A;font-family:monospace;border:1px solid #DDD6FE" colspan="2">${r.tnp}</td>
+        <td style="padding:9px;text-align:center;font-size:20px;font-weight:800;color:#16A34A;font-family:monospace;border:1px solid #DDD6FE" colspan="3">${r.tnp}</td>
       </tr>`;
       if(r.obs)html+=`<tr style="background:${bg}"><td colspan="7" style="padding:4px 12px;font-size:9px;color:#6B7280;border:1px solid #DDD6FE;font-style:italic">📝 ${r.obs}</td></tr>`;
     });
@@ -2524,21 +2525,29 @@ async function _capturarReporte(){
 
   await new Promise(r=>setTimeout(r,200));
 
-  // Forzar dimensiones fijas en SVGs para que html2canvas los capture bien
+  // Calcular dimensiones reales del contenido
+  const curContW=cont.getBoundingClientRect().width||cont.scrollWidth;
+  const fullW=cont.scrollWidth+40;
+  const fullH=cont.scrollHeight+40;
+  const scaleFactor=fullW/curContW;
+
+  // html2canvas no resuelve bien los SVG con ancho en % (se quedan con su
+  // tamaño de diseño original y dejan un hueco en blanco al ensanchar el
+  // contenedor para la captura). Por eso aquí calculamos matemáticamente
+  // el ancho final que tendrá cada gráfico y lo fijamos en píxeles ANTES
+  // de llamar a html2canvas, en vez de confiar en que se auto-ajuste.
   const svgs=cont.querySelectorAll('svg');
   const svgOrigSizes=[];
   svgs.forEach(svg=>{
     const rect=svg.getBoundingClientRect();
     svgOrigSizes.push({svg,w:svg.getAttribute('width'),h:svg.getAttribute('height')});
-    svg.setAttribute('width',Math.max(rect.width,280));
-    svg.setAttribute('height',Math.max(rect.height,60));
+    if(rect.width>0){
+      svg.setAttribute('width',Math.round(rect.width*scaleFactor));
+      svg.setAttribute('height',Math.round(rect.height*scaleFactor));
+    }
   });
 
-  await new Promise(r=>setTimeout(r,100));
-
-  // Calcular dimensiones reales del contenido
-  const fullW=cont.scrollWidth+40;
-  const fullH=cont.scrollHeight+40;
+  await new Promise(r=>setTimeout(r,50));
 
   const cv=await html2canvas(cont,{
     scale:2.5,
@@ -2557,7 +2566,7 @@ async function _capturarReporte(){
   allOverflow.forEach(({el,ov,mh,ow})=>{
     el.style.overflow=ov;el.style.maxHeight=mh;el.style.overflowX=ow;
   });
-  // Restaurar SVGs
+  // Restaurar SVGs a su tamaño original responsive
   svgOrigSizes.forEach(({svg,w,h})=>{
     if(w)svg.setAttribute('width',w);else svg.removeAttribute('width');
     if(h)svg.setAttribute('height',h);else svg.removeAttribute('height');
@@ -3330,26 +3339,86 @@ function rrEliminar(id){
   rrRenderMaquinas();
 }
 
+function rrCerrarModal(){
+  var m=document.getElementById('rr-cfg-modal');
+  if(m) document.body.removeChild(m);
+}
+
+function rrCfgGuardar(id){
+  var m=rrMaquinas.find(function(x){return x.id===id;});
+  if(!m) return;
+  var maqEl=document.getElementById('rr-cfg-maq');
+  var opEl=document.getElementById('rr-cfg-op');
+  var grpEl=document.getElementById('rr-cfg-grp');
+  if(maqEl) m.maquina=maqEl.value.toUpperCase().trim();
+  if(opEl)  m.operador=opEl.value.trim();
+  if(grpEl) m.grupo=grpEl.value.toUpperCase().trim();
+  m.tipo=window._rrCfgTipo||m.tipo;
+  rrCerrarModal();
+  var fundo=document.getElementById('rr-fundo').value||'arato1';
+  var plantillas=rrMaquinas.map(function(x){return{maquina:x.maquina,operador:x.operador,grupo:x.grupo,tipo:x.tipo};});
+  rrGuardarPlantillas(plantillas,fundo);
+  rrRenderMaquinas();
+  showToast('✅ Configuración guardada','ok');
+}
+
 function rrEditarConfig(id){
   var m=rrMaquinas.find(function(x){return x.id===id;});
   if(!m) return;
-  // Modal simple usando prompt
-  var maq=prompt('Código de máquina:',m.maquina);
-  if(maq===null) return;
-  var op=prompt('Operador:',m.operador);
-  if(op===null) return;
-  var grp=prompt('Grupo (A,B,C...):',m.grupo);
-  if(grp===null) return;
-  var tipo=confirm('¿Es montacargas? (OK=Sí, Cancelar=Maquinaria)')?'montacargas':'maquinaria';
-  m.maquina=maq.toUpperCase().trim();
-  m.operador=op.trim();
-  m.grupo=grp.toUpperCase().trim();
-  m.tipo=tipo;
-  // Guardar plantilla por fundo
-  var fundo=document.getElementById('rr-fundo').value||'arato1';
-  var plantillas=rrMaquinas.map(function(x){return {maquina:x.maquina,operador:x.operador,grupo:x.grupo,tipo:x.tipo};});
-  rrGuardarPlantillas(plantillas, fundo);
-  rrRenderMaquinas();
+  window._rrCfgTipo=m.tipo||'maquinaria';
+
+  // Crear modal sin onclick inline para evitar problemas en celular
+  var overlay=document.createElement('div');
+  overlay.id='rr-cfg-modal';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+
+  var box=document.createElement('div');
+  box.style.cssText='background:#1E293B;border:1.5px solid #A855F7;border-radius:16px;padding:20px;width:100%;max-width:340px;';
+  box.innerHTML=
+    '<div style="font-size:0.9rem;font-weight:800;color:#A855F7;margin-bottom:16px;">⚙️ Configurar Máquina</div>'+
+    '<div style="margin-bottom:10px;"><div style="font-size:0.6rem;color:#94A3B8;text-transform:uppercase;font-weight:700;margin-bottom:4px;">Código máquina</div>'+
+    '<input id="rr-cfg-maq" value="'+m.maquina+'" style="width:100%;background:#0F172A;border:1.5px solid #334155;border-radius:8px;padding:10px;color:#fff;font-size:0.9rem;font-family:monospace;font-weight:700;"></div>'+
+    '<div style="margin-bottom:10px;"><div style="font-size:0.6rem;color:#94A3B8;text-transform:uppercase;font-weight:700;margin-bottom:4px;">Operador</div>'+
+    '<input id="rr-cfg-op" value="'+m.operador+'" style="width:100%;background:#0F172A;border:1.5px solid #334155;border-radius:8px;padding:10px;color:#fff;font-size:0.85rem;font-family:inherit;"></div>'+
+    '<div style="margin-bottom:14px;"><div style="font-size:0.6rem;color:#94A3B8;text-transform:uppercase;font-weight:700;margin-bottom:4px;">Grupo (A, B, C...)</div>'+
+    '<input id="rr-cfg-grp" value="'+m.grupo+'" maxlength="3" style="width:100%;background:#0F172A;border:1.5px solid #334155;border-radius:8px;padding:10px;color:#F5C800;font-size:1.4rem;font-family:monospace;font-weight:900;text-align:center;text-transform:uppercase;"></div>'+
+    '<div style="margin-bottom:16px;"><div style="font-size:0.6rem;color:#94A3B8;text-transform:uppercase;font-weight:700;margin-bottom:6px;">Tipo</div>'+
+    '<div style="display:flex;gap:8px;" id="rr-tipo-btns">'+
+    '<button id="rr-cfg-maq-btn" style="flex:1;padding:10px;border-radius:8px;border:1.5px solid #A855F7;background:rgba(168,85,247,.2);color:#A855F7;font-weight:700;cursor:pointer;font-family:inherit;">🚜 Maquinaria</button>'+
+    '<button id="rr-cfg-mon-btn" style="flex:1;padding:10px;border-radius:8px;border:1.5px solid #334155;background:transparent;color:#64748B;font-weight:700;cursor:pointer;font-family:inherit;">🏗️ Montacargas</button>'+
+    '</div></div>'+
+    '<div style="display:flex;gap:8px;">'+
+    '<button id="rr-cfg-cancel" style="flex:1;padding:12px;border-radius:10px;border:1px solid #334155;background:transparent;color:#94A3B8;font-weight:700;cursor:pointer;font-family:inherit;">Cancelar</button>'+
+    '<button id="rr-cfg-save" style="flex:1;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#A855F7,#7C3AED);color:#fff;font-weight:800;cursor:pointer;font-family:inherit;">✅ Guardar</button>'+
+    '</div>';
+
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+
+  // Aplicar estado inicial
+  if(m.tipo==='montacargas'){
+    document.getElementById('rr-cfg-maq-btn').style.borderColor='#334155';
+    document.getElementById('rr-cfg-maq-btn').style.background='transparent';
+    document.getElementById('rr-cfg-maq-btn').style.color='#64748B';
+    document.getElementById('rr-cfg-mon-btn').style.borderColor='#F59E0B';
+    document.getElementById('rr-cfg-mon-btn').style.background='rgba(245,158,11,.2)';
+    document.getElementById('rr-cfg-mon-btn').style.color='#F59E0B';
+  }
+
+  // Eventos
+  document.getElementById('rr-cfg-grp').addEventListener('input',function(){this.value=this.value.toUpperCase();});
+  document.getElementById('rr-cfg-maq-btn').addEventListener('click',function(){
+    window._rrCfgTipo='maquinaria';
+    document.getElementById('rr-cfg-maq-btn').style.cssText='flex:1;padding:10px;border-radius:8px;border:1.5px solid #A855F7;background:rgba(168,85,247,.2);color:#A855F7;font-weight:700;cursor:pointer;font-family:inherit;';
+    document.getElementById('rr-cfg-mon-btn').style.cssText='flex:1;padding:10px;border-radius:8px;border:1.5px solid #334155;background:transparent;color:#64748B;font-weight:700;cursor:pointer;font-family:inherit;';
+  });
+  document.getElementById('rr-cfg-mon-btn').addEventListener('click',function(){
+    window._rrCfgTipo='montacargas';
+    document.getElementById('rr-cfg-mon-btn').style.cssText='flex:1;padding:10px;border-radius:8px;border:1.5px solid #F59E0B;background:rgba(245,158,11,.2);color:#F59E0B;font-weight:700;cursor:pointer;font-family:inherit;';
+    document.getElementById('rr-cfg-maq-btn').style.cssText='flex:1;padding:10px;border-radius:8px;border:1.5px solid #334155;background:transparent;color:#64748B;font-weight:700;cursor:pointer;font-family:inherit;';
+  });
+  document.getElementById('rr-cfg-cancel').addEventListener('click',rrCerrarModal);
+  document.getElementById('rr-cfg-save').addEventListener('click',function(){rrCfgGuardar(id);});
 }
 
 async function rrGuardarTodo(){
