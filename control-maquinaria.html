@@ -732,6 +732,14 @@ async function cargarRegistros() {
     allRecords = rows.map(r => {
       // Convertir fecha de YYYY-MM-DD a DD/MM/YYYY para el dashboard
       let fechaFmt = r.fecha||'';
+      // Normalizar fecha a DD/MM/YYYY con ceros (06/07/2026 no 6/7/2026)
+      if(fechaFmt && fechaFmt.includes('/')){
+        const p=fechaFmt.split('/');
+        if(p.length===3){
+          fechaFmt=String(p[0]).padStart(2,'0')+'/'+String(p[1]).padStart(2,'0')+'/'+p[2];
+        }
+      }
+      // Si viene en YYYY-MM-DD convertir a DD/MM/YYYY
       if(fechaFmt && fechaFmt.includes('-') && fechaFmt.length===10){
         const p=fechaFmt.split('-');
         fechaFmt=p[2]+'/'+p[1]+'/'+p[0];
@@ -820,6 +828,7 @@ function actualizarMenuMaq(){
   const th1=tnhr(r1),th2=tnhr(r2);
   const META=3.5;
 
+// Formato inteligente: sin decimal si es entero, 1 decimal si tiene fracción
 function fmt1(v){
   var n=parseFloat(v)||0;
   return n===Math.round(n)?String(Math.round(n)):n.toFixed(1);
@@ -884,14 +893,14 @@ async function guardarEdit() {
       maquina, operador, fecha,
       hrs_ejec: +hrsEjec.toFixed(1),
       bins: +bins.toFixed(1),
-      toneladas: tons,
+      toneladas: +tons.toFixed(1),
       tn_hr: tnhr,
       meta: META,
       estado, modulos
     });
     // Update local records
     const idx = records.findIndex(r=>r.id===id);
-    if(idx>=0) records[idx] = {...records[idx], maquina, operador, fecha, hrsEjec:+hrsEjec.toFixed(1), bins:+bins.toFixed(1), toneladas:tons, tnhr, estado, modulos};
+    if(idx>=0) records[idx] = {...records[idx], maquina, operador, fecha, hrsEjec:+hrsEjec.toFixed(1), bins:+bins.toFixed(1), toneladas:+tons.toFixed(1), tnhr, estado, modulos};
     cerrarEdit();
     renderDashboard();
     renderTabla();
@@ -1000,8 +1009,8 @@ function prevPersonal(){
   const pers=parseFloat(document.getElementById('prs-personal').value)||0;
   if(!tons||!hrs||!pers){document.getElementById('prs-prev').style.display='none';return;}
   const tnhr=+(tons/hrs).toFixed(2);
-  const tnp=+(tons/pers).toFixed(3);
-  const hrsp=+(hrs/pers).toFixed(3);
+  const tnp=+(tons/pers).toFixed(1);
+  const hrsp=+(hrs/pers).toFixed(1);
   document.getElementById('prs-tnhr').textContent=tnhr;
   document.getElementById('prs-tnp').textContent=tnp;
   document.getElementById('prs-hrsp').textContent=hrsp;
@@ -1034,15 +1043,15 @@ async function guardarPersonal(){
   if(existe)showToast('Ya hay registro para '+fecha+' — agregando otro','ok');
 
   const tnhr=+(tons/hrs).toFixed(2);
-  const tnp=+(tons/pers).toFixed(3);
-  const hrsp=+(hrs/pers).toFixed(3);
+  const tnp=+(tons/pers).toFixed(1);
+  const hrsp=+(hrs/pers).toFixed(1);
   try{
     showToast('Guardando en Supabase...','ok');
     const saved=await supaFetch('personal_acopio','POST',{
-      fecha,personal:pers,toneladas:tons,horas:hrs,tnhr,tnp,hrsp,obs
+      fecha,personal:pers,toneladas:+tons.toFixed(1),horas:hrs,tnhr,tnp,hrsp,obs
     });
     const newId=Array.isArray(saved)?saved[0]?.id:saved?.id;
-    personalRecords.unshift({id:newId||'p'+Date.now(),fecha,personal:pers,toneladas:tons,horas:hrs,tnhr,tnp,hrsp,obs});
+    personalRecords.unshift({id:newId||'p'+Date.now(),fecha,personal:pers,toneladas:+tons.toFixed(1),horas:hrs,tnhr,tnp,hrsp,obs});
     svPersonal();
     renderPersonalTabla();
     document.getElementById('prs-tons').value='';
@@ -1105,15 +1114,15 @@ async function guardarEdicionPersonal(id){
   const [y,m,d]=fechaRaw.split('-');
   const fecha=`${d}/${m}/${y}`;
   const tnhr=+(tons/hrs).toFixed(2);
-  const tnp=+(tons/pers).toFixed(3);
-  const hrsp=+(hrs/pers).toFixed(3);
+  const tnp=+(tons/pers).toFixed(1);
+  const hrsp=+(hrs/pers).toFixed(1);
   try{
     // Actualizar en Supabase si tiene ID numérico
     if(!String(id).startsWith('p')){
-      await supaFetch('personal_acopio?id=eq.'+id,'PATCH',{fecha,personal:pers,toneladas:tons,horas:hrs,tnhr,tnp,hrsp,obs});
+      await supaFetch('personal_acopio?id=eq.'+id,'PATCH',{fecha,personal:pers,toneladas:+tons.toFixed(1),horas:hrs,tnhr,tnp,hrsp,obs});
     }
     const idx=personalRecords.findIndex(r=>String(r.id)===String(id));
-    if(idx>=0)personalRecords[idx]={...personalRecords[idx],fecha,personal:pers,toneladas:tons,horas:hrs,tnhr,tnp,hrsp,obs};
+    if(idx>=0)personalRecords[idx]={...personalRecords[idx],fecha,personal:pers,toneladas:+tons.toFixed(1),horas:hrs,tnhr,tnp,hrsp,obs};
     svPersonal();
     renderPersonalTabla();
     document.querySelector('div[style*="position:fixed"]')?.remove();
@@ -1149,12 +1158,12 @@ function renderPersonalTabla(){
     +'</tr></thead><tbody>';
   personalRecords.forEach((r,i)=>{
     const bg=i%2===0?'#F8FAFC':'#FFFFFF';
-    const hrsp=r.hrsp||(r.horas&&r.personal?+(r.horas/r.personal).toFixed(2):0);
+    const hrsp=r.hrsp||(r.horas&&r.personal?+(r.horas/r.personal).toFixed(1):0);
     h+=`<tr style="background:${bg}">
       <td style="padding:8px;color:#1E293B;font-weight:700;border:1px solid #E2E8F0">${r.fecha}</td>
       <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;font-weight:800;font-size:1rem;color:#7C3AED">${r.personal}</td>
       <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;font-weight:700;font-family:monospace;color:#1E293B">${r.horas}</td>
-      <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;color:#475569;font-family:monospace">${hrsp}</td>
+      <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;color:#475569;font-family:monospace">${+hrsp.toFixed(1)}</td>
       <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;font-weight:700;font-family:monospace;color:#1E293B">${r.toneladas}</td>
       <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;font-weight:800;font-size:1rem;color:#D97706;font-family:monospace">${r.tnhr}</td>
       <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;font-weight:700;color:#16A34A;font-family:monospace">${r.tnp}</td>
@@ -1732,9 +1741,9 @@ function buildReporteGlobal(){
                   esPeor?'<span style="font-size:8px;background:#FEE2E2;color:#DC2626;padding:1px 5px;border-radius:6px;font-weight:700;margin-left:4px">⚠️ CRÍTICO</span>':'';
       html+=`<tr style="background:${bg};${resalte}">
         <td style="padding:9px 12px;font-weight:700;color:#1E293B;border:1px solid #D0DCF4">${r.maquina}${badge}</td>
-        <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;color:#475569;font-size:10px">${r.operador||'—'}${r.grupo?` <span style="background:#1e3a8a;color:#F5C800;font-size:7px;font-weight:800;padding:1px 5px;border-radius:4px;margin-left:3px;">Grp ${r.grupo}</span>`:''}</td>
-        <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-family:monospace;font-size:15px;color:#0F172A">${(r.hrsEjec||0).toFixed(1)}</td>
-        <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-family:monospace;font-size:15px;color:#0F172A">${(r.toneladas||0).toFixed(1)}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;color:#475569;font-size:10px">${r.operador||'—'}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-family:monospace;font-size:15px;color:#0F172A">${fmt1(r.hrsEjec)}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-family:monospace;font-size:15px;color:#0F172A">${fmt1(r.toneladas)}</td>
         <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;background:${_rptBg(r.tnhr)}">
           <div style="font-size:20px;font-weight:800;color:${_rptCol(r.tnhr)};font-family:monospace;line-height:1">${(r.tnhr||0).toFixed(2)}</div>
           <div style="font-size:8px;color:${_rptCol(r.tnhr)};margin-top:2px">${_rptEstado(r.tnhr)}</div>
@@ -1745,8 +1754,8 @@ function buildReporteGlobal(){
 
   html+=`<tr style="background:#1A3A8F">
     <td colspan="2" style="padding:10px 12px;color:#F5C800;font-weight:700;font-size:11px;border:1px solid #C0D0F4">TOTAL DÍA — ${recsDia.length} máquina(s)</td>
-    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${totH.toFixed(1)}</td>
-    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${totT.toFixed(1)}</td>
+    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${fmt1(totH)}</td>
+    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${fmt1(totT)}</td>
     <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;background:${_rptBg(totTh)}">
       <div style="font-size:26px;font-weight:800;color:${_rptCol(totTh)};font-family:monospace;line-height:1">${totTh.toFixed(2)}</div>
       <div style="font-size:9px;color:${_rptCol(totTh)};margin-top:2px">${_rptEstado(totTh)}</div>
@@ -1801,9 +1810,9 @@ function buildReportePorMaq(){
     totH+=r.hrsEjec||0; totT+=r.toneladas||0;
     h+=`<tr style="background:${bg}">
       <td style="padding:9px 12px;font-weight:700;color:#1E293B;border:1px solid #D0DCF4">${r.maquina}</td>
-      <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;color:#475569;font-size:10px">${r.operador||'—'}${r.grupo?` <span style="background:#1e3a8a;color:#F5C800;font-size:7px;font-weight:800;padding:1px 5px;border-radius:4px;margin-left:3px;">Grp ${r.grupo}</span>`:''}</td>
-      <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;font-weight:700;color:#1E293B;font-family:monospace">${(r.hrsEjec||0).toFixed(1)}</td>
-      <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;font-weight:700;color:#1E293B;font-family:monospace">${(r.toneladas||0).toFixed(1)}</td>
+      <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;color:#475569;font-size:10px">${r.operador||'—'}</td>
+      <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;font-weight:700;color:#1E293B;font-family:monospace">${fmt1(r.hrsEjec)}</td>
+      <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;font-weight:700;color:#1E293B;font-family:monospace">${fmt1(r.toneladas)}</td>
       <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;background:${_rptBg(r.tnhr)};vertical-align:middle">
         <div style="font-size:20px;font-weight:800;color:${_rptCol(r.tnhr)};font-family:monospace;line-height:1">${(r.tnhr||0).toFixed(2)}</div>
         <div style="font-size:8px;color:${_rptCol(r.tnhr)};margin-top:2px">${_rptEstado(r.tnhr)}</div>
@@ -1817,8 +1826,8 @@ function buildReportePorMaq(){
     <td colspan="2" style="padding:10px 12px;color:#F5C800;font-size:11px;font-weight:700;border:1px solid #C0D0F4">
       TOTAL ${fechaSel} — ${maquinas.length} máquina(s)
     </td>
-    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${totH.toFixed(1)}</td>
-    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${totT.toFixed(1)}</td>
+    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${fmt1(totH)}</td>
+    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${fmt1(totT)}</td>
     <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;background:${_rptBg(totTh)}">
       <div style="font-size:26px;font-weight:800;color:${_rptCol(totTh)};font-family:monospace;line-height:1">${totTh.toFixed(2)}</div>
       <div style="font-size:9px;color:${_rptCol(totTh)};margin-top:2px">${_rptEstado(totTh)}</div>
@@ -1836,7 +1845,10 @@ function buildReportePorMaq(){
 
 // ── Helper: get week key (lunes de la semana) ──
 function _weekKey(fecha){
-  const [d,m,y]=fecha.split('/').map(Number);
+  // Normalizar: puede venir 6/7/2026 o 06/07/2026
+  const p=fecha.split('/');
+  if(p.length!==3) return fecha;
+  const d=parseInt(p[0]),m=parseInt(p[1]),y=parseInt(p[2]);
   const dt=new Date(y,m-1,d);
   const day=dt.getDay();
   const diff=day===0?-6:1-day; // lunes
@@ -2027,7 +2039,7 @@ function buildReporteSemanal(){
       </div>
       <div style="background:rgba(124,58,237,.12);border:1px solid rgba(196,181,253,.2);border-radius:8px;padding:7px 5px;text-align:center;">
         <div style="font-size:7px;color:rgba(255,255,255,.4);margin-bottom:2px;">👷 TN/Persona</div>
-        <div style="font-size:13px;font-weight:800;color:#C4B5FD;font-family:monospace;">${totTnp>0?totTnp.toFixed(2):'N/D'}</div>
+        <div style="font-size:13px;font-weight:800;color:#C4B5FD;font-family:monospace;">${totTnp>0?fmt1(totTnp):'N/D'}</div>
         <div style="font-size:6px;color:rgba(255,255,255,.3);">${avgPers>0?'~'+avgPers+' p/día':'—'}</div>
       </div>
       <div style="background:${cumplimiento>=100?'rgba(21,128,61,.15)':cumplimiento>=90?'rgba(217,119,6,.15)':'rgba(220,38,38,.15)'};border:1px solid ${cumplimiento>=100?'rgba(74,222,128,.25)':cumplimiento>=90?'rgba(253,230,138,.25)':'rgba(252,165,165,.25)'};border-radius:8px;padding:7px 5px;text-align:center;">
@@ -2275,8 +2287,8 @@ function buildReporteMonta(){
       html+=`<tr style="background:${bg}">
         <td style="padding:9px 12px;font-weight:700;color:#1E293B;border:1px solid #FDE68A">${r.maquina}</td>
         <td style="padding:9px 8px;text-align:center;border:1px solid #FDE68A;color:#475569;font-size:10px">${r.operador||'—'}${r.grupo?` <span style="background:#78350f;color:#FDE68A;font-size:7px;font-weight:800;padding:1px 5px;border-radius:4px;margin-left:3px;">Grp ${r.grupo}</span>`:''}</td>
-        <td style="padding:9px 8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.hrsEjec||0).toFixed(1)}</td>
-        <td style="padding:9px 8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.toneladas||0).toFixed(1)}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${fmt1(r.hrsEjec)}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${fmt1(r.toneladas)}</td>
         <td style="padding:9px 8px;text-align:center;border:1px solid #FDE68A;background:${bg2}">
           <div style="font-size:20px;font-weight:800;color:${col};font-family:monospace;line-height:1">${(r.tnhr||0).toFixed(2)}</div>
         </td>
@@ -2288,8 +2300,8 @@ function buildReporteMonta(){
   // TOTAL DEL DÍA
   html+=`<tr style="background:#B45309">
     <td colspan="2" style="padding:10px 12px;color:#FEF9C3;font-weight:700;font-size:11px;border:1px solid #FDE68A">TOTAL DÍA — ${recsDia.length} equipo(s)</td>
-    <td style="padding:10px;text-align:center;border:1px solid #FDE68A;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${totH.toFixed(1)}</td>
-    <td style="padding:10px;text-align:center;border:1px solid #FDE68A;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${totT.toFixed(1)}</td>
+    <td style="padding:10px;text-align:center;border:1px solid #FDE68A;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${fmt1(totH)}</td>
+    <td style="padding:10px;text-align:center;border:1px solid #FDE68A;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${fmt1(totT)}</td>
     <td style="padding:10px;text-align:center;border:1px solid #FDE68A;background:#FEF3C7">
       <div style="font-size:26px;font-weight:800;color:#D97706;font-family:monospace;line-height:1">${totTh.toFixed(2)}</div>
     </td>
@@ -2423,10 +2435,10 @@ function buildReporteCombinado(){
       const estadoIcon=r.tnhr>=META?'🟢 BIEN':r.tnhr>=META*0.7?'🟡 REGULAR':'🔴 BAJO META';
       html+=`<tr style="background:${bg}">
         <td style="padding:8px 12px;font-weight:700;color:#1E293B;border:1px solid #D0DCF4">${r.maquina}</td>
-        <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;color:#475569;font-size:10px">${r.operador||'—'}${r.grupo?` <span style="background:#1e3a8a;color:#F5C800;font-size:7px;font-weight:800;padding:1px 5px;border-radius:4px;margin-left:3px;">Grp ${r.grupo}</span>`:''}</td>
+        <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;color:#475569;font-size:10px">${r.operador||'—'}</td>
         <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-size:11px;color:#1A3A8F">${r.grupo||'—'}</td>
-        <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.hrsEjec||0).toFixed(1)}</td>
-        <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.toneladas||0).toFixed(1)}</td>
+        <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${fmt1(r.hrsEjec)}</td>
+        <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${fmt1(r.toneladas)}</td>
         <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;background:${_rptBg(r.tnhr)}">
           <div style="font-size:16px;font-weight:800;color:${_rptCol(r.tnhr)};font-family:monospace">${(r.tnhr||0).toFixed(2)}</div>
         </td>
@@ -2453,8 +2465,8 @@ function buildReporteCombinado(){
         <td style="padding:8px 12px;font-weight:700;color:#1E293B;border:1px solid #FDE68A">${r.maquina}</td>
         <td style="padding:8px;text-align:center;border:1px solid #FDE68A;color:#475569;font-size:10px">${r.operador||'—'}</td>
         <td style="padding:8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-size:11px;color:#B45309">${r.grupo||'—'}</td>
-        <td style="padding:8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.hrsEjec||0).toFixed(1)}</td>
-        <td style="padding:8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.toneladas||0).toFixed(1)}</td>
+        <td style="padding:8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${fmt1(r.hrsEjec)}</td>
+        <td style="padding:8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${fmt1(r.toneladas)}</td>
         <td style="padding:8px;text-align:center;border:1px solid #FDE68A;background:#FEF3C7">
           <div style="font-size:16px;font-weight:800;color:#D97706;font-family:monospace">${(r.tnhr||0).toFixed(2)}</div>
         </td>
@@ -2480,13 +2492,17 @@ function buildReporteCombinado(){
     </tr>`;
     recsPers.forEach((r,i)=>{
       const bg=i%2===0?'#F5F3FF':'#EDE9FE';
-      const hrsp=r.hrsp||(r.horas&&r.personal?+(r.horas/r.personal).toFixed(2):0);
+      const hrsp=r.hrsp||(r.horas&&r.personal?+(r.horas/r.personal).toFixed(1):0);
+      const horasDisp=fmt1(r.horas);
+      const tonsDisp=fmt1(r.toneladas);
+      const tnpDisp=fmt1(r.tnp);
+      const hrspDisp=fmt1(hrsp);
       html+=`<tr style="background:${bg}">
         <td style="padding:9px;text-align:center;font-size:18px;font-weight:800;color:#7C3AED;border:1px solid #DDD6FE">${r.personal}</td>
-        <td style="padding:9px;text-align:center;font-weight:700;font-family:monospace;font-size:14px;border:1px solid #DDD6FE;color:#1E293B">${fmt1(r.horas)}</td>
-        <td style="padding:9px;text-align:center;font-family:monospace;font-size:13px;border:1px solid #DDD6FE;color:#475569">${fmt1(hrsp)}</td>
-        <td style="padding:9px;text-align:center;font-weight:700;font-family:monospace;font-size:14px;border:1px solid #DDD6FE;color:#1E293B">${fmt1(r.toneladas)}</td>
-        <td style="padding:9px;text-align:center;font-size:20px;font-weight:800;color:#16A34A;font-family:monospace;border:1px solid #DDD6FE" colspan="3">${fmt1(r.tnp)}</td>
+        <td style="padding:9px;text-align:center;font-weight:700;font-family:monospace;font-size:14px;border:1px solid #DDD6FE;color:#1E293B">${horasDisp}</td>
+        <td style="padding:9px;text-align:center;font-family:monospace;font-size:13px;border:1px solid #DDD6FE;color:#475569">${hrspDisp}</td>
+        <td style="padding:9px;text-align:center;font-weight:700;font-family:monospace;font-size:14px;border:1px solid #DDD6FE;color:#1E293B">${tonsDisp}</td>
+        <td style="padding:9px;text-align:center;font-size:20px;font-weight:800;color:#16A34A;font-family:monospace;border:1px solid #DDD6FE" colspan="3">${tnpDisp}</td>
       </tr>`;
       if(r.obs)html+=`<tr style="background:${bg}"><td colspan="7" style="padding:4px 12px;font-size:9px;color:#6B7280;border:1px solid #DDD6FE;font-style:italic">📝 ${r.obs}</td></tr>`;
     });
@@ -2530,27 +2546,30 @@ async function _capturarReporte(){
 
   await new Promise(r=>setTimeout(r,200));
 
+  // Fijar SVGs a tamaño real antes de capturar (html2canvas no resuelve % bien)
+  const svgs=cont.querySelectorAll('svg');
+  const svgOrigSizes=[];
+  svgs.forEach(svg=>{
+    const rect=svg.getBoundingClientRect();
+    const parent=svg.parentElement;
+    const parentW=parent?parent.getBoundingClientRect().width||parent.scrollWidth:0;
+    const W=Math.max(rect.width,parentW,320); // mínimo 320px
+    const vb=svg.getAttribute('viewBox');
+    const vbH=vb?parseFloat(vb.split(' ')[3])||128:128;
+    const vbW=vb?parseFloat(vb.split(' ')[2])||380:380;
+    const H=Math.round(W*(vbH/vbW));
+    svgOrigSizes.push({svg,w:svg.getAttribute('width'),h:svg.getAttribute('height')});
+    svg.setAttribute('width',W);
+    svg.setAttribute('height',H);
+  });
+
+  await new Promise(r=>setTimeout(r,100));
+
   // Calcular dimensiones reales del contenido
   const curContW=cont.getBoundingClientRect().width||cont.scrollWidth;
   const fullW=cont.scrollWidth+40;
   const fullH=cont.scrollHeight+40;
   const scaleFactor=fullW/curContW;
-
-  // html2canvas no resuelve bien los SVG con ancho en % (se quedan con su
-  // tamaño de diseño original y dejan un hueco en blanco al ensanchar el
-  // contenedor para la captura). Por eso aquí calculamos matemáticamente
-  // el ancho final que tendrá cada gráfico y lo fijamos en píxeles ANTES
-  // de llamar a html2canvas, en vez de confiar en que se auto-ajuste.
-  const svgs=cont.querySelectorAll('svg');
-  const svgOrigSizes=[];
-  svgs.forEach(svg=>{
-    const rect=svg.getBoundingClientRect();
-    svgOrigSizes.push({svg,w:svg.getAttribute('width'),h:svg.getAttribute('height')});
-    if(rect.width>0){
-      svg.setAttribute('width',Math.round(rect.width*scaleFactor));
-      svg.setAttribute('height',Math.round(rect.height*scaleFactor));
-    }
-  });
 
   await new Promise(r=>setTimeout(r,50));
 
@@ -2616,7 +2635,7 @@ function buildRecord(maquina,operador,fecha,ini,fin,bins,modulos) {
   const tons = +(b*KG_BIN/1000).toFixed(1);
   const hrs = horasEntre(ini,fin);
   const tnhr = hrs>0 ? +(tons/hrs).toFixed(1) : 0;
-  return {maquina,operador,fecha,horaInicio:ini,horaFin:fin,hrsEjec:hrs,bins:b,toneladas:tons,tnhr,estado:calcEstado(tnhr),modulos};
+  return {maquina,operador,fecha,horaInicio:ini,horaFin:fin,hrsEjec:hrs,bins:b,toneladas:+tons.toFixed(1),tnhr,estado:calcEstado(tnhr),modulos};
 }
 
 // ── Form ───────────────────────────────────────────────────
@@ -2712,7 +2731,7 @@ async function guardarRegistro() {
     maquina, operador, fecha, tipo,
     horaInicio:'—', horaFin:'—',
     hrsEjec:+hrsEjec.toFixed(1),
-    bins:+bins.toFixed(1), toneladas:tons, tnhr, estado, modulos, grupo,
+    bins:+bins.toFixed(1), toneladas:+tons.toFixed(1), tnhr, estado, modulos, grupo,
     fundo: fundoActual==='comparar'?'arato1':fundoActual
   };
   try {
@@ -2795,7 +2814,7 @@ async function importExcel(input) {
         const modulos = String(get(r,"modulo")||"").trim();
         const dup = records.find(x=>x.maquina===maquina&&x.fecha===fecha&&x.horaInicio===ini);
         const tipo   = String(get(r,"tipo")||"").trim().toLowerCase()||'maquinaria';
-        if (!dup) { records.push({maquina,operador,fecha,tipo,horaInicio:ini,horaFin:fin,hrsEjec:hrs,bins,toneladas:tons,tnhr,estado:calcEstado(tnhr),modulos}); imported++; }
+        if (!dup) { records.push({maquina,operador,fecha,tipo,horaInicio:ini,horaFin:fin,hrsEjec:hrs,bins,toneladas:+tons.toFixed(1),tnhr,estado:calcEstado(tnhr),modulos}); imported++; }
       });
       showToast(`✓ ${imported} registros importados`,"ok");
       updateMaquinaFilter();
@@ -2921,7 +2940,7 @@ function renderDashboard() {
         const recs=records.filter(r=>r.maquina===m&&r.fecha===f);
         if (!recs.length) return null;
         const avg=recs.reduce((s,r)=>s+r.tnhr,0)/recs.length;
-        return +avg.toFixed(3);
+        return +avg.toFixed(1);
       }),
       borderColor:COLORS[i%COLORS.length],
       backgroundColor:COLORS[i%COLORS.length]+"33",
@@ -3100,7 +3119,7 @@ function renderComparacion(){
     const hrs=recs.reduce((s,r)=>s+r.hrsEjec,0);
     const tons=recs.reduce((s,r)=>s+r.toneladas,0);
     const tnhr=hrs>0?tons/hrs:0;
-    return{hrs:+hrs.toFixed(1),tons:+tons.toFixed(1),tnhr:+tnhr.toFixed(3),registros:recs.length};
+    return{hrs:+hrs.toFixed(1),tons:+tons.toFixed(1),tnhr:+tnhr.toFixed(1),registros:recs.length};
   }
   const s1=stats(r1),s2=stats(r2);
   const META=3.5;
@@ -3257,7 +3276,7 @@ function abrirRegistroRapido(fundoInicial){
 function rrCargarMaquinas(fundo){
   var plantillas=rrCargarPlantillas(fundo);
   if(plantillas.length){
-    rrMaquinas=plantillas.map(function(p){ return Object.assign({},p,{id:rrIdCounter++,hrs:'',bins:''}); });
+    rrMaquinas=plantillas.map(function(p){ return Object.assign({},p,{id:rrIdCounter++,hrs:'',bins:'',turnos:[{hrs:'',bins:''}]}); });
   } else {
     // Plantillas por defecto según fundo
     if(fundo==='arato2'){
@@ -3285,57 +3304,185 @@ function cerrarRegistroRapido(){
 
 function rrRenderMaquinas(){
   var lista=document.getElementById('rr-maquinas-lista');
+  // Asegurar que todas las máquinas tengan turnos
+  rrMaquinas.forEach(function(m){if(!m.turnos||!m.turnos.length)m.turnos=[{hrs:m.hrs||'',bins:m.bins||''}];});
   lista.innerHTML=rrMaquinas.map(function(m){
     var colBorde=m.tipo==='montacargas'?'#F59E0B':'#A855F7';
     var colTitulo=m.tipo==='montacargas'?'#F59E0B':'#C4B5FD';
     var icon=m.tipo==='montacargas'?'🏗️':'🚜';
-    return '<div style="background:#111827;border:1.5px solid '+colBorde+';border-radius:14px;padding:12px;" id="rr-card-'+m.id+'">'+
+    if(!m.turnos)m.turnos=[{hrs:'',bins:''}];
+
+    // Total horas y toneladas
+    var totHrs=m.turnos.reduce(function(s,t){return s+(parseFloat(t.hrs)||0);},0);
+    var totBins=m.tipo==='montacargas'?
+      rrMaquinas.filter(function(x){return x.tipo!=='montacargas';}).reduce(function(s,x){
+        return s+(x.turnos||[{bins:x.bins}]).reduce(function(ss,t){return ss+(parseFloat(t.bins)||0);},0);
+      },0) :
+      m.turnos.reduce(function(s,t){return s+(parseFloat(t.bins)||0);},0);
+
+    var turnosHTML='';
+    if(m.tipo!=='montacargas'){
+      turnosHTML=m.turnos.map(function(t,ti){
+        return '<div style="display:grid;grid-template-columns:1fr 1fr auto;gap:6px;margin-bottom:6px;" id="rr-turno-'+m.id+'-'+ti+'">'+
+          '<input type="number" step="0.1" min="0" placeholder="Hrs" value="'+t.hrs+'" oninput="rrActualizarTurno('+m.id+','+ti+',\'hrs\',this.value)" style="background:#1E293B;border:1px solid #334155;border-radius:8px;padding:9px;color:#fff;font-size:0.95rem;font-family:monospace;font-weight:700;text-align:center;width:100%;">'+
+          '<input type="number" step="0.1" min="0" placeholder="TN" value="'+t.bins+'" oninput="rrActualizarTurno('+m.id+','+ti+',\'bins\',this.value)" style="background:#1E293B;border:1px solid #334155;border-radius:8px;padding:9px;color:#fff;font-size:0.95rem;font-family:monospace;font-weight:700;text-align:center;width:100%;">'+
+          (m.turnos.length>1?'<button onclick="rrQuitarTurno('+m.id+','+ti+')" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:9px 10px;color:#EF4444;cursor:pointer;font-size:0.7rem;">✕</button>':'<div></div>')+
+        '</div>';
+      }).join('');
+      turnosHTML+='<button onclick="rrAgregarTurno('+m.id+')" style="width:100%;background:rgba(168,85,247,.08);border:1px dashed rgba(168,85,247,.3);border-radius:8px;padding:7px;color:#A855F7;font-size:0.65rem;font-weight:700;cursor:pointer;margin-bottom:6px;">➕ Agregar turno / parque</button>';
+    } else {
+      // Montacargas — solo horas, toneladas auto
+      turnosHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px;">'+
+        '<div>'+
+          '<div style="font-size:0.55rem;color:#64748B;margin-bottom:3px;text-transform:uppercase;">Horas</div>'+
+          '<input type="number" step="0.1" min="0" placeholder="Hrs" value="'+(m.turnos[0].hrs||'')+'" oninput="rrActualizarTurno('+m.id+',0,\'hrs\',this.value)" style="width:100%;background:#1E293B;border:1px solid #334155;border-radius:8px;padding:9px;color:#fff;font-size:0.95rem;font-family:monospace;font-weight:700;text-align:center;">'+
+        '</div>'+
+        '<div>'+
+          '<div style="font-size:0.55rem;color:#64748B;margin-bottom:3px;text-transform:uppercase;">Toneladas (auto)</div>'+
+          '<div style="background:#0F172A;border:1px solid #334155;border-radius:8px;padding:9px;color:#94A3B8;font-size:0.95rem;font-family:monospace;font-weight:700;text-align:center;min-height:38px;" id="rr-monta-tons-'+m.id+'">'+totBins.toFixed(1)+'</div>'+
+        '</div>'+
+      '</div>';
+    }
+
+    // Totales
+    var totHTML='';
+    if(m.tipo!=='montacargas'&&m.turnos.length>1){
+      totHTML='<div style="display:flex;gap:8px;font-size:0.62rem;color:#94A3B8;margin-bottom:4px;padding:6px 8px;background:rgba(255,255,255,.04);border-radius:6px;">'+
+        '<span>∑ Horas: <b style="color:#fff;">'+totHrs.toFixed(1)+'</b></span>'+
+        '<span>∑ TN: <b style="color:#fff;">'+totBins.toFixed(1)+'</b></span>'+
+      '</div>';
+    }
+
+    return '<div style="background:#111827;border:1.5px solid '+colBorde+';border-radius:14px;padding:12px;margin-bottom:10px;" id="rr-card-'+m.id+'">'+
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'+
         '<div>'+
           '<div style="font-size:0.7rem;font-weight:800;color:'+colTitulo+';">'+icon+' '+m.maquina+'</div>'+
           '<div style="font-size:0.6rem;color:#64748B;margin-top:1px;">'+m.operador+(m.grupo?' · Grp '+m.grupo:'')+'</div>'+
         '</div>'+
         '<div style="display:flex;gap:6px;">'+
-          '<button onclick="rrEditarConfig('+m.id+')" style="background:rgba(255,255,255,.05);border:1px solid #334155;border-radius:6px;padding:4px 8px;color:#94A3B8;font-size:0.6rem;cursor:pointer;">✏️ Config</button>'+
+          '<button onclick="rrEditarConfig('+m.id+')" style="background:rgba(255,255,255,.05);border:1px solid #334155;border-radius:6px;padding:4px 8px;color:#94A3B8;font-size:0.6rem;cursor:pointer;">✏️</button>'+
           '<button onclick="rrEliminar('+m.id+')" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:6px;padding:4px 8px;color:#EF4444;font-size:0.6rem;cursor:pointer;">✕</button>'+
         '</div>'+
       '</div>'+
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+
-        '<div>'+
-          '<div style="font-size:0.58rem;color:#64748B;font-weight:700;text-transform:uppercase;margin-bottom:3px;">Horas trabajadas</div>'+
-          '<input type="number" step="0.1" min="0" placeholder="0.0" value="'+m.hrs+'" oninput="rrActualizar('+m.id+',\'hrs\',this.value)" style="width:100%;background:#1E293B;border:1px solid #334155;border-radius:8px;padding:10px;color:#fff;font-size:1rem;font-family:monospace;font-weight:700;text-align:center;">'+
-        '</div>'+
-        '<div>'+
-          '<div style="font-size:0.58rem;color:#64748B;font-weight:700;text-transform:uppercase;margin-bottom:3px;">Toneladas</div>'+
-          '<input type="number" step="0.1" min="0" placeholder="0.0" value="'+m.bins+'" oninput="rrActualizar('+m.id+',\'bins\',this.value)" style="width:100%;background:#1E293B;border:1px solid #334155;border-radius:8px;padding:10px;color:#fff;font-size:1rem;font-family:monospace;font-weight:700;text-align:center;">'+
-        '</div>'+
+      '<div style="font-size:0.55rem;color:#64748B;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:0 2px;">'+
+        (m.tipo!=='montacargas'?'<span>Horas</span><span>Toneladas</span>':'')+
       '</div>'+
-      '<div id="rr-preview-'+m.id+'" style="margin-top:8px;text-align:center;font-size:0.7rem;color:#64748B;"></div>'+
+      turnosHTML+totHTML+
+      '<div id="rr-preview-'+m.id+'" style="margin-top:4px;text-align:center;font-size:0.7rem;color:#64748B;"></div>'+
     '</div>';
   }).join('');
+  rrActualizarTodoPreviews();
 }
 
 function rrActualizar(id, campo, val){
   var m=rrMaquinas.find(function(x){return x.id===id;});
   if(!m) return;
   m[campo]=val;
-  // Preview TN/Hr — bins ahora son toneladas directamente
+
+  // Si es montacargas, calcular toneladas automático
+  if(m.tipo==='montacargas'){
+    var totalMaq=rrMaquinas.filter(function(x){return x.tipo!=='montacargas';}).reduce(function(s,x){return s+(parseFloat(x.bins)||0);},0);
+    m.bins=totalMaq.toFixed(1);
+    // Actualizar el input visual del montacargas
+    var inputEl=document.querySelector('#rr-card-'+m.id+' input[oninput*="bins"]');
+    if(inputEl) inputEl.value=m.bins;
+  }
+
   var hrs=parseFloat(m.hrs)||0;
-  var tons=parseFloat(m.bins)||0; // bins field ahora guarda toneladas
-  var tnhr=hrs>0?+(tons/hrs).toFixed(2):0;
+  var tons=parseFloat(m.bins)||0;
+  var tnhr=hrs>0&&tons>0?+(tons/hrs).toFixed(2):0;
   var prev=document.getElementById('rr-preview-'+id);
-  if(prev&&hrs>0&&bins>0){
-    var col=tnhr>=3.5?'#22C55E':tnhr>=2.5?'#F59E0B':'#EF4444';
-    prev.innerHTML='<span style="color:'+col+';font-weight:700;">'+tons+' TN · '+tnhr+' TN/Hr</span>';
-  } else if(prev){
+  if(!prev) return;
+  if(hrs>0&&tons>0){
+    var META=3.5;
+    var col=tnhr>=META?'#22C55E':tnhr>=META*0.7?'#F59E0B':'#EF4444';
+    var ico=tnhr>=META?'✅ BIEN':tnhr>=META*0.7?'⚠️ REGULAR':'❌ BAJO META';
+    var extra=m.tipo==='montacargas'?'<span style="font-size:0.5rem;color:#64748B;"> (auto)</span>':'';
+    prev.innerHTML=
+      '<div style="display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(0,0,0,.2);border-radius:8px;padding:6px 10px;">'+
+      '<span style="font-family:monospace;font-size:1.1rem;font-weight:900;color:'+col+';">'+tnhr.toFixed(2)+'</span>'+
+      '<span style="font-size:0.6rem;color:'+col+';font-weight:700;">TN/Hr &nbsp;·&nbsp; '+ico+'</span>'+
+      '<span style="font-size:0.6rem;color:#94A3B8;">'+tons+' TN'+extra+'</span>'+
+      '</div>';
+  } else if(m.tipo==='montacargas'&&tons>0){
+    prev.innerHTML='<div style="font-size:0.65rem;color:#F59E0B;text-align:center;padding:4px;">'+tons+' TN (auto) · Pon las horas</div>';
+  } else {
     prev.innerHTML='';
   }
 }
 
-function rrAgregarMaquina(){
-  rrMaquinas.push({id:rrIdCounter++,maquina:'',operador:'',grupo:'',tipo:'maquinaria',hrs:'',bins:''});
+function rrAgregarTurno(id){
+  var m=rrMaquinas.find(function(x){return x.id===id;});
+  if(!m) return;
+  if(!m.turnos)m.turnos=[{hrs:'',bins:''}];
+  m.turnos.push({hrs:'',bins:''});
   rrRenderMaquinas();
-  // Abrir config de la nueva
+}
+
+function rrQuitarTurno(id,ti){
+  var m=rrMaquinas.find(function(x){return x.id===id;});
+  if(!m||!m.turnos||m.turnos.length<=1) return;
+  m.turnos.splice(ti,1);
+  rrRenderMaquinas();
+}
+
+function rrActualizarTurno(id,ti,campo,val){
+  var m=rrMaquinas.find(function(x){return x.id===id;});
+  if(!m) return;
+  if(!m.turnos)m.turnos=[{hrs:'',bins:''}];
+  m.turnos[ti][campo]=val;
+  // Actualizar totales en preview
+  rrActualizarPreview(id);
+  // Si hay montacargas, actualizar sus toneladas auto
+  rrMaquinas.forEach(function(x){
+    if(x.tipo==='montacargas'){
+      var totalMaq=rrMaquinas.filter(function(y){return y.tipo!=='montacargas';}).reduce(function(s,y){
+        return s+(y.turnos||[]).reduce(function(ss,t){return ss+(parseFloat(t.bins)||0);},0);
+      },0);
+      var el=document.getElementById('rr-monta-tons-'+x.id);
+      if(el) el.textContent=totalMaq.toFixed(1);
+      rrActualizarPreview(x.id);
+    }
+  });
+}
+
+function rrActualizarPreview(id){
+  var m=rrMaquinas.find(function(x){return x.id===id;});
+  if(!m) return;
+  var totHrs=(m.turnos||[]).reduce(function(s,t){return s+(parseFloat(t.hrs)||0);},0);
+  var totBins=m.tipo==='montacargas'?
+    rrMaquinas.filter(function(x){return x.tipo!=='montacargas';}).reduce(function(s,x){
+      return s+(x.turnos||[]).reduce(function(ss,t){return ss+(parseFloat(t.bins)||0);},0);
+    },0):
+    (m.turnos||[]).reduce(function(s,t){return s+(parseFloat(t.bins)||0);},0);
+
+  var tnhr=totHrs>0&&totBins>0?+(totBins/totHrs).toFixed(2):0;
+  var prev=document.getElementById('rr-preview-'+id);
+  if(!prev) return;
+  if(totHrs>0&&totBins>0){
+    var META=3.5;
+    var col=tnhr>=META?'#22C55E':tnhr>=META*0.7?'#F59E0B':'#EF4444';
+    var ico=tnhr>=META?'✅ BIEN':tnhr>=META*0.7?'⚠️ REGULAR':'❌ BAJO META';
+    var extra=m.tipo==='montacargas'?' (auto)':'';
+    prev.innerHTML='<div style="display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(0,0,0,.2);border-radius:8px;padding:5px 10px;">'+
+      '<span style="font-family:monospace;font-size:1rem;font-weight:900;color:'+col+';">'+tnhr.toFixed(2)+' TN/Hr</span>'+
+      '<span style="font-size:0.6rem;color:'+col+';font-weight:700;">'+ico+'</span>'+
+      '<span style="font-size:0.55rem;color:#64748B;">'+totBins.toFixed(1)+' TN'+extra+'</span>'+
+      '</div>';
+  } else if(m.tipo==='montacargas'&&totBins>0){
+    prev.innerHTML='<div style="font-size:0.62rem;color:#F59E0B;text-align:center;padding:3px;">'+totBins.toFixed(1)+' TN (auto) · Ingresa las horas</div>';
+  } else {
+    prev.innerHTML='';
+  }
+}
+
+function rrActualizarTodoPreviews(){
+  rrMaquinas.forEach(function(m){rrActualizarPreview(m.id);});
+}
+
+function rrAgregarMaquina(){
+  rrMaquinas.push({id:rrIdCounter++,maquina:'',operador:'',grupo:'',tipo:'maquinaria',hrs:'',bins:'',turnos:[{hrs:'',bins:''}]});
+  rrRenderMaquinas();
   rrEditarConfig(rrMaquinas[rrMaquinas.length-1].id);
 }
 
@@ -3430,60 +3577,69 @@ async function rrGuardarTodo(){
   var fechaRaw=document.getElementById('rr-fecha').value;
   var fundo=document.getElementById('rr-fundo').value;
   if(!fechaRaw){showToast('Pon la fecha','err');return;}
-  // Convertir YYYY-MM-DD → DD/MM/YYYY para consistencia con el resto del sistema
   var fp=fechaRaw.split('-');
-  var fecha=fp[2]+'/'+fp[1]+'/'+fp[0];
+  var fechaDD=fp[2]+'/'+fp[1]+'/'+fp[0];
 
-  var validos=rrMaquinas.filter(function(m){return m.maquina&&(parseFloat(m.hrs)>0||parseFloat(m.bins)>0);});
-  if(!validos.length){showToast('Llena al menos horas o bins de una máquina','err');return;}
+  var validos=rrMaquinas.filter(function(m){
+    if(!m.maquina) return false;
+    var totHrs=(m.turnos||[]).reduce(function(s,t){return s+(parseFloat(t.hrs)||0);},0);
+    var totBins=(m.turnos||[]).reduce(function(s,t){return s+(parseFloat(t.bins)||0);},0);
+    return m.tipo==='montacargas'?totHrs>0:totHrs>0||totBins>0;
+  });
+  if(!validos.length){showToast('Llena horas y toneladas','err');return;}
 
   var btn=document.querySelector('#pantalla-rapido button[onclick="rrGuardarTodo()"]');
   if(btn){btn.textContent='⏳ Guardando...';btn.disabled=true;}
 
-  var KG=430;var META_VAL=3.5;
+  // Calcular toneladas montacargas = suma de todas las máquinas
+  var totalTonsMaq=validos.filter(function(m){return m.tipo!=='montacargas';}).reduce(function(s,m){
+    return s+(m.turnos||[]).reduce(function(ss,t){return ss+(parseFloat(t.bins)||0);},0);
+  },0);
+
+  var META_VAL=3.5;
   var ok=0,err=0;
+  var resEl=document.getElementById('rr-resultado');
 
   for(var i=0;i<validos.length;i++){
     var m=validos[i];
-    var hrs=parseFloat(m.hrs)||0;
-    var tons=parseFloat(m.bins)||0; // bins field = toneladas ingresadas directamente
-    var bins=tons>0?Math.round(tons*1000/430):0; // calcular bins aproximados
-    var tnhr=hrs>0?+(tons/hrs).toFixed(2):0;
+    // Calcular totales desde turnos
+    var hrs=(m.turnos||[]).reduce(function(s,t){return s+(parseFloat(t.hrs)||0);},0);
+    var tons=m.tipo==='montacargas'?totalTonsMaq:(m.turnos||[]).reduce(function(s,t){return s+(parseFloat(t.bins)||0);},0);
+    var bins=tons>0?Math.round(tons*1000/430):0;
+    var tnhr=hrs>0&&tons>0?+(tons/hrs).toFixed(2):0;
     var estado=tnhr>=META_VAL?'ok':tnhr>=META_VAL*0.7?'regular':'bajo';
+    if(resEl) resEl.textContent='Guardando '+(i+1)+'/'+validos.length+'...';
 
     var payload={
-      maquina:m.maquina,
-      operador:m.operador||'',
-      grupo:m.grupo||'',
-      fecha:fechaRaw,  // YYYY-MM-DD para Supabase
-      tipo:m.tipo||'maquinaria',
+      maquina:m.maquina,operador:m.operador||'',grupo:m.grupo||'',
+      fecha:fechaDD,tipo:m.tipo||'maquinaria',
       hora_inicio:'—',hora_fin:'—',
-      hrs_ejec:hrs,bins:bins,toneladas:tons,tn_hr:tnhr,
-      meta:META_VAL,estado:estado,modulos:'',
-      fundo:fundo
+      hrs_ejec:hrs,bins:bins,toneladas:+tons.toFixed(1),tn_hr:tnhr,
+      meta:META_VAL,estado:estado,modulos:'',fundo:fundo
     };
     try{
-      await supaFetch('maquinaria_registros','POST',payload);
-      ok++;
-    }catch(e){err++;}
+      var r=await fetch(SURL+'/rest/v1/maquinaria_registros',{
+        method:'POST',
+        headers:{
+          'apikey':SKEY,'Authorization':'Bearer '+SKEY,
+          'Content-Type':'application/json','Prefer':'return=minimal'
+        },
+        body:JSON.stringify(payload)
+      });
+      if(r.ok||r.status===201){ok++;}
+      else{var t=await r.text();console.error('Error '+m.maquina+':',r.status,t);err++;}
+    }catch(e){console.error('Red:',e.message);err++;}
   }
 
   if(btn){btn.textContent='✅ Guardar Todo';btn.disabled=false;}
+  if(resEl) resEl.textContent=ok+'/'+validos.length+' guardados'+(err?' · ⚠️ '+err+' errores':'')+' ✅';
 
-  var res=document.getElementById('rr-resultado');
-  if(res) res.textContent='✅ '+ok+' registros guardados'+(err?' · ⚠️ '+err+' errores':'');
+  var plantillas=rrMaquinas.map(function(x){return{maquina:x.maquina,operador:x.operador,grupo:x.grupo,tipo:x.tipo};});
+  rrGuardarPlantillas(plantillas,fundo);
 
-  // Guardar plantillas para próxima vez
-  var plantillas=rrMaquinas.map(function(x){return {maquina:x.maquina,operador:x.operador,grupo:x.grupo,tipo:x.tipo};});
-  rrGuardarPlantillas(plantillas, fundo);
-
-  showToast('✅ '+ok+' registros guardados','ok');
-
-  // Limpiar inputs
-  rrMaquinas.forEach(function(m){m.hrs='';m.bins='';});
+  showToast('✅ '+ok+'/'+validos.length+' registros guardados','ok');
+  rrMaquinas.forEach(function(m){m.hrs='';m.bins='';m.turnos=[{hrs:'',bins:''}];});
   rrRenderMaquinas();
-
-  // Sincronizar registros principales
   try{await cargarRegistros();}catch(e){}
 }
 </script>
