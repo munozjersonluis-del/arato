@@ -827,12 +827,6 @@ function actualizarMenuMaq(){
   }
   const th1=tnhr(r1),th2=tnhr(r2);
   const META=3.5;
-
-// Formato inteligente: sin decimal si es entero, 1 decimal si tiene fracción
-function fmt1(v){
-  var n=parseFloat(v)||0;
-  return n===Math.round(n)?String(Math.round(n)):n.toFixed(1);
-}
   const el1=document.getElementById('ms-a1-tnhr');
   const el2=document.getElementById('ms-a2-tnhr');
   const b1=document.getElementById('ms-a1-badge');
@@ -1163,7 +1157,7 @@ function renderPersonalTabla(){
       <td style="padding:8px;color:#1E293B;font-weight:700;border:1px solid #E2E8F0">${r.fecha}</td>
       <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;font-weight:800;font-size:1rem;color:#7C3AED">${r.personal}</td>
       <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;font-weight:700;font-family:monospace;color:#1E293B">${r.horas}</td>
-      <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;color:#475569;font-family:monospace">${+hrsp.toFixed(1)}</td>
+      <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;color:#475569;font-family:monospace">${hrsp}</td>
       <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;font-weight:700;font-family:monospace;color:#1E293B">${r.toneladas}</td>
       <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;font-weight:800;font-size:1rem;color:#D97706;font-family:monospace">${r.tnhr}</td>
       <td style="padding:8px;text-align:center;border:1px solid #E2E8F0;font-weight:700;color:#16A34A;font-family:monospace">${r.tnp}</td>
@@ -1741,9 +1735,9 @@ function buildReporteGlobal(){
                   esPeor?'<span style="font-size:8px;background:#FEE2E2;color:#DC2626;padding:1px 5px;border-radius:6px;font-weight:700;margin-left:4px">⚠️ CRÍTICO</span>':'';
       html+=`<tr style="background:${bg};${resalte}">
         <td style="padding:9px 12px;font-weight:700;color:#1E293B;border:1px solid #D0DCF4">${r.maquina}${badge}</td>
-        <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;color:#475569;font-size:10px">${r.operador||'—'}</td>
-        <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-family:monospace;font-size:15px;color:#0F172A">${fmt1(r.hrsEjec)}</td>
-        <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-family:monospace;font-size:15px;color:#0F172A">${fmt1(r.toneladas)}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;color:#475569;font-size:10px">${r.operador||'—'}${r.grupo?` <span style="background:#1e3a8a;color:#F5C800;font-size:7px;font-weight:800;padding:1px 5px;border-radius:4px;margin-left:3px;">Grp ${r.grupo}</span>`:''}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-family:monospace;font-size:15px;color:#0F172A">${(r.hrsEjec||0).toFixed(1)}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-family:monospace;font-size:15px;color:#0F172A">${(r.toneladas||0).toFixed(1)}</td>
         <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;background:${_rptBg(r.tnhr)}">
           <div style="font-size:20px;font-weight:800;color:${_rptCol(r.tnhr)};font-family:monospace;line-height:1">${(r.tnhr||0).toFixed(2)}</div>
           <div style="font-size:8px;color:${_rptCol(r.tnhr)};margin-top:2px">${_rptEstado(r.tnhr)}</div>
@@ -1754,8 +1748,8 @@ function buildReporteGlobal(){
 
   html+=`<tr style="background:#1A3A8F">
     <td colspan="2" style="padding:10px 12px;color:#F5C800;font-weight:700;font-size:11px;border:1px solid #C0D0F4">TOTAL DÍA — ${recsDia.length} máquina(s)</td>
-    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${fmt1(totH)}</td>
-    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${fmt1(totT)}</td>
+    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${totH.toFixed(1)}</td>
+    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${totT.toFixed(1)}</td>
     <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;background:${_rptBg(totTh)}">
       <div style="font-size:26px;font-weight:800;color:${_rptCol(totTh)};font-family:monospace;line-height:1">${totTh.toFixed(2)}</div>
       <div style="font-size:9px;color:${_rptCol(totTh)};margin-top:2px">${_rptEstado(totTh)}</div>
@@ -1810,9 +1804,9 @@ function buildReportePorMaq(){
     totH+=r.hrsEjec||0; totT+=r.toneladas||0;
     h+=`<tr style="background:${bg}">
       <td style="padding:9px 12px;font-weight:700;color:#1E293B;border:1px solid #D0DCF4">${r.maquina}</td>
-      <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;color:#475569;font-size:10px">${r.operador||'—'}</td>
-      <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;font-weight:700;color:#1E293B;font-family:monospace">${fmt1(r.hrsEjec)}</td>
-      <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;font-weight:700;color:#1E293B;font-family:monospace">${fmt1(r.toneladas)}</td>
+      <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;color:#475569;font-size:10px">${r.operador||'—'}${r.grupo?` <span style="background:#1e3a8a;color:#F5C800;font-size:7px;font-weight:800;padding:1px 5px;border-radius:4px;margin-left:3px;">Grp ${r.grupo}</span>`:''}</td>
+      <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;font-weight:700;color:#1E293B;font-family:monospace">${(r.hrsEjec||0).toFixed(1)}</td>
+      <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;font-weight:700;color:#1E293B;font-family:monospace">${(r.toneladas||0).toFixed(1)}</td>
       <td style="padding:9px 8px;text-align:center;border:1px solid #D0DCF4;background:${_rptBg(r.tnhr)};vertical-align:middle">
         <div style="font-size:20px;font-weight:800;color:${_rptCol(r.tnhr)};font-family:monospace;line-height:1">${(r.tnhr||0).toFixed(2)}</div>
         <div style="font-size:8px;color:${_rptCol(r.tnhr)};margin-top:2px">${_rptEstado(r.tnhr)}</div>
@@ -1826,8 +1820,8 @@ function buildReportePorMaq(){
     <td colspan="2" style="padding:10px 12px;color:#F5C800;font-size:11px;font-weight:700;border:1px solid #C0D0F4">
       TOTAL ${fechaSel} — ${maquinas.length} máquina(s)
     </td>
-    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${fmt1(totH)}</td>
-    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${fmt1(totT)}</td>
+    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${totH.toFixed(1)}</td>
+    <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${totT.toFixed(1)}</td>
     <td style="padding:10px;text-align:center;border:1px solid #C0D0F4;background:${_rptBg(totTh)}">
       <div style="font-size:26px;font-weight:800;color:${_rptCol(totTh)};font-family:monospace;line-height:1">${totTh.toFixed(2)}</div>
       <div style="font-size:9px;color:${_rptCol(totTh)};margin-top:2px">${_rptEstado(totTh)}</div>
@@ -2039,7 +2033,7 @@ function buildReporteSemanal(){
       </div>
       <div style="background:rgba(124,58,237,.12);border:1px solid rgba(196,181,253,.2);border-radius:8px;padding:7px 5px;text-align:center;">
         <div style="font-size:7px;color:rgba(255,255,255,.4);margin-bottom:2px;">👷 TN/Persona</div>
-        <div style="font-size:13px;font-weight:800;color:#C4B5FD;font-family:monospace;">${totTnp>0?fmt1(totTnp):'N/D'}</div>
+        <div style="font-size:13px;font-weight:800;color:#C4B5FD;font-family:monospace;">${totTnp>0?totTnp.toFixed(2):'N/D'}</div>
         <div style="font-size:6px;color:rgba(255,255,255,.3);">${avgPers>0?'~'+avgPers+' p/día':'—'}</div>
       </div>
       <div style="background:${cumplimiento>=100?'rgba(21,128,61,.15)':cumplimiento>=90?'rgba(217,119,6,.15)':'rgba(220,38,38,.15)'};border:1px solid ${cumplimiento>=100?'rgba(74,222,128,.25)':cumplimiento>=90?'rgba(253,230,138,.25)':'rgba(252,165,165,.25)'};border-radius:8px;padding:7px 5px;text-align:center;">
@@ -2287,8 +2281,8 @@ function buildReporteMonta(){
       html+=`<tr style="background:${bg}">
         <td style="padding:9px 12px;font-weight:700;color:#1E293B;border:1px solid #FDE68A">${r.maquina}</td>
         <td style="padding:9px 8px;text-align:center;border:1px solid #FDE68A;color:#475569;font-size:10px">${r.operador||'—'}${r.grupo?` <span style="background:#78350f;color:#FDE68A;font-size:7px;font-weight:800;padding:1px 5px;border-radius:4px;margin-left:3px;">Grp ${r.grupo}</span>`:''}</td>
-        <td style="padding:9px 8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${fmt1(r.hrsEjec)}</td>
-        <td style="padding:9px 8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${fmt1(r.toneladas)}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.hrsEjec||0).toFixed(1)}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.toneladas||0).toFixed(1)}</td>
         <td style="padding:9px 8px;text-align:center;border:1px solid #FDE68A;background:${bg2}">
           <div style="font-size:20px;font-weight:800;color:${col};font-family:monospace;line-height:1">${(r.tnhr||0).toFixed(2)}</div>
         </td>
@@ -2300,8 +2294,8 @@ function buildReporteMonta(){
   // TOTAL DEL DÍA
   html+=`<tr style="background:#B45309">
     <td colspan="2" style="padding:10px 12px;color:#FEF9C3;font-weight:700;font-size:11px;border:1px solid #FDE68A">TOTAL DÍA — ${recsDia.length} equipo(s)</td>
-    <td style="padding:10px;text-align:center;border:1px solid #FDE68A;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${fmt1(totH)}</td>
-    <td style="padding:10px;text-align:center;border:1px solid #FDE68A;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${fmt1(totT)}</td>
+    <td style="padding:10px;text-align:center;border:1px solid #FDE68A;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${totH.toFixed(1)}</td>
+    <td style="padding:10px;text-align:center;border:1px solid #FDE68A;color:#fff;font-weight:800;font-family:monospace;font-size:17px">${totT.toFixed(1)}</td>
     <td style="padding:10px;text-align:center;border:1px solid #FDE68A;background:#FEF3C7">
       <div style="font-size:26px;font-weight:800;color:#D97706;font-family:monospace;line-height:1">${totTh.toFixed(2)}</div>
     </td>
@@ -2435,10 +2429,10 @@ function buildReporteCombinado(){
       const estadoIcon=r.tnhr>=META?'🟢 BIEN':r.tnhr>=META*0.7?'🟡 REGULAR':'🔴 BAJO META';
       html+=`<tr style="background:${bg}">
         <td style="padding:8px 12px;font-weight:700;color:#1E293B;border:1px solid #D0DCF4">${r.maquina}</td>
-        <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;color:#475569;font-size:10px">${r.operador||'—'}</td>
+        <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;color:#475569;font-size:10px">${r.operador||'—'}${r.grupo?` <span style="background:#1e3a8a;color:#F5C800;font-size:7px;font-weight:800;padding:1px 5px;border-radius:4px;margin-left:3px;">Grp ${r.grupo}</span>`:''}</td>
         <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-size:11px;color:#1A3A8F">${r.grupo||'—'}</td>
-        <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${fmt1(r.hrsEjec)}</td>
-        <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${fmt1(r.toneladas)}</td>
+        <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.hrsEjec||0).toFixed(1)}</td>
+        <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.toneladas||0).toFixed(1)}</td>
         <td style="padding:8px;text-align:center;border:1px solid #D0DCF4;background:${_rptBg(r.tnhr)}">
           <div style="font-size:16px;font-weight:800;color:${_rptCol(r.tnhr)};font-family:monospace">${(r.tnhr||0).toFixed(2)}</div>
         </td>
@@ -2465,8 +2459,8 @@ function buildReporteCombinado(){
         <td style="padding:8px 12px;font-weight:700;color:#1E293B;border:1px solid #FDE68A">${r.maquina}</td>
         <td style="padding:8px;text-align:center;border:1px solid #FDE68A;color:#475569;font-size:10px">${r.operador||'—'}</td>
         <td style="padding:8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-size:11px;color:#B45309">${r.grupo||'—'}</td>
-        <td style="padding:8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${fmt1(r.hrsEjec)}</td>
-        <td style="padding:8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${fmt1(r.toneladas)}</td>
+        <td style="padding:8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.hrsEjec||0).toFixed(1)}</td>
+        <td style="padding:8px;text-align:center;border:1px solid #FDE68A;font-weight:800;font-family:monospace;font-size:14px;color:#1E293B">${(r.toneladas||0).toFixed(1)}</td>
         <td style="padding:8px;text-align:center;border:1px solid #FDE68A;background:#FEF3C7">
           <div style="font-size:16px;font-weight:800;color:#D97706;font-family:monospace">${(r.tnhr||0).toFixed(2)}</div>
         </td>
@@ -2493,16 +2487,12 @@ function buildReporteCombinado(){
     recsPers.forEach((r,i)=>{
       const bg=i%2===0?'#F5F3FF':'#EDE9FE';
       const hrsp=r.hrsp||(r.horas&&r.personal?+(r.horas/r.personal).toFixed(1):0);
-      const horasDisp=fmt1(r.horas);
-      const tonsDisp=fmt1(r.toneladas);
-      const tnpDisp=fmt1(r.tnp);
-      const hrspDisp=fmt1(hrsp);
       html+=`<tr style="background:${bg}">
         <td style="padding:9px;text-align:center;font-size:18px;font-weight:800;color:#7C3AED;border:1px solid #DDD6FE">${r.personal}</td>
-        <td style="padding:9px;text-align:center;font-weight:700;font-family:monospace;font-size:14px;border:1px solid #DDD6FE;color:#1E293B">${horasDisp}</td>
-        <td style="padding:9px;text-align:center;font-family:monospace;font-size:13px;border:1px solid #DDD6FE;color:#475569">${hrspDisp}</td>
-        <td style="padding:9px;text-align:center;font-weight:700;font-family:monospace;font-size:14px;border:1px solid #DDD6FE;color:#1E293B">${tonsDisp}</td>
-        <td style="padding:9px;text-align:center;font-size:20px;font-weight:800;color:#16A34A;font-family:monospace;border:1px solid #DDD6FE" colspan="3">${tnpDisp}</td>
+        <td style="padding:9px;text-align:center;font-weight:700;font-family:monospace;font-size:14px;border:1px solid #DDD6FE;color:#1E293B">${r.horas}</td>
+        <td style="padding:9px;text-align:center;font-family:monospace;font-size:13px;border:1px solid #DDD6FE;color:#475569">${hrsp}</td>
+        <td style="padding:9px;text-align:center;font-weight:700;font-family:monospace;font-size:14px;border:1px solid #DDD6FE;color:#1E293B">${r.toneladas}</td>
+        <td style="padding:9px;text-align:center;font-size:20px;font-weight:800;color:#16A34A;font-family:monospace;border:1px solid #DDD6FE" colspan="3">${r.tnp}</td>
       </tr>`;
       if(r.obs)html+=`<tr style="background:${bg}"><td colspan="7" style="padding:4px 12px;font-size:9px;color:#6B7280;border:1px solid #DDD6FE;font-style:italic">📝 ${r.obs}</td></tr>`;
     });
@@ -2546,30 +2536,27 @@ async function _capturarReporte(){
 
   await new Promise(r=>setTimeout(r,200));
 
-  // Fijar SVGs a tamaño real antes de capturar (html2canvas no resuelve % bien)
-  const svgs=cont.querySelectorAll('svg');
-  const svgOrigSizes=[];
-  svgs.forEach(svg=>{
-    const rect=svg.getBoundingClientRect();
-    const parent=svg.parentElement;
-    const parentW=parent?parent.getBoundingClientRect().width||parent.scrollWidth:0;
-    const W=Math.max(rect.width,parentW,320); // mínimo 320px
-    const vb=svg.getAttribute('viewBox');
-    const vbH=vb?parseFloat(vb.split(' ')[3])||128:128;
-    const vbW=vb?parseFloat(vb.split(' ')[2])||380:380;
-    const H=Math.round(W*(vbH/vbW));
-    svgOrigSizes.push({svg,w:svg.getAttribute('width'),h:svg.getAttribute('height')});
-    svg.setAttribute('width',W);
-    svg.setAttribute('height',H);
-  });
-
-  await new Promise(r=>setTimeout(r,100));
-
   // Calcular dimensiones reales del contenido
   const curContW=cont.getBoundingClientRect().width||cont.scrollWidth;
   const fullW=cont.scrollWidth+40;
   const fullH=cont.scrollHeight+40;
   const scaleFactor=fullW/curContW;
+
+  // html2canvas no resuelve bien los SVG con ancho en % (se quedan con su
+  // tamaño de diseño original y dejan un hueco en blanco al ensanchar el
+  // contenedor para la captura). Por eso aquí calculamos matemáticamente
+  // el ancho final que tendrá cada gráfico y lo fijamos en píxeles ANTES
+  // de llamar a html2canvas, en vez de confiar en que se auto-ajuste.
+  const svgs=cont.querySelectorAll('svg');
+  const svgOrigSizes=[];
+  svgs.forEach(svg=>{
+    const rect=svg.getBoundingClientRect();
+    svgOrigSizes.push({svg,w:svg.getAttribute('width'),h:svg.getAttribute('height')});
+    if(rect.width>0){
+      svg.setAttribute('width',Math.round(rect.width*scaleFactor));
+      svg.setAttribute('height',Math.round(rect.height*scaleFactor));
+    }
+  });
 
   await new Promise(r=>setTimeout(r,50));
 
