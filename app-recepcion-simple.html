@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📦 Recepción Rápida</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f4fb;
+            padding: 20px;
+        }
+        .container { max-width: 500px; margin: 0 auto; }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .header h1 { font-size: 24px; }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 14px;
+        }
+        select, input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        input {
+            text-align: center;
+            background: #f9f9f9;
+        }
+        .btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 18px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .btn:hover { transform: scale(1.02); }
+        .btn:active { transform: scale(0.98); }
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 12px;
+            font-weight: bold;
+            display: none;
+            text-align: center;
+        }
+        .message.show { display: block; }
+        .message.success { background: #dcfce7; color: #15803d; }
+        .message.error { background: #fee2e2; color: #991b1b; }
+        
+        .stats {
+            background: #f0f4fb;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 16px;
+        }
+        .stats div { font-size: 14px; color: #667eea; font-weight: bold; }
+        
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            padding: 10px 14px;
+            background: #f0f4fb;
+            border: 2px solid #667eea;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .tab-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .form-group-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .form-group-2col input {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>📦 RECEPCIÓN</h1>
+        <p>Registra guías rápido</p>
+    </div>
+    
+    <div class="tabs">
+        <button class="tab-btn active" onclick="verTab('registrar')">📥 REGISTRAR</button>
+        <button class="tab-btn" onclick="verTab('historial')">📋 HISTORIAL</button>
+        <button class="tab-btn" onclick="verTab('grupos')">⚙️ GRUPOS</button>
+        <button class="tab-btn" onclick="verTab('cuadre')">🔄 CUADRE</button>
+    </div>
+    
+    <!-- TAB: REGISTRAR -->
+    <div id="registrar" class="tab-content active">
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding: 10px; background: #f0f4fb; border-radius: 8px;">
+                <label style="margin: 0; font-weight: bold; font-size: 14px;">Modo:</label>
+                <button id="toggleModo" class="btn" onclick="cambiarModo()" style="width: auto; padding: 8px 16px; margin: 0; font-size: 14px;">⚡ AUTOMÁTICO</button>
+            </div>
+            
+            <div class="form-group">
+                <label>📍 Selecciona Subgrupo</label>
+                <select id="grupo" onchange="actualizarNumeroAuto()">
+                    <option value="">-- Selecciona --</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>🔢 Número de VIN</label>
+                <input type="number" id="numero" placeholder="Se llena solo" min="1">
+            </div>
+            
+            <button class="btn" onclick="registrar()">✅ REGISTRAR</button>
+            
+            <div id="mensaje" class="message"></div>
+            
+            <div class="stats">
+                <div>Total Registrado: <span id="totalReg">0</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- TAB: GRUPOS -->
+    <div id="grupos" class="tab-content">
+        <div class="card">
+            <h3 style="margin-bottom: 16px;">⚙️ Crear Subgrupos</h3>
+            
+            <div class="form-group">
+                <label>Letra del Grupo (D, E, F, etc.)</label>
+                <input type="text" id="letraGrupo" maxlength="1" placeholder="D">
+            </div>
+            
+            <button class="btn" onclick="crearGrupo()">⚡ CREAR D1, D2, D3, D4</button>
+            
+            <div id="mensajeGrupo" class="message"></div>
+            
+            <div style="margin-top: 20px; padding: 12px; background: #f0f4fb; border-radius: 8px;">
+                <strong>Grupos Activos:</strong>
+                <div id="listaGrupos" style="margin-top: 10px; font-size: 14px; line-height: 1.8;"></div>
+            </div>
+            
+            <button class="btn" onclick="limpiarTodo()" style="background: #ef4444; margin-top: 20px;">🗑️ Borrar Todo</button>
+        </div>
+    </div>
+    
+    <!-- TAB: CUADRE -->
+    <div id="cuadre" class="tab-content">
+        <div class="card">
+            <h3 style="margin-bottom: 16px;">🔄 Datos de Campo</h3>
+            
+            <div id="campoDatos"></div>
+            
+            <button class="btn" onclick="guardarCampo()">💾 GUARDAR CAMPO</button>
+            
+            <div id="mensajeCampo" class="message"></div>
+            
+            <div style="margin-top: 20px; padding: 16px; background: #f0f4fb; border-radius: 8px;">
+                <strong style="font-size: 16px;">📊 CUADRE - CAMPO vs ACOPIO</strong>
+                
+                <table style="width: 100%; margin-top: 12px; border-collapse: collapse; font-size: 13px;">
+                    <thead>
+                        <tr style="background: #667eea; color: white;">
+                            <th style="padding: 8px; text-align: left; border: 1px solid #667eea;">Grupo</th>
+                            <th style="padding: 8px; text-align: center; border: 1px solid #667eea;">Campo</th>
+                            <th style="padding: 8px; text-align: center; border: 1px solid #667eea;">Acopio</th>
+                            <th style="padding: 8px; text-align: center; border: 1px solid #667eea;">Diferencia</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaResultado">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- TAB: HISTORIAL -->
+    <div id="historial" class="tab-content">
+        <div class="card">
+            <h3 style="margin-bottom: 16px;">📋 Historial de Registros</h3>
+            
+            <div id="historiallista"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let grupos = [];
+    let registros = {}; // {D1: [1,2,3...], D2: [1,2,3...]}
+    let datosCampo = {}; // {D1: 50, D2: 45...}
+    let modoAutomatico = true; // true = automático, false = manual
+    
+    // INICIALIZAR
+    document.addEventListener('DOMContentLoaded', function() {
+        cargarDatos();
+        renderizarGrupos();
+        actualizarCuadre();
+    });
+    
+    // GUARDAR/CARGAR
+    function guardarDatos() {
+        localStorage.setItem('grupos', JSON.stringify(grupos));
+        localStorage.setItem('registros', JSON.stringify(registros));
+        localStorage.setItem('datosCampo', JSON.stringify(datosCampo));
+    }
+    
+    function cargarDatos() {
+        const g = localStorage.getItem('grupos');
+        const r = localStorage.getItem('registros');
+        const c = localStorage.getItem('datosCampo');
+        
+        if (g) grupos = JSON.parse(g);
+        if (r) registros = JSON.parse(r);
+        if (c) datosCampo = JSON.parse(c);
+        
+        grupos.forEach(gr => {
+            if (!registros[gr]) registros[gr] = [];
+            if (!datosCampo[gr]) datosCampo[gr] = 0;
+        });
+    }
+    
+    // TABS
+    function verTab(tab) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        
+        document.getElementById(tab).classList.add('active');
+        event.target.classList.add('active');
+        
+        if (tab === 'cuadre') actualizarCampo();
+    }
+    
+    // CAMBIAR MODO (Automático / Manual)
+    function cambiarModo() {
+        modoAutomatico = !modoAutomatico;
+        const btn = document.getElementById('toggleModo');
+        const inputNumero = document.getElementById('numero');
+        
+        if (modoAutomatico) {
+            btn.textContent = '⚡ AUTOMÁTICO';
+            btn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            inputNumero.placeholder = 'Se llena solo';
+            inputNumero.readOnly = true; // NO se puede editar
+            inputNumero.style.background = '#f0f0f0';
+            inputNumero.style.cursor = 'not-allowed';
+        } else {
+            btn.textContent = '✍️ MANUAL';
+            btn.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+            inputNumero.placeholder = 'Ingresa el número';
+            inputNumero.readOnly = false; // SE PUEDE editar
+            inputNumero.style.background = 'white';
+            inputNumero.style.cursor = 'text';
+        }
+        
+        inputNumero.value = '';
+        actualizarNumeroAuto();
+    }
+    
+    // ACTUALIZAR NÚMERO AUTOMÁTICO - INTELIGENTE
+    function actualizarNumeroAuto() {
+        if (!modoAutomatico) {
+            document.getElementById('numero').value = '';
+            return;
+        }
+        
+        const grupo = document.getElementById('grupo').value;
+        if (!grupo) {
+            document.getElementById('numero').value = '';
+            return;
+        }
+        
+        const registrados = registros[grupo] || [];
+        
+        if (registrados.length === 0) {
+            // Si no hay registros, empieza en 1
+            document.getElementById('numero').value = 1;
+        } else {
+            // Encontrar el siguiente número que falta
+            registrados.sort((a, b) => a - b);
+            
+            let siguiente = 1;
+            for (let num of registrados) {
+                if (num === siguiente) {
+                    siguiente++;
+                } else {
+                    // Encontró un hueco
+                    break;
+                }
+            }
+            
+            document.getElementById('numero').value = siguiente;
+        }
+    }
+    
+    // RENDERIZAR GRUPOS EN SELECT
+    function renderizarGrupos() {
+        const select = document.getElementById('grupo');
+        select.innerHTML = '<option value="">-- Selecciona --</option>';
+        
+        grupos.forEach(g => {
+            const opt = document.createElement('option');
+            opt.value = g;
+            opt.textContent = g;
+            select.appendChild(opt);
+        });
+        
+        // Mostrar lista
+        const lista = document.getElementById('listaGrupos');
+        lista.innerHTML = grupos.length > 0 ? grupos.join(', ') : 'Ninguno creado';
+        
+        document.getElementById('totalReg').textContent = 
+            Object.values(registros).reduce((a, b) => a + b.length, 0);
+    }
+    
+    // REGISTRAR
+    function registrar() {
+        const grupo = document.getElementById('grupo').value;
+        const numero = parseInt(document.getElementById('numero').value);
+        
+        if (!grupo) {
+            mostrarMsg('mensaje', '❌ Selecciona grupo', 'error');
+            return;
+        }
+        
+        if (!numero || numero < 1) {
+            mostrarMsg('mensaje', '❌ Ingresa número válido', 'error');
+            return;
+        }
+        
+        if (!registros[grupo]) registros[grupo] = [];
+        
+        // Verificar si ya está registrado
+        if (registros[grupo].includes(numero)) {
+            mostrarMsg('mensaje', `⚠️ Ya registrado ${grupo}-${numero}`, 'error');
+            return;
+        }
+        
+        registros[grupo].push(numero);
+        registros[grupo].sort((a, b) => a - b); // Ordenar
+        
+        guardarDatos();
+        
+        mostrarMsg('mensaje', `✅ Registrado ${grupo}-${numero}`, 'success');
+        document.getElementById('totalReg').textContent = 
+            Object.values(registros).reduce((a, b) => a + b.length, 0);
+        actualizarCuadre();
+        
+        // ACTUALIZAR NÚMERO AUTOMÁTICAMENTE
+        actualizarNumeroAuto();
+        
+        // Si está en modo manual, limpiar
+        if (!modoAutomatico) {
+            document.getElementById('numero').value = '';
+            document.getElementById('numero').focus();
+        }
+    }
+    
+    // CREAR GRUPO
+    function crearGrupo() {
+        const letra = document.getElementById('letraGrupo').value.toUpperCase();
+        
+        if (!letra || letra.length === 0) {
+            mostrarMsg('mensajeGrupo', '❌ Ingresa una letra', 'error');
+            return;
+        }
+        
+        const nuevos = [letra + '1', letra + '2', letra + '3', letra + '4'];
+        let agregados = [];
+        
+        nuevos.forEach(g => {
+            if (!grupos.includes(g)) {
+                grupos.push(g);
+                registros[g] = [];
+                datosCampo[g] = 0;
+                agregados.push(g);
+            }
+        });
+        
+        if (agregados.length === 0) {
+            mostrarMsg('mensajeGrupo', `⚠️ Grupo ${letra} ya existe`, 'error');
+            return;
+        }
+        
+        grupos.sort();
+        guardarDatos();
+        document.getElementById('letraGrupo').value = '';
+        mostrarMsg('mensajeGrupo', `✅ Creado: ${agregados.join(', ')}`, 'success');
+        renderizarGrupos();
+        actualizarCuadre();
+    }
+    
+    // CAMPO
+    function actualizarCampo() {
+        let html = '';
+        grupos.forEach(g => {
+            html += `
+                <div style="margin-bottom: 10px;">
+                    <label style="font-size: 12px;">${g}:</label>
+                    <input type="number" id="campo_${g}" value="${datosCampo[g] || 0}" min="0" style="margin-top: 4px;">
+                </div>
+            `;
+        });
+        document.getElementById('campoDatos').innerHTML = html;
+    }
+    
+    function guardarCampo() {
+        grupos.forEach(g => {
+            datosCampo[g] = parseInt(document.getElementById(`campo_${g}`).value) || 0;
+        });
+        guardarDatos();
+        mostrarMsg('mensajeCampo', '✅ Datos guardados', 'success');
+        actualizarCuadre();
+    }
+    
+    // CUADRE
+    function actualizarCuadre() {
+        let html = '';
+        let totalCampo = 0;
+        let totalAcopio = 0;
+        
+        grupos.forEach(g => {
+            const campo = datosCampo[g] || 0;
+            const acopio = registros[g]?.length || 0;
+            const falta = campo - acopio;
+            
+            totalCampo += campo;
+            totalAcopio += acopio;
+            
+            const estadoClass = falta === 0 ? 'style="color: #22c55e; font-weight: bold;"' : 'style="color: #ef4444; font-weight: bold;"';
+            const estado = falta === 0 ? '✅ OK' : `⚠️ -${falta}`;
+            
+            html += `
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #e2e8f0; font-weight: bold;">${g}</td>
+                    <td style="padding: 8px; border: 1px solid #e2e8f0; text-align: center;">${campo}</td>
+                    <td style="padding: 8px; border: 1px solid #e2e8f0; text-align: center;">${acopio}</td>
+                    <td style="padding: 8px; border: 1px solid #e2e8f0; text-align: center;" ${estadoClass}>${estado}</td>
+                </tr>
+            `;
+        });
+        
+        const totalFalta = totalCampo - totalAcopio;
+        const estadoTotal = totalFalta === 0 ? 'style="color: #22c55e; font-weight: bold;"' : 'style="color: #ef4444; font-weight: bold;"';
+        const estadoTotalTxt = totalFalta === 0 ? '✅ OK' : `⚠️ -${totalFalta}`;
+        
+        html += `
+            <tr style="background: #f0f4fb; font-weight: bold;">
+                <td style="padding: 10px; border: 2px solid #667eea;">TOTAL</td>
+                <td style="padding: 10px; border: 2px solid #667eea; text-align: center;">${totalCampo}</td>
+                <td style="padding: 10px; border: 2px solid #667eea; text-align: center;">${totalAcopio}</td>
+                <td style="padding: 10px; border: 2px solid #667eea; text-align: center;" ${estadoTotal}>${estadoTotalTxt}</td>
+            </tr>
+        `;
+        
+        document.getElementById('tablaResultado').innerHTML = html;
+        actualizarHistorial();
+    }
+    
+    // HISTORIAL
+    function actualizarHistorial() {
+        let html = '';
+        
+        grupos.forEach(g => {
+            const nums = registros[g] || [];
+            if (nums.length > 0) {
+                html += `
+                    <div style="margin-bottom: 12px; padding: 12px; background: #f0f4fb; border-radius: 8px; border-left: 3px solid #667eea;">
+                        <div style="font-weight: bold; color: #667eea; margin-bottom: 8px;">${g}</div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                            ${nums.map(n => `<span style="background: #667eea; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold;">${n}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        
+        if (!html) html = '<div style="text-align: center; color: #999; padding: 20px;">Sin registros aún</div>';
+        
+        document.getElementById('historiallista').innerHTML = html;
+    }
+    
+    // UTILIDADES
+    function mostrarMsg(id, texto, tipo) {
+        const msg = document.getElementById(id);
+        msg.textContent = texto;
+        msg.className = `message show ${tipo}`;
+        setTimeout(() => msg.classList.remove('show'), 2500);
+    }
+    
+    function limpiarTodo() {
+        if (confirm('¿Borrar TODO?')) {
+            grupos = [];
+            registros = {};
+            datosCampo = {};
+            guardarDatos();
+            location.reload();
+        }
+    }
+</script>
+
+</body>
+</html>
