@@ -117,13 +117,14 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(30,9
 /* Section headers */
 .rs-head{
   display:flex;align-items:center;gap:10px;
-  padding:11px 24px;
+  padding:12px 24px;
   font-family:'Barlow Condensed',sans-serif;font-weight:800;
-  font-size:13px;letter-spacing:2px;text-transform:uppercase;color:white;
+  font-size:14px;letter-spacing:2.5px;text-transform:uppercase;color:white;
+  text-shadow:0 1px 2px rgba(0,0,0,.25);
 }
-.rs-head.maq{background:linear-gradient(90deg,#1b3a5c,#2a5285);}
-.rs-head.mont{background:linear-gradient(90deg,#1a3d2b,#2d6a4f);}
-.rs-head-icon{width:22px;height:22px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;}
+.rs-head.maq{background:linear-gradient(90deg,#0f2942,#1e6091);}
+.rs-head.mont{background:linear-gradient(90deg,#12281c,#2d6a4f);}
+.rs-head-icon{width:24px;height:24px;background:rgba(255,255,255,.18);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.25);}
 
 /* Tables */
 .rt-wrap{padding:0 16px 8px;}
@@ -131,16 +132,16 @@ table.rt{width:100%;border-collapse:collapse;font-size:12.5px;table-layout:fixed
 
 .rt thead tr{background:transparent;}
 .rt thead th{
-  padding:10px 12px;
+  padding:11px 12px;
   font-family:'Barlow Condensed',sans-serif;
-  font-size:10.5px;font-weight:700;
-  text-transform:uppercase;letter-spacing:.8px;
-  border-bottom:2px solid;text-align:center;
+  font-size:11.5px;font-weight:800;
+  text-transform:uppercase;letter-spacing:1.2px;
+  border-bottom:3px solid;text-align:center;
 }
 .rt thead th:first-child{text-align:left;}
 
-.maq-t thead th{background:#e8f0fb;color:#1b3a5c;border-color:#3b82f6;}
-.mon-t thead th{background:#dcf5e7;color:#1a3d2b;border-color:#2d6a4f;}
+.maq-t thead th{background:linear-gradient(180deg,#e8f0fb,#d9e8fa);color:#0f2942;border-color:#1e6091;}
+.mon-t thead th{background:linear-gradient(180deg,#dcf5e7,#c9edd9);color:#12281c;border-color:#2d6a4f;}
 
 .rt tbody tr{border-bottom:1px solid #f0f0f0;transition:background .15s;}
 .rt tbody tr:nth-child(even){background:#fafcff;}
@@ -150,15 +151,16 @@ table.rt{width:100%;border-collapse:collapse;font-size:12.5px;table-layout:fixed
 
 /* Cell styles */
 .cell-machine{
-  font-family:'Barlow Condensed',sans-serif;font-weight:700;
-  font-size:14px;color:#0a1628;
+  font-family:'Barlow Condensed',sans-serif;font-weight:800;
+  font-size:15px;color:#0a1628;letter-spacing:.2px;
 }
 .cell-mod{
   display:inline-flex;align-items:center;
   background:#0a1628;color:white;
-  font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;
-  padding:4px 10px;border-radius:20px;letter-spacing:.5px;
-  white-space:nowrap;
+  font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:800;
+  padding:5px 12px;border-radius:6px;letter-spacing:.8px;
+  white-space:nowrap;text-transform:uppercase;
+  box-shadow:0 2px 5px rgba(0,0,0,.22);
 }
 .mon-t .cell-mod{background:#2d6a4f;}
 .cell-bines{
@@ -186,18 +188,18 @@ table.rt{width:100%;border-collapse:collapse;font-size:12.5px;table-layout:fixed
 
 /* Subtotal rows */
 .subt-row td{
-  background:linear-gradient(90deg,#dbeafe,#e8f4fd)!important;
+  background:#eef2f9!important;
   font-family:'Barlow Condensed',sans-serif;font-weight:800;
-  font-size:13px;color:#1b3a5c;
-  border-top:2px solid #3b82f6!important;
-  border-bottom:none!important;
-  padding:11px 12px;
+  font-size:12.5px;color:#0f2942;
+  border-top:none!important;
+  border-bottom:2px solid #dbe3ee!important;
+  padding:8px 12px;
 }
 .mon-t .subt-row td{
-  background:linear-gradient(90deg,#dcf5e7,#e8faf0)!important;
-  color:#1a3d2b;border-top-color:#2d6a4f!important;
+  background:#eaf7f0!important;
+  color:#12281c;border-bottom-color:#cdeadb!important;
 }
-.subt-label{font-size:11px;letter-spacing:1px;}
+.subt-label{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;opacity:.75;}
 
 /* Module summary */
 .mod-summary{
@@ -209,17 +211,17 @@ table.rt{width:100%;border-collapse:collapse;font-size:12.5px;table-layout:fixed
   background:white;
   border-radius:8px;
   padding:12px 14px;
-  border-left:4px solid var(--blue);
-  box-shadow:0 2px 8px rgba(0,0,0,.06);
+  border-left:5px solid var(--blue);
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
 }
 .mod-card.hrs-card{border-left-color:var(--green);}
 .mod-card-label{
-  font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;
-  text-transform:uppercase;letter-spacing:.8px;color:#9ca3af;margin-bottom:4px;
+  font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:800;
+  text-transform:uppercase;letter-spacing:1px;color:#6b7280;margin-bottom:4px;
 }
 .mod-card-val{
   font-family:'Barlow Condensed',sans-serif;font-weight:900;
-  font-size:20px;color:#0a1628;line-height:1;
+  font-size:21px;color:#0a1628;line-height:1;
 }
 .mod-card.hrs-card .mod-card-val{color:var(--green);}
 .mod-card-sub{font-size:11px;color:#9ca3af;margin-top:3px;}
@@ -574,6 +576,18 @@ var fijasData = [
 var extraMaqs = []; // máquinas adicionales {maq:'', turnos:[{mod:'',bines:''}]}
 
 const MODS_LIST = ['MÓDULO 01','MÓDULO 02','MÓDULO 03','MÓDULO 04','MÓDULO 05','MÓDULO 06','MÓDULO 07','MÓDULO 08','MÓDULO 09','MÓDULO 10','MÓDULO 11','MÓDULO 12','MÓDULO 13','MÓDULO 14','MÓDULO 15','MÓDULO 16','MÓDULO 17','MÓDULO 18','MÓDULO 19','MÓDULO 20','MÓDULO 21','MÓDULO 22','MÓDULO 23','MÓDULO 24'];
+
+function modIndex(mod) {
+  const i = MODS_LIST.indexOf(mod);
+  return i === -1 ? 9999 : i;
+}
+
+const MOD_COLORS = ['#1e6091','#b45309','#7c3aed','#be123c','#0d9488','#c2410c','#4338ca','#059669','#a21caf','#0369a1','#ca8a04','#9333ea'];
+function modColor(mod) {
+  const i = modIndex(mod);
+  if (i === 9999) return '#374151';
+  return MOD_COLORS[i % MOD_COLORS.length];
+}
 
 function modSelect(val) {
   return '<select style="width:100%;border:1px solid #ced4da;border-radius:6px;padding:8px;font-family:Barlow,sans-serif;font-size:13px;color:#0a1628;" onchange="leerEstadoPanel();guardarMaquinasFijas();updateSticky();updateMontPreview();">'
@@ -978,37 +992,70 @@ function generateReport() {
   leerMontState();
   guardarHistorial();
   const dateStr = getDateStr();
-  const map = getModuleMap(); const mods = Object.keys(map);
+  const map = getModuleMap();
+  const mods = Object.keys(map).sort((a,b) => modIndex(a)-modIndex(b));
 
   // Módulos activos para montacarga (no excluidos Y no marcados como sin montacarga)
   const map2 = getModuleMap();
-  const activeMods = Object.keys(map2).filter(m => !excludedModules.has(m) && map2[m].mont !== false && !montSinMap[m]);
-  let maqRows='',maqBines=0,maqTons=0;
-  machines.forEach(m => {
+  const activeMods = Object.keys(map2)
+    .filter(m => !excludedModules.has(m) && map2[m].mont !== false && !montSinMap[m])
+    .sort((a,b) => modIndex(a)-modIndex(b));
+
+  // Maquinarias ordenadas por módulo (01→24) y luego por nombre de máquina, con subtotal por módulo
+  const machinesSorted = [...machines].sort((a,b) => {
+    const na = modIndex(a.mod), nb = modIndex(b.mod);
+    if (na !== nb) return na - nb;
+    return (a.maq||'').localeCompare(b.maq||'');
+  });
+  let maqRows='',maqTons=0,maqBinesTotal=0,modAcum=0,modBinesAcum=0,prevMod=undefined;
+  machinesSorted.forEach((m, i) => {
     const tons = m.tons || (m.bines||0)*PESO/1000;
-    maqTons += tons;
+    const bines = m.bines || 0;
+    maqTons += tons; maqBinesTotal += bines;
+    if (prevMod !== undefined && m.mod !== prevMod) {
+      maqRows+=`<tr class="subt-row" style="border-left:4px solid ${modColor(prevMod)};">
+        <td colspan="2"><span class="subt-label">Subtotal ${prevMod||'Sin módulo'}</span></td>
+        <td><span class="cell-bines" style="font-size:12px;">${fmt(modBinesAcum)}</span></td>
+        <td><strong>${modAcum.toFixed(1)} TN</strong></td>
+        <td>—</td>
+      </tr>`;
+      modAcum = 0; modBinesAcum = 0;
+    }
+    modAcum += tons; modBinesAcum += bines;
+    prevMod = m.mod;
     maqRows+=`<tr>
       <td><span class="cell-machine">${m.maq||'—'}</span></td>
-      <td><span class="cell-mod">${m.mod||'—'}</span></td>
+      <td><span class="cell-mod" style="background:${modColor(m.mod)};">${m.mod||'—'}</span></td>
+      <td><span class="cell-bines">${fmt(bines)}</span></td>
       <td><span class="cell-tons" style="font-size:13px;">${tons.toFixed(1)} TN</span></td>
       <td>${m.obs?`<span class="cell-obs">${m.obs}</span>`:'<span style="color:#d1d5db;">—</span>'}</td>
     </tr>`;
   });
+  if (machinesSorted.length) {
+    maqRows+=`<tr class="subt-row" style="border-left:4px solid ${modColor(prevMod)};">
+      <td colspan="2"><span class="subt-label">Subtotal ${prevMod||'Sin módulo'}</span></td>
+      <td><span class="cell-bines" style="font-size:12px;">${fmt(modBinesAcum)}</span></td>
+      <td><strong>${modAcum.toFixed(1)} TN</strong></td>
+      <td>—</td>
+    </tr>`;
+  }
 
-  let montRows='',montTons=0,totalHrs=0;
+  let montRows='',montTons=0,montBinesTotal=0,totalHrs=0;
   const hrsPerMod = {};
   activeMods.forEach(mod => {
     const arr = (montState[mod] && montState[mod].length) ? montState[mod] : [{nombre:'',horas:'',bines:''}];
     const moduleTons = map[mod].tons/1000;
+    const moduleBines = map[mod].bines;
     let modHrs = 0;
     if (arr.length <= 1) {
-      // Un solo montacarga en el módulo: usa el total de toneladas del módulo
+      // Un solo montacarga en el módulo: usa el total de bines/toneladas del módulo
       const nombre = (arr[0] && arr[0].nombre) || 'Montacarga';
       const hrs = parseFloat(arr[0] && arr[0].horas) || 0;
-      modHrs += hrs; totalHrs += hrs; montTons += moduleTons;
+      modHrs += hrs; totalHrs += hrs; montTons += moduleTons; montBinesTotal += moduleBines;
       montRows+=`<tr>
         <td><span class="cell-machine">${nombre}</span></td>
-        <td><span class="cell-mod">${mod}</span></td>
+        <td><span class="cell-mod" style="background:${modColor(mod)};">${mod}</span></td>
+        <td><span class="cell-bines">${fmt(moduleBines)}</span></td>
         <td><span class="cell-tons">${moduleTons.toFixed(1)} TN</span></td>
         <td><span class="cell-hrs">⏱ ${hrs} hrs</span></td>
       </tr>`;
@@ -1019,10 +1066,11 @@ function generateReport() {
         const tons = bines*PESO/1000;
         const hrs = parseFloat(e.horas)||0;
         const nombre = e.nombre || 'Montacarga';
-        modHrs += hrs; totalHrs += hrs; montTons += tons;
+        modHrs += hrs; totalHrs += hrs; montTons += tons; montBinesTotal += bines;
         montRows+=`<tr>
           <td><span class="cell-machine">${nombre}</span></td>
-          <td><span class="cell-mod">${mod}</span></td>
+          <td><span class="cell-mod" style="background:${modColor(mod)};">${mod}</span></td>
+          <td><span class="cell-bines">${fmt(bines)}</span></td>
           <td><span class="cell-tons">${tons.toFixed(1)} TN</span></td>
           <td><span class="cell-hrs">⏱ ${hrs} hrs</span></td>
         </tr>`;
@@ -1032,10 +1080,10 @@ function generateReport() {
   });
 
   const modCards = mods.map(mod =>
-    `<div class="mod-card">
+    `<div class="mod-card" style="border-left-color:${modColor(mod)};">
       <div class="mod-card-label">${mod}</div>
       <div class="mod-card-val">${(map[mod].tons/1000).toFixed(1)} TN</div>
-      <div class="mod-card-sub">${hrsPerMod[mod]||0} hrs montacarga</div>
+      <div class="mod-card-sub">${fmt(map[mod].bines)} bines · ${hrsPerMod[mod]||0} hrs</div>
     </div>`
   ).join('');
 
@@ -1065,15 +1113,17 @@ function generateReport() {
     <div class="rt-wrap">
       <table class="rt maq-t">
         <thead><tr>
-          <th style="width:30%;text-align:left;">Máquina</th>
-          <th style="width:30%;">Módulo</th>
-          <th style="width:25%;">Toneladas</th>
-          <th style="width:15%;">Obs</th>
+          <th style="width:24%;text-align:left;">Máquina</th>
+          <th style="width:22%;">Módulo</th>
+          <th style="width:16%;">Bines</th>
+          <th style="width:22%;">Toneladas</th>
+          <th style="width:16%;">Obs</th>
         </tr></thead>
         <tbody>
           ${maqRows}
           <tr class="subt-row">
             <td colspan="2"><span class="subt-label">TOTAL MAQUINARIAS</span></td>
+            <td><span class="cell-bines" style="font-weight:800;">${fmt(maqBinesTotal)}</span></td>
             <td><strong>${maqTons.toFixed(1)} TN</strong></td>
             <td>—</td>
           </tr>
@@ -1088,15 +1138,17 @@ function generateReport() {
     <div class="rt-wrap">
       <table class="rt mon-t">
         <thead><tr>
-          <th style="width:35%;text-align:left;">Montacarga</th>
-          <th style="width:30%;">Módulo</th>
+          <th style="width:26%;text-align:left;">Montacarga</th>
+          <th style="width:22%;">Módulo</th>
+          <th style="width:16%;">Bines</th>
           <th style="width:20%;">Toneladas</th>
-          <th style="width:15%;">Hrs</th>
+          <th style="width:16%;">Hrs</th>
         </tr></thead>
         <tbody>
           ${montRows}
           <tr class="subt-row">
             <td colspan="2"><span class="subt-label">TOTAL MONTACARGAS</span></td>
+            <td><span class="cell-bines" style="font-weight:800;">${fmt(montBinesTotal)}</span></td>
             <td><strong>${montTons.toFixed(1)} TN</strong></td>
             <td><span class="cell-hrs">⏱ ${totalHrs} hrs</span></td>
           </tr>
