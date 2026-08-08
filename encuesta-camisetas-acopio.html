@@ -2,6 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
 <title>Camiseta Acopio Arato — Elige tu talla y número</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -345,9 +348,12 @@
 <div class="admin" id="adminView" style="display:none;">
   <h2>Lista de pedidos — Acopio</h2>
   <div class="admin-kpis" id="adminKpis"></div>
-  <button class="btn-sm" id="exportBtn">⬇ Exportar CSV</button>
+  <div style="display:flex; gap:8px; margin-bottom:10px;">
+    <button class="btn-sm" id="exportBtn">⬇ Exportar CSV</button>
+    <button class="btn-sm" id="refreshBtn">↻ Actualizar lista</button>
+  </div>
   <table>
-    <thead><tr><th>#</th><th>Quién pidió</th><th>Camiseta</th><th>Talla</th><th>N°</th><th>Fecha</th></tr></thead>
+    <thead><tr><th>#</th><th>Quién pidió</th><th>Camiseta</th><th>Talla</th><th>N°</th><th>Fecha</th><th></th></tr></thead>
     <tbody id="adminBody"></tbody>
   </table>
 </div>
@@ -409,6 +415,27 @@ async function insertPedido(row){
     const all = localGetAll();
     all.push({ ...row, id: Date.now(), created_at: new Date().toISOString() });
     localSaveAll(all);
+  }
+}
+
+async function updatePedido(id, fields){
+  if(useCloud){
+    const { error } = await sb.from(TABLE).update(fields).eq("id", id);
+    if(error) throw error;
+  }else{
+    const all = localGetAll();
+    const idx = all.findIndex(p => p.id === id);
+    if(idx > -1) all[idx] = { ...all[idx], ...fields };
+    localSaveAll(all);
+  }
+}
+
+async function deletePedido(id){
+  if(useCloud){
+    const { error } = await sb.from(TABLE).delete().eq("id", id);
+    if(error) throw error;
+  }else{
+    localSaveAll(localGetAll().filter(p => p.id !== id));
   }
 }
 
@@ -570,8 +597,75 @@ async function loadAdmin(){
   const body = document.getElementById("adminBody");
   body.innerHTML = all.map((p,i)=>{
     const fecha = p.created_at ? new Date(p.created_at).toLocaleDateString("es-PE") : "-";
-    return `<tr><td>${i+1}</td><td>${p.nombre_real || "-"}</td><td>${p.nombre}</td><td>${p.talla}</td><td>${p.numero}</td><td>${fecha}</td></tr>`;
+    const tallaOptions = TALLAS.map(t=>`<option value="${t}" ${t===p.talla?"selected":""}>${t}</option>`).join("");
+    return `<tr data-id="${p.id}">
+      <td>${i+1}</td>
+      <td class="cell-nombrereal">${p.nombre_real || "-"}</td>
+      <td class="cell-nombre">${p.nombre}</td>
+      <td><select class="talla-select" style="background:rgba(0,0,0,.3); color:#f2efe6; border:1px solid rgba(255,255,255,.16); border-radius:6px; padding:4px;">${tallaOptions}</select></td>
+      <td class="cell-numero">${p.numero}</td>
+      <td>${fecha}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn-sm edit-btn" style="padding:5px 9px; font-size:12px;">✎</button>
+        <button class="btn-sm del-btn" style="padding:5px 9px; font-size:12px; color:#e2837c;">🗑</button>
+      </td>
+    </tr>`;
   }).join("");
+
+  body.querySelectorAll(".talla-select").forEach(sel=>{
+    sel.addEventListener("change", async ()=>{
+      const id = sel.closest("tr").dataset.id;
+      try{ await updatePedido(isNaN(id)?id:Number(id), { talla: sel.value }); }
+      catch(err){ alert("No se pudo guardar la talla."); console.error(err); }
+    });
+  });
+
+  body.querySelectorAll(".edit-btn").forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      const tr = btn.closest("tr");
+      const id = tr.dataset.id;
+      const nombreRealCell = tr.querySelector(".cell-nombrereal");
+      const nombreCell = tr.querySelector(".cell-nombre");
+      const numeroCell = tr.querySelector(".cell-numero");
+
+      const nuevoNombreReal = prompt("Nombre completo (quién pidió):", nombreRealCell.textContent.trim());
+      if(nuevoNombreReal === null) return;
+      const nuevoNombre = prompt("Nombre para la camiseta:", nombreCell.textContent.trim());
+      if(nuevoNombre === null) return;
+      const nuevoNumero = prompt("Número:", numeroCell.textContent.trim());
+      if(nuevoNumero === null) return;
+
+      try{
+        await updatePedido(isNaN(id)?id:Number(id), {
+          nombre_real: nuevoNombreReal.trim(),
+          nombre: nuevoNombre.trim(),
+          numero: Number(nuevoNumero)
+        });
+        loadAdmin();
+      }catch(err){
+        alert("No se pudo guardar los cambios.");
+        console.error(err);
+      }
+    });
+  });
+
+  body.querySelectorAll(".del-btn").forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      const tr = btn.closest("tr");
+      const id = tr.dataset.id;
+      const nombre = tr.querySelector(".cell-nombrereal").textContent.trim();
+      if(!confirm(`¿Borrar el pedido de ${nombre}?`)) return;
+      try{
+        await deletePedido(isNaN(id)?id:Number(id));
+        loadAdmin();
+      }catch(err){
+        alert("No se pudo borrar.");
+        console.error(err);
+      }
+    });
+  });
+
+  document.getElementById("refreshBtn").onclick = loadAdmin;
 
   document.getElementById("exportBtn").onclick = ()=>{
     const rows = [["Quien pidio","Camiseta","Talla","Numero","Fecha"]];
