@@ -322,14 +322,28 @@
     </div>
 
     <div class="card">
-      <div class="card-label"><span class="num">3</span>Talla</div>
+      <div class="card-label"><span class="num">3</span>Hombre o mujer</div>
+      <div class="talla-grid" id="generoGrid" style="grid-template-columns:repeat(2,1fr);">
+        <div class="talla-opt">
+          <input type="radio" name="genero" id="genero_H" value="Hombre" checked>
+          <label for="genero_H">Hombre</label>
+        </div>
+        <div class="talla-opt">
+          <input type="radio" name="genero" id="genero_M" value="Mujer">
+          <label for="genero_M">Mujer</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label"><span class="num">4</span>Talla</div>
       <div class="talla-grid" id="tallaGrid">
         <!-- filled by JS -->
       </div>
     </div>
 
     <div class="card">
-      <div class="card-label"><span class="num">4</span>Número para la espalda</div>
+      <div class="card-label"><span class="num">5</span>Número para la espalda</div>
       <input type="number" id="numero" placeholder="Ej. 9" min="0" max="99" required inputmode="numeric">
       <div class="status-line wait" id="numStatus">Escribe un número del 0 al 99</div>
     </div>
@@ -354,8 +368,19 @@
     <button class="btn-sm" id="refreshBtn">↻ Actualizar lista</button>
   </div>
   <table>
+    <thead><tr><th colspan="8" style="font-family:'Barlow Condensed',sans-serif; font-size:20px; text-transform:uppercase; color:var(--gold-soft); padding-top:16px;">👨 Hombres (<span id="countHombres">0</span>)</th></tr></thead>
+  </table>
+  <table>
     <thead><tr><th>#</th><th>Quién pidió</th><th>Camiseta</th><th>Talla</th><th>N°</th><th>Pago</th><th>Fecha</th><th></th></tr></thead>
-    <tbody id="adminBody"></tbody>
+    <tbody id="adminBodyHombres"></tbody>
+  </table>
+
+  <table>
+    <thead><tr><th colspan="8" style="font-family:'Barlow Condensed',sans-serif; font-size:20px; text-transform:uppercase; color:var(--gold-soft); padding-top:16px;">👩 Mujeres (<span id="countMujeres">0</span>)</th></tr></thead>
+  </table>
+  <table>
+    <thead><tr><th>#</th><th>Quién pidió</th><th>Camiseta</th><th>Talla</th><th>N°</th><th>Pago</th><th>Fecha</th><th></th></tr></thead>
+    <tbody id="adminBodyMujeres"></tbody>
   </table>
 </div>
 
@@ -566,7 +591,8 @@ document.getElementById("surveyForm").addEventListener("submit", async (e)=>{
   submitBtn.disabled = true;
   submitBtn.textContent = "Enviando...";
   try{
-    await insertPedido({ nombre_real: nombreReal, nombre, talla: talla.value, numero: Number(numero) });
+    const genero = document.querySelector('input[name="genero"]:checked').value;
+    await insertPedido({ nombre_real: nombreReal, nombre, talla: talla.value, numero: Number(numero), genero });
     document.getElementById("publicView").querySelectorAll(".hero,.preview-wrap,.sheet").forEach(el=>el.style.display="none");
     document.getElementById("confirmText").textContent =
       `${nombreReal} — camiseta "${nombre}", talla ${talla.value}, número ${numero}. Ya quedó registrado tu pedido.`;
@@ -606,8 +632,7 @@ async function loadAdmin(){
     <div class="kpi"><b>S/ ${esperado.toFixed(0)}</b>Total esperado (${all.length}×S/${PRECIO})</div>
   `;
 
-  const body = document.getElementById("adminBody");
-  body.innerHTML = all.map((p,i)=>{
+  function renderRow(p,i){
     const fecha = p.created_at ? new Date(p.created_at).toLocaleDateString("es-PE") : "-";
     const tallaOptions = TALLAS.map(t=>`<option value="${t}" ${t===p.talla?"selected":""}>${t}</option>`).join("");
     const monto = Number(p.monto_pagado)||0;
@@ -630,9 +655,16 @@ async function loadAdmin(){
         <button class="btn-sm del-btn" style="padding:5px 9px; font-size:12px; color:#e2837c;">🗑</button>
       </td>
     </tr>`;
-  }).join("");
+  }
 
-  body.querySelectorAll(".talla-select").forEach(sel=>{
+  const hombres = all.filter(p => (p.genero || "Hombre") === "Hombre");
+  const mujeres = all.filter(p => p.genero === "Mujer");
+  document.getElementById("adminBodyHombres").innerHTML = hombres.map(renderRow).join("");
+  document.getElementById("adminBodyMujeres").innerHTML = mujeres.map(renderRow).join("");
+  document.getElementById("countHombres").textContent = hombres.length;
+  document.getElementById("countMujeres").textContent = mujeres.length;
+
+  document.querySelectorAll(".talla-select").forEach(sel=>{
     sel.addEventListener("change", async ()=>{
       const id = sel.closest("tr").dataset.id;
       try{ await updatePedido(isNaN(id)?id:Number(id), { talla: sel.value }); }
@@ -640,13 +672,14 @@ async function loadAdmin(){
     });
   });
 
-  body.querySelectorAll(".edit-btn").forEach(btn=>{
+  document.querySelectorAll(".edit-btn").forEach(btn=>{
     btn.addEventListener("click", async ()=>{
       const tr = btn.closest("tr");
       const id = tr.dataset.id;
       const nombreRealCell = tr.querySelector(".cell-nombrereal");
       const nombreCell = tr.querySelector(".cell-nombre");
       const numeroCell = tr.querySelector(".cell-numero");
+      const generoActual = tr.closest("tbody").id === "adminBodyMujeres" ? "Mujer" : "Hombre";
 
       const nuevoNombreReal = prompt("Nombre completo (quién pidió):", nombreRealCell.textContent.trim());
       if(nuevoNombreReal === null) return;
@@ -654,12 +687,16 @@ async function loadAdmin(){
       if(nuevoNombre === null) return;
       const nuevoNumero = prompt("Número:", numeroCell.textContent.trim());
       if(nuevoNumero === null) return;
+      const nuevoGenero = prompt('Género: escribe "H" para Hombre o "M" para Mujer', generoActual === "Mujer" ? "M" : "H");
+      if(nuevoGenero === null) return;
+      const genero = nuevoGenero.trim().toUpperCase().startsWith("M") ? "Mujer" : "Hombre";
 
       try{
         await updatePedido(isNaN(id)?id:Number(id), {
           nombre_real: nuevoNombreReal.trim(),
           nombre: nuevoNombre.trim(),
-          numero: Number(nuevoNumero)
+          numero: Number(nuevoNumero),
+          genero
         });
         loadAdmin();
       }catch(err){
@@ -669,7 +706,7 @@ async function loadAdmin(){
     });
   });
 
-  body.querySelectorAll(".del-btn").forEach(btn=>{
+  document.querySelectorAll(".del-btn").forEach(btn=>{
     btn.addEventListener("click", async ()=>{
       const tr = btn.closest("tr");
       const id = tr.dataset.id;
@@ -685,7 +722,7 @@ async function loadAdmin(){
     });
   });
 
-  body.querySelectorAll(".pago-btn").forEach(btn=>{
+  document.querySelectorAll(".pago-btn").forEach(btn=>{
     btn.addEventListener("click", async ()=>{
       const tr = btn.closest("tr");
       const id = tr.dataset.id;
