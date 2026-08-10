@@ -477,6 +477,9 @@ async function deletePedido(id){
 /* ---------- Tallas ---------- */
 const TALLAS = ["S","M","L","XL","XXL","3XL","Niño 4","Niño 6","Niño 8","Niño 10","Niño 12","Niño 14","Niño 16"];
 const PRECIO = 35;
+const PRECIO_XL = 40;
+const TALLAS_XL_A_MAS = ["XL","XXL","3XL"];
+function precioDeTalla(talla){ return TALLAS_XL_A_MAS.includes(talla) ? PRECIO_XL : PRECIO; }
 const tallaGrid = document.getElementById("tallaGrid");
 TALLAS.forEach((t,i)=>{
   const wrap = document.createElement("div");
@@ -631,14 +634,14 @@ async function loadAdmin(){
   kpis.innerHTML = `<div class="kpi"><b>${all.length}</b>Total pedidos</div>` +
     TALLAS.map(t=>`<div class="kpi"><b>${counts[t]}</b>Talla ${t}</div>`).join("");
 
-  const esperado = all.length * PRECIO;
+  const esperado = all.reduce((s,p)=> s + precioDeTalla(p.talla), 0);
   const recaudado = all.reduce((s,p)=> s + (Number(p.monto_pagado)||0), 0);
   const pendiente = esperado - recaudado;
   const kpisPago = document.getElementById("adminKpisPago");
   kpisPago.innerHTML = `
     <div class="kpi" style="border-color:rgba(63,138,94,.5);"><b style="color:#6fce93;">S/ ${recaudado.toFixed(0)}</b>Recaudado</div>
     <div class="kpi" style="border-color:rgba(193,68,60,.5);"><b style="color:#e2837c;">S/ ${pendiente.toFixed(0)}</b>Falta cobrar</div>
-    <div class="kpi"><b>S/ ${esperado.toFixed(0)}</b>Total esperado (${all.length}×S/${PRECIO})</div>
+    <div class="kpi"><b>S/ ${esperado.toFixed(0)}</b>Total esperado (${all.length} camisetas)</div>
   `;
 
   function renderRow(p,i){
@@ -646,9 +649,10 @@ async function loadAdmin(){
     const tallaOptions = TALLAS.map(t=>`<option value="${t}" ${t===p.talla?"selected":""}>${t}</option>`).join("");
     const monto = Number(p.monto_pagado)||0;
     let pagoLabel, pagoColor;
-    if(monto >= PRECIO){ pagoLabel = "✓ Completo"; pagoColor = "#6fce93"; }
-    else if(monto > 0){ pagoLabel = `S/${monto} de ${PRECIO}`; pagoColor = "#e8c76a"; }
-    else{ pagoLabel = `Debe S/${PRECIO}`; pagoColor = "#e2837c"; }
+    const precio = precioDeTalla(p.talla);
+    if(monto >= precio){ pagoLabel = "✓ Completo"; pagoColor = "#6fce93"; }
+    else if(monto > 0){ pagoLabel = `S/${monto} de ${precio}`; pagoColor = "#e8c76a"; }
+    else{ pagoLabel = `Debe S/${precio}`; pagoColor = "#e2837c"; }
     return `<tr data-id="${p.id}">
       <td>${i+1}</td>
       <td class="cell-nombrereal">${p.nombre_real || "-"}</td>
@@ -656,7 +660,7 @@ async function loadAdmin(){
       <td><select class="talla-select" style="background:rgba(0,0,0,.3); color:#f2efe6; border:1px solid rgba(255,255,255,.16); border-radius:6px; padding:4px;">${tallaOptions}</select></td>
       <td class="cell-numero">${p.numero}</td>
       <td>
-        <button class="btn-sm pago-btn" data-monto="${monto}" style="padding:5px 9px; font-size:12px; color:${pagoColor}; white-space:nowrap;">${pagoLabel}</button>
+        <button class="btn-sm pago-btn" data-monto="${monto}" data-precio="${precio}" style="padding:5px 9px; font-size:12px; color:${pagoColor}; white-space:nowrap;">${pagoLabel}</button>
       </td>
       <td>${fecha}</td>
       <td style="white-space:nowrap;">
@@ -677,12 +681,13 @@ async function loadAdmin(){
   const porPersona = {};
   all.forEach(p=>{
     const key = (p.nombre_real || "(sin nombre)").trim();
-    if(!porPersona[key]) porPersona[key] = { cantidad: 0, pagado: 0 };
+    if(!porPersona[key]) porPersona[key] = { cantidad: 0, pagado: 0, total: 0 };
     porPersona[key].cantidad += 1;
     porPersona[key].pagado += Number(p.monto_pagado)||0;
+    porPersona[key].total += precioDeTalla(p.talla);
   });
   const filas = Object.entries(porPersona)
-    .map(([nombre, d]) => ({ nombre, cantidad: d.cantidad, total: d.cantidad*PRECIO, pagado: d.pagado, debe: d.cantidad*PRECIO - d.pagado }))
+    .map(([nombre, d]) => ({ nombre, cantidad: d.cantidad, total: d.total, pagado: d.pagado, debe: d.total - d.pagado }))
     .sort((a,b) => b.debe - a.debe);
 
   document.getElementById("adminBodyDeudas").innerHTML = filas.map(f=>{
@@ -764,8 +769,9 @@ async function loadAdmin(){
       const id = tr.dataset.id;
       const nombre = tr.querySelector(".cell-nombrereal").textContent.trim();
       const actual = Number(btn.dataset.monto)||0;
+      const precioItem = Number(btn.dataset.precio)||PRECIO;
       const resp = prompt(
-        `Pago de ${nombre} (precio S/${PRECIO})\n\n` +
+        `Pago de ${nombre} (precio S/${precioItem})\n\n` +
         `Escribe:\n` +
         `- "completo" si ya pagó todo\n` +
         `- "mitad" si pagó la mitad\n` +
@@ -776,8 +782,8 @@ async function loadAdmin(){
       if(resp === null) return;
       let monto;
       const val = resp.trim().toLowerCase();
-      if(val === "completo") monto = PRECIO;
-      else if(val === "mitad") monto = PRECIO/2;
+      if(val === "completo") monto = precioItem;
+      else if(val === "mitad") monto = precioItem/2;
       else if(val === "") return;
       else{
         monto = Number(val);
@@ -799,7 +805,7 @@ async function loadAdmin(){
     const rows = [["Quien pidio","Camiseta","Talla","Numero","Pagado","Debe","Fecha"]];
     all.forEach(p=>{
       const monto = Number(p.monto_pagado)||0;
-      rows.push([p.nombre_real || "", p.nombre, p.talla, p.numero, monto, Math.max(PRECIO-monto,0), p.created_at || ""]);
+      rows.push([p.nombre_real || "", p.nombre, p.talla, p.numero, monto, Math.max(precioDeTalla(p.talla)-monto,0), p.created_at || ""]);
     });
     const csv = rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");
     const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
