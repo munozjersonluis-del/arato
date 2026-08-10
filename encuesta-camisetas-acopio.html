@@ -367,6 +367,15 @@
     <button class="btn-sm" id="exportBtn">⬇ Exportar CSV</button>
     <button class="btn-sm" id="refreshBtn">↻ Actualizar lista</button>
   </div>
+
+  <table>
+    <thead><tr><th colspan="6" style="font-family:'Barlow Condensed',sans-serif; font-size:20px; text-transform:uppercase; color:var(--gold-soft); padding-top:16px;">💰 Deudas por persona</th></tr></thead>
+  </table>
+  <table>
+    <thead><tr><th>Responsable</th><th>Camisetas</th><th>Total a pagar</th><th>Pagado</th><th>Debe</th><th></th></tr></thead>
+    <tbody id="adminBodyDeudas"></tbody>
+  </table>
+
   <table>
     <thead><tr><th colspan="8" style="font-family:'Barlow Condensed',sans-serif; font-size:20px; text-transform:uppercase; color:var(--gold-soft); padding-top:16px;">👨 Hombres (<span id="countHombres">0</span>)</th></tr></thead>
   </table>
@@ -663,6 +672,33 @@ async function loadAdmin(){
   document.getElementById("adminBodyMujeres").innerHTML = mujeres.map(renderRow).join("");
   document.getElementById("countHombres").textContent = hombres.length;
   document.getElementById("countMujeres").textContent = mujeres.length;
+
+  // Deudas por persona (agrupado por nombre_real)
+  const porPersona = {};
+  all.forEach(p=>{
+    const key = (p.nombre_real || "(sin nombre)").trim();
+    if(!porPersona[key]) porPersona[key] = { cantidad: 0, pagado: 0 };
+    porPersona[key].cantidad += 1;
+    porPersona[key].pagado += Number(p.monto_pagado)||0;
+  });
+  const filas = Object.entries(porPersona)
+    .map(([nombre, d]) => ({ nombre, cantidad: d.cantidad, total: d.cantidad*PRECIO, pagado: d.pagado, debe: d.cantidad*PRECIO - d.pagado }))
+    .sort((a,b) => b.debe - a.debe);
+
+  document.getElementById("adminBodyDeudas").innerHTML = filas.map(f=>{
+    let color;
+    if(f.debe <= 0) color = "#6fce93";
+    else if(f.pagado > 0) color = "#e8c76a";
+    else color = "#e2837c";
+    return `<tr>
+      <td>${f.nombre}</td>
+      <td>${f.cantidad}</td>
+      <td>S/${f.total}</td>
+      <td>S/${f.pagado}</td>
+      <td style="color:${color}; font-weight:600;">${f.debe > 0 ? `S/${f.debe.toFixed(2).replace(/\.00$/,"")}` : "✓ Pagado"}</td>
+      <td></td>
+    </tr>`;
+  }).join("");
 
   document.querySelectorAll(".talla-select").forEach(sel=>{
     sel.addEventListener("change", async ()=>{
