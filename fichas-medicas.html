@@ -1163,7 +1163,7 @@ function SignaturePad({ label, value, onChange }) {
 }
 
 function App(){
-  const _SK="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdmN2ZmZ5eW5wbmlnaHp3eGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MjgyNDcsImV4cCI6MjA5MzMwNDI0N30.fFufNEdRvAzl6O6BqtTbx83O3Eg8Wd7gACNJDGQKga4";
+  const _SK="sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn";
   const _SU="https://rqvcvffyynpnighzwxju.supabase.co";
 
   // ── CARGAR desde Supabase al iniciar ──
@@ -1241,7 +1241,7 @@ function App(){
   const upd=(field,val)=>setRecords(rs=>rs.map(r=>r.id===activeId?{...r,[field]:val}:r));
   const open=id=>{setActiveId(id);setFormTab(0);setScreen("form");};
   const addNew=()=>{const r=NR();setRecords(rs=>[...rs,r]);setActiveId(r.id);setFormTab(0);setScreen("form");};
-  const SK="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdmN2ZmZ5eW5wbmlnaHp3eGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MjgyNDcsImV4cCI6MjA5MzMwNDI0N30.fFufNEdRvAzl6O6BqtTbx83O3Eg8Wd7gACNJDGQKga4";
+  const SK="sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn";
   const SU="https://rqvcvffyynpnighzwxju.supabase.co";
   const sbHeaders={"apikey":SK,"Authorization":"Bearer "+SK,"Content-Type":"application/json","Prefer":"return=minimal"};
 
@@ -1422,7 +1422,7 @@ function App(){
             <h2 style={{marginBottom:8}}>Sincronizar</h2>
             <p style={{fontSize:13,color:"#666",marginBottom:16}}>Guarda y comparte tus fichas entre dispositivos.</p>
             <button className="sync-btn" style={{width:"100%",marginBottom:8,background:"#16A34A",color:"#fff"}} onClick={()=>{
-              const SK="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdmN2ZmZ5eW5wbmlnaHp3eGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MjgyNDcsImV4cCI6MjA5MzMwNDI0N30.fFufNEdRvAzl6O6BqtTbx83O3Eg8Wd7gACNJDGQKga4";
+              const SK="sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn";
               const SU="https://rqvcvffyynpnighzwxju.supabase.co";
               const recs=records;
               if(!recs.length){showToast("Sin fichas");return;}
@@ -1445,7 +1445,7 @@ function App(){
               });
             }}>Guardar en Nube ({records.length} fichas)</button>
             <button className="sync-btn" style={{width:"100%",marginBottom:8,background:"#2563EB",color:"#fff"}} onClick={()=>{
-              const SK="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdmN2ZmZ5eW5wbmlnaHp3eGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MjgyNDcsImV4cCI6MjA5MzMwNDI0N30.fFufNEdRvAzl6O6BqtTbx83O3Eg8Wd7gACNJDGQKga4";
+              const SK="sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn";
               const SU="https://rqvcvffyynpnighzwxju.supabase.co";
               fetch(SU+"/rest/v1/fichas_medicas?select=*&order=created_at.asc",{headers:{"apikey":SK,"Authorization":"Bearer "+SK}})
               .then(r=>r.json()).then(rows=>{
