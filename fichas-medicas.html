@@ -1245,9 +1245,11 @@ function App(){
   const SU="https://rqvcvffyynpnighzwxju.supabase.co";
   const sbHeaders={"apikey":SK,"Authorization":"Bearer "+SK,"Content-Type":"application/json","Prefer":"return=minimal"};
 
+  const APPS_SCRIPT_URL="https://script.google.com/macros/s/AKfycbzBep3a3T2_ozIjkkstHWtS2UnWkxbcDJ-AEARoT6Nu0sFb5FDUFrGvgt77-1sczXrjYw/exec";
+
   const syncSheets= async (updatedRecords)=>{
     try{
-      await fetch('/api/sheets-fichas',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({records:updatedRecords})});
+      await fetch(APPS_SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({records:updatedRecords})});
     }catch(e){console.warn('Sheets sync error:',e);}
   };
 
