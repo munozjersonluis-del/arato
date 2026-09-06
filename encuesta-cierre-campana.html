@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Cierre de Campaña — Acopio Arato 01</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --plum:#3a0d2b;
+    --plum-deep:#210617;
+    --wine:#5c1436;
+    --gold:#e8b64a;
+    --gold-soft:#f5d488;
+    --cream:#f6ede2;
+    --red:#c1443c;
+    --green:#3f8a5e;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1000px 500px at 15% -10%, rgba(232,182,74,0.14), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(92,20,54,0.35), transparent 55%),
+      var(--plum-deep);
+    color:var(--cream);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    padding-bottom:60px;
+  }
+  a{color:inherit;}
+
+  .hero{ padding:30px 18px 10px; text-align:center; }
+  .eyebrow{
+    font-family:'Oswald',sans-serif;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    font-size:12px;
+    color:var(--gold-soft);
+    font-weight:600;
+    margin-bottom:8px;
+  }
+  .hero h1{
+    font-family:'Barlow Condensed',sans-serif;
+    font-weight:800;
+    font-size:clamp(30px,8vw,46px);
+    line-height:1.0;
+    margin:0 0 10px;
+    text-transform:uppercase;
+  }
+  .hero h1 span{color:var(--gold-soft);}
+  .hero p.sub{
+    color:#e6cfe0;
+    font-size:14.5px;
+    max-width:420px;
+    margin:0 auto;
+    line-height:1.5;
+  }
+
+  .confetti-row{
+    display:flex; justify-content:center; gap:10px; margin:18px 0 4px;
+    font-size:22px;
+  }
+
+  .sheet{ max-width:440px; margin:24px auto 0; padding:0 18px; }
+  .card{
+    background:rgba(255,255,255,.045);
+    border:1px solid rgba(232,182,74,.22);
+    border-radius:16px;
+    padding:20px 18px 22px;
+    margin-bottom:16px;
+  }
+  .card-label{
+    font-family:'Oswald',sans-serif;
+    font-size:12px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--gold-soft);
+    font-weight:600;
+    margin-bottom:10px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .card-label .num{
+    background:var(--gold);
+    color:var(--plum-deep);
+    width:20px;height:20px;
+    border-radius:50%;
+    display:inline-flex;
+    align-items:center;justify-content:center;
+    font-size:11px;
+    font-family:'Inter',sans-serif;
+    font-weight:700;
+  }
+  .card-hint{ font-size:12.5px; color:#c9a8bd; margin-top:8px; }
+
+  input[type=text]{
+    width:100%;
+    background:rgba(0,0,0,.28);
+    border:1px solid rgba(255,255,255,.14);
+    border-radius:10px;
+    padding:13px 14px;
+    color:var(--cream);
+    font-size:16px;
+    font-family:'Inter',sans-serif;
+    outline:none;
+  }
+  input::placeholder{color:#8a7086;}
+  input:focus{border-color:var(--gold);}
+
+  .invite-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:13px 4px;
+    border-bottom:1px solid rgba(255,255,255,.08);
+  }
+  .invite-row:last-child{border-bottom:none;}
+  .invite-label{
+    font-family:'Barlow Condensed',sans-serif;
+    font-weight:600;
+    font-size:17px;
+    text-transform:uppercase;
+    letter-spacing:.02em;
+  }
+  .toggle{
+    position:relative;
+    width:50px; height:28px;
+    border-radius:999px;
+    background:rgba(255,255,255,.14);
+    border:1px solid rgba(255,255,255,.18);
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .toggle input{ position:absolute; opacity:0; inset:0; margin:0; cursor:pointer; }
+  .toggle .knob{
+    position:absolute; top:2px; left:2px;
+    width:22px; height:22px; border-radius:50%;
+    background:#8a7086;
+    transition:transform .18s, background .18s;
+  }
+  .toggle input:checked + .knob{
+    background:var(--gold);
+    transform:translateX(22px);
+  }
+
+  .stepper{
+    display:flex; align-items:center; gap:14px;
+  }
+  .stepper button{
+    width:32px; height:32px; border-radius:8px;
+    border:1px solid rgba(255,255,255,.18);
+    background:rgba(0,0,0,.25);
+    color:var(--cream);
+    font-size:18px;
+    font-family:'Inter',sans-serif;
+    cursor:pointer;
+  }
+  .stepper button:active{ background:rgba(232,182,74,.25); }
+  .stepper .count{
+    font-family:'Oswald',sans-serif;
+    font-size:20px;
+    min-width:22px;
+    text-align:center;
+  }
+
+  .total-badge{
+    max-width:440px; margin:0 auto 20px; padding:0 18px;
+  }
+  .total-badge-inner{
+    background:linear-gradient(135deg,var(--gold),var(--gold-soft));
+    color:var(--plum-deep);
+    border-radius:14px;
+    padding:14px 18px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .total-badge-inner .label{
+    font-family:'Oswald',sans-serif;
+    font-size:12px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    font-weight:600;
+  }
+  .total-badge-inner .value{
+    font-family:'Barlow Condensed',sans-serif;
+    font-size:30px;
+    font-weight:800;
+  }
+
+  .submit-btn{
+    width:100%;
+    background:linear-gradient(135deg,var(--gold),var(--gold-soft));
+    color:var(--plum-deep);
+    border:none;
+    border-radius:12px;
+    padding:16px;
+    font-family:'Oswald',sans-serif;
+    font-weight:700;
+    font-size:16px;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    cursor:pointer;
+    margin-top:4px;
+  }
+  .submit-btn:active{transform:scale(.98);}
+  .submit-btn:disabled{opacity:.5; cursor:not-allowed;}
+
+  .foot-note{
+    text-align:center; font-size:12px; color:#8a7086;
+    margin-top:18px; padding:0 30px; line-height:1.5;
+  }
+
+  .confirm{
+    max-width:420px; margin:70px auto; padding:0 24px; text-align:center; display:none;
+  }
+  .confirm .check{
+    width:64px;height:64px; background:var(--gold); border-radius:50%;
+    display:flex;align-items:center;justify-content:center; margin:0 auto 18px;
+    font-size:30px; color:var(--plum-deep);
+  }
+  .confirm h2{
+    font-family:'Barlow Condensed',sans-serif; font-size:28px; text-transform:uppercase; margin:0 0 8px;
+  }
+  .confirm p{color:#e6cfe0; font-size:14.5px; line-height:1.5;}
+
+  .admin{max-width:640px; margin:20px auto; padding:0 16px;}
+  .admin h2{font-family:'Barlow Condensed',sans-serif; font-size:26px; text-transform:uppercase;}
+  .admin-kpis{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;}
+  .kpi{
+    background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1);
+    border-radius:10px; padding:10px 14px; font-size:13px;
+  }
+  .kpi b{display:block; font-family:'Oswald',sans-serif; font-size:20px; color:var(--gold-soft);}
+  table{width:100%; border-collapse:collapse; font-size:13px; margin-top:10px;}
+  th,td{text-align:left; padding:9px 8px; border-bottom:1px solid rgba(255,255,255,.08);}
+  th{color:var(--gold-soft); font-family:'Oswald',sans-serif; font-weight:600; letter-spacing:.03em; font-size:12px; text-transform:uppercase;}
+  .btn-sm{
+    background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.16);
+    color:var(--cream); padding:8px 14px; border-radius:8px; font-size:13px;
+    cursor:pointer; font-family:'Inter',sans-serif;
+  }
+</style>
+</head>
+<body>
+
+<div id="publicView">
+  <div class="hero">
+    <div class="eyebrow">Fundo Arato · Área de Acopio</div>
+    <h1>Cierre de<br><span>Campaña</span></h1>
+    <p class="sub">Confírmanos tu asistencia y cuéntanos si vienes con familia, para organizar bien el evento.</p>
+    <div class="confetti-row">🎉 🥂 🎊</div>
+  </div>
+
+  <form class="sheet" id="surveyForm">
+    <div class="card">
+      <div class="card-label"><span class="num">1</span>Tu nombre completo</div>
+      <input type="text" id="responsable" placeholder="Ej. Yerson Muñoz" required autocomplete="name">
+    </div>
+
+    <div class="card">
+      <div class="card-label"><span class="num">2</span>¿Cuántos invitados llevas?</div>
+
+      <div class="invite-row">
+        <span class="invite-label">Invitados adicionales</span>
+        <div class="stepper">
+          <button type="button" id="otrosMenos">−</button>
+          <span class="count" id="otrosCount">0</span>
+          <button type="button" id="otrosMas">+</button>
+        </div>
+      </div>
+
+      <div class="card-hint">Si vas solo, deja el número en cero.</div>
+    </div>
+
+    <div class="card" id="otrosDetalleCard" style="display:none;">
+      <div class="card-label"><span class="num">3</span>¿Quiénes son? (opcional)</div>
+      <input type="text" id="otrosDetalle" placeholder="Ej. esposa, 2 hijos, mi mamá...">
+    </div>
+
+    <div class="total-badge">
+      <div class="total-badge-inner">
+        <span class="label">Total de asistentes</span>
+        <span class="value" id="totalCount">1</span>
+      </div>
+    </div>
+
+    <button type="submit" class="submit-btn" id="submitBtn">Confirmar asistencia</button>
+    <p class="foot-note">Tus datos se usan solo para organizar el evento de cierre de campaña.</p>
+  </form>
+
+  <div class="confirm" id="confirmView">
+    <div class="check">✓</div>
+    <h2>¡Nos vemos ahí!</h2>
+    <p id="confirmText">Tu asistencia quedó confirmada.</p>
+  </div>
+</div>
+
+<div class="admin" id="adminView" style="display:none;">
+  <h2>Cierre de Campaña — Lista</h2>
+  <div class="admin-kpis" id="adminKpis"></div>
+  <div style="display:flex; gap:8px; margin-bottom:10px;">
+    <button class="btn-sm" id="exportBtn">⬇ Exportar CSV</button>
+    <button class="btn-sm" id="refreshBtn">↻ Actualizar lista</button>
+  </div>
+  <table>
+    <thead><tr><th>#</th><th>Responsable</th><th>Invitados</th><th>Detalle</th><th>Total</th><th></th></tr></thead>
+    <tbody id="adminBody"></tbody>
+  </table>
+</div>
+
+<script>
+const SUPABASE_URL = "https://rqvcvffyynpnighzwxju.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn";
+const TABLE = "evento_cierre_campana";
+
+let sb = null;
+try{ sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }catch(e){ console.warn("Supabase no disponible"); }
+
+async function getAllInscritos(){
+  const { data, error } = await sb.from(TABLE).select("*").order("created_at",{ascending:true});
+  if(error){ console.error(error); return []; }
+  return data;
+}
+async function insertInscrito(row){
+  const { error } = await sb.from(TABLE).insert(row);
+  if(error) throw error;
+}
+async function updateInscrito(id, fields){
+  const { error } = await sb.from(TABLE).update(fields).eq("id", id);
+  if(error) throw error;
+}
+async function deleteInscrito(id){
+  const { error } = await sb.from(TABLE).delete().eq("id", id);
+  if(error) throw error;
+}
+
+/* ---------- Form logic ---------- */
+const responsableInput = document.getElementById("responsable");
+const otrosCount = document.getElementById("otrosCount");
+const otrosDetalleCard = document.getElementById("otrosDetalleCard");
+const otrosDetalleInput = document.getElementById("otrosDetalle");
+const totalCount = document.getElementById("totalCount");
+const submitBtn = document.getElementById("submitBtn");
+let otros = 0;
+
+function updateTotal(){
+  totalCount.textContent = 1 + otros;
+  otrosDetalleCard.style.display = otros > 0 ? "block" : "none";
+}
+document.getElementById("otrosMas").addEventListener("click", ()=>{ otros = Math.min(otros+1, 15); otrosCount.textContent = otros; updateTotal(); });
+document.getElementById("otrosMenos").addEventListener("click", ()=>{ otros = Math.max(otros-1, 0); otrosCount.textContent = otros; updateTotal(); });
+
+document.getElementById("surveyForm").addEventListener("submit", async (e)=>{
+  e.preventDefault();
+  const responsable = responsableInput.value.trim();
+  if(!responsable){ alert("Escribe tu nombre completo."); return; }
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Enviando...";
+  try{
+    await insertInscrito({
+      responsable,
+      otros,
+      otros_detalle: otrosDetalleInput.value.trim()
+    });
+    document.getElementById("publicView").querySelectorAll(".hero,.confetti-row,.sheet").forEach(el=>el.style.display="none");
+    document.getElementById("confirmText").textContent =
+      `${responsable}, quedaste registrado con ${totalCount.textContent} asistente(s) en total.`;
+    document.getElementById("confirmView").style.display = "block";
+  }catch(err){
+    console.error(err);
+    alert("Hubo un problema al guardar. Intenta de nuevo.");
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Confirmar asistencia";
+  }
+});
+
+/* ---------- Admin view (?admin=1) ---------- */
+if(new URLSearchParams(location.search).get("admin") === "1"){
+  document.getElementById("publicView").style.display = "none";
+  document.getElementById("adminView").style.display = "block";
+  loadAdmin();
+}
+
+async function loadAdmin(){
+  const all = await getAllInscritos();
+  const totalPersonas = all.reduce((s,p)=> s + 1 + (Number(p.otros)||0), 0);
+  const kpis = document.getElementById("adminKpis");
+  kpis.innerHTML = `
+    <div class="kpi"><b>${all.length}</b>Responsables</div>
+    <div class="kpi"><b>${totalPersonas}</b>Total asistentes</div>
+    <div class="kpi"><b>${all.reduce((s,p)=>s+(Number(p.otros)||0),0)}</b>Invitados adicionales</div>
+  `;
+
+  const body = document.getElementById("adminBody");
+  body.innerHTML = all.map((p,i)=>{
+    const total = 1 + (Number(p.otros)||0);
+    return `<tr data-id="${p.id}">
+      <td>${i+1}</td>
+      <td>${p.responsable}</td>
+      <td>${p.otros||0}</td>
+      <td>${p.otros_detalle||"-"}</td>
+      <td><b>${total}</b></td>
+      <td style="white-space:nowrap;">
+        <button class="btn-sm edit-btn" style="padding:5px 9px; font-size:12px;">✎</button>
+        <button class="btn-sm del-btn" style="padding:5px 9px; font-size:12px; color:#e2837c;">🗑</button>
+      </td>
+    </tr>`;
+  }).join("");
+
+  document.querySelectorAll(".edit-btn").forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      const tr = btn.closest("tr");
+      const id = tr.dataset.id;
+      const row = all.find(p=>String(p.id)===String(id));
+      const nuevoResp = prompt("Nombre del responsable:", row.responsable);
+      if(nuevoResp===null) return;
+      const nuevoOtros = prompt("Cantidad de invitados adicionales:", row.otros||0);
+      if(nuevoOtros===null) return;
+      const nuevoOtrosDetalle = prompt("¿Quiénes son? (opcional):", row.otros_detalle||"");
+      try{
+        await updateInscrito(isNaN(id)?id:Number(id), {
+          responsable: nuevoResp.trim(),
+          otros: Number(nuevoOtros)||0,
+          otros_detalle: (nuevoOtrosDetalle||"").trim()
+        });
+        loadAdmin();
+      }catch(err){ alert("No se pudo guardar."); console.error(err); }
+    });
+  });
+
+  document.querySelectorAll(".del-btn").forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      const tr = btn.closest("tr");
+      const id = tr.dataset.id;
+      const row = all.find(p=>String(p.id)===String(id));
+      if(!confirm(`¿Borrar el registro de ${row.responsable}?`)) return;
+      try{ await deleteInscrito(isNaN(id)?id:Number(id)); loadAdmin(); }
+      catch(err){ alert("No se pudo borrar."); console.error(err); }
+    });
+  });
+
+  document.getElementById("refreshBtn").onclick = loadAdmin;
+  document.getElementById("exportBtn").onclick = ()=>{
+    const rows = [["Responsable","Invitados adicionales","Detalle","Total"]];
+    all.forEach(p=>{
+      const total = 1 + (Number(p.otros)||0);
+      rows.push([p.responsable, p.otros||0, p.otros_detalle||"", total]);
+    });
+    const csv = rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "cierre_campana_acopio.csv";
+    a.click();
+  };
+}
+
+updateTotal();
+</script>
+</body>
+</html>
