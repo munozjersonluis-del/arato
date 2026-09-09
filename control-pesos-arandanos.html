@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Control de Pesos — Arándanos</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --bg:#EEEAE1;
+    --surface:#FFFFFF;
+    --ink:#26221E;
+    --muted:#6B655C;
+    --blueberry:#3F3A63;
+    --blueberry-dark:#2A2645;
+    --leaf:#5B7A56;
+    --rust:#A8402F;
+    --line:#DDD7CB;
+    --line-strong:#C7BFAF;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-variant-numeric:tabular-nums;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .app{max-width:480px;margin:0 auto;min-height:100vh;background:var(--bg);padding-bottom:40px;}
+  header{
+    background:var(--blueberry);
+    color:#F3F1EA;
+    padding:22px 20px 18px;
+    border-bottom:4px solid var(--blueberry-dark);
+  }
+  header h1{
+    margin:0;
+    font-size:1.3rem;
+    font-weight:700;
+    letter-spacing:0.01em;
+  }
+  header p{margin:4px 0 0;font-size:0.85rem;color:#C9C4E0;}
+  nav{
+    display:flex;
+    background:var(--surface);
+    border-bottom:1px solid var(--line);
+    position:sticky;top:0;z-index:10;
+  }
+  nav button{
+    flex:1;
+    padding:13px 4px;
+    background:none;
+    border:none;
+    font-size:0.85rem;
+    font-weight:600;
+    color:var(--muted);
+    border-bottom:3px solid transparent;
+  }
+  nav button.active{color:var(--blueberry);border-bottom-color:var(--blueberry);}
+  main{padding:18px 16px;}
+  section{display:none;}
+  section.active{display:block;}
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:16px;
+    margin-bottom:14px;
+  }
+  .card h2{margin:0 0 12px;font-size:1rem;font-weight:700;}
+  label{display:block;font-size:0.8rem;color:var(--muted);margin:0 0 4px;font-weight:600;}
+  select, input[type="number"], input[type="text"]{
+    width:100%;
+    padding:11px 10px;
+    border:1px solid var(--line-strong);
+    border-radius:7px;
+    font-size:1rem;
+    background:#FBFAF7;
+    color:var(--ink);
+    margin-bottom:12px;
+  }
+  select:focus, input:focus{outline:2px solid var(--blueberry);outline-offset:1px;}
+  .row{display:flex;gap:10px;}
+  .row > div{flex:1;}
+  .calc{
+    background:#F4F2EC;
+    border:1px dashed var(--line-strong);
+    border-radius:8px;
+    padding:12px 14px;
+    margin:4px 0 14px;
+  }
+  .calc div{display:flex;justify-content:space-between;font-size:0.88rem;padding:2px 0;}
+  .calc .net{font-weight:700;font-size:1.05rem;color:var(--blueberry);border-top:1px solid var(--line-strong);margin-top:6px;padding-top:8px;}
+  button.primary{
+    width:100%;
+    padding:14px;
+    background:var(--blueberry);
+    color:#fff;
+    border:none;
+    border-radius:8px;
+    font-size:1rem;
+    font-weight:700;
+    cursor:pointer;
+  }
+  button.primary:active{background:var(--blueberry-dark);}
+  button.ghost{
+    width:100%;
+    padding:11px;
+    background:none;
+    border:1px solid var(--line-strong);
+    border-radius:8px;
+    color:var(--blueberry);
+    font-weight:600;
+    font-size:0.9rem;
+  }
+  .summary{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+  .chip{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:8px 12px;
+    font-size:0.82rem;
+    flex:1;
+    min-width:88px;
+  }
+  .chip b{display:block;font-size:1.05rem;color:var(--blueberry);}
+  .record{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:9px;
+    padding:12px 14px;
+    margin-bottom:10px;
+  }
+  .record .top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
+  .record .grupo-tag{
+    background:var(--leaf);
+    color:#fff;
+    font-size:0.75rem;
+    font-weight:700;
+    padding:2px 9px;
+    border-radius:12px;
+  }
+  .record .date{font-size:0.72rem;color:var(--muted);}
+  .record .meta{font-size:0.82rem;color:var(--muted);margin-bottom:4px;}
+  .record .net{font-weight:700;color:var(--blueberry);font-size:1rem;}
+  .record .del{
+    background:none;border:none;color:var(--rust);font-size:0.78rem;font-weight:600;
+    padding:6px 0 0;cursor:pointer;
+  }
+  .empty{color:var(--muted);font-size:0.88rem;text-align:center;padding:30px 10px;}
+  .tara-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .tara-row span{flex:1;font-size:0.9rem;font-weight:600;}
+  .tara-row input{width:90px;margin:0;}
+  .add-valle{display:flex;gap:8px;margin-top:6px;}
+  .add-valle input{margin:0;}
+  .add-valle button{
+    background:var(--leaf);color:#fff;border:none;border-radius:7px;
+    padding:0 16px;font-weight:700;font-size:1.1rem;
+  }
+  .filter{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;padding-bottom:2px;}
+  .filter button{
+    flex:none;padding:7px 14px;border-radius:16px;border:1px solid var(--line-strong);
+    background:var(--surface);font-size:0.82rem;font-weight:600;color:var(--muted);
+  }
+  .filter button.active{background:var(--blueberry);color:#fff;border-color:var(--blueberry);}
+  .msg{font-size:0.8rem;color:var(--muted);text-align:center;margin-top:8px;min-height:1em;}
+  .save-note{font-size:0.75rem;color:var(--muted);margin-top:-4px;margin-bottom:12px;}
+  .rango{display:flex;gap:6px;margin-bottom:14px;}
+  .rango button{
+    flex:1;padding:9px 4px;border-radius:7px;border:1px solid var(--line-strong);
+    background:var(--surface);font-size:0.8rem;font-weight:600;color:var(--muted);
+  }
+  .rango button.active{background:var(--blueberry);color:#fff;border-color:var(--blueberry);}
+  .rep-total{
+    background:var(--blueberry);color:#fff;border-radius:10px;padding:16px;margin-bottom:14px;
+    text-align:center;
+  }
+  .rep-total .kg{font-size:1.9rem;font-weight:700;line-height:1.1;}
+  .rep-total .lbl{font-size:0.78rem;color:#C9C4E0;margin-top:2px;}
+  table.rep{width:100%;border-collapse:collapse;font-size:0.82rem;}
+  table.rep th, table.rep td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left;}
+  table.rep th{color:var(--muted);font-weight:700;font-size:0.72rem;text-transform:none;}
+  table.rep td.num, table.rep th.num{text-align:right;}
+  table.rep tr.grupo-row td{font-weight:700;background:#F4F2EC;}
+  .rep-actions{display:flex;gap:10px;margin-top:14px;}
+  .rep-actions button{flex:1;}
+  button.leaf{background:var(--leaf);color:#fff;border:none;border-radius:8px;padding:13px;font-weight:700;font-size:0.9rem;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Control de Pesos — Arándanos</h1>
+    <p>Tara, lotes y reporte por grupo</p>
+  </header>
+
+  <nav>
+    <button data-tab="registrar" class="active">Registrar</button>
+    <button data-tab="historial">Historial</button>
+    <button data-tab="reporte">Reporte</button>
+    <button data-tab="tara">Tara</button>
+  </nav>
+
+  <main>
+
+    <section id="registrar" class="active">
+      <div class="card">
+        <h2>Nuevo lote</h2>
+
+        <label for="r-valle">Valle</label>
+        <select id="r-valle"></select>
+
+        <div class="row">
+          <div>
+            <label for="r-grupo">Grupo</label>
+            <select id="r-grupo">
+              <option>A</option><option>B</option><option>C</option><option>D</option><option>E</option>
+            </select>
+          </div>
+          <div>
+            <label for="r-modulo">Módulo</label>
+            <input type="text" id="r-modulo" placeholder="Ej. 6 → M06">
+          </div>
+        </div>
+
+        <label for="r-variedad">Variedad</label>
+        <input type="text" id="r-variedad" list="variedades" placeholder="Ej. Ventura">
+        <datalist id="variedades">
+          <option value="Biloxi"><option value="Ventura"><option value="Emerald">
+          <option value="Jewel"><option value="Snowchaser"><option value="Sekoya Pop">
+          <option value="Colossus"><option value="Ochlockonee">
+        </datalist>
+
+        <div class="row">
+          <div>
+            <label for="r-bandejas">N° de bandejas</label>
+            <input type="number" id="r-bandejas" value="8" min="1">
+          </div>
+          <div>
+            <label for="r-bruto">Peso bruto total (kg)</label>
+            <input type="number" id="r-bruto" step="0.01" placeholder="0.00">
+          </div>
+        </div>
+
+        <div class="calc">
+          <div><span>Tara promedio / bandeja</span><span id="c-tara-unit">—</span></div>
+          <div><span>Tara total (<span id="c-band-n">8</span> bandejas)</span><span id="c-tara-total">—</span></div>
+          <div class="net"><span>Peso neto</span><span id="c-neto">—</span></div>
+        </div>
+
+        <button class="primary" id="btn-guardar">Guardar registro</button>
+        <div class="msg" id="save-msg"></div>
+      </div>
+    </section>
+
+    <section id="historial">
+      <div class="summary" id="summary-chips"></div>
+      <div class="filter" id="filter-grupo"></div>
+      <div id="lista-registros"></div>
+    </section>
+
+    <section id="reporte">
+      <div class="rango" id="rep-rango">
+        <button data-r="hoy" class="active">Hoy</button>
+        <button data-r="7d">Últimos 7 días</button>
+        <button data-r="todo">Todo</button>
+      </div>
+
+      <div class="rep-total">
+        <div class="kg" id="rep-total-kg">0.0 kg</div>
+        <div class="lbl" id="rep-total-lbl">peso neto — 0 lotes</div>
+      </div>
+
+      <div class="card" style="overflow-x:auto;">
+        <h2>Por grupo, módulo y variedad</h2>
+        <table class="rep" id="rep-table"></table>
+      </div>
+
+      <div class="rep-actions">
+        <button class="leaf" id="btn-excel">Descargar Excel</button>
+        <button class="ghost" id="btn-copiar">Copiar resumen</button>
+      </div>
+      <div class="msg" id="rep-msg"></div>
+    </section>
+
+    <section id="tara">
+      <div class="card">
+        <h2>Tara promedio por valle</h2>
+        <p class="save-note">Peso promedio de una bandeja vacía, en gramos. Se usa para calcular el peso neto de cada lote.</p>
+        <div id="tara-list"></div>
+        <div class="add-valle">
+          <input type="text" id="new-valle-nombre" placeholder="Nombre del valle, ej. Valle 2">
+          <input type="number" id="new-valle-tara" placeholder="g" style="width:70px;">
+          <button id="btn-add-valle">+</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+const TARA_KEY = 'arandanos-tara-config';
+const REG_KEY = 'arandanos-registros';
+
+let taraConfig = { "Valle 1": 300, "Valle 3": 290 };
+let registros = [];
+let filtroGrupo = 'Todos';
+
+async function loadData(){
+  try{
+    const t = localStorage.getItem(TARA_KEY);
+    if(t) taraConfig = JSON.parse(t);
+  }catch(e){}
+  try{
+    const r = localStorage.getItem(REG_KEY);
+    if(r) registros = JSON.parse(r);
+  }catch(e){}
+  renderValleSelect();
+  renderTaraList();
+  renderHistorial();
+}
+
+async function saveTara(){
+  try{
+    localStorage.setItem(TARA_KEY, JSON.stringify(taraConfig));
+  }catch(e){ console.error('Error guardando tara', e); }
+}
+async function saveRegistros(){
+  try{
+    localStorage.setItem(REG_KEY, JSON.stringify(registros));
+  }catch(e){ console.error('Error guardando registros', e); }
+}
+
+function formatModulo(m){
+  if(m === undefined || m === null || m === '') return '—';
+  const s = String(m).trim();
+  if(/^\d+$/.test(s)) return 'M' + s.padStart(2,'0');
+  return s;
+}
+
+function renderValleSelect(){
+  const sel = document.getElementById('r-valle');
+  const current = sel.value;
+  sel.innerHTML = Object.keys(taraConfig).map(v => `<option value="${v}">${v}</option>`).join('');
+  if(current && taraConfig[current] !== undefined) sel.value = current;
+  updateCalc();
+}
+
+function renderTaraList(){
+  const el = document.getElementById('tara-list');
+  const entries = Object.entries(taraConfig);
+  if(entries.length === 0){
+    el.innerHTML = '<p class="empty">Aún no hay valles configurados.</p>';
+    return;
+  }
+  el.innerHTML = entries.map(([nombre, gramos]) => `
+    <div class="tara-row">
+      <span>${nombre}</span>
+      <input type="number" data-valle="${nombre}" class="tara-input" value="${gramos}">
+    </div>
+  `).join('');
+  el.querySelectorAll('.tara-input').forEach(inp => {
+    inp.addEventListener('change', async e => {
+      const v = e.target.dataset.valle;
+      const val = parseFloat(e.target.value) || 0;
+      taraConfig[v] = val;
+      await saveTara();
+      renderValleSelect();
+    });
+  });
+}
+
+document.getElementById('btn-add-valle').addEventListener('click', async () => {
+  const nombreInput = document.getElementById('new-valle-nombre');
+  const taraInput = document.getElementById('new-valle-tara');
+  const nombre = nombreInput.value.trim();
+  const tara = parseFloat(taraInput.value);
+  if(!nombre || isNaN(tara)){ return; }
+  taraConfig[nombre] = tara;
+  nombreInput.value = '';
+  taraInput.value = '';
+  await saveTara();
+  renderTaraList();
+  renderValleSelect();
+});
+
+function updateCalc(){
+  const valle = document.getElementById('r-valle').value;
+  const taraUnit = taraConfig[valle] || 0;
+  const bandejas = parseFloat(document.getElementById('r-bandejas').value) || 0;
+  const bruto = parseFloat(document.getElementById('r-bruto').value) || 0;
+  const taraTotalKg = (taraUnit * bandejas) / 1000;
+  const neto = bruto - taraTotalKg;
+
+  document.getElementById('c-tara-unit').textContent = taraUnit ? `${taraUnit} g` : '—';
+  document.getElementById('c-band-n').textContent = bandejas || 0;
+  document.getElementById('c-tara-total').textContent = taraTotalKg ? `${taraTotalKg.toFixed(2)} kg` : '—';
+  document.getElementById('c-neto').textContent = bruto ? `${neto.toFixed(2)} kg` : '—';
+}
+
+['r-valle','r-bandejas','r-bruto'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updateCalc);
+  document.getElementById(id).addEventListener('change', updateCalc);
+});
+
+document.getElementById('btn-guardar').addEventListener('click', async () => {
+  const valle = document.getElementById('r-valle').value;
+  const grupo = document.getElementById('r-grupo').value;
+  const modulo = document.getElementById('r-modulo').value.trim();
+  const variedad = document.getElementById('r-variedad').value.trim();
+  const bandejas = parseFloat(document.getElementById('r-bandejas').value) || 0;
+  const bruto = parseFloat(document.getElementById('r-bruto').value);
+  const msg = document.getElementById('save-msg');
+
+  if(!valle || !bandejas || isNaN(bruto)){
+    msg.textContent = 'Completa valle, N° de bandejas y peso bruto.';
+    msg.style.color = 'var(--rust)';
+    return;
+  }
+
+  const taraUnit = taraConfig[valle] || 0;
+  const taraTotalKg = (taraUnit * bandejas) / 1000;
+  const neto = bruto - taraTotalKg;
+
+  const registro = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    timestamp: new Date().toISOString(),
+    valle, grupo, modulo, variedad,
+    bandejas, bruto,
+    taraUnit, taraTotalKg,
+    neto
+  };
+  registros.unshift(registro);
+  await saveRegistros();
+
+  msg.style.color = 'var(--leaf)';
+  msg.textContent = `Guardado: Grupo ${grupo} — ${neto.toFixed(2)} kg netos.`;
+  document.getElementById('r-bruto').value = '';
+  updateCalc();
+  renderHistorial();
+  setTimeout(() => { msg.textContent=''; }, 3000);
+});
+
+function renderHistorial(){
+  const grupos = ['Todos','A','B','C','D','E'];
+  const filterEl = document.getElementById('filter-grupo');
+  filterEl.innerHTML = grupos.map(g =>
+    `<button data-g="${g}" class="${g===filtroGrupo?'active':''}">${g}</button>`
+  ).join('');
+  filterEl.querySelectorAll('button').forEach(b => {
+    b.addEventListener('click', () => {
+      filtroGrupo = b.dataset.g;
+      renderHistorial();
+    });
+  });
+
+  const filtrados = filtroGrupo === 'Todos' ? registros : registros.filter(r => r.grupo === filtroGrupo);
+
+  const totalesPorGrupo = {};
+  registros.forEach(r => { totalesPorGrupo[r.grupo] = (totalesPorGrupo[r.grupo]||0) + r.neto; });
+  const chipsEl = document.getElementById('summary-chips');
+  const totalGeneral = registros.reduce((s,r)=>s+r.neto,0);
+  let chipsHtml = `<div class="chip">Total general<b>${totalGeneral.toFixed(1)} kg</b></div>`;
+  Object.entries(totalesPorGrupo).sort().forEach(([g,kg]) => {
+    chipsHtml += `<div class="chip">Grupo ${g}<b>${kg.toFixed(1)} kg</b></div>`;
+  });
+  chipsEl.innerHTML = chipsHtml;
+
+  const listaEl = document.getElementById('lista-registros');
+  if(filtrados.length === 0){
+    listaEl.innerHTML = '<p class="empty">No hay registros todavía.</p>';
+    return;
+  }
+  listaEl.innerHTML = filtrados.map(r => {
+    const fecha = new Date(r.timestamp);
+    const fechaStr = fecha.toLocaleDateString('es-PE', {day:'2-digit',month:'2-digit'}) + ' ' +
+                      fecha.toLocaleTimeString('es-PE', {hour:'2-digit',minute:'2-digit'});
+    return `
+      <div class="record">
+        <div class="top">
+          <span class="grupo-tag">Grupo ${r.grupo}</span>
+          <span class="date">${fechaStr}</span>
+        </div>
+        <div class="meta">${r.valle} · ${formatModulo(r.modulo)} · ${r.variedad || 'Variedad —'}</div>
+        <div class="meta">${r.bandejas} bandejas · bruto ${r.bruto.toFixed(2)} kg · tara ${r.taraTotalKg.toFixed(2)} kg</div>
+        <div class="net">${r.neto.toFixed(2)} kg netos</div>
+        <button class="del" data-id="${r.id}">Eliminar</button>
+      </div>
+    `;
+  }).join('');
+  listaEl.querySelectorAll('.del').forEach(b => {
+    b.addEventListener('click', async () => {
+      registros = registros.filter(r => r.id !== b.dataset.id);
+      await saveRegistros();
+      renderHistorial();
+    });
+  });
+}
+
+let rangoReporte = 'hoy';
+
+function registrosEnRango(){
+  const ahora = new Date();
+  return registros.filter(r => {
+    const f = new Date(r.timestamp);
+    if(rangoReporte === 'hoy'){
+      return f.toDateString() === ahora.toDateString();
+    }
+    if(rangoReporte === '7d'){
+      const limite = new Date(ahora); limite.setDate(limite.getDate()-7);
+      return f >= limite;
+    }
+    return true;
+  });
+}
+
+function agruparReporte(lista){
+  // Estructura: { grupo: { total, filas: { "modulo|variedad": {modulo,variedad,bandejas,bruto,neto} } } }
+  const grupos = {};
+  lista.forEach(r => {
+    if(!grupos[r.grupo]) grupos[r.grupo] = { total: 0, filas: {} };
+    const key = `${r.modulo || '—'}|${r.variedad || '—'}`;
+    if(!grupos[r.grupo].filas[key]){
+      grupos[r.grupo].filas[key] = { modulo: formatModulo(r.modulo), variedad: r.variedad || '—', bandejas:0, bruto:0, neto:0 };
+    }
+    const f = grupos[r.grupo].filas[key];
+    f.bandejas += r.bandejas;
+    f.bruto += r.bruto;
+    f.neto += r.neto;
+    grupos[r.grupo].total += r.neto;
+  });
+  return grupos;
+}
+
+function renderReporte(){
+  document.querySelectorAll('#rep-rango button').forEach(b => {
+    b.classList.toggle('active', b.dataset.r === rangoReporte);
+  });
+
+  const lista = registrosEnRango();
+  const totalNeto = lista.reduce((s,r)=>s+r.neto,0);
+  document.getElementById('rep-total-kg').textContent = `${totalNeto.toFixed(1)} kg`;
+  document.getElementById('rep-total-lbl').textContent = `peso neto — ${lista.length} lote${lista.length===1?'':'s'}`;
+
+  const grupos = agruparReporte(lista);
+  const tabla = document.getElementById('rep-table');
+  if(Object.keys(grupos).length === 0){
+    tabla.innerHTML = '<tr><td class="empty" style="border:none;">No hay lotes en este rango.</td></tr>';
+    return;
+  }
+  let html = `<tr><th>Módulo</th><th>Variedad</th><th class="num">Bandejas</th><th class="num">Neto (kg)</th></tr>`;
+  Object.keys(grupos).sort().forEach(g => {
+    html += `<tr class="grupo-row"><td colspan="3">Grupo ${g}</td><td class="num">${grupos[g].total.toFixed(1)}</td></tr>`;
+    Object.values(grupos[g].filas).forEach(f => {
+      html += `<tr><td>${f.modulo}</td><td>${f.variedad}</td><td class="num">${f.bandejas}</td><td class="num">${f.neto.toFixed(1)}</td></tr>`;
+    });
+  });
+  tabla.innerHTML = html;
+}
+
+document.getElementById('rep-rango').addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if(!b) return;
+  rangoReporte = b.dataset.r;
+  renderReporte();
+});
+
+document.getElementById('btn-excel').addEventListener('click', () => {
+  const lista = registrosEnRango();
+  const msg = document.getElementById('rep-msg');
+  if(lista.length === 0){
+    msg.style.color = 'var(--rust)';
+    msg.textContent = 'No hay lotes en este rango para exportar.';
+    return;
+  }
+  const filas = lista.map(r => ({
+    Fecha: new Date(r.timestamp).toLocaleString('es-PE'),
+    Valle: r.valle,
+    Grupo: r.grupo,
+    Módulo: formatModulo(r.modulo),
+    Variedad: r.variedad || '—',
+    Bandejas: r.bandejas,
+    'Peso bruto (kg)': Number(r.bruto.toFixed(2)),
+    'Tara total (kg)': Number(r.taraTotalKg.toFixed(2)),
+    'Peso neto (kg)': Number(r.neto.toFixed(2))
+  }));
+  const grupos = agruparReporte(lista);
+  const resumen = [];
+  Object.keys(grupos).sort().forEach(g => {
+    resumen.push({ Grupo: g, 'Peso neto total (kg)': Number(grupos[g].total.toFixed(2)) });
+  });
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(resumen), 'Resumen por grupo');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filas), 'Detalle de lotes');
+
+  const nombreArchivo = `reporte-pesos-arandanos-${rangoReporte}-${new Date().toISOString().slice(0,10)}.xlsx`;
+  XLSX.writeFile(wb, nombreArchivo);
+  msg.style.color = 'var(--leaf)';
+  msg.textContent = 'Excel descargado.';
+  setTimeout(()=>{ msg.textContent=''; }, 3000);
+});
+
+document.getElementById('btn-copiar').addEventListener('click', async () => {
+  const lista = registrosEnRango();
+  const grupos = agruparReporte(lista);
+  const totalNeto = lista.reduce((s,r)=>s+r.neto,0);
+  const etiquetaRango = rangoReporte === 'hoy' ? 'Hoy' : rangoReporte === '7d' ? 'Últimos 7 días' : 'Todo';
+  let texto = `Reporte de pesos — Arándanos (${etiquetaRango})\nTotal neto: ${totalNeto.toFixed(1)} kg — ${lista.length} lotes\n\n`;
+  Object.keys(grupos).sort().forEach(g => {
+    texto += `Grupo ${g}: ${grupos[g].total.toFixed(1)} kg\n`;
+    Object.values(grupos[g].filas).forEach(f => {
+      texto += `  · Módulo ${f.modulo} / ${f.variedad}: ${f.neto.toFixed(1)} kg (${f.bandejas} bandejas)\n`;
+    });
+  });
+  const msg = document.getElementById('rep-msg');
+  try{
+    await navigator.clipboard.writeText(texto);
+    msg.style.color = 'var(--leaf)';
+    msg.textContent = 'Resumen copiado — listo para pegar en WhatsApp o correo.';
+  }catch(e){
+    msg.style.color = 'var(--rust)';
+    msg.textContent = 'No se pudo copiar automáticamente.';
+  }
+  setTimeout(()=>{ msg.textContent=''; }, 4000);
+});
+
+document.querySelectorAll('nav button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('main section').forEach(s => s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+    if(btn.dataset.tab === 'reporte') renderReporte();
+  });
+});
+
+loadData();
+</script>
+</body>
+</html>
