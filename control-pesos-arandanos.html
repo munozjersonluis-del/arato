@@ -517,7 +517,7 @@ function registrosEnRango(){
 }
 
 function agruparReporte(lista){
-  // Estructura: { grupo: { total, filas: { id_del_lote: {modulo,variedad,bandejas,bruto,neto} } } }
+  // Estructura: { grupo: { total, filas: { id_del_lote: {modulo,variedad,bandejas,taraUnitKg,bruto,neto} } } }
   // Cada lote (pesada) queda en su propia fila, aunque comparta módulo y variedad con otro.
   const grupos = {};
   lista.forEach(r => {
@@ -526,6 +526,7 @@ function agruparReporte(lista){
       modulo: formatModulo(r.modulo),
       variedad: r.variedad || '—',
       bandejas: r.bandejas,
+      taraUnitKg: r.taraUnit / 1000,
       bruto: r.bruto,
       neto: r.neto
     };
@@ -550,11 +551,11 @@ function renderReporte(){
     tabla.innerHTML = '<tr><td class="empty" style="border:none;">No hay lotes en este rango.</td></tr>';
     return;
   }
-  let html = `<tr><th>Módulo</th><th>Variedad</th><th class="num">Bandejas</th><th class="num">Neto (kg)</th></tr>`;
+  let html = `<tr><th>Módulo</th><th>Variedad</th><th class="num">Bandejas</th><th class="num">Tara/band. (kg)</th><th class="num">Neto (kg)</th></tr>`;
   Object.keys(grupos).sort().forEach(g => {
-    html += `<tr class="grupo-row"><td colspan="3">Grupo ${g}</td><td class="num">${grupos[g].total.toFixed(1)}</td></tr>`;
+    html += `<tr class="grupo-row"><td colspan="4">Grupo ${g}</td><td class="num">${grupos[g].total.toFixed(1)}</td></tr>`;
     Object.values(grupos[g].filas).forEach(f => {
-      html += `<tr><td>${f.modulo}</td><td>${f.variedad}</td><td class="num">${f.bandejas}</td><td class="num">${f.neto.toFixed(1)}</td></tr>`;
+      html += `<tr><td>${f.modulo}</td><td>${f.variedad}</td><td class="num">${f.bandejas}</td><td class="num">${f.taraUnitKg.toFixed(3)}</td><td class="num">${f.neto.toFixed(1)}</td></tr>`;
     });
   });
   tabla.innerHTML = html;
@@ -582,6 +583,7 @@ document.getElementById('btn-excel').addEventListener('click', () => {
     Módulo: formatModulo(r.modulo),
     Variedad: r.variedad || '—',
     Bandejas: r.bandejas,
+    'Tara por bandeja (kg)': Number((r.taraUnit/1000).toFixed(3)),
     'Peso bruto (kg)': Number(r.bruto.toFixed(2)),
     'Tara total (kg)': Number(r.taraTotalKg.toFixed(2)),
     'Peso neto (kg)': Number(r.neto.toFixed(2))
@@ -612,7 +614,7 @@ document.getElementById('btn-copiar').addEventListener('click', async () => {
   Object.keys(grupos).sort().forEach(g => {
     texto += `Grupo ${g}: ${grupos[g].total.toFixed(1)} kg\n`;
     Object.values(grupos[g].filas).forEach(f => {
-      texto += `  · Módulo ${f.modulo} / ${f.variedad}: ${f.neto.toFixed(1)} kg (${f.bandejas} bandejas)\n`;
+      texto += `  · Módulo ${f.modulo} / ${f.variedad}: ${f.neto.toFixed(1)} kg (${f.bandejas} bandejas, tara ${f.taraUnitKg.toFixed(3)} kg/bandeja)\n`;
     });
   });
   const msg = document.getElementById('rep-msg');
