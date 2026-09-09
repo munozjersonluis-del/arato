@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Control de Pesos — Arándanos</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   :root{
     --bg:#EEEAE1;
@@ -196,6 +197,10 @@
   .estado-tag.seca{background:#E2E9DF;color:var(--leaf);}
   .estado-tag.humeda{background:#F6E9DF;color:var(--rust);}
   .estado-tag.editable{cursor:pointer;border:1px solid currentColor;}
+  .rep-capture-head{
+    display:flex; justify-content:space-between; align-items:baseline;
+    font-size:0.78rem; color:var(--muted); font-weight:600; margin-bottom:10px; padding:0 2px;
+  }
 </style>
 </head>
 <body>
@@ -284,19 +289,29 @@
         <button data-r="todo">Todo</button>
       </div>
 
-      <div class="rep-total">
-        <div class="kg" id="rep-total-kg">0.0 kg</div>
-        <div class="lbl" id="rep-total-lbl">peso neto — 0 lotes</div>
-      </div>
+      <div id="rep-capture" style="background:var(--bg);">
+        <div class="rep-capture-head" id="rep-capture-head">
+          <span>Control de pesos — arándanos</span>
+          <span id="rep-capture-fecha"></span>
+        </div>
 
-      <div class="card" style="overflow-x:auto;">
-        <h2>Por grupo, módulo y variedad</h2>
-        <table class="rep" id="rep-table"></table>
+        <div class="rep-total">
+          <div class="kg" id="rep-total-kg">0.0 kg</div>
+          <div class="lbl" id="rep-total-lbl">peso neto — 0 lotes</div>
+        </div>
+
+        <div class="card" style="overflow-x:auto;">
+          <h2>Por grupo, módulo y variedad</h2>
+          <table class="rep" id="rep-table"></table>
+        </div>
       </div>
 
       <div class="rep-actions">
-        <button class="leaf" id="btn-excel">Descargar Excel</button>
-        <button class="ghost" id="btn-copiar">Copiar resumen</button>
+        <button class="leaf" id="btn-foto">Foto para WhatsApp</button>
+        <button class="ghost" id="btn-excel">Descargar Excel</button>
+      </div>
+      <div class="rep-actions" style="margin-top:8px;">
+        <button class="ghost" id="btn-copiar">Copiar resumen (texto)</button>
       </div>
       <div class="msg" id="rep-msg"></div>
     </section>
@@ -587,6 +602,10 @@ function renderReporte(){
   document.getElementById('rep-total-kg').textContent = `${totalNeto.toFixed(1)} kg`;
   document.getElementById('rep-total-lbl').textContent = `peso neto — ${lista.length} lote${lista.length===1?'':'s'}`;
 
+  const etiquetaRango = rangoReporte === 'hoy' ? 'Hoy' : rangoReporte === '7d' ? 'Últimos 7 días' : 'Todo';
+  const fechaHoy = new Date().toLocaleDateString('es-PE', {day:'2-digit', month:'2-digit', year:'numeric'});
+  document.getElementById('rep-capture-fecha').textContent = `${etiquetaRango} · ${fechaHoy}`;
+
   const grupos = agruparReporte(lista);
   const tabla = document.getElementById('rep-table');
   if(Object.keys(grupos).length === 0){
@@ -611,6 +630,59 @@ document.getElementById('rep-rango').addEventListener('click', e => {
   if(!b) return;
   rangoReporte = b.dataset.r;
   renderReporte();
+});
+
+document.getElementById('btn-foto').addEventListener('click', async () => {
+  const msg = document.getElementById('rep-msg');
+  const lista = registrosEnRango();
+  if(lista.length === 0){
+    msg.style.color = 'var(--rust)';
+    msg.textContent = 'No hay lotes en este rango para generar la foto.';
+    return;
+  }
+  msg.style.color = 'var(--muted)';
+  msg.textContent = 'Generando imagen...';
+
+  try{
+    const nodo = document.getElementById('rep-capture');
+    const canvas = await html2canvas(nodo, {
+      backgroundColor: '#EEEAE1',
+      scale: 2,
+      useCORS: true
+    });
+
+    canvas.toBlob(async (blob) => {
+      const nombreArchivo = `reporte-pesos-arandanos-${rangoReporte}-${new Date().toISOString().slice(0,10)}.png`;
+      const archivo = new File([blob], nombreArchivo, { type: 'image/png' });
+
+      if(navigator.canShare && navigator.canShare({ files: [archivo] })){
+        try{
+          await navigator.share({
+            files: [archivo],
+            title: 'Reporte de pesos — Arándanos',
+            text: 'Reporte de pesos — Arándanos'
+          });
+          msg.style.color = 'var(--leaf)';
+          msg.textContent = 'Listo, elige WhatsApp en el menú para enviarla.';
+        }catch(e){
+          msg.textContent = '';
+        }
+      }else{
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = nombreArchivo;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        msg.style.color = 'var(--leaf)';
+        msg.textContent = 'Imagen descargada — adjúntala en WhatsApp.';
+      }
+      setTimeout(()=>{ msg.textContent=''; }, 5000);
+    }, 'image/png');
+  }catch(e){
+    msg.style.color = 'var(--rust)';
+    msg.textContent = 'No se pudo generar la imagen.';
+    console.error(e);
+  }
 });
 
 document.getElementById('btn-excel').addEventListener('click', () => {
