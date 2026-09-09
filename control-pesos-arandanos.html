@@ -644,24 +644,34 @@ document.getElementById('btn-foto').addEventListener('click', async () => {
   msg.textContent = 'Generando imagen...';
 
   try{
-    const nodo = document.getElementById('rep-capture');
-    const canvas = await html2canvas(nodo, {
+    const original = document.getElementById('rep-capture');
+    const clone = original.cloneNode(true);
+    clone.style.position = 'fixed';
+    clone.style.top = '-9999px';
+    clone.style.left = '0';
+    clone.style.width = 'max-content';
+    clone.style.maxWidth = 'none';
+
+    const card = clone.querySelector('.card');
+    if(card){
+      card.style.overflow = 'visible';
+      card.style.overflowX = 'visible';
+      card.style.width = 'max-content';
+      card.style.maxWidth = 'none';
+    }
+    const tabla = clone.querySelector('table.rep');
+    if(tabla){
+      tabla.style.width = 'max-content';
+      tabla.style.minWidth = 'auto';
+    }
+
+    document.body.appendChild(clone);
+    const canvas = await html2canvas(clone, {
       backgroundColor: '#EEEAE1',
       scale: 2,
-      useCORS: true,
-      onclone: (clonedDoc) => {
-        const card = clonedDoc.querySelector('#rep-capture .card');
-        if(card){
-          card.style.overflow = 'visible';
-          card.style.overflowX = 'visible';
-        }
-        const tabla = clonedDoc.getElementById('rep-table');
-        if(tabla){
-          tabla.style.width = 'max-content';
-          tabla.style.minWidth = '100%';
-        }
-      }
+      useCORS: true
     });
+    document.body.removeChild(clone);
 
     canvas.toBlob(async (blob) => {
       const nombreArchivo = `reporte-pesos-arandanos-${rangoReporte}-${new Date().toISOString().slice(0,10)}.png`;
@@ -691,6 +701,8 @@ document.getElementById('btn-foto').addEventListener('click', async () => {
       setTimeout(()=>{ msg.textContent=''; }, 5000);
     }, 'image/png');
   }catch(e){
+    const residuo = document.querySelector('#rep-capture[style*="-9999px"]');
+    if(residuo) residuo.remove();
     msg.style.color = 'var(--rust)';
     msg.textContent = 'No se pudo generar la imagen.';
     console.error(e);
