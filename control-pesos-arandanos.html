@@ -195,6 +195,7 @@
   }
   .estado-tag.seca{background:#E2E9DF;color:var(--leaf);}
   .estado-tag.humeda{background:#F6E9DF;color:var(--rust);}
+  .estado-tag.editable{cursor:pointer;border:1px solid currentColor;}
 </style>
 </head>
 <body>
@@ -542,23 +543,38 @@ function registrosEnRango(){
 }
 
 function agruparReporte(lista){
-  // Estructura: { grupo: { total, filas: { id_del_lote: {modulo,variedad,bandejas,taraUnitKg,bruto,neto} } } }
-  // Cada lote (pesada) queda en su propia fila, aunque comparta módulo y variedad con otro.
+  // Estructura: { grupo: { total, filas: [ {id,modulo,variedad,bandejas,taraUnitKg,bruto,neto,estado,orden} ] } }
+  // Cada lote (pesada) queda en su propia fila, numerada por orden cronológico dentro del grupo (1 = más antiguo).
   const grupos = {};
   lista.forEach(r => {
-    if(!grupos[r.grupo]) grupos[r.grupo] = { total: 0, filas: {} };
-    grupos[r.grupo].filas[r.id] = {
+    if(!grupos[r.grupo]) grupos[r.grupo] = { total: 0, filas: [] };
+    grupos[r.grupo].filas.push({
+      id: r.id,
       modulo: formatModulo(r.modulo),
       variedad: r.variedad || '—',
       bandejas: r.bandejas,
       taraUnitKg: r.taraUnit / 1000,
       bruto: r.bruto,
       neto: r.neto,
-      estado: r.estado || 'Seca'
-    };
+      estado: r.estado || 'Seca',
+      timestamp: r.timestamp
+    });
     grupos[r.grupo].total += r.neto;
   });
+  Object.values(grupos).forEach(g => {
+    g.filas.sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+    g.filas.forEach((f,i) => { f.orden = i + 1; });
+  });
   return grupos;
+}
+
+async function toggleEstadoLote(id){
+  const r = registros.find(x => x.id === id);
+  if(!r) return;
+  r.estado = (r.estado === 'Húmeda') ? 'Seca' : 'Húmeda';
+  await saveRegistros();
+  renderReporte();
+  renderHistorial();
 }
 
 function renderReporte(){
@@ -577,14 +593,17 @@ function renderReporte(){
     tabla.innerHTML = '<tr><td class="empty" style="border:none;">No hay lotes en este rango.</td></tr>';
     return;
   }
-  let html = `<tr><th>Módulo</th><th>Variedad</th><th class="num">Bandejas</th><th class="num">Tara/band. (kg)</th><th>Estado</th><th class="num">Neto (kg)</th></tr>`;
+  let html = `<tr><th class="num">N°</th><th>Módulo</th><th>Variedad</th><th class="num">Bandejas</th><th class="num">Tara/band. (kg)</th><th>Estado</th><th class="num">Neto (kg)</th></tr>`;
   Object.keys(grupos).sort().forEach(g => {
-    html += `<tr class="grupo-row"><td colspan="5">Grupo ${g}</td><td class="num">${grupos[g].total.toFixed(1)}</td></tr>`;
-    Object.values(grupos[g].filas).forEach(f => {
-      html += `<tr><td>${f.modulo}</td><td>${f.variedad}</td><td class="num">${f.bandejas}</td><td class="num">${f.taraUnitKg.toFixed(3)}</td><td><span class="estado-tag ${f.estado==='Húmeda'?'humeda':'seca'}">${f.estado}</span></td><td class="num">${f.neto.toFixed(1)}</td></tr>`;
+    html += `<tr class="grupo-row"><td colspan="6">Grupo ${g}</td><td class="num">${grupos[g].total.toFixed(1)}</td></tr>`;
+    grupos[g].filas.forEach(f => {
+      html += `<tr><td class="num">${f.orden}</td><td>${f.modulo}</td><td>${f.variedad}</td><td class="num">${f.bandejas}</td><td class="num">${f.taraUnitKg.toFixed(3)}</td><td><span class="estado-tag editable ${f.estado==='Húmeda'?'humeda':'seca'}" data-id="${f.id}">${f.estado}</span></td><td class="num">${f.neto.toFixed(1)}</td></tr>`;
     });
   });
   tabla.innerHTML = html;
+  tabla.querySelectorAll('.estado-tag.editable').forEach(tag => {
+    tag.addEventListener('click', () => toggleEstadoLote(tag.dataset.id));
+  });
 }
 
 document.getElementById('rep-rango').addEventListener('click', e => {
@@ -602,7 +621,12 @@ document.getElementById('btn-excel').addEventListener('click', () => {
     msg.textContent = 'No hay lotes en este rango para exportar.';
     return;
   }
+  const grupos = agruparReporte(lista);
+  const ordenPorId = {};
+  Object.values(grupos).forEach(g => g.filas.forEach(f => { ordenPorId[f.id] = f.orden; }));
+
   const filas = lista.map(r => ({
+    'N° en grupo': ordenPorId[r.id] || '',
     Fecha: new Date(r.timestamp).toLocaleString('es-PE'),
     Valle: r.valle,
     Grupo: r.grupo,
@@ -615,7 +639,6 @@ document.getElementById('btn-excel').addEventListener('click', () => {
     'Tara total (kg)': Number(r.taraTotalKg.toFixed(2)),
     'Peso neto (kg)': Number(r.neto.toFixed(2))
   }));
-  const grupos = agruparReporte(lista);
   const resumen = [];
   Object.keys(grupos).sort().forEach(g => {
     resumen.push({ Grupo: g, 'Peso neto total (kg)': Number(grupos[g].total.toFixed(2)) });
@@ -640,8 +663,8 @@ document.getElementById('btn-copiar').addEventListener('click', async () => {
   let texto = `Reporte de pesos — Arándanos (${etiquetaRango})\nTotal neto: ${totalNeto.toFixed(1)} kg — ${lista.length} lotes\n\n`;
   Object.keys(grupos).sort().forEach(g => {
     texto += `Grupo ${g}: ${grupos[g].total.toFixed(1)} kg\n`;
-    Object.values(grupos[g].filas).forEach(f => {
-      texto += `  · Módulo ${f.modulo} / ${f.variedad} (${f.estado}): ${f.neto.toFixed(1)} kg (${f.bandejas} bandejas, tara ${f.taraUnitKg.toFixed(3)} kg/bandeja)\n`;
+    grupos[g].filas.forEach(f => {
+      texto += `  · #${f.orden} Módulo ${f.modulo} / ${f.variedad} (${f.estado}): ${f.neto.toFixed(1)} kg (${f.bandejas} bandejas, tara ${f.taraUnitKg.toFixed(3)} kg/bandeja)\n`;
     });
   });
   const msg = document.getElementById('rep-msg');
