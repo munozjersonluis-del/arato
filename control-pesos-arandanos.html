@@ -186,6 +186,15 @@
   .rep-actions{display:flex;gap:10px;margin-top:14px;}
   .rep-actions button{flex:1;}
   button.leaf{background:var(--leaf);color:#fff;border:none;border-radius:8px;padding:13px;font-weight:700;font-size:0.9rem;}
+  .aviso-humeda{
+    background:#F6E9DF;color:var(--rust);border:1px solid #E3B79C;border-radius:7px;
+    padding:9px 12px;font-size:0.8rem;font-weight:600;margin:-6px 0 12px;
+  }
+  .estado-tag{
+    display:inline-block;font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:6px;
+  }
+  .estado-tag.seca{background:#E2E9DF;color:var(--leaf);}
+  .estado-tag.humeda{background:#F6E9DF;color:var(--rust);}
 </style>
 </head>
 <body>
@@ -231,6 +240,13 @@
           <option value="Jewel"><option value="Snowchaser"><option value="Sekoya Pop">
           <option value="Colossus"><option value="Ochlockonee">
         </datalist>
+
+        <label for="r-estado">Estado de la fruta</label>
+        <select id="r-estado">
+          <option value="Seca">Seca</option>
+          <option value="Húmeda">Húmeda</option>
+        </select>
+        <div class="aviso-humeda" id="aviso-humeda" style="display:none;">Fruta húmeda — este lote queda marcado para revisión aparte.</div>
 
         <div class="row">
           <div>
@@ -405,6 +421,10 @@ function updateCalc(){
   document.getElementById(id).addEventListener('change', updateCalc);
 });
 
+document.getElementById('r-estado').addEventListener('change', e => {
+  document.getElementById('aviso-humeda').style.display = e.target.value === 'Húmeda' ? 'block' : 'none';
+});
+
 document.getElementById('btn-guardar').addEventListener('click', async () => {
   const valle = document.getElementById('r-valle').value;
   const grupo = document.getElementById('r-grupo').value;
@@ -412,6 +432,7 @@ document.getElementById('btn-guardar').addEventListener('click', async () => {
   const variedad = document.getElementById('r-variedad').value.trim();
   const bandejas = parseFloat(document.getElementById('r-bandejas').value) || 0;
   const bruto = parseFloat(document.getElementById('r-bruto').value);
+  const estado = document.getElementById('r-estado').value;
   const msg = document.getElementById('save-msg');
 
   if(!valle || !bandejas || isNaN(bruto)){
@@ -430,7 +451,7 @@ document.getElementById('btn-guardar').addEventListener('click', async () => {
     valle, grupo, modulo, variedad,
     bandejas, bruto,
     taraUnit, taraTotalKg,
-    neto
+    neto, estado
   };
   registros.unshift(registro);
   await saveRegistros();
@@ -438,6 +459,8 @@ document.getElementById('btn-guardar').addEventListener('click', async () => {
   msg.style.color = 'var(--leaf)';
   msg.textContent = `Guardado: Grupo ${grupo} — ${neto.toFixed(2)} kg netos.`;
   document.getElementById('r-bruto').value = '';
+  document.getElementById('r-estado').value = 'Seca';
+  document.getElementById('aviso-humeda').style.display = 'none';
   updateCalc();
   renderHistorial();
   setTimeout(() => { msg.textContent=''; }, 3000);
@@ -483,7 +506,9 @@ function renderHistorial(){
           <span class="grupo-tag">Grupo ${r.grupo}</span>
           <span class="date">${fechaStr}</span>
         </div>
-        <div class="meta">${r.valle} · ${formatModulo(r.modulo)} · ${r.variedad || 'Variedad —'}</div>
+        <div class="meta">${r.valle} · ${formatModulo(r.modulo)} · ${r.variedad || 'Variedad —'}
+          <span class="estado-tag ${r.estado === 'Húmeda' ? 'humeda' : 'seca'}">${r.estado || 'Seca'}</span>
+        </div>
         <div class="meta">${r.bandejas} bandejas · bruto ${r.bruto.toFixed(2)} kg · tara ${r.taraTotalKg.toFixed(2)} kg</div>
         <div class="net">${r.neto.toFixed(2)} kg netos</div>
         <button class="del" data-id="${r.id}">Eliminar</button>
@@ -528,7 +553,8 @@ function agruparReporte(lista){
       bandejas: r.bandejas,
       taraUnitKg: r.taraUnit / 1000,
       bruto: r.bruto,
-      neto: r.neto
+      neto: r.neto,
+      estado: r.estado || 'Seca'
     };
     grupos[r.grupo].total += r.neto;
   });
@@ -551,11 +577,11 @@ function renderReporte(){
     tabla.innerHTML = '<tr><td class="empty" style="border:none;">No hay lotes en este rango.</td></tr>';
     return;
   }
-  let html = `<tr><th>Módulo</th><th>Variedad</th><th class="num">Bandejas</th><th class="num">Tara/band. (kg)</th><th class="num">Neto (kg)</th></tr>`;
+  let html = `<tr><th>Módulo</th><th>Variedad</th><th class="num">Bandejas</th><th class="num">Tara/band. (kg)</th><th>Estado</th><th class="num">Neto (kg)</th></tr>`;
   Object.keys(grupos).sort().forEach(g => {
-    html += `<tr class="grupo-row"><td colspan="4">Grupo ${g}</td><td class="num">${grupos[g].total.toFixed(1)}</td></tr>`;
+    html += `<tr class="grupo-row"><td colspan="5">Grupo ${g}</td><td class="num">${grupos[g].total.toFixed(1)}</td></tr>`;
     Object.values(grupos[g].filas).forEach(f => {
-      html += `<tr><td>${f.modulo}</td><td>${f.variedad}</td><td class="num">${f.bandejas}</td><td class="num">${f.taraUnitKg.toFixed(3)}</td><td class="num">${f.neto.toFixed(1)}</td></tr>`;
+      html += `<tr><td>${f.modulo}</td><td>${f.variedad}</td><td class="num">${f.bandejas}</td><td class="num">${f.taraUnitKg.toFixed(3)}</td><td><span class="estado-tag ${f.estado==='Húmeda'?'humeda':'seca'}">${f.estado}</span></td><td class="num">${f.neto.toFixed(1)}</td></tr>`;
     });
   });
   tabla.innerHTML = html;
@@ -584,6 +610,7 @@ document.getElementById('btn-excel').addEventListener('click', () => {
     Variedad: r.variedad || '—',
     Bandejas: r.bandejas,
     'Tara por bandeja (kg)': Number((r.taraUnit/1000).toFixed(3)),
+    Estado: r.estado || 'Seca',
     'Peso bruto (kg)': Number(r.bruto.toFixed(2)),
     'Tara total (kg)': Number(r.taraTotalKg.toFixed(2)),
     'Peso neto (kg)': Number(r.neto.toFixed(2))
@@ -614,7 +641,7 @@ document.getElementById('btn-copiar').addEventListener('click', async () => {
   Object.keys(grupos).sort().forEach(g => {
     texto += `Grupo ${g}: ${grupos[g].total.toFixed(1)} kg\n`;
     Object.values(grupos[g].filas).forEach(f => {
-      texto += `  · Módulo ${f.modulo} / ${f.variedad}: ${f.neto.toFixed(1)} kg (${f.bandejas} bandejas, tara ${f.taraUnitKg.toFixed(3)} kg/bandeja)\n`;
+      texto += `  · Módulo ${f.modulo} / ${f.variedad} (${f.estado}): ${f.neto.toFixed(1)} kg (${f.bandejas} bandejas, tara ${f.taraUnitKg.toFixed(3)} kg/bandeja)\n`;
     });
   });
   const msg = document.getElementById('rep-msg');
