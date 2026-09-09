@@ -648,7 +648,19 @@ document.getElementById('btn-foto').addEventListener('click', async () => {
     const canvas = await html2canvas(nodo, {
       backgroundColor: '#EEEAE1',
       scale: 2,
-      useCORS: true
+      useCORS: true,
+      onclone: (clonedDoc) => {
+        const card = clonedDoc.querySelector('#rep-capture .card');
+        if(card){
+          card.style.overflow = 'visible';
+          card.style.overflowX = 'visible';
+        }
+        const tabla = clonedDoc.getElementById('rep-table');
+        if(tabla){
+          tabla.style.width = 'max-content';
+          tabla.style.minWidth = '100%';
+        }
+      }
     });
 
     canvas.toBlob(async (blob) => {
