@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi Administrador Financiero</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236366f1'/%3E%3Cstop offset='1' stop-color='%23818cf8'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='url(%23g)'/%3E%3Ctext x='32' y='42' font-family='Arial,sans-serif' font-weight='800' font-size='26' fill='white' text-anchor='middle'%3EJL%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --surface-2: #1f1c14;
+    --ink: #f2ecdb;
+    --ink-dim: #a8a196;
+    --line: #33301f;
+    --moto: #e8734a;
+    --ahorro: #34a874;
+    --emergencia: #e0b23c;
+    --accent: #ffd447;
+    --accent-2: #fff3b0;
+    --warn-bg: #332a12;
+    --warn-ink: #ffe27a;
+    --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 4px 18px rgba(0,0,0,0.45);
+    --radius: 18px;
+    --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  :root[data-theme="light"] {
+    --bg: #f7f5ef; --surface: #ffffff; --surface-2: #f0ede2;
+    --ink: #1a1710; --ink-dim: #6b6558; --line: #e3ddc9;
+    --moto: #c1552f; --ahorro: #1f7a50; --emergencia: #a5760f;
+    --accent: #b8901a; --accent-2: #e0b32e;
+    --warn-bg: #f8ecc9; --warn-ink: #6b4d0f;
+    --shadow: 0 1px 2px rgba(30,25,10,0.06), 0 4px 16px rgba(30,25,10,0.06);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--font-body); padding: 18px 14px 50px; line-height: 1.4;
+  }
+  .wrap { max-width: 480px; margin: 0 auto; }
+  .brand { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 2px 0 16px; }
+  .brand-logo {
+    width: 38px; height: 38px; border-radius: 11px; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display); font-weight: 800; font-size: 0.95rem; color: #201808;
+    letter-spacing: 0.01em; box-shadow: var(--shadow), 0 0 16px rgba(255, 212, 71, 0.35);
+  }
+  h1 { font-family: var(--font-display); font-weight: 700; font-size: 1.3rem; margin: 0; letter-spacing: -0.01em; }
+  .card {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 20px; margin-bottom: 14px; box-shadow: var(--shadow);
+  }
+  .hero { text-align: center; }
+  .hero label { display:block; font-size: 1rem; color: var(--ink-dim); margin-bottom: 10px; font-weight: 500; }
+  .hero input {
+    width: 100%; text-align: center; font-family: var(--font-display); font-size: 2rem; font-weight: 700;
+    padding: 14px; border-radius: 14px; border: 2px solid var(--line);
+    background: var(--surface-2); color: var(--ink); margin-bottom: 14px;
+  }
+  .hero input:focus { outline: none; border-color: var(--accent); }
+  button {
+    width: 100%; padding: 16px; border-radius: 14px; border: none;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #201808; font-size: 1.05rem;
+    font-family: var(--font-display); font-weight: 700; cursor: pointer;
+    box-shadow: 0 0 18px rgba(255, 212, 71, 0.3);
+  }
+  button:active { opacity: 0.85; }
+  button.ghost { background: transparent; border: 1px solid var(--line); color: var(--ink-dim); font-weight:500; font-size:0.9rem; padding: 12px; }
+  button.small { padding: 12px; font-size: 0.9rem; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .stat {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    padding: 14px 8px; text-align: center; box-shadow: var(--shadow);
+  }
+  .stat .icon { font-size: 1.4rem; }
+  .stat .value { font-family: var(--font-display); font-size: 1rem; font-weight: 700; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .stat .label { font-size: 0.68rem; color: var(--ink-dim); margin-top: 2px; font-weight: 500; }
+  .bar-bg { height: 7px; background: var(--line); border-radius: 6px; overflow: hidden; margin-top: 8px; }
+  .bar-fill { height: 100%; background: linear-gradient(90deg, var(--moto), var(--accent-2)); border-radius: 6px; }
+  .result { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .result-row { display:flex; justify-content: space-between; padding: 6px 0; font-size: 0.95rem; }
+  .result-row .name { color: var(--ink-dim); }
+  .warn { background: var(--warn-bg); color: var(--warn-ink); border-radius: 12px; padding: 12px; font-size: 0.85rem; margin-bottom: 12px; }
+  .saldo-ok { color: var(--ink); }
+  .saldo-low { color: var(--warn-ink); font-weight: 700; }
+  .saldo-over { color: var(--moto); font-weight: 700; }
+  .saldo-tag { font-size: 0.68rem; font-weight: 600; padding: 2px 7px; border-radius: 6px; margin-left: 6px; vertical-align: middle; }
+  .saldo-tag.low { background: var(--warn-bg); color: var(--warn-ink); }
+  .saldo-tag.over { background: var(--warn-bg); color: var(--moto); }
+  .toggle-row { text-align: center; margin: 6px 0 14px; }
+  .more { display: none; }
+  .more.open { display: block; }
+  label.field { display:block; font-size: 0.8rem; color: var(--ink-dim); margin-bottom: 4px; margin-top: 10px; }
+  input.field, select.field {
+    width: 100%; padding: 11px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--surface-2); color: var(--ink); font-size: 1rem; font-family: var(--font-body);
+  }
+  .hist-item { display:flex; justify-content:space-between; align-items:center; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 0.88rem; }
+  .hist-item:last-child { border-bottom: none; }
+  .hist-item .d { color: var(--ink-dim); }
+  .del-btn { background: none; border: none; width: auto; padding: 0 0 0 10px; font-size: 0.95rem; cursor: pointer; }
+  #loadingNote { text-align:center; color: var(--ink-dim); padding: 40px 0; }
+  .muted { color: var(--ink-dim); font-size: 0.75rem; }
+  .sync-badge {
+    display: block; text-align: center; font-size: 0.72rem; font-weight: 600;
+    margin: -8px 0 14px; padding: 5px; border-radius: 8px;
+  }
+  .sync-badge.ok { color: var(--ahorro); }
+  .sync-badge.pending { background: var(--warn-bg); color: var(--warn-ink); }
+  .sync-badge.offline { background: var(--warn-bg); color: var(--warn-ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <div class="brand-logo">JL</div>
+    <h1>Mi Administrador Financiero</h1>
+  </div>
+  <div id="syncBadge" class="sync-badge"></div>
+  <div id="loadingNote">Cargando...</div>
+  <div id="app" style="display:none;"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const FIXED = { prestamo: 17000, abuelos: 10000, alimentacion: 38000, gustos: 10000, transporte: 3000, emergencia: 3000 };
+const MOTO_GOAL = 1000000;
+const BUDGETS = { alimentacion: FIXED.alimentacion, gustos: FIXED.gustos, transporte: FIXED.transporte };
+
+
+function saldoStatus(key, saldo){
+  const budget = BUDGETS[key];
+  if(saldo <= 0) return 'over';
+  if(saldo / budget <= 0.2) return 'low';
+  return 'ok';
+}
+const CAT_META = {
+  prestamo: {label:'Préstamo', icon:'💳'}, abuelos: {label:'Abuelos', icon:'👴'},
+  alimentacion: {label:'Alimentación', icon:'🍽️'}, gustos: {label:'Gustos', icon:'🎉'},
+  transporte: {label:'Transporte', icon:'🚌'}, emergencia: {label:'Emergencia', icon:'🧯'},
+  ahorro: {label:'Ahorro', icon:'🏦'}, fondoMoto: {label:'Fondo Moto', icon:'🏍️'}
+};
+const ORDER = ['fondoMoto','ahorro','prestamo','abuelos','alimentacion','gustos','transporte','emergencia'];
+
+function fmt(c){
+  const neg = c < 0;
+  const v = Math.abs(c)/100;
+  return (neg ? '-S/' : 'S/') + v.toLocaleString('es-PE',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function toCentavos(v){ return Math.round(parseFloat(v)*100); }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+
+function distribute(sueldoCent){
+  let cat = {prestamo:FIXED.prestamo, abuelos:FIXED.abuelos, alimentacion:FIXED.alimentacion, gustos:FIXED.gustos, transporte:FIXED.transporte, emergencia:FIXED.emergencia, ahorro:0, fondoMoto:0};
+  let fixedTotal = FIXED.prestamo+FIXED.abuelos+FIXED.alimentacion+FIXED.gustos+FIXED.transporte+FIXED.emergencia;
+  let remainder = sueldoCent - fixedTotal;
+  let warning = null;
+  if(remainder < 0){
+    let deficit = -remainder;
+    const trim = (key, floor=0) => { if(deficit<=0) return; let avail=cat[key]-floor; let cut=Math.min(avail,deficit); cat[key]-=cut; deficit-=cut; };
+    trim('gustos'); trim('transporte'); trim('emergencia'); trim('alimentacion', Math.round(FIXED.alimentacion*0.6));
+    if(deficit>0){ warning = `No alcanza para cubrir todo. Faltan ${fmt(deficit)} tras recortar lo posible.`; trim('alimentacion', 0); }
+    remainder = 0;
+  } else {
+    let leftoverAhorro = Math.floor(remainder/2);
+    cat.ahorro = leftoverAhorro;
+    cat.fondoMoto = remainder - leftoverAhorro;
+  }
+  let total = Object.values(cat).reduce((a,b)=>a+b,0);
+  let diff = sueldoCent - total;
+  if(diff !== 0){ cat.fondoMoto += diff; }
+  return {cat, warning};
+}
+
+const SUPABASE_URL = 'https://rqvcvffyynpnighzwxju.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdmN2ZmZ5eW5wbmlnaHp3eGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MjgyNDcsImV4cCI6MjA5MzMwNDI0N30.fFufNEdRvAzl6O6BqtTbx83O3Eg8Wd7gACNJDGQKga4';
+const DEFAULT_STATE = { fondoMoto:0, ahorro:0, emergencia:0, prestamoReservado:0, saldos:{alimentacion:0, gustos:0, transporte:0}, historial:[] };
+const CACHE_KEY = 'finanzas_jerson_cache_v1';
+
+let state = null, sb = null, moreOpen = false;
+let syncStatus = 'ok'; // 'ok' | 'pending' | 'offline'
+
+function loadCache(){
+  try { const raw = localStorage.getItem(CACHE_KEY); return raw ? JSON.parse(raw) : null; }
+  catch(e){ return null; }
+}
+function writeCache(data, pending){
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify({data, pending})); }
+  catch(e){ /* localStorage no disponible: seguimos solo en memoria */ }
+}
+function updateBadge(){
+  const el = document.getElementById('syncBadge');
+  if(!el) return;
+  el.className = 'sync-badge ' + syncStatus;
+  el.textContent = syncStatus === 'ok' ? '🟢 Sincronizado'
+    : syncStatus === 'pending' ? '🟡 Guardado en tu celular — sincronizando…'
+    : '🔴 Sin conexión — se guardó en tu celular, se sincroniza al volver la señal';
+}
+
+async function init(){
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const cache = loadCache();
+
+  if(cache){
+    state = cache.data;
+    syncStatus = cache.pending ? 'pending' : 'ok';
+    document.getElementById('loadingNote').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    render();
+    updateBadge();
+  }
+
+  try {
+    const { data, error } = await sb.from('finanzas_estado').select('data').eq('id','main').maybeSingle();
+    if(error) throw error;
+    if(data && (!cache || !cache.pending)){
+      state = data.data;
+    } else if(!data && !cache){
+      state = DEFAULT_STATE;
+      await sb.from('finanzas_estado').insert({ id:'main', data: state });
+    }
+    document.getElementById('loadingNote').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    syncStatus = (cache && cache.pending) ? 'pending' : 'ok';
+    writeCache(state, syncStatus === 'pending');
+    render();
+    updateBadge();
+    if(syncStatus === 'pending') trySync();
+  } catch(err){
+    if(!state){ state = DEFAULT_STATE; }
+    syncStatus = 'offline';
+    document.getElementById('loadingNote').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    render();
+    updateBadge();
+  }
+
+  sb.channel('finanzas_estado_changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'finanzas_estado', filter: 'id=eq.main' }, payload => {
+      if(payload.new && payload.new.data && syncStatus !== 'pending'){
+        state = payload.new.data; writeCache(state, false); syncStatus = 'ok'; updateBadge(); render();
+      }
+    })
+    .subscribe();
+
+  window.addEventListener('online', trySync);
+  setInterval(trySync, 20000);
+}
+
+async function trySync(){
+  if(syncStatus !== 'pending' && syncStatus !== 'offline') return;
+  if(navigator.onLine === false){ syncStatus = 'offline'; updateBadge(); return; }
+  try {
+    const { error } = await sb.from('finanzas_estado').upsert({ id:'main', data: state, updated_at: new Date().toISOString() });
+    if(error) throw error;
+    writeCache(state, false);
+    syncStatus = 'ok';
+  } catch(err){
+    syncStatus = 'offline';
+    writeCache(state, true);
+  }
+  updateBadge();
+}
+
+async function save(){
+  writeCache(state, true);
+  syncStatus = 'pending';
+  updateBadge();
+  await trySync();
+}
+
+function toggleMore(){ moreOpen = !moreOpen; render(); }
+
+function render(){
+  const app = document.getElementById('app');
+  const motoPct = Math.max(0, Math.min(100, (state.fondoMoto/MOTO_GOAL*100)));
+  app.innerHTML = `
+    <div class="card hero">
+      <label>¿Cuánto cobraste?</label>
+      <input type="number" id="montoInput" placeholder="0.00" step="0.01" min="0" inputmode="decimal">
+      <button onclick="registrarSueldo()">Registrar</button>
+      <div id="resultado"></div>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="icon">🏍️</div>
+        <div class="value">${fmt(state.fondoMoto)}</div>
+        <div class="label">Moto</div>
+        <div class="bar-bg"><div class="bar-fill" style="width:${motoPct}%"></div></div>
+      </div>
+      <div class="stat">
+        <div class="icon">🏦</div>
+        <div class="value">${fmt(state.ahorro)}</div>
+        <div class="label">Ahorro</div>
+      </div>
+      <div class="stat">
+        <div class="icon">🧯</div>
+        <div class="value">${fmt(state.emergencia)}</div>
+        <div class="label">Emergencia</div>
+      </div>
+    </div>
+
+    <div class="toggle-row">
+      <button class="ghost small" onclick="toggleMore()">${moreOpen ? 'Ocultar detalles ▲' : 'Ver más (gastos, préstamo, historial) ▼'}</button>
+    </div>
+
+    <div class="more ${moreOpen ? 'open' : ''}">
+      <div class="card">
+        <div style="font-weight:600; margin-bottom:8px;">Saldos de esta quincena</div>
+        ${['alimentacion','gustos','transporte'].map(k => {
+          const saldo = state.saldos[k];
+          const st = saldoStatus(k, saldo);
+          const icon = k==='alimentacion' ? '🍽️' : k==='gustos' ? '🎉' : '🚌';
+          const nombre = k==='alimentacion' ? 'Alimentación' : k==='gustos' ? 'Gustos' : 'Transporte';
+          const tag = st==='over' ? '<span class="saldo-tag over">excedido</span>' : st==='low' ? '<span class="saldo-tag low">por acabarse</span>' : '';
+          return `<div class="result-row"><span class="name">${icon} ${nombre}${tag}</span><span class="saldo-${st}">${fmt(saldo)}</span></div>`;
+        }).join('')}
+
+        <label class="field">Categoría del gasto</label>
+        <select class="field" id="gastoCat">
+          <option value="alimentacion">Alimentación</option>
+          <option value="gustos">Gustos</option>
+          <option value="transporte">Transporte</option>
+        </select>
+        <label class="field">Monto gastado</label>
+        <input class="field" type="number" id="gastoMonto" placeholder="0.00" step="0.01" min="0" inputmode="decimal">
+        <div style="margin-top:12px;"><button class="small" onclick="registrarGasto()">Registrar gasto</button></div>
+        <div id="gastoAviso"></div>
+      </div>
+
+      <div class="card">
+        <div style="font-weight:600; margin-bottom:8px;">💳 Préstamo</div>
+        <div class="result-row"><span class="name">Reservado</span><span>${fmt(state.prestamoReservado)} / S/340</span></div>
+        ${state.prestamoReservado >= 34000 ? `<div style="margin-top:10px;"><button class="small" onclick="pagarPrestamo()">Registrar pago (S/340)</button></div>` : ''}
+      </div>
+
+      <div class="card">
+        <div style="font-weight:600; margin-bottom:8px;">Historial</div>
+        ${state.historial.length === 0 ? '<div style="color:var(--ink-dim); font-size:0.85rem;">Sin registros aún.</div>' :
+          state.historial.slice().reverse().map(h => `<div class="hist-item"><span class="d">${h.fecha}</span><span>${fmt(h.sueldo)}<button class="del-btn" onclick="eliminarHistorial(${h.timestamp})" title="Eliminar">🗑️</button></span></div>`).join('')}
+      </div>
+
+      <div class="card">
+        <div style="font-weight:600; margin-bottom:8px;">✏️ Corregir montos manualmente</div>
+        <div style="font-size:0.8rem; color:var(--ink-dim); margin-bottom:6px;">Usa esto solo si algo quedó mal registrado.</div>
+        <label class="field">Fondo Moto</label>
+        <input class="field" type="number" step="0.01" id="edMoto" value="${(state.fondoMoto/100).toFixed(2)}">
+        <label class="field">Ahorro</label>
+        <input class="field" type="number" step="0.01" id="edAhorro" value="${(state.ahorro/100).toFixed(2)}">
+        <label class="field">Emergencia</label>
+        <input class="field" type="number" step="0.01" id="edEmergencia" value="${(state.emergencia/100).toFixed(2)}">
+        <label class="field">Reservado préstamo</label>
+        <input class="field" type="number" step="0.01" id="edPrestamo" value="${(state.prestamoReservado/100).toFixed(2)}">
+        <label class="field">Saldo Alimentación</label>
+        <input class="field" type="number" step="0.01" id="edAlim" value="${(state.saldos.alimentacion/100).toFixed(2)}">
+        <label class="field">Saldo Gustos</label>
+        <input class="field" type="number" step="0.01" id="edGustos" value="${(state.saldos.gustos/100).toFixed(2)}">
+        <label class="field">Saldo Transporte</label>
+        <input class="field" type="number" step="0.01" id="edTransporte" value="${(state.saldos.transporte/100).toFixed(2)}">
+        <div style="margin-top:12px;"><button class="small" onclick="guardarCorreccion()">Guardar corrección</button></div>
+      </div>
+    </div>
+  `;
+}
+
+async function registrarSueldo(){
+  const montoRaw = document.getElementById('montoInput').value;
+  if(!montoRaw || parseFloat(montoRaw) <= 0) return;
+  const sueldoCent = toCentavos(montoRaw);
+  const {cat, warning} = distribute(sueldoCent);
+
+  // Cierre de quincena: lo que sobró de Alimentación/Gustos/Transporte pasa al Fondo Moto
+  const sobrante = ['alimentacion','gustos','transporte']
+    .reduce((sum, k) => sum + Math.max(0, state.saldos[k]), 0);
+  cat.fondoMoto += sobrante;
+
+  state.fondoMoto += cat.fondoMoto;
+  state.ahorro += cat.ahorro;
+  state.emergencia += cat.emergencia;
+  state.prestamoReservado += cat.prestamo;
+  state.saldos = {alimentacion: cat.alimentacion, gustos: cat.gustos, transporte: cat.transporte};
+  state.historial.push({fecha: todayStr(), sueldo: sueldoCent, cat, timestamp: Date.now()});
+  if(state.historial.length > 20) state.historial = state.historial.slice(-20);
+
+  const resultHTML = (warning ? `<div class="warn">⚠️ ${warning}</div>` : '') +
+    '<div class="result">' + ORDER.map(k => `<div class="result-row"><span class="name">${CAT_META[k].icon} ${CAT_META[k].label}</span><span>${fmt(cat[k])}</span></div>`).join('') + '</div>' +
+    (sobrante > 0 ? `<div class="muted" style="text-align:left; margin-top:4px;">↳ incluye ${fmt(sobrante)} de sobrante de la quincena anterior</div>` : '');
+
+  await save();
+  render();
+  document.getElementById('resultado').innerHTML = resultHTML;
+  document.getElementById('montoInput').value = '';
+}
+
+async function registrarGasto(){
+  const catKey = document.getElementById('gastoCat').value;
+  const montoRaw = document.getElementById('gastoMonto').value;
+  if(!montoRaw || parseFloat(montoRaw) <= 0) return;
+  const montoCent = toCentavos(montoRaw);
+  state.saldos[catKey] -= montoCent;
+  const saldo = state.saldos[catKey];
+  const st = saldoStatus(catKey, saldo);
+  await save();
+  render();
+  if(st === 'over'){
+    document.getElementById('gastoAviso').innerHTML = `<div class="warn">⚠️ Te pasaste en ${CAT_META[catKey].label} por ${fmt(-saldo)}.</div>`;
+  } else if(st === 'low'){
+    document.getElementById('gastoAviso').innerHTML = `<div class="warn">⚠️ Te queda poco en ${CAT_META[catKey].label}: solo ${fmt(saldo)}.</div>`;
+  }
+}
+
+async function pagarPrestamo(){
+  state.prestamoReservado = Math.max(0, state.prestamoReservado - 34000);
+  await save();
+  render();
+}
+
+async function eliminarHistorial(timestamp){
+  const entry = state.historial.find(h => h.timestamp === timestamp);
+  if(!entry) return;
+  if(!confirm(`¿Eliminar el registro de ${entry.fecha} (${fmt(entry.sueldo)})? Esto también restará lo que sumó a Moto/Ahorro/Emergencia/Préstamo.`)) return;
+  state.fondoMoto -= entry.cat.fondoMoto;
+  state.ahorro -= entry.cat.ahorro;
+  state.emergencia -= entry.cat.emergencia;
+  state.prestamoReservado -= entry.cat.prestamo;
+  state.historial = state.historial.filter(h => h.timestamp !== timestamp);
+  await save();
+  render();
+}
+
+async function guardarCorreccion(){
+  state.fondoMoto = toCentavos(document.getElementById('edMoto').value || 0);
+  state.ahorro = toCentavos(document.getElementById('edAhorro').value || 0);
+  state.emergencia = toCentavos(document.getElementById('edEmergencia').value || 0);
+  state.prestamoReservado = toCentavos(document.getElementById('edPrestamo').value || 0);
+  state.saldos.alimentacion = toCentavos(document.getElementById('edAlim').value || 0);
+  state.saldos.gustos = toCentavos(document.getElementById('edGustos').value || 0);
+  state.saldos.transporte = toCentavos(document.getElementById('edTransporte').value || 0);
+  await save();
+  render();
+}
+
+init();
+</script>
+</body>
+</html>
