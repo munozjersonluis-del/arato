@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Mi Administrador Financiero</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23ffd447'/%3E%3Cstop offset='1' stop-color='%23fff3b0'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='url(%23g)'/%3E%3Ctext x='32' y='42' font-family='Arial,sans-serif' font-weight='800' font-size='26' fill='%23201808' text-anchor='middle'%3EJL%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --surface-2: #1f1c14;
+    --ink: #f2ecdb;
+    --ink-dim: #a8a196;
+    --line: #33301f;
+    --moto: #e8734a;
+    --ahorro: #34a874;
+    --emergencia: #e0b23c;
+    --accent: #ffd447;
+    --accent-2: #fff3b0;
+    --warn-bg: #332a12;
+    --warn-ink: #ffe27a;
+    --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 4px 18px rgba(0,0,0,0.45);
+    --radius: 18px;
+    --navh: 68px;
+    --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); }
+  body {
+    color: var(--ink); font-family: var(--font-body); line-height: 1.4;
+    padding-bottom: calc(var(--navh) + env(safe-area-inset-bottom) + 10px);
+  }
+  .shell { max-width: 480px; margin: 0 auto; }
+
+  /* ---- Top bar ---- */
+  .topbar {
+    display: flex; align-items: center; gap: 10px;
+    padding: calc(env(safe-area-inset-top) + 14px) 16px 10px;
+    position: sticky; top: 0; z-index: 20;
+    background: linear-gradient(var(--bg) 80%, transparent);
+  }
+  .brand-logo {
+    width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display); font-weight: 800; font-size: 0.9rem; color: #201808;
+    box-shadow: 0 0 14px rgba(255,212,71,0.3);
+  }
+  .topbar h1 { font-family: var(--font-display); font-weight: 700; font-size: 1.15rem; margin: 0; flex: 1; }
+  .sync-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .sync-dot.ok { background: var(--ahorro); }
+  .sync-dot.pending { background: var(--emergencia); }
+  .sync-dot.offline { background: #e05a5a; }
+
+  main { padding: 0 14px 24px; }
+  .view { display: none; animation: fadein .15s ease; }
+  .view.active { display: block; }
+  @keyframes fadein { from { opacity: 0; transform: translateY(4px);} to { opacity:1; transform:none; } }
+
+  h2.section-title { font-family: var(--font-display); font-size: 1rem; font-weight: 700; margin: 4px 2px 10px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 18px; margin-bottom: 14px; box-shadow: var(--shadow);
+  }
+  .hero { text-align: center; }
+  .hero label { display:block; font-size: 0.95rem; color: var(--ink-dim); margin-bottom: 10px; font-weight: 500; }
+  .hero input {
+    width: 100%; text-align: center; font-family: var(--font-display); font-size: 2rem; font-weight: 700;
+    padding: 14px; border-radius: 14px; border: 2px solid var(--line);
+    background: var(--surface-2); color: var(--ink); margin-bottom: 14px;
+  }
+  .hero input:focus { outline: none; border-color: var(--accent); }
+
+  button.primary {
+    width: 100%; padding: 15px; border-radius: 14px; border: none;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #201808; font-size: 1.02rem;
+    font-family: var(--font-display); font-weight: 700; cursor: pointer;
+    box-shadow: 0 0 16px rgba(255,212,71,0.28);
+  }
+  button.primary:active { opacity: 0.85; }
+  button.ghost {
+    width: 100%; background: transparent; border: 1px solid var(--line); color: var(--ink-dim);
+    font-weight: 500; font-size: 0.9rem; padding: 11px; border-radius: 12px; cursor: pointer;
+  }
+  button.small { padding: 11px; font-size: 0.88rem; }
+  button.danger { color: #e88; border-color: #5a2f2f; }
+
+  .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 6px; text-align: center; box-shadow: var(--shadow); }
+  .stat .icon { font-size: 1.3rem; }
+  .stat .value { font-family: var(--font-display); font-size: 0.98rem; font-weight: 700; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .stat .label { font-size: 0.65rem; color: var(--ink-dim); margin-top: 2px; font-weight: 500; }
+  .bar-bg { height: 6px; background: var(--line); border-radius: 6px; overflow: hidden; margin-top: 7px; }
+  .bar-fill { height: 100%; background: linear-gradient(90deg, var(--moto), var(--accent-2)); border-radius: 6px; }
+
+  .result { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .row { display:flex; justify-content: space-between; align-items:center; padding: 7px 0; font-size: 0.94rem; }
+  .row .name { color: var(--ink-dim); }
+  .warn { background: var(--warn-bg); color: var(--warn-ink); border-radius: 12px; padding: 11px; font-size: 0.85rem; margin-bottom: 12px; }
+  .muted { color: var(--ink-dim); font-size: 0.75rem; }
+
+  .status-ok { color: var(--ink); }
+  .status-low { color: var(--warn-ink); font-weight: 700; }
+  .status-over { color: #ff8f6b; font-weight: 700; }
+  .tag { font-size: 0.65rem; font-weight: 600; padding: 2px 7px; border-radius: 6px; margin-left: 6px; }
+  .tag.low { background: var(--warn-bg); color: var(--warn-ink); }
+  .tag.over { background: #3a1f1a; color: #ff8f6b; }
+
+  label.field { display:block; font-size: 0.78rem; color: var(--ink-dim); margin-bottom: 4px; margin-top: 12px; }
+  input.field, select.field {
+    width: 100%; padding: 11px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--surface-2); color: var(--ink); font-size: 1rem; font-family: var(--font-body);
+  }
+  .field-row { display:flex; gap: 10px; }
+  .field-row > div { flex:1; }
+
+  .hist-item { display:flex; justify-content:space-between; align-items:center; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 0.88rem; }
+  .hist-item:last-child { border-bottom: none; }
+  .hist-item .d { color: var(--ink-dim); }
+  .del-btn { background: none; border: none; padding: 0 0 0 12px; font-size: 0.95rem; cursor: pointer; }
+
+  .settings-group { margin-bottom: 6px; }
+  .settings-group-title { font-size: 0.72rem; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-dim); font-weight: 700; margin: 18px 2px 6px; }
+  .settings-group-title:first-child { margin-top: 0; }
+
+  #loadingNote { text-align:center; color: var(--ink-dim); padding: 60px 0; }
+
+  /* ---- Bottom nav ---- */
+  .bottomnav {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+    display: flex; height: var(--navh);
+    padding-bottom: env(safe-area-inset-bottom);
+    background: var(--surface); border-top: 1px solid var(--line);
+    box-shadow: 0 -2px 16px rgba(0,0,0,0.35);
+  }
+  .navbtn {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    background: none; border: none; color: var(--ink-dim); font-family: var(--font-body);
+    font-size: 0.66rem; font-weight: 600; cursor: pointer; padding: 6px 0 0;
+  }
+  .navbtn svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .navbtn.active { color: var(--accent); }
+  .navbtn .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--accent); margin-top: 1px; opacity: 0; }
+  .navbtn.active .dot { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="topbar">
+    <div class="brand-logo">JL</div>
+    <h1>Mi Administrador Financiero</h1>
+    <div id="syncDot" class="sync-dot ok" title="Sincronizado"></div>
+  </div>
+  <div id="loadingNote">Cargando...</div>
+  <main id="app" style="display:none;"></main>
+</div>
+
+<nav class="bottomnav" id="bottomnav" style="display:none;">
+  <button class="navbtn" data-tab="inicio" onclick="setTab('inicio')">
+    <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+    Inicio<span class="dot"></span>
+  </button>
+  <button class="navbtn" data-tab="gastos" onclick="setTab('gastos')">
+    <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="16" cy="14" r="1" fill="currentColor" stroke="none"/></svg>
+    Gastos<span class="dot"></span>
+  </button>
+  <button class="navbtn" data-tab="historial" onclick="setTab('historial')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+    Historial<span class="dot"></span>
+  </button>
+  <button class="navbtn" data-tab="ajustes" onclick="setTab('ajustes')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    Ajustes<span class="dot"></span>
+  </button>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const DEFAULT_CONFIG = {
+  prestamoCuota: 17000, prestamoTotal: 34000, abuelos: 10000,
+  alimentacion: 38000, gustos: 10000, transporte: 3000, emergencia: 3000,
+  motoGoal: 1000000
+};
+const DEFAULT_STATE = () => ({
+  fondoMoto:0, ahorro:0, emergencia:0, prestamoReservado:0,
+  saldos:{alimentacion:0, gustos:0, transporte:0}, historial:[],
+  config: {...DEFAULT_CONFIG}
+});
+function ensureConfig(s){ s.config = Object.assign({}, DEFAULT_CONFIG, s.config || {}); return s; }
+
+const CAT_META = {
+  prestamo: {label:'Préstamo', icon:'💳'}, abuelos: {label:'Abuelos', icon:'👴'},
+  alimentacion: {label:'Alimentación', icon:'🍽️'}, gustos: {label:'Gustos', icon:'🎉'},
+  transporte: {label:'Transporte', icon:'🚌'}, emergencia: {label:'Emergencia', icon:'🧯'},
+  ahorro: {label:'Ahorro', icon:'🏦'}, fondoMoto: {label:'Fondo Moto', icon:'🏍️'}
+};
+const ORDER = ['fondoMoto','ahorro','prestamo','abuelos','alimentacion','gustos','transporte','emergencia'];
+
+function fmt(c){
+  const neg = c < 0;
+  const v = Math.abs(c)/100;
+  return (neg ? '-S/' : 'S/') + v.toLocaleString('es-PE',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function toCentavos(v){ return Math.round(parseFloat(v)*100) || 0; }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+
+function saldoStatus(key, saldo, cfg){
+  const budget = cfg[key];
+  if(saldo <= 0) return 'over';
+  if(budget > 0 && saldo / budget <= 0.2) return 'low';
+  return 'ok';
+}
+
+function distribute(sueldoCent, cfg){
+  let cat = {
+    prestamo: cfg.prestamoCuota, abuelos: cfg.abuelos, alimentacion: cfg.alimentacion,
+    gustos: cfg.gustos, transporte: cfg.transporte, emergencia: cfg.emergencia,
+    ahorro: 0, fondoMoto: 0
+  };
+  let fixedTotal = cfg.prestamoCuota + cfg.abuelos + cfg.alimentacion + cfg.gustos + cfg.transporte + cfg.emergencia;
+  let remainder = sueldoCent - fixedTotal;
+  let warning = null;
+  if(remainder < 0){
+    let deficit = -remainder;
+    const trim = (key, floor=0) => { if(deficit<=0) return; let avail=cat[key]-floor; let cut=Math.min(avail,deficit); cat[key]-=cut; deficit-=cut; };
+    trim('gustos'); trim('transporte'); trim('emergencia'); trim('alimentacion', Math.round(cfg.alimentacion*0.6));
+    if(deficit>0){ warning = `No alcanza para cubrir todo. Faltan ${fmt(deficit)} tras recortar lo posible.`; trim('alimentacion', 0); }
+    remainder = 0;
+  } else {
+    let leftoverAhorro = Math.floor(remainder/2);
+    cat.ahorro = leftoverAhorro;
+    cat.fondoMoto = remainder - leftoverAhorro;
+  }
+  let total = Object.values(cat).reduce((a,b)=>a+b,0);
+  let diff = sueldoCent - total;
+  if(diff !== 0){ cat.fondoMoto += diff; }
+  return {cat, warning};
+}
+
+const SUPABASE_URL = 'https://rqvcvffyynpnighzwxju.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdmN2ZmZ5eW5wbmlnaHp3eGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MjgyNDcsImV4cCI6MjA5MzMwNDI0N30.fFufNEdRvAzl6O6BqtTbx83O3Eg8Wd7gACNJDGQKga4';
+const CACHE_KEY = 'finanzas_jerson_cache_v2';
+
+let state = null, sb = null, activeTab = 'inicio';
+let syncStatus = 'ok'; // 'ok' | 'pending' | 'offline'
+let lastResultHTML = '';
+
+function loadCache(){
+  try { const raw = localStorage.getItem(CACHE_KEY); return raw ? JSON.parse(raw) : null; }
+  catch(e){ return null; }
+}
+function writeCache(data, pending){
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify({data, pending})); }
+  catch(e){ /* localStorage no disponible: seguimos solo en memoria */ }
+}
+function updateSyncDot(){
+  const el = document.getElementById('syncDot');
+  if(!el) return;
+  el.className = 'sync-dot ' + syncStatus;
+  el.title = syncStatus === 'ok' ? 'Sincronizado'
+    : syncStatus === 'pending' ? 'Guardando…'
+    : 'Sin conexión — se sincroniza al volver la señal';
+}
+
+async function init(){
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const cache = loadCache();
+
+  const showApp = () => {
+    document.getElementById('loadingNote').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('bottomnav').style.display = 'flex';
+  };
+
+  if(cache){
+    state = ensureConfig(cache.data);
+    syncStatus = cache.pending ? 'pending' : 'ok';
+    showApp(); render(); updateSyncDot();
+  }
+
+  try {
+    const { data, error } = await sb.from('finanzas_estado').select('data').eq('id','main').maybeSingle();
+    if(error) throw error;
+    if(data && (!cache || !cache.pending)){
+      state = ensureConfig(data.data);
+    } else if(!data && !cache){
+      state = DEFAULT_STATE();
+      await sb.from('finanzas_estado').insert({ id:'main', data: state });
+    }
+    showApp();
+    syncStatus = (cache && cache.pending) ? 'pending' : 'ok';
+    writeCache(state, syncStatus === 'pending');
+    render(); updateSyncDot();
+    if(syncStatus === 'pending') trySync();
+  } catch(err){
+    if(!state){ state = DEFAULT_STATE(); }
+    syncStatus = 'offline';
+    showApp(); render(); updateSyncDot();
+  }
+
+  sb.channel('finanzas_estado_changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'finanzas_estado', filter: 'id=eq.main' }, payload => {
+      if(payload.new && payload.new.data && syncStatus !== 'pending'){
+        state = ensureConfig(payload.new.data); writeCache(state, false); syncStatus = 'ok'; updateSyncDot(); render();
+      }
+    })
+    .subscribe();
+
+  window.addEventListener('online', trySync);
+  setInterval(trySync, 20000);
+}
+
+async function trySync(){
+  if(syncStatus !== 'pending' && syncStatus !== 'offline') return;
+  if(navigator.onLine === false){ syncStatus = 'offline'; updateSyncDot(); return; }
+  try {
+    const { error } = await sb.from('finanzas_estado').upsert({ id:'main', data: state, updated_at: new Date().toISOString() });
+    if(error) throw error;
+    writeCache(state, false);
+    syncStatus = 'ok';
+  } catch(err){
+    syncStatus = 'offline';
+    writeCache(state, true);
+  }
+  updateSyncDot();
+}
+
+async function save(){
+  writeCache(state, true);
+  syncStatus = 'pending';
+  updateSyncDot();
+  await trySync();
+}
+
+function setTab(tab){ activeTab = tab; lastResultHTML = ''; render(); window.scrollTo(0,0); }
+
+function render(){
+  document.querySelectorAll('.navbtn').forEach(b => b.classList.toggle('active', b.dataset.tab === activeTab));
+  const app = document.getElementById('app');
+  if(activeTab === 'inicio') app.innerHTML = viewInicio();
+  else if(activeTab === 'gastos') app.innerHTML = viewGastos();
+  else if(activeTab === 'historial') app.innerHTML = viewHistorial();
+  else if(activeTab === 'ajustes') app.innerHTML = viewAjustes();
+}
+
+function viewInicio(){
+  const cfg = state.config;
+  const motoPct = Math.max(0, Math.min(100, (state.fondoMoto/cfg.motoGoal*100)));
+  return `
+    <div class="view active">
+      <div class="card hero">
+        <label>¿Cuánto cobraste?</label>
+        <input type="number" id="montoInput" placeholder="0.00" step="0.01" min="0" inputmode="decimal">
+        <button class="primary" onclick="registrarSueldo()">Registrar</button>
+        <div id="resultado">${lastResultHTML}</div>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="icon">🏍️</div>
+          <div class="value">${fmt(state.fondoMoto)}</div>
+          <div class="label">Moto</div>
+          <div class="bar-bg"><div class="bar-fill" style="width:${motoPct}%"></div></div>
+        </div>
+        <div class="stat">
+          <div class="icon">🏦</div>
+          <div class="value">${fmt(state.ahorro)}</div>
+          <div class="label">Ahorro</div>
+        </div>
+        <div class="stat">
+          <div class="icon">🧯</div>
+          <div class="value">${fmt(state.emergencia)}</div>
+          <div class="label">Emergencia</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row"><span class="name">🏍️ Falta para la moto</span><span>${fmt(Math.max(0, cfg.motoGoal - state.fondoMoto))}</span></div>
+        <div class="row"><span class="name">💳 Reservado préstamo</span><span>${fmt(state.prestamoReservado)} / ${fmt(cfg.prestamoTotal)}</span></div>
+        <div class="row"><span class="name">👴 Próximo aporte abuelos</span><span>${fmt(cfg.abuelos)}</span></div>
+      </div>
+    </div>
+  `;
+}
+
+function viewGastos(){
+  const cfg = state.config;
+  const items = ['alimentacion','gustos','transporte'].map(k => {
+    const saldo = state.saldos[k];
+    const st = saldoStatus(k, saldo, cfg);
+    const icon = k==='alimentacion' ? '🍽️' : k==='gustos' ? '🎉' : '🚌';
+    const nombre = k==='alimentacion' ? 'Alimentación' : k==='gustos' ? 'Gustos' : 'Transporte';
+    const tag = st==='over' ? '<span class="tag over">excedido</span>' : st==='low' ? '<span class="tag low">por acabarse</span>' : '';
+    return `<div class="row"><span class="name">${icon} ${nombre}${tag}</span><span class="status-${st}">${fmt(saldo)}</span></div>`;
+  }).join('');
+
+  return `
+    <div class="view active">
+      <h2 class="section-title">Saldos de esta quincena</h2>
+      <div class="card">
+        ${items}
+        <label class="field">Categoría del gasto</label>
+        <select class="field" id="gastoCat">
+          <option value="alimentacion">Alimentación</option>
+          <option value="gustos">Gustos</option>
+          <option value="transporte">Transporte</option>
+        </select>
+        <label class="field">Monto gastado</label>
+        <input class="field" type="number" id="gastoMonto" placeholder="0.00" step="0.01" min="0" inputmode="decimal">
+        <div style="margin-top:12px;"><button class="primary small" onclick="registrarGasto()">Registrar gasto</button></div>
+        <div id="gastoAviso"></div>
+      </div>
+
+      <h2 class="section-title">Préstamo</h2>
+      <div class="card">
+        <div class="row"><span class="name">Reservado</span><span>${fmt(state.prestamoReservado)} / ${fmt(cfg.prestamoTotal)}</span></div>
+        ${state.prestamoReservado >= cfg.prestamoTotal ? `<div style="margin-top:10px;"><button class="primary small" onclick="pagarPrestamo()">Registrar pago (${fmt(cfg.prestamoTotal)})</button></div>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+function viewHistorial(){
+  const items = state.historial.length === 0
+    ? '<div class="muted" style="padding:6px 0;">Sin registros aún.</div>'
+    : state.historial.slice().reverse().map(h => `<div class="hist-item"><span class="d">${h.fecha}</span><span>${fmt(h.sueldo)}<button class="del-btn" onclick="eliminarHistorial(${h.timestamp})" title="Eliminar">🗑️</button></span></div>`).join('');
+  return `
+    <div class="view active">
+      <h2 class="section-title">Historial de quincenas</h2>
+      <div class="card">${items}</div>
+    </div>
+  `;
+}
+
+function viewAjustes(){
+  const cfg = state.config;
+  const s = state;
+  return `
+    <div class="view active">
+      <h2 class="section-title">Presupuesto por quincena</h2>
+      <div class="card">
+        <div class="field-row">
+          <div><label class="field">Préstamo (cuota quincenal)</label><input class="field" type="number" step="0.01" id="cfgPrestamoCuota" value="${(cfg.prestamoCuota/100).toFixed(2)}"></div>
+          <div><label class="field">Préstamo total (día 1)</label><input class="field" type="number" step="0.01" id="cfgPrestamoTotal" value="${(cfg.prestamoTotal/100).toFixed(2)}"></div>
+        </div>
+        <label class="field">Abuelos</label>
+        <input class="field" type="number" step="0.01" id="cfgAbuelos" value="${(cfg.abuelos/100).toFixed(2)}">
+        <label class="field">Alimentación</label>
+        <input class="field" type="number" step="0.01" id="cfgAlimentacion" value="${(cfg.alimentacion/100).toFixed(2)}">
+        <div class="field-row">
+          <div><label class="field">Gustos</label><input class="field" type="number" step="0.01" id="cfgGustos" value="${(cfg.gustos/100).toFixed(2)}"></div>
+          <div><label class="field">Transporte</label><input class="field" type="number" step="0.01" id="cfgTransporte" value="${(cfg.transporte/100).toFixed(2)}"></div>
+        </div>
+        <label class="field">Emergencia</label>
+        <input class="field" type="number" step="0.01" id="cfgEmergencia" value="${(cfg.emergencia/100).toFixed(2)}">
+        <label class="field">Meta Fondo Moto</label>
+        <input class="field" type="number" step="0.01" id="cfgMotoGoal" value="${(cfg.motoGoal/100).toFixed(2)}">
+        <div style="margin-top:14px;"><button class="primary small" onclick="guardarConfig()">Guardar presupuesto</button></div>
+        <div style="margin-top:8px;"><button class="ghost small" onclick="restaurarConfig()">Restaurar valores por defecto</button></div>
+      </div>
+
+      <h2 class="section-title">Corregir montos manualmente</h2>
+      <div class="card">
+        <div class="muted" style="margin-bottom:4px;">Usa esto solo si algo quedó mal registrado.</div>
+        <div class="field-row">
+          <div><label class="field">Fondo Moto</label><input class="field" type="number" step="0.01" id="edMoto" value="${(s.fondoMoto/100).toFixed(2)}"></div>
+          <div><label class="field">Ahorro</label><input class="field" type="number" step="0.01" id="edAhorro" value="${(s.ahorro/100).toFixed(2)}"></div>
+        </div>
+        <div class="field-row">
+          <div><label class="field">Emergencia</label><input class="field" type="number" step="0.01" id="edEmergencia" value="${(s.emergencia/100).toFixed(2)}"></div>
+          <div><label class="field">Reservado préstamo</label><input class="field" type="number" step="0.01" id="edPrestamo" value="${(s.prestamoReservado/100).toFixed(2)}"></div>
+        </div>
+        <label class="field">Saldo Alimentación</label>
+        <input class="field" type="number" step="0.01" id="edAlim" value="${(s.saldos.alimentacion/100).toFixed(2)}">
+        <div class="field-row">
+          <div><label class="field">Saldo Gustos</label><input class="field" type="number" step="0.01" id="edGustos" value="${(s.saldos.gustos/100).toFixed(2)}"></div>
+          <div><label class="field">Saldo Transporte</label><input class="field" type="number" step="0.01" id="edTransporte" value="${(s.saldos.transporte/100).toFixed(2)}"></div>
+        </div>
+        <div style="margin-top:14px;"><button class="primary small" onclick="guardarCorreccion()">Guardar corrección</button></div>
+      </div>
+
+      <h2 class="section-title">Acerca de</h2>
+      <div class="card">
+        <div class="row"><span class="name">App</span><span>Mi Administrador Financiero</span></div>
+        <div class="row"><span class="name">Versión</span><span>2026.1</span></div>
+        <div class="row"><span class="name">Estado</span><span id="ajustesSyncLabel">${syncStatus === 'ok' ? '🟢 Sincronizado' : syncStatus === 'pending' ? '🟡 Sincronizando…' : '🔴 Sin conexión'}</span></div>
+      </div>
+    </div>
+  `;
+}
+
+async function registrarSueldo(){
+  const montoRaw = document.getElementById('montoInput').value;
+  if(!montoRaw || parseFloat(montoRaw) <= 0) return;
+  const cfg = state.config;
+  const sueldoCent = toCentavos(montoRaw);
+  const {cat, warning} = distribute(sueldoCent, cfg);
+
+  const sobrante = ['alimentacion','gustos','transporte']
+    .reduce((sum, k) => sum + Math.max(0, state.saldos[k]), 0);
+  cat.fondoMoto += sobrante;
+
+  state.fondoMoto += cat.fondoMoto;
+  state.ahorro += cat.ahorro;
+  state.emergencia += cat.emergencia;
+  state.prestamoReservado += cat.prestamo;
+  state.saldos = {alimentacion: cat.alimentacion, gustos: cat.gustos, transporte: cat.transporte};
+  state.historial.push({fecha: todayStr(), sueldo: sueldoCent, cat, timestamp: Date.now()});
+  if(state.historial.length > 20) state.historial = state.historial.slice(-20);
+
+  lastResultHTML = (warning ? `<div class="warn">⚠️ ${warning}</div>` : '') +
+    '<div class="result">' + ORDER.map(k => `<div class="row"><span class="name">${CAT_META[k].icon} ${CAT_META[k].label}</span><span>${fmt(cat[k])}</span></div>`).join('') + '</div>' +
+    (sobrante > 0 ? `<div class="muted" style="text-align:left; margin-top:4px;">↳ incluye ${fmt(sobrante)} de sobrante de la quincena anterior</div>` : '');
+
+  await save();
+  render();
+}
+
+async function registrarGasto(){
+  const catKey = document.getElementById('gastoCat').value;
+  const montoRaw = document.getElementById('gastoMonto').value;
+  if(!montoRaw || parseFloat(montoRaw) <= 0) return;
+  const montoCent = toCentavos(montoRaw);
+  state.saldos[catKey] -= montoCent;
+  const saldo = state.saldos[catKey];
+  const st = saldoStatus(catKey, saldo, state.config);
+  await save();
+  render();
+  if(st === 'over'){
+    document.getElementById('gastoAviso').innerHTML = `<div class="warn">⚠️ Te pasaste en ${CAT_META[catKey].label} por ${fmt(-saldo)}.</div>`;
+  } else if(st === 'low'){
+    document.getElementById('gastoAviso').innerHTML = `<div class="warn">⚠️ Te queda poco en ${CAT_META[catKey].label}: solo ${fmt(saldo)}.</div>`;
+  }
+}
+
+async function pagarPrestamo(){
+  state.prestamoReservado = Math.max(0, state.prestamoReservado - state.config.prestamoTotal);
+  await save();
+  render();
+}
+
+async function eliminarHistorial(timestamp){
+  const entry = state.historial.find(h => h.timestamp === timestamp);
+  if(!entry) return;
+  if(!confirm(`¿Eliminar el registro de ${entry.fecha} (${fmt(entry.sueldo)})? Esto también restará lo que sumó a Moto/Ahorro/Emergencia/Préstamo.`)) return;
+  state.fondoMoto -= entry.cat.fondoMoto;
+  state.ahorro -= entry.cat.ahorro;
+  state.emergencia -= entry.cat.emergencia;
+  state.prestamoReservado -= entry.cat.prestamo;
+  state.historial = state.historial.filter(h => h.timestamp !== timestamp);
+  await save();
+  render();
+}
+
+async function guardarCorreccion(){
+  state.fondoMoto = toCentavos(document.getElementById('edMoto').value);
+  state.ahorro = toCentavos(document.getElementById('edAhorro').value);
+  state.emergencia = toCentavos(document.getElementById('edEmergencia').value);
+  state.prestamoReservado = toCentavos(document.getElementById('edPrestamo').value);
+  state.saldos.alimentacion = toCentavos(document.getElementById('edAlim').value);
+  state.saldos.gustos = toCentavos(document.getElementById('edGustos').value);
+  state.saldos.transporte = toCentavos(document.getElementById('edTransporte').value);
+  await save();
+  render();
+}
+
+async function guardarConfig(){
+  state.config = {
+    prestamoCuota: toCentavos(document.getElementById('cfgPrestamoCuota').value),
+    prestamoTotal: toCentavos(document.getElementById('cfgPrestamoTotal').value),
+    abuelos: toCentavos(document.getElementById('cfgAbuelos').value),
+    alimentacion: toCentavos(document.getElementById('cfgAlimentacion').value),
+    gustos: toCentavos(document.getElementById('cfgGustos').value),
+    transporte: toCentavos(document.getElementById('cfgTransporte').value),
+    emergencia: toCentavos(document.getElementById('cfgEmergencia').value),
+    motoGoal: toCentavos(document.getElementById('cfgMotoGoal').value)
+  };
+  await save();
+  render();
+}
+
+async function restaurarConfig(){
+  if(!confirm('¿Restaurar el presupuesto a los valores por defecto?')) return;
+  state.config = {...DEFAULT_CONFIG};
+  await save();
+  render();
+}
+
+init();
+</script>
+</body>
+</html>
