@@ -633,7 +633,7 @@ const SRC={
   desc(){return simple([...DEF.desc,...vales.flatMap(v=>v.items.map(i=>i.desc))],'desc')}
 };
 const PICK={
-  placas(val){const v=veh(val);if(!v)return;if(v.marca)$('fMarca').value=v.marca;if(v.conductor&&!$('fCond').value.trim()){$('fCond').value=v.conductor;PICK.cond(v.conductor)}},
+  placas(val){const v=veh(val);if(!v)return;if(v.marca)$('fMarca').value=v.marca;if(v.conductor){$('fCond').value=v.conductor;delete $('sN1').dataset.touched;PICK.cond(v.conductor);toast('Datos de '+v.conductor+' cargados')}},
   cond(val){const c=cond(val);syncCond();if(!c)return;if(c.licencia)$('fLic').value=c.licencia;if(c.dni)$('sD1').value=c.dni;if(c.celular)$('fCel').value=c.celular}
 };
 let acOpen=null;
