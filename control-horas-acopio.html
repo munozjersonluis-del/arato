@@ -369,6 +369,12 @@
   .hist-item .del-btn + .del-btn { padding-left: 6px; }
   .nc { display:none; }
   @media (max-width: 700px){ .nf { display:none; } .nc { display:inline; } table.week { font-size:.7rem; } table.week th, table.week td { padding:6px 1px; } table.week td:first-child { white-space:nowrap; max-width:96px; overflow:hidden; text-overflow:ellipsis; } }
+  .btag { display:inline-block; font-size:.56rem; font-weight:800; color:#636b8a; background:#e9ecf4; border:1px solid #d5dae8; padding:1px 4px; border-radius:4px; letter-spacing:.03em; vertical-align:1px; white-space:nowrap; }
+  .bajas-box { padding: 10px 14px; margin-top: 10px; }
+  .bajas-box summary { cursor:pointer; font-weight:700; color: var(--ink-dim); font-size:.9rem; padding:4px 0; }
+  .baja-row { opacity:.85; }
+  .baja-info { font-size:.72rem; color: var(--ink-dim); }
+  .baja-banner { background:#eef0f6; color:#4a5275; border-radius:8px; padding:8px 10px; font-size:.74rem; font-weight:700; margin: 8px 0 4px; }
   table.week td.sobre { color: var(--danger) !important; }
   .card-head { display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 2px solid var(--red); }
   .card-head .brandline { display:flex; align-items:center; gap:10px; }
@@ -720,6 +726,14 @@ function render(){
   if(activeTab === 'registrar'){ filtrarListaRegistrar(); actualizarPreview(); syncCount(); pintarTipo(); }
 }
 
+// ---- Bajas (cese / cambio de área): se guardan en el trabajador, sus registros no se tocan
+const MOTIVOS_BAJA = { cese: 'Cese / renuncia', area: 'Cambio de área', otro: 'Otro' };
+function hoyStr(){ return fmtDate(new Date()); }
+function activoEn(t, fecha){ return !t.baja || fecha <= t.baja; }
+function fCorta(f){ const d = parseDate(f); return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0'); }
+function tagBaja(t){ return t && t.baja ? `<span class="btag" title="${esc(MOTIVOS_BAJA[t.bajaMotivo] || 'Baja')}">BAJA ${fCorta(t.baja)}</span>` : ''; }
+function trabDe(m, dni){ const d = stores[m] && stores[m].data; return d ? d.trabajadores.find(x => x.dni === dni) : null; }
+
 function catalogoOrdenado(){
   const lista = state.trabajadores.slice();
   if(M().cargos){
@@ -732,10 +746,18 @@ function catalogoOrdenado(){
 }
 
 function viewRegistrar(){
-  const filas = catalogoOrdenado().map(t => `
+  const hoy = hoyStr();
+  const activos = catalogoOrdenado().filter(t => activoEn(t, hoy));
+  const bajas = catalogoOrdenado().filter(t => !activoEn(t, hoy));
+  const filasBaja = bajas.map(t => `
+    <div class="trab-check-row baja-row">
+      <span><span>${esc(t.nombre)}</span> <span class="dni-tag">${esc(t.dni)}</span><br><span class="baja-info">Último día ${fCorta(t.baja)} · ${esc(MOTIVOS_BAJA[t.bajaMotivo] || 'Baja')}${t.bajaObs ? ' · ' + esc(t.bajaObs) : ''}</span></span>
+      <button class="ghost small" onclick="reactivarTrabajador('${esc(t.dni)}')">Reactivar</button>
+    </div>`).join('');
+  const filas = activos.map(t => `
     <div class="trab-check-row" data-n="${esc(t.nombre)}" data-d="${esc(t.dni)}">
       <label><input type="checkbox" class="chk-trab" value="${esc(t.dni)}" onchange="syncCount()"> <span>${esc(t.nombre)}</span> ${cargoTag(t)} <span class="dni-tag">${esc(t.dni)}</span></label>
-      <button class="del-btn" onclick="eliminarTrabajador('${esc(t.dni)}')" title="Quitar del catálogo">🗑️</button>
+      ${t.baja ? tagBaja(t) : ''}<button class="del-btn" onclick="abrirBaja('${esc(t.dni)}')" title="Dar de baja">🚪</button>
     </div>
   `).join('');
   const cargoBtns = M().cargos ? `
@@ -753,8 +775,9 @@ function viewRegistrar(){
           <button class="icon-btn" onclick="nuevoTrabajador()" title="Agregar trabajador">➕</button>
         </div>
         ${state.trabajadores.length > 0 ? cargoBtns : ''}
-        ${state.trabajadores.length === 0 ? '<div class="muted">Sin trabajadores — agrega uno con ➕</div>' : filas}
+        ${activos.length === 0 ? '<div class="muted">Sin trabajadores activos — agrega uno con ➕</div>' : filas}
       </div>
+      ${bajas.length ? `<details class="card bajas-box"><summary>🚪 Dados de baja (${bajas.length})</summary>${filasBaja}</details>` : ''}
       </div><div class="reg-form">
 
       <div class="card">
@@ -834,7 +857,8 @@ async function nuevoTrabajador(){
   const dni = prompt('DNI del nuevo trabajador:');
   if(!dni || !dni.trim()) return;
   const d = dni.trim();
-  if(state.trabajadores.some(t => t.dni === d)){ alert('Ese DNI ya está en el catálogo.'); return; }
+  const existe = state.trabajadores.find(t => t.dni === d);
+  if(existe){ if(existe.baja){ if(confirm(`${existe.nombre} está dado de baja (último día ${fCorta(existe.baja)}). ¿Reactivarlo?`)){ delete existe.baja; delete existe.bajaMotivo; delete existe.bajaObs; await saveState(); render(); } } else alert('Ese DNI ya está en el catálogo.'); return; }
   const nombre = prompt('Nombre completo:');
   if(!nombre || !nombre.trim()) return;
   const nuevo = { dni: d, nombre: nombre.trim() };
@@ -851,13 +875,49 @@ async function nuevoTrabajador(){
   if(box){ box.checked = true; syncCount(); }
 }
 
+let bajaMotivoSel = 'cese';
+function abrirBaja(dni){
+  const t = state.trabajadores.find(x => x.dni === dni); if(!t) return;
+  const ult = state.registros.filter(r => r.trabajadorDni === dni && !esAus(r)).map(r => r.fecha).sort().pop();
+  bajaMotivoSel = t.bajaMotivo || 'cese';
+  abrirModal(`
+    <div class="modal-h"><b>🚪 Dar de baja</b><button class="x" onclick="cerrarModal()">✕</button></div>
+    <div style="font-weight:800;margin-bottom:2px">${esc(t.nombre)}</div>
+    <div class="muted" style="margin-bottom:10px">DNI ${esc(t.dni)}${ult ? ` · último registro: ${diaCortoFijo(ult)}` : ''}</div>
+    <label class="field">Último día que trabajó</label>
+    <input class="field" type="date" id="bajaFecha" value="${t.baja || ult || hoyStr()}">
+    <label class="field">Motivo</label>
+    <div class="tipo-chips" style="grid-template-columns:repeat(3,1fr)">${Object.entries(MOTIVOS_BAJA).map(([k,v]) => `<button data-bm="${k}" class="${k===bajaMotivoSel?'on':''}" onclick="bajaMotivoSel='${k}'; document.querySelectorAll('[data-bm]').forEach(b=>b.classList.toggle('on', b.dataset.bm===bajaMotivoSel))">${v}</button>`).join('')}</div>
+    <label class="field">Detalle (opcional)</label>
+    <input class="field" id="bajaObs" placeholder="Ej. pasó a cosecha, se retiró…" value="${esc(t.bajaObs || '')}">
+    <div class="muted" style="margin:6px 0 12px">Sus horas, faltas y permisos anteriores se mantienen en los reportes. Desde el día siguiente ya no aparece para registrar ni cuenta en el personal.</div>
+    <button class="primary" onclick="guardarBaja('${esc(t.dni)}')">Confirmar baja</button>
+    <button class="ghost small" style="width:100%;margin-top:10px;color:#d12a18" onclick="eliminarTrabajador('${esc(t.dni)}')">Eliminar del catálogo (solo si se agregó por error)</button>`);
+}
+function diaCortoFijo(f){ const d = parseDate(f); return DIAS[(d.getDay()+6)%7] + ' ' + fCorta(f); }
+async function guardarBaja(dni){
+  const t = state.trabajadores.find(x => x.dni === dni); if(!t) return;
+  const fecha = document.getElementById('bajaFecha').value;
+  if(!fecha){ alert('Indica el último día que trabajó.'); return; }
+  const despues = state.registros.filter(r => r.trabajadorDni === dni && r.fecha > fecha).length;
+  if(despues && !confirm(`${t.nombre} tiene ${despues} registro(s) después del ${fCorta(fecha)}. Se mantienen, pero revisa si están bien. ¿Continuar?`)) return;
+  t.baja = fecha; t.bajaMotivo = bajaMotivoSel; t.bajaObs = (document.getElementById('bajaObs').value || '').trim();
+  await saveState(); cerrarModal(); render();
+  toast(`🚪 ${esc(nombreCorto(t.nombre))} dado de baja (último día ${fCorta(fecha)})`);
+}
+async function reactivarTrabajador(dni){
+  const t = state.trabajadores.find(x => x.dni === dni); if(!t) return;
+  if(!confirm(`¿Reactivar a ${t.nombre}? Volverá a aparecer para registrar.`)) return;
+  delete t.baja; delete t.bajaMotivo; delete t.bajaObs;
+  await saveState(); render();
+}
 async function eliminarTrabajador(dni){
   const t = state.trabajadores.find(x => x.dni === dni);
   if(!t) return;
-  if(!confirm(`¿Quitar a "${t.nombre}" del catálogo? Sus registros de horas ya guardados NO se borran.`)) return;
+  if(!confirm(`¿Eliminar a "${t.nombre}" del catálogo? Úsalo solo si lo agregaste por error. Sus registros de horas NO se borran.`)) return;
   state.trabajadores = state.trabajadores.filter(x => x.dni !== dni);
   await saveState();
-  render();
+  cerrarModal(); render();
 }
 
 function setRegTipo(t){ regTipo = t; pintarTipo(); }
@@ -876,6 +936,8 @@ async function registrarHora(){
   if(dnis.length === 0){ alert('Marca al menos un trabajador.'); return; }
   const fecha = document.getElementById('fechaInput').value;
   if(fecha && semanaCerrada(mod, fecha)){ alert(`La semana ${semanaISO(parseDate(fecha))} está cerrada. Reábrela en la pestaña Semana si necesitas registrar.`); return; }
+  const fuera = dnis.map(d => state.trabajadores.find(x => x.dni === d)).filter(t => t && fecha && !activoEn(t, fecha));
+  if(fuera.length){ alert(`No se puede registrar el ${fCorta(fecha)} porque ya están de baja:\n\n${fuera.map(t => `• ${t.nombre} (último día ${fCorta(t.baja)})`).join('\n')}\n\nDesmárcalos o elige una fecha anterior.`); return; }
   if(AUSENCIAS[regTipo]){
     if(!fecha){ alert('Elige la fecha.'); return; }
     const obs = (document.getElementById('obsInput')?.value || '').trim();
@@ -924,7 +986,7 @@ function datosSemana(){
 
   // Catálogo actual + cualquiera que tenga registros esa semana aunque ya no esté en el catálogo
   const mapa = {};
-  catalogoOrdenado().forEach(t => mapa[t.dni] = t);
+  catalogoOrdenado().filter(t => activoEn(t, dayKeys[0])).forEach(t => mapa[t.dni] = t);
   state.registros.filter(r => dayKeys.includes(r.fecha)).forEach(r => {
     if(!mapa[r.trabajadorDni]) mapa[r.trabajadorDni] = { dni: r.trabajadorDni, nombre: r.trabajador, cargo: r.cargo };
   });
@@ -968,7 +1030,7 @@ function cuerpoSemana(){
   const rangeLabel = rangoSemana(days);
   const filaHTML = f => {
     const total = f.horas.reduce((a,b)=>a+b,0);
-    return `<tr><td><a class="lnk" onclick="abrirFicha('${esc(f.t.dni)}')"><span class="nf">${esc(f.t.nombre)}</span><span class="nc">${esc(nombreCorto(f.t.nombre))}</span></a></td>${f.horas.map((h,i) => h===0 && f.aus[i] ? `<td>${badgeAus(f.aus[i])}</td>` : `<td class="${h===0?'zero':''}">${h===0?'–':h.toFixed(1)}</td>`).join('')}<td style="font-weight:800;color:${total > JORNADA_SEMANA ? COL_SEM[estadoSemana(total)] : 'var(--green)'}">${total.toFixed(1)}</td></tr>`;
+    return `<tr><td><a class="lnk" onclick="abrirFicha('${esc(f.t.dni)}')"><span class="nf">${esc(f.t.nombre)}</span><span class="nc">${esc(nombreCorto(f.t.nombre))}</span></a> ${tagBaja(trabDe(mod, f.t.dni))}</td>${f.horas.map((h,i) => h===0 && f.aus[i] ? `<td>${badgeAus(f.aus[i])}</td>` : `<td class="${h===0?'zero':''}">${h===0?'–':h.toFixed(1)}</td>`).join('')}<td style="font-weight:800;color:${total > JORNADA_SEMANA ? COL_SEM[estadoSemana(total)] : 'var(--green)'}">${total.toFixed(1)}</td></tr>`;
   };
   let cuerpo = '';
   if(filas.length === 0){
@@ -1113,10 +1175,11 @@ function soles(v){ return 'S/ ' + v.toLocaleString('es-PE', { minimumFractionDig
 
 function agregado(mods, fechas, modo){
   modo = modo || repPer;
-  const set = new Set(fechas), W = {}; let catalogo = 0;
+  const set = new Set(fechas), W = {}; let catalogo = 0; const bajasPer = [];
   mods.forEach(m => {
     const d = stores[m] && stores[m].data; if(!d) return;
-    catalogo += d.trabajadores.length;
+    catalogo += d.trabajadores.filter(t => activoEn(t, fechas[0])).length;
+    d.trabajadores.filter(t => t.baja && t.baja >= fechas[0] && t.baja <= fechas[fechas.length-1]).forEach(t => bajasPer.push({ ...t, m }));
     d.registros.filter(r => set.has(r.fecha)).forEach(r => {
       const k = m + '|' + r.trabajadorDni;
       const w = W[k] || (W[k] = { k, m, dni: r.trabajadorDni, nombre: r.trabajador, porDia: {}, ini: {}, fin: {}, aus: [] });
@@ -1161,7 +1224,7 @@ function agregado(mods, fechas, modo){
     extra: trab.reduce((s,w)=>s+w.extra,0), conExtra: trab.filter(w=>w.extra>0).length,
     exceden: sem ? trab.filter(w => w.pasa60).length : 0,
     costo: trab.reduce((s,w)=>s+w.costo,0), sinCosto: mods.some(m => !(cfg(m).costoHora > 0)),
-    ausItems, faltas: cnt('falta'), permisos: cnt('permiso'), dm: cnt('dm'),
+    bajasPer, ausItems, faltas: cnt('falta'), permisos: cnt('permiso'), dm: cnt('dm'),
     asistencia: (diasTrab + ausItems.length) ? diasTrab/(diasTrab + ausItems.length)*100 : 0,
     porDia: fechas.map(f => trab.reduce((s,w)=>s+(w.porDia[f]||0),0)),
     persDia: fechas.map(f => trab.filter(w => w.porDia[f]).length),
@@ -1212,6 +1275,7 @@ function hojaResumen(){
   if(A.sem && A.exceden) alertas.push(['#d12a18', `<b>${A.exceden}</b> pasan el máximo de ${MAX_SEMANA} h: ${A.trab.filter(w=>w.pasa60).map(w=>esc(nombreCorto(w.nombre))).join(', ')}`]);
   if(A.conExtra) alertas.push(['#c27c0e', `<b>${A.conExtra}</b> con horas extra · <b>${A.extra.toFixed(1)} h</b>${A.costo ? ` · costo aprox. <b>${soles(A.costo)}</b>` : ''}`]);
   if(A.ausItems.length) alertas.push(['#6b46c1', `Ausencias: <b>${A.faltas}</b> faltas · <b>${A.permisos}</b> permisos · <b>${A.dm}</b> desc. médicos`]);
+  if(A.bajasPer.length) alertas.push(['#636b8a', `Bajas en el periodo: ${A.bajasPer.map(t => `<b>${esc(nombreCorto(t.nombre))}</b> (${fCorta(t.baja)}, ${esc((MOTIVOS_BAJA[t.bajaMotivo]||'baja').toLowerCase())})`).join(', ')}`]);
   if(!alertas.length) alertas.push(['#1a8a55', 'Sin horas extra ni ausencias en el periodo ✔']);
   let grafico;
   if(A.modo !== 'dia') grafico = graficoPeriodo(A);
@@ -1246,19 +1310,19 @@ function hojaHoras(){
   if(A.modo === 'semana'){
     const dias = diasDeSemana(parseDate(repFecha)); cols = 10;
     head = `<tr><th style="text-align:left">Nombre</th>${dias.map((d,i)=>`<th>${DIAS[i].slice(0,2)}<br>${d.getDate()}</th>`).join('')}<th>Tot</th><th>Ext</th></tr>`;
-    filaFn = w => `<tr><td class="n">${esc(nombreCorto(w.nombre))}</td>${f.map(k => { const h = w.porDia[k]; const a = w.aus.find(x => x.fecha === k); return h ? `<td>${h.toFixed(1)}</td>` : a ? `<td>${badgeAus(a.tipo)}</td>` : '<td class="z">–</td>'; }).join('')}<td class="h" style="color:${COL_SEM[w.est]}">${w.horas.toFixed(1)}</td>${extCell(w)}</tr>`;
+    filaFn = w => `<tr><td class="n">${esc(nombreCorto(w.nombre))} ${tagBaja(trabDe(w.m, w.dni))}</td>${f.map(k => { const h = w.porDia[k]; const a = w.aus.find(x => x.fecha === k); return h ? `<td>${h.toFixed(1)}</td>` : a ? `<td>${badgeAus(a.tipo)}</td>` : '<td class="z">–</td>'; }).join('')}<td class="h" style="color:${COL_SEM[w.est]}">${w.horas.toFixed(1)}</td>${extCell(w)}</tr>`;
     totRow = X => `<tr class="tot"><td class="n">${X.label}</td>${f.map(k => { const v = X.l.reduce((s,w)=>s+(w.porDia[k]||0),0); return `<td>${v?v.toFixed(0):'–'}</td>`; }).join('')}<td>${X.l.reduce((s,w)=>s+w.horas,0).toFixed(1)}</td><td>${sumExt(X.l)}</td></tr>`;
   } else if(A.modo === 'mes'){
     cols = A.semanas.length + 6;
     head = `<tr><th style="text-align:left">Nombre</th>${A.porSemana.map(s=>`<th>S${s.n}</th>`).join('')}<th>Tot</th><th>Ext</th><th>F</th><th>P</th><th>DM</th></tr>`;
     const c = (w,t) => { const n = w.aus.filter(a=>a.tipo===t).length; return n ? `<td style="color:${AUSENCIAS[t].color};font-weight:800">${n}</td>` : '<td class="z">–</td>'; };
-    filaFn = w => `<tr><td class="n">${esc(nombreCorto(w.nombre))}</td>${A.semanas.map(k => { const h = w.porSem[k]; return h ? `<td style="color:${COL_SEM[estadoSemana(h)]};font-weight:${h>JORNADA_SEMANA?800:400}">${h.toFixed(1)}</td>` : '<td class="z">–</td>'; }).join('')}<td class="h">${w.horas.toFixed(1)}</td>${extCell(w)}${c(w,'falta')}${c(w,'permiso')}${c(w,'dm')}</tr>`;
+    filaFn = w => `<tr><td class="n">${esc(nombreCorto(w.nombre))} ${tagBaja(trabDe(w.m, w.dni))}</td>${A.semanas.map(k => { const h = w.porSem[k]; return h ? `<td style="color:${COL_SEM[estadoSemana(h)]};font-weight:${h>JORNADA_SEMANA?800:400}">${h.toFixed(1)}</td>` : '<td class="z">–</td>'; }).join('')}<td class="h">${w.horas.toFixed(1)}</td>${extCell(w)}${c(w,'falta')}${c(w,'permiso')}${c(w,'dm')}</tr>`;
     totRow = X => `<tr class="tot"><td class="n">${X.label}</td>${A.semanas.map(k => { const v = X.l.reduce((s,w)=>s+(w.porSem[k]||0),0); return `<td>${v?v.toFixed(0):'–'}</td>`; }).join('')}<td>${X.l.reduce((s,w)=>s+w.horas,0).toFixed(0)}</td><td>${sumExt(X.l)}</td>${['falta','permiso','dm'].map(t=>`<td>${X.l.reduce((s,w)=>s+w.aus.filter(a=>a.tipo===t).length,0)||'–'}</td>`).join('')}</tr>`;
   } else {
     cols = 5;
     head = `<tr><th style="text-align:left">Nombre</th><th>Entr.</th><th>Sal.</th><th>Horas</th><th>Ext</th></tr>`;
-    filaFn = w => { const a = w.aus[0]; return w.horas ? `<tr><td class="n">${esc(nombreCorto(w.nombre))}</td><td>${w.ini[repFecha]}</td><td>${w.fin[repFecha]}</td><td class="h">${w.horas.toFixed(1)}</td>${extCell(w)}</tr>`
-      : `<tr><td class="n">${esc(nombreCorto(w.nombre))}</td><td colspan="3">${badgeAus(a.tipo)} ${AUSENCIAS[a.tipo].label}</td><td>–</td></tr>`; };
+    filaFn = w => { const a = w.aus[0]; return w.horas ? `<tr><td class="n">${esc(nombreCorto(w.nombre))} ${tagBaja(trabDe(w.m, w.dni))}</td><td>${w.ini[repFecha]}</td><td>${w.fin[repFecha]}</td><td class="h">${w.horas.toFixed(1)}</td>${extCell(w)}</tr>`
+      : `<tr><td class="n">${esc(nombreCorto(w.nombre))} ${tagBaja(trabDe(w.m, w.dni))}</td><td colspan="3">${badgeAus(a.tipo)} ${AUSENCIAS[a.tipo].label}</td><td>–</td></tr>`; };
     totRow = X => `<tr class="tot"><td class="n">${X.label}</td><td></td><td></td><td>${X.l.reduce((s,w)=>s+w.horas,0).toFixed(1)}</td><td>${sumExt(X.l)}</td></tr>`;
   }
   let cuerpo = '';
@@ -1605,6 +1669,7 @@ function pintarFicha(){
     <div class="rep" id="fichaCard" style="margin-bottom:10px">
       <div class="rep-head"><img src="${LOGO_SRC}" alt="Mission"><div class="fecha"><small>${M().titulo}</small><span style="text-transform:capitalize">${MESES[mes.getMonth()]} ${mes.getFullYear()}</span></div></div>
       <div class="rep-title"><b>${esc(t.nombre)}</b><span>DNI ${esc(t.dni)} · Blueberries</span></div>
+      ${t.baja ? `<div class="baja-banner">🚪 Dado de baja · último día ${diaCortoFijo(t.baja)} · ${esc(MOTIVOS_BAJA[t.bajaMotivo] || 'Baja')}${t.bajaObs ? ' · ' + esc(t.bajaObs) : ''}</div>` : ''}
       <div class="rep-kpis k3">
         ${kpi(dias, 'Días trab.')}${kpi(horas.toFixed(1), 'Horas')}${kpi(extra.toFixed(1), 'H. extra', extra?'warn':'')}
         ${kpi(cnt('falta'), 'Faltas', '', `background:${AUSENCIAS.falta.bg};--c:${AUSENCIAS.falta.color}`)}
