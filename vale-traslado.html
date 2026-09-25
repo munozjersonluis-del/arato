@@ -66,6 +66,37 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .empty{color:var(--ink2);text-align:center;padding:30px 10px}
 .row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
 .hidden{display:none!important}
+.stephide{display:none!important}
+.hello{margin:6px 2px 14px}.hello h1{font:600 26px "Barlow Semi Condensed",sans-serif;margin:2px 0 0}
+.hbig{display:flex;align-items:center;gap:16px;width:100%;text-align:left;border:0;border-radius:16px;padding:20px 18px;margin-bottom:12px;cursor:pointer;min-height:104px;color:#fff}
+.hbig.a{background:#0A2A8C}.hbig.b{background:#1E7B4A}
+.hbig .ic{width:56px;height:56px;border-radius:14px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;flex:none}
+.hbig .ic svg{width:32px;height:32px}
+.hbig b{display:block;font:600 24px "Barlow Semi Condensed",sans-serif}
+.hbig small{display:block;font-size:14.5px;opacity:.9;margin-top:2px}
+.hmid{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--panel);border:1.5px solid var(--accent);border-radius:14px;padding:14px 16px;margin-bottom:12px;cursor:pointer;color:var(--ink)}
+.hmid b{display:block;font:600 18px "Barlow Semi Condensed",sans-serif;color:var(--accent)}
+.hmid small{display:block;font-size:13.5px;color:var(--ink2)}
+.hsmall{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hsmall button{background:var(--panel);border:1px solid var(--line);border-radius:12px;min-height:56px;padding:10px;font-weight:600;cursor:pointer;color:var(--ink);text-align:center}
+.hsmall button.full{grid-column:1/-1}
+.hsmall .cnt{display:inline-block;background:var(--accent);color:var(--accent-ink);border-radius:10px;padding:0 7px;font-size:13px;margin-left:4px}
+.steps{margin:0 0 12px}
+.sbar{height:8px;background:var(--line);border-radius:6px;overflow:hidden}
+.sbar i{display:block;height:100%;background:var(--accent);border-radius:6px;transition:width .25s}
+.stxt{display:flex;justify-content:space-between;align-items:baseline;margin-top:8px}
+.stxt b{font:600 20px "Barlow Semi Condensed",sans-serif}
+.stxt span{font-size:14px;color:var(--ink2);font-weight:600}
+.q{font-weight:600;margin:0 0 6px;font-size:15px}
+.guide{position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:40;display:flex;align-items:flex-end;justify-content:center;padding:16px 12px calc(16px + env(safe-area-inset-bottom,0px))}
+.guide .gc{background:var(--panel);border-radius:18px;max-width:440px;width:100%;padding:20px 18px 16px;text-align:center}
+.guide svg{width:100%;max-width:260px;height:150px;display:block;margin:0 auto 6px}
+.guide h3{font:600 23px "Barlow Semi Condensed",sans-serif;margin:4px 0 6px}
+.guide p{margin:0 0 14px;color:var(--ink2);font-size:15.5px;line-height:1.45}
+.guide .dots{display:flex;gap:6px;justify-content:center;margin-bottom:14px}
+.guide .dots i{width:8px;height:8px;border-radius:4px;background:var(--line)}
+.guide .dots i.on{background:var(--accent);width:22px}
+.guide .gb{display:flex;gap:8px}.guide .gb .btn{flex:1}
 .acw{position:relative}
 .ac{position:absolute;left:0;right:0;top:100%;margin-top:4px;background:var(--panel);border:1px solid var(--line);border-radius:10px;z-index:20;overflow:hidden;box-shadow:0 8px 24px rgba(10,20,50,.18);max-height:280px;overflow-y:auto}
 .ac .o{display:flex;align-items:center;border-bottom:1px solid var(--line)}
@@ -254,20 +285,33 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 
   <div class="top hidden" id="topBar">
     <div class="tabs" role="tablist">
-      <button role="tab" aria-selected="true" data-tab="nuevo">Nuevo</button>
+      <button role="tab" aria-selected="true" data-tab="home">Inicio</button>
       <button role="tab" aria-selected="false" data-tab="hist">Vales</button>
-      <button role="tab" aria-selected="false" data-tab="rep">Reporte</button>
-      <button role="tab" aria-selected="false" data-tab="verif">Verificar</button>
+      <button role="tab" aria-selected="false" data-tab="rep" id="tabRep">Reporte</button>
     </div>
     <button class="userbtn" id="userBtn" type="button"></button>
   </div>
   <div class="menu hidden" id="menu"></div>
 
+  <section id="vHome" class="hidden">
+    <div class="hello"><div class="small" id="hDate"></div><h1 id="hName">Hola</h1></div>
+    <button class="hbig a" id="hNuevo" type="button"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><path d="M12 11v6M9 14h6"/></svg></span><span><b>Hacer vale</b><small>Para mandar material a otro fundo</small></span></button>
+    <button class="hbig b" id="hRecv" type="button"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><path d="M8 8h3v3H8zM13 13h3v3h-3zM13 8h3M8 16h3"/></svg></span><span><b>Recibir vale</b><small>Te llegó una carga: escanea el QR del vale</small></span></button>
+    <button class="hmid hidden" id="hRepeat" type="button"><span><b>Repetir mi último vale</b><small id="hRepTxt"></small></span></button>
+    <div class="hsmall">
+      <button type="button" id="hVales">Ver vales <span class="cnt hidden" id="hCamino"></span></button>
+      <button type="button" id="hVerif">¿Este vale es real?</button>
+      <button type="button" class="full" id="hGuia">¿Cómo se usa?</button>
+    </div>
+  </section>
+
   <section id="vNuevo" class="hidden">
     <div class="editbanner hidden" id="editBanner"></div>
-    <div class="card">
-      <h2>Datos del traslado <span class="numbox" id="numPrev">N° ------</span></h2>
-      <div class="seg" role="group" aria-label="Modalidad"><button type="button" data-mod="PRESENCIAL" aria-pressed="true">Conductor aquí</button><button type="button" data-mod="A DISTANCIA" aria-pressed="false">Conductor en otro fundo</button></div>
+    <div class="steps"><div class="sbar"><i id="sFill"></i></div><div class="stxt"><b id="sTitle"></b><span id="sNum"></span></div></div>
+    <div class="card" data-step="1">
+      <h2>Datos del viaje <span class="numbox" id="numPrev">N° ------</span></h2>
+      <p class="q">¿El chofer está aquí para firmar?</p>
+      <div class="seg" role="group" aria-label="Modalidad"><button type="button" data-mod="PRESENCIAL" aria-pressed="true">Sí, está aquí</button><button type="button" data-mod="A DISTANCIA" aria-pressed="false">No, está en otro fundo</button></div>
       <p class="hint hidden" id="modHint">Llena el vale con los datos que te mandó el conductor. Al guardar, envíaselo por WhatsApp para que responda CONFORME y registra su conformidad.</p>
       <div class="grid">
         <label class="f">Fundo salida<input id="fSal" data-ac="fundos" autocomplete="off"></label>
@@ -282,29 +326,29 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
         <label class="f">Precinto<input id="fPrec" inputmode="numeric" autocomplete="off"></label>
       </div>
     </div>
-    <div class="card">
-      <h2>Detalle <button class="btn ghost" id="addItem" type="button">+ Agregar ítem</button></h2>
+    <div class="card" data-step="2">
+      <h2>Materiales <button class="btn ghost" id="addItem" type="button">+ Otro material</button></h2>
       <div class="items" id="items"></div>
       <div class="total" id="tCant">Total: 0</div>
     </div>
-    <div class="card"><label class="f">Observaciones<textarea id="fObs"></textarea></label></div>
-    <div class="card">
-      <h2>Firmas</h2>
+    <div class="card" data-step="2"><label class="f">Observaciones (opcional)<textarea id="fObs" placeholder="Ej.: jabas en buen estado"></textarea></label></div>
+    <div class="card" data-step="3">
+      <h2>Firma aquí con el dedo</h2>
       <div class="sigs">
         <div class="sig"><div class="t">Despacho <button class="clr" data-clr="0" type="button">Borrar</button></div><canvas data-sig="0"></canvas>
           <input class="in" id="sN0" readonly><input class="in" id="sD0" readonly></div>
-        <div class="sig"><div class="t">Conductor <button class="clr" data-clr="1" type="button">Borrar</button></div><canvas data-sig="1"></canvas><div class="remote-box hidden" id="remoteBox">Conformidad por WhatsApp después de guardar</div>
+        <div class="sig"><div class="t">Conductor <button class="clr" data-clr="1" type="button">Borrar</button></div><canvas data-sig="1"></canvas><div class="small hidden" id="sigNote1" style="margin-top:4px;color:var(--accent);font-weight:600">Firma registrada del conductor. Toca Borrar si quiere firmar de nuevo.</div><div class="remote-box hidden" id="remoteBox">Conformidad por WhatsApp después de guardar</div>
           <input class="in" id="sN1" placeholder="Nombre"><input class="in" id="sD1" placeholder="DNI" inputmode="numeric" maxlength="8"></div>
       </div>
       <p class="small" style="margin:10px 0 0">La recepción la firma quien recibe, desde su celular al llegar, o a mano en el papel.</p>
     </div>
-    <div class="card">
-      <h2>Foto de evidencia <span class="small">opcional</span></h2>
+    <div class="card" data-step="2">
+      <h2>Foto <span class="small">opcional</span></h2>
       <p class="small" style="margin:0 0 8px">Precinto, carga o guía. Se guarda junto al vale.</p>
       <div class="row"><label class="btn ghost">Tomar o elegir foto<input type="file" id="fFoto" accept="image/*" capture="environment" class="hidden"></label><span class="small" id="fFotoTxt"></span></div>
       <div class="fotos" id="fFotoPrev"></div>
     </div>
-    <div class="card hidden" id="motivoCard"><label class="f">Motivo de la corrección (queda registrado)<input id="fMotivo" placeholder="Placa mal escrita"></label></div>
+    <div class="card hidden" data-step="3" id="motivoCard"><label class="f">Motivo de la corrección (queda registrado)<input id="fMotivo" placeholder="Placa mal escrita"></label></div>
     <p class="err" id="err"></p>
   </section>
 
@@ -337,8 +381,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 
   <section id="vVerif" class="hidden">
     <div class="card">
-      <h2>Verificar un vale</h2>
-      <button class="btn primary" id="btnScan" type="button" style="width:100%;margin-bottom:12px">Escanear QR con la cámara</button>
+      <h2>¿Este vale es real?</h2><p class="small" style="margin:0 0 10px">Escanea el QR del vale en papel o en foto. Te dice si es original, si fue cambiado o si está anulado.</p>
+      <button class="btn primary" id="btnScan" type="button" style="width:100%;margin-bottom:12px">Escanear el QR</button>
       <div class="grid">
         <label class="f">N° de vale<input id="vNum" type="number" inputmode="numeric"></label>
         <label class="f">Código<input id="vCod" autocomplete="off" style="text-transform:uppercase" maxlength="9" placeholder="AB12-CD34"></label>
@@ -361,10 +405,10 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
   <section id="vVer" class="hidden">
     <div class="row" style="margin-bottom:10px">
       <button class="btn" id="backHist" type="button">← Vales</button>
-      <button class="btn primary" id="btnRecv" type="button">Recibir</button>
+      <button class="btn primary" id="btnRecv" type="button">Recibir carga</button>
       <button class="btn" id="btnEdit" type="button">Editar</button>
-      <button class="btn" id="dupVale" type="button">Usar como base</button>
-      <button class="btn" id="btnConf" type="button">Registrar conformidad</button>
+      <button class="btn" id="dupVale" type="button">Hacer uno igual</button>
+      <button class="btn" id="btnConf" type="button">El chofer dijo CONFORME</button>
       <button class="btn danger" id="btnAnular" type="button">Anular</button>
       <button class="btn danger" id="btnDel" type="button">Eliminar</button>
     </div>
@@ -376,7 +420,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
       <div class="row" style="margin-top:8px"><button class="btn" id="delNo" type="button">Cancelar</button><button class="btn danger" id="delSi" type="button">Eliminar definitivamente</button></div>
     </div>
     <div class="card hidden" id="recvPanel">
-      <h2>Recepción del vale</h2>
+      <h2>Recibir la carga</h2>
       <p class="small" style="margin:0 0 6px">Cuenta lo que llegó. Si todo está completo, solo firma y confirma.</p>
       <div id="recvItems"></div>
       <div class="grid" style="margin-top:10px">
@@ -422,6 +466,11 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 </div>
 <div class="cam hidden" id="cam"><video id="camVideo" playsinline muted></video><div class="frame"></div><div class="cb"><span id="camTxt">Apunta al código QR del vale</span><button class="btn" id="camClose" type="button">Cerrar</button></div></div>
 <div class="lightbox hidden" id="lightbox"><img id="lbImg" alt="Foto"></div>
+<div class="guide hidden" id="guide" role="dialog" aria-modal="true" aria-labelledby="gTitle"><div class="gc">
+  <div id="gArt"></div><h3 id="gTitle"></h3><p id="gTxt"></p>
+  <div class="dots" id="gDots"></div>
+  <div class="gb"><button class="btn" id="gSkip" type="button">Saltar</button><button class="btn primary" id="gNext" type="button">Siguiente</button></div>
+</div></div>
 <div class="toast" id="toast" role="status"></div>
 <div id="offscreen"></div>
 <div id="qrTmp" style="position:fixed;left:-10000px;top:0"></div>
@@ -459,11 +508,11 @@ async function api(fn,args={}){
 }
 
 /* ---------- sesión ---------- */
-function setUser(u){USER=u;ls('user',JSON.stringify(u));$('userBtn').textContent=u.nombre.split(' ').slice(0,2).join(' ')}
+function setUser(u){USER=u;ls('user',JSON.stringify(u));$('userBtn').textContent=u.nombre.split(' ').slice(0,2).join(' ');$('tabRep').classList.toggle('hidden',u.rol!=='admin')}
 async function startSession(){
   $('vLogin').classList.add('hidden');$('topBar').classList.remove('hidden');
   try{const u=await api('vales_sesion',{p_token:TOKEN});setUser(u)}catch(e){if(!USER)return}
-  resetForm();show('nuevo');await Promise.all([loadCat(),loadVales()]);updateNumPrev();
+  resetForm();show('home');if(USER&&!ls('guia:'+USER.dni))openGuide();await Promise.all([loadCat(),loadVales()]);updateNumPrev();renderHome();
 }
 function logout(expired){
   if(TOKEN&&!expired)api('vales_salir',{p_token:TOKEN}).catch(()=>{});
@@ -500,10 +549,10 @@ $('goLogin').onclick=()=>{$('vVerif').classList.add('hidden');$('vLogin').classL
 
 /* ---------- menú ---------- */
 $('userBtn').onclick=e=>{e.stopPropagation();const m=$('menu');if(!m.classList.contains('hidden')){m.classList.add('hidden');return}
-  m.innerHTML=`<div class="who"><b>${esc(USER.nombre)}</b>DNI ${esc(USER.dni)} · ${USER.rol==='admin'?'Administrador':'Usuario'}</div>${USER.rol==='admin'?'<button type="button" data-m="admin">Usuarios y ajustes</button>':''}<button type="button" data-m="logo">Cambiar logo de este celular</button><button type="button" data-m="salir">Cerrar sesión</button>`;
+  m.innerHTML=`<div class="who"><b>${esc(USER.nombre)}</b>DNI ${esc(USER.dni)} · ${USER.rol==='admin'?'Administrador':'Usuario'}</div>${USER.rol==='admin'?'<button type="button" data-m="admin">Usuarios y ajustes</button>':''}<button type="button" data-m="guia">¿Cómo se usa?</button><button type="button" data-m="logo">Cambiar logo de este celular</button><button type="button" data-m="salir">Cerrar sesión</button>`;
   m.classList.remove('hidden')};
 document.addEventListener('click',e=>{const m=$('menu');if(m.classList.contains('hidden'))return;const b=e.target.closest('[data-m]');
-  if(b){const a=b.dataset.m;if(a==='admin'){loadAdmin();show('admin')}if(a==='salir')logout();if(a==='logo')$('logoIn').click()}
+  if(b){const a=b.dataset.m;if(a==='admin'){loadAdmin();show('admin')}if(a==='salir')logout();if(a==='logo')$('logoIn').click();if(a==='guia')openGuide()}
   if(!e.target.closest('#menu'))m.classList.add('hidden')});
 
 /* ---------- ítems ---------- */
@@ -525,22 +574,25 @@ function calc(){$('tCant').textContent='Total: '+totals(readItems())}
 
 /* ---------- firmas ---------- */
 function setupSig(cv){
-  const ctx=cv.getContext('2d');let drawing=false,has=false;
+  const ctx=cv.getContext('2d');let drawing=false,has=false,snap='',reused=false;
   function style(){ctx.lineWidth=3.2;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#111'}
-  function size(){const r=cv.getBoundingClientRect();if(!r.width)return;const img=has?cv.toDataURL():null;cv.width=r.width*2;cv.height=r.height*2;style();if(img)draw(img)}
+  // Solo redimensiona si el tamaño cambió de verdad (el teclado del celular dispara muchos "resize")
+  function size(){const r=cv.getBoundingClientRect();if(!r.width)return;const w=Math.round(r.width*2),h=Math.round(r.height*2);if(cv.width===w&&cv.height===h)return;cv.width=w;cv.height=h;style();if(snap)draw(snap)}
   function draw(src){const i=new Image();i.onload=()=>{ctx.clearRect(0,0,cv.width,cv.height);const s=Math.min(cv.width/i.width,cv.height/i.height);const w=i.width*s,h=i.height*s;ctx.drawImage(i,(cv.width-w)/2,(cv.height-h)/2,w,h)};i.src=src}
   const pos=e=>{const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*cv.width/r.width,(e.clientY-r.top)*cv.height/r.height]};
-  cv.addEventListener('pointerdown',e=>{drawing=true;has=true;cv.setPointerCapture(e.pointerId);const[x,y]=pos(e);ctx.beginPath();ctx.moveTo(x,y)});
+  cv.addEventListener('pointerdown',e=>{e.preventDefault();drawing=true;has=true;if(reused){reused=false;cv.dispatchEvent(new Event('sigchange'))}cv.setPointerCapture(e.pointerId);const[x,y]=pos(e);ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+0.1,y+0.1);ctx.stroke()});
   cv.addEventListener('pointermove',e=>{if(!drawing)return;const[x,y]=pos(e);ctx.lineTo(x,y);ctx.stroke()});
-  ['pointerup','pointercancel'].forEach(t=>cv.addEventListener(t,()=>drawing=false));
-  const api={clear(){ctx.clearRect(0,0,cv.width,cv.height);has=false},
-    load(src){if(src){has=true;draw(src)}else api.clear()},
+  ['pointerup','pointercancel','pointerleave'].forEach(t=>cv.addEventListener(t,()=>{if(drawing){drawing=false;snap=cv.toDataURL('image/png')}}));
+  const api={clear(){ctx.clearRect(0,0,cv.width,cv.height);has=false;snap='';reused=false;cv.dispatchEvent(new Event('sigchange'))},
+    load(src,reuse){if(src){has=true;snap=src;reused=!!reuse;draw(src);cv.dispatchEvent(new Event('sigchange'))}else api.clear()},
+    isReused(){return reused&&has},
     get(){if(!has)return '';const o=document.createElement('canvas');o.width=360;o.height=Math.round(360*cv.height/cv.width);o.getContext('2d').drawImage(cv,0,0,o.width,o.height);return o.toDataURL('image/png')},size};
   size();window.addEventListener('resize',size);return api;
 }
 
 
 
+function sigNote(){const n=$('sigNote1');if(!n)return;n.classList.toggle('hidden',!(sigs[1]&&sigs[1].isReused()))}
 /* ---------- formulario ---------- */
 function today(d=new Date()){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 function nowTime(){const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
@@ -564,8 +616,31 @@ function resetForm(base){
   if(base){$('fSal').value=base.salida||'';$('fLle').value=base.llegada||'';$('fMarca').value=base.marca||'';$('fPlaca').value=base.placa||'';$('fCond').value=base.conductor||'';$('fLic').value=base.licencia||'';(base.items||[]).forEach(i=>addItem({desc:i.desc,cant:i.cant,um:i.um}))}
   if(!$('items').children.length)addItem();
   sigs.forEach(s=>s.clear());syncCond();clearErr();calc();fotoNueva=null;$('fFotoTxt').textContent='';$('fFotoPrev').innerHTML='';
-  $('editBanner').classList.add('hidden');$('motivoCard').classList.add('hidden');$('btnGuardar').textContent='Guardar vale';$('btnNuevo').textContent='Limpiar';
-  updateNumPrev();
+  $('editBanner').classList.add('hidden');$('motivoCard').classList.add('hidden');
+  setStep(1);updateNumPrev();
+}
+/* ---------- pasos del formulario ---------- */
+let step=1;
+const STEPS=['Camión y chofer','¿Qué se lleva?','Firmas'];
+function stepOf(id){const el=id&&$(id);const c=el&&el.closest('[data-step]');return c?+c.dataset.step:(id==='items'?2:1)}
+function setStep(n){
+  step=n;document.querySelectorAll('#vNuevo [data-step]').forEach(c=>c.classList.toggle('stephide',+c.dataset.step!==n));
+  $('sFill').style.width=(n/3*100)+'%';$('sTitle').textContent=STEPS[n-1];$('sNum').textContent='Paso '+n+' de 3';
+  $('btnNuevo').textContent=n>1?'← Atrás':(editing?'Cancelar':'Salir');
+  $('btnGuardar').textContent=n<3?'Siguiente →':(editing?'Guardar corrección':'Guardar vale');
+  if(n===3)setTimeout(()=>sigs.forEach(s=>s.size()),0);
+  clearErr();window.scrollTo(0,0);
+}
+function nextStep(){
+  const bad=validate(collect());
+  if(bad&&stepOf(bad[0])<=step){if(stepOf(bad[0])<step)setStep(stepOf(bad[0]));showErr(bad[0]==='items'?null:bad[0],bad[1]);return}
+  setStep(step+1);
+}
+function repetir(v,msg){
+  resetForm(v);
+  if(v.conductor&&PICK.cond)PICK.cond(v.conductor);
+  $('editBanner').textContent=msg;$('editBanner').classList.remove('hidden');
+  show('nuevo');setStep(2);
 }
 function startEdit(v){
   resetForm(v);editing=v;
@@ -577,25 +652,25 @@ function startEdit(v){
   $('editBanner').textContent=`Corrigiendo el vale N° ${pad(v.numero)}. Conserva su número y queda registrado como versión ${v.version+1}.`;
   $('editBanner').classList.remove('hidden');$('motivoCard').classList.remove('hidden');
   $('btnGuardar').textContent='Guardar corrección';$('btnNuevo').textContent='Cancelar';
-  show('nuevo');
+  show('nuevo');setStep(1);
 }
 function collect(){
   const g=i=>$(i).value.trim().toUpperCase().replace(/\s+/g,' ');
   return{salida:g('fSal'),llegada:g('fLle'),fecha:$('fFecha').value,hora:$('fHora').value,marca:g('fMarca'),placa:g('fPlaca').replace(/\s/g,''),conductor:g('fCond'),licencia:g('fLic'),precinto:g('fPrec'),obs:$('fObs').value.trim(),items:readItems(),modalidad:modo,celular:$('fCel').value.replace(/\D/g,''),
-    firmas:[{nombre:USER.nombre,dni:USER.dni,img:sigs[0].get()},{nombre:g('sN1'),dni:$('sD1').value.trim(),img:modo==='A DISTANCIA'?'':sigs[1].get()},{nombre:'',dni:'',img:''}]}
+    firmas:[{nombre:USER.nombre,dni:USER.dni,img:sigs[0].get()},{nombre:g('sN1'),dni:$('sD1').value.trim(),img:modo==='A DISTANCIA'?'':sigs[1].get(),registrada:modo!=='A DISTANCIA'&&sigs[1].isReused()},{nombre:'',dni:'',img:''}]}
 }
 function validate(v){
-  const need=[['fSal',v.salida,'Falta el fundo de salida.'],['fLle',v.llegada,'Falta el fundo de llegada.'],['fFecha',v.fecha,'Falta la fecha.'],['fHora',v.hora,'Falta la hora de salida.'],['fPlaca',v.placa,'Falta la placa.'],['fCond',v.conductor,'Falta el conductor.']];
+  const need=[['fSal',v.salida,'Falta de qué fundo sale.'],['fLle',v.llegada,'Falta a qué fundo llega.'],['fFecha',v.fecha,'Falta la fecha.'],['fHora',v.hora,'Falta la hora de salida.'],['fPlaca',v.placa,'Falta la placa.'],['fCond',v.conductor,'Falta el conductor.']];
   for(const[id,val,m]of need)if(!val)return[id,m];
   if(v.salida===v.llegada)return['fLle','El fundo de llegada no puede ser igual al de salida.'];
-  if(!v.items.length||v.items.some(i=>!i.desc||!(i.cant>0)))return[null,'Cada ítem necesita descripción y una cantidad mayor a 0.'];
+  if(!v.items.length||v.items.some(i=>!i.desc||!(i.cant>0)))return['items','Pon qué material se lleva y cuántos.'];
   if(v.firmas[1].dni&&!/^\d{8}$/.test(v.firmas[1].dni))return['sD1','El DNI del conductor debe tener 8 dígitos.'];
   if(editing&&!$('fMotivo').value.trim())return['fMotivo','Escribe el motivo de la corrección.'];
   return null;
 }
 async function updateNumPrev(){if(editing||!TOKEN)return;try{const n=await api('vales_contador_ver',{p_token:TOKEN});$('numPrev').textContent='N° '+pad(n+1);$('nextNum').value=n+1}catch(e){}}
 async function save(){
-  const v=collect();const bad=validate(v);if(bad){showErr(...bad);return}
+  const v=collect();const bad=validate(v);if(bad){setStep(stepOf(bad[0]));showErr(bad[0]==='items'?null:bad[0],bad[1]);return}
   const b=$('btnGuardar');b.disabled=true;const lbl=b.textContent;b.textContent='Guardando…';
   try{
     const d=editing?await api('vale_corregir',{p_token:TOKEN,p_numero:editing.numero,p:v,p_motivo:$('fMotivo').value.trim()}):await api('vale_emitir',{p_token:TOKEN,p:v});
@@ -678,7 +753,7 @@ function docHTML(v){
   const firma=(t,i)=>{const f=v.firmas[i]||{};
     const box=(i===1&&v.modalidad==='A DISTANCIA')?`<div class="rm">${v.conformidad?`CONFORME VÍA ${esc(v.conformidad.via.toUpperCase())} · ${fmtDT(v.conformidad.fecha)}`:'CONFORMIDAD PENDIENTE'}</div>`:`<div class="im">${f.img?`<img src="${f.img}" alt="">`:''}</div>`;
     const who=f.nombre?`<div class="nm">${esc(f.nombre)}<br>DNI: ${esc(f.dni)||'__________'}</div>`:`<div class="bl">Nombre: _______________<br>DNI: __________________</div>`;
-    return`<div>${box}<span class="pill">${t}</span>${who}<span class="cap">${caps[i]}</span></div>`};
+    return`<div>${box}<span class="pill">${t}</span>${who}<span class="cap">${caps[i]}${f.registrada?' · firma registrada':''}</span></div>`};
   const cols=rv?'<col style="width:9%"><col style="width:47%"><col style="width:16%"><col style="width:16%"><col style="width:12%">':'<col style="width:10.5%"><col style="width:56.5%"><col style="width:18%"><col style="width:15%">';
   const head=rv?'<tr><th>N°</th><th>DESCRIPCIÓN DEL MATERIAL</th><th>ENVIADO</th><th>RECIBIDO</th><th>UM</th></tr>':'<tr><th>N°</th><th>DESCRIPCIÓN DEL MATERIAL</th><th>CANTIDAD</th><th>UM</th></tr>';
   const body=rows.map((r,i)=>{const n=String(i+1).padStart(2,'0');
@@ -834,7 +909,7 @@ $('fEst').onclick=e=>{const b=e.target.closest('[data-e]');if(!b)return;filtroEs
 let loadingVales=false;
 async function loadVales(){
   if(!TOKEN||loadingVales)return;loadingVales=true;
-  try{vales=await api('vales_listar',{p_token:TOKEN});renderHist();if(!$('vRep').classList.contains('hidden'))renderRep()}catch(e){if(!vales.length)$('histList').innerHTML=`<div class="empty">${esc(e.message)}</div>`}
+  try{vales=await api('vales_listar',{p_token:TOKEN});renderHist();if(!$('vHome').classList.contains('hidden'))renderHome();if(!$('vRep').classList.contains('hidden'))renderRep()}catch(e){if(!vales.length)$('histList').innerHTML=`<div class="empty">${esc(e.message)}</div>`}
   loadingVales=false;
 }
 setInterval(()=>{if(!document.hidden)loadVales()},20000);
@@ -851,6 +926,7 @@ function registrar(v){
   let ve=cat.vehiculos.find(x=>x.placa===v.placa);if(!ve){ve={placa:v.placa,usos:0};cat.vehiculos.push(ve)}
   Object.assign(ve,{marca:v.marca||ve.marca||'',conductor:v.conductor,usos:(ve.usos||0)+1,ult:now});
   let co=cat.conductores.find(x=>x.nombre===v.conductor);if(!co){co={nombre:v.conductor,usos:0};cat.conductores.push(co)}
+  if(v.firmas[1].img&&!v.firmas[1].registrada)co.firma=v.firmas[1].img;
   Object.assign(co,{licencia:v.licencia||co.licencia||'',dni:v.firmas[1].dni||co.dni||'',celular:v.celular||co.celular||'',placa:v.placa,usos:(co.usos||0)+1,ult:now});
   unhide('placas',v.placa);unhide('conductores',v.conductor);unhide('marcas',v.marca);unhide('fundos',v.salida);unhide('fundos',v.llegada);v.items.forEach(i=>unhide('desc',i.desc));
   return catSave().catch(()=>{});
@@ -870,7 +946,7 @@ const SRC={
 };
 const PICK={
   placas(val){const v=veh(val);if(!v)return;if(v.marca)$('fMarca').value=v.marca;if(v.conductor){$('fCond').value=v.conductor;delete $('sN1').dataset.touched;PICK.cond(v.conductor);toast('Datos de '+v.conductor+' cargados')}},
-  cond(val){const c=cond(val);syncCond();if(!c)return;if(c.licencia)$('fLic').value=c.licencia;if(c.dni)$('sD1').value=c.dni;if(c.celular)$('fCel').value=c.celular}
+  cond(val){const c=cond(val);syncCond();if(!c)return;if(c.firma&&modo!=='A DISTANCIA'){sigs[1].load(c.firma,true)}else if(sigs[1].isReused()){sigs[1].clear()}if(c.licencia)$('fLic').value=c.licencia;if(c.dni)$('sD1').value=c.dni;if(c.celular)$('fCel').value=c.celular}
 };
 let acOpen=null;
 function closeAc(){if(acOpen){acOpen.remove();acOpen=null}}
@@ -1016,23 +1092,58 @@ $('saveNext').onclick=async()=>{const n=parseInt($('nextNum').value,10);$('errNu
 
 /* ---------- navegación ---------- */
 function show(t){
-  const map={nuevo:'vNuevo',hist:'vHist',rep:'vRep',verif:'vVerif',ver:'vVer',admin:'vAdmin'};
+  const map={home:'vHome',nuevo:'vNuevo',hist:'vHist',rep:'vRep',verif:'vVerif',ver:'vVer',admin:'vAdmin'};
   Object.entries(map).forEach(([k,id])=>$(id).classList.toggle('hidden',k!==t));
   $('barNuevo').classList.toggle('hidden',t!=='nuevo');$('barVer').classList.toggle('hidden',t!=='ver');$('verifLogin').classList.add('hidden');
   document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===t||(t==='ver'&&b.dataset.tab==='hist'))));
   if(t==='nuevo')setTimeout(()=>sigs.forEach(s=>s.size()),0);
   if(t==='rep')renderRep();
+  if(t==='home')renderHome();
   window.scrollTo(0,0);
 }
-document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{if(b.dataset.tab==='nuevo'&&editing)resetForm();show(b.dataset.tab)});
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>show(b.dataset.tab));
+/* ---------- inicio ---------- */
+function lastMine(){return USER?vales.filter(v=>v.emisor&&v.emisor.id===USER.id&&v.estado!=='ANULADO').sort((a,b)=>b.numero-a.numero)[0]:null}
+function renderHome(){
+  if(!USER)return;
+  const h=new Date().getHours();$('hName').textContent=(h<12?'Buenos días, ':h<19?'Buenas tardes, ':'Buenas noches, ')+USER.nombre.split(' ')[0].charAt(0)+USER.nombre.split(' ')[0].slice(1).toLowerCase();
+  $('hDate').textContent=new Date().toLocaleDateString('es-PE',{weekday:'long',day:'numeric',month:'long'});
+  const l=lastMine();$('hRepeat').classList.toggle('hidden',!l);
+  if(l)$('hRepTxt').textContent=`N° ${pad(l.numero)} · ${l.placa} · ${l.salida} → ${l.llegada}`;
+  const c=vales.filter(v=>v.estado==='VIGENTE').length;$('hCamino').textContent=c?c+' en camino':'';$('hCamino').classList.toggle('hidden',!c);
+}
+$('hNuevo').onclick=()=>{resetForm();show('nuevo')};
+$('hRecv').onclick=()=>{scanMode='recibir';startScan()};
+$('hVales').onclick=()=>show('hist');
+$('hVerif').onclick=()=>show('verif');
+$('hGuia').onclick=()=>openGuide();
+$('hRepeat').onclick=async()=>{const l=lastMine();if(!l)return;let v=l;
+  if(!v.items||!v.items.length){try{v=await api('vale_obtener',{p_token:TOKEN,p_numero:l.numero})}catch(e){toast(e.message);return}}
+  repetir(v,`Copiado de tu vale N° ${pad(v.numero)}. Revisa las cantidades y firma.`)};
+/* ---------- guía rápida ---------- */
+const GUIA=[
+ {t:'1. Hacer el vale',p:'Toca <b>Hacer vale</b>. Elige la placa y el chofer se llena solo. Pon qué material se lleva, firma y toca <b>Guardar</b>.',
+  a:'<svg viewBox="0 0 260 150"><rect x="70" y="8" width="120" height="134" rx="14" fill="#E6ECF8" stroke="#0A2A8C" stroke-width="3"/><rect x="86" y="30" width="88" height="14" rx="4" fill="#0A2A8C"/><rect x="86" y="54" width="88" height="10" rx="4" fill="#9FB3E0"/><rect x="86" y="72" width="60" height="10" rx="4" fill="#9FB3E0"/><path d="M92 108c10-14 18 8 28-4s14 6 24-2" stroke="#16213A" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="200" cy="112" r="22" fill="#1E7B4A"/><path d="M190 112l7 7 13-14" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'},
+ {t:'2. Enviarlo',p:'Con el vale abierto, toca <b>Enviar a WhatsApp</b> o <b>Descargar PDF</b> para imprimirlo. El chofer lleva el vale con su código QR.',
+  a:'<svg viewBox="0 0 260 150"><rect x="30" y="20" width="92" height="116" rx="8" fill="#fff" stroke="#0A2A8C" stroke-width="3"/><rect x="44" y="34" width="64" height="10" rx="3" fill="#0A2A8C"/><rect x="44" y="52" width="64" height="8" rx="3" fill="#9FB3E0"/><rect x="44" y="66" width="40" height="8" rx="3" fill="#9FB3E0"/><rect x="72" y="92" width="36" height="36" rx="3" fill="#16213A"/><rect x="78" y="98" width="10" height="10" fill="#fff"/><rect x="92" y="112" width="10" height="10" fill="#fff"/><path d="M134 78h40" stroke="#0A2A8C" stroke-width="4" stroke-linecap="round"/><path d="M164 66l12 12-12 12" stroke="#0A2A8C" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="210" cy="78" r="28" fill="#1FA855"/><path d="M198 90l3-10a13 13 0 1 1 5 5z" fill="#fff"/></svg>'},
+ {t:'3. Recibir la carga',p:'Cuando llega el camión, toca <b>Recibir vale</b> y escanea el QR. Cuenta lo que llegó, firma y confirma. Si falta algo, queda registrado.',
+  a:'<svg viewBox="0 0 260 150"><rect x="18" y="58" width="120" height="60" rx="6" fill="#0A2A8C"/><rect x="138" y="76" width="44" height="42" rx="6" fill="#2F63C8"/><rect x="148" y="84" width="22" height="14" rx="3" fill="#E6ECF8"/><circle cx="50" cy="122" r="12" fill="#16213A"/><circle cx="160" cy="122" r="12" fill="#16213A"/><rect x="196" y="30" width="50" height="86" rx="10" fill="#fff" stroke="#16213A" stroke-width="3"/><rect x="206" y="48" width="30" height="30" rx="3" fill="#16213A"/><rect x="211" y="53" width="8" height="8" fill="#fff"/><rect x="223" y="65" width="8" height="8" fill="#fff"/><path d="M206 92h30" stroke="#1E7B4A" stroke-width="4" stroke-linecap="round"/></svg>'}
+];
+let gi=0;
+function openGuide(){gi=0;drawGuide();$('guide').classList.remove('hidden')}
+function drawGuide(){const g=GUIA[gi];$('gArt').innerHTML=g.a;$('gTitle').textContent=g.t;$('gTxt').innerHTML=g.p;
+  $('gDots').innerHTML=GUIA.map((_,i)=>`<i class="${i===gi?'on':''}"></i>`).join('');$('gNext').textContent=gi<GUIA.length-1?'Siguiente':'¡Entendido!';$('gSkip').classList.toggle('hidden',gi===GUIA.length-1)}
+function closeGuide(){$('guide').classList.add('hidden');if(USER)ls('guia:'+USER.dni,'1')}
+$('gNext').onclick=()=>{if(gi<GUIA.length-1){gi++;drawGuide()}else closeGuide()};
+$('gSkip').onclick=closeGuide;
 $('addItem').onclick=()=>addItem();
-$('btnNuevo').onclick=()=>{const e=editing;resetForm();if(e)openVale(e)};
-$('btnGuardar').onclick=save;
+$('btnNuevo').onclick=()=>{if(step>1){setStep(step-1);return}const e=editing;resetForm();if(e)openVale(e);else show('home')};
+$('btnGuardar').onclick=()=>{if(step<3)nextStep();else save()};
 $('btnPdf').onclick=pdf;
 $('btnPrint').onclick=()=>{try{window.print()}catch(e){toast('Usa Descargar PDF para imprimir')}};
 $('backHist').onclick=()=>show('hist');
 $('btnEdit').onclick=()=>startEdit(current);
-$('dupVale').onclick=()=>{resetForm(current);show('nuevo');toast('Datos copiados. Revisa y guarda como vale nuevo.')};
+$('dupVale').onclick=()=>repetir(current,`Copiado del vale N° ${pad(current.numero)}. Revisa las cantidades y firma.`);
 document.querySelectorAll('[data-clr]').forEach(b=>b.onclick=()=>sigs[+b.dataset.clr].clear());
 $('printArea').addEventListener('contextmenu',e=>e.preventDefault());
 const logoIn=document.createElement('input');logoIn.type='file';logoIn.accept='image/*';logoIn.id='logoIn';logoIn.className='hidden';document.body.appendChild(logoIn);
@@ -1041,6 +1152,7 @@ logoIn.onchange=async e=>{const f=e.target.files[0];if(!f)return;try{ls('logo',a
 /* ---------- inicio ---------- */
 $('loginLogo').src=LOGO_DEF;
 sigs=[...document.querySelectorAll('canvas[data-sig]')].map(setupSig);
+document.querySelector('canvas[data-sig="1"]').addEventListener('sigchange',sigNote);
 document.querySelectorAll('#vNuevo input[data-ac]').forEach(attachAc);
 (function(){const d=new Date();$('rHasta').value=today(d);d.setDate(d.getDate()-6);$('rDesde').value=today(d)})();
 const qp=new URLSearchParams(location.search);
