@@ -3,6 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="vales.webmanifest">
+<meta name="theme-color" content="#0A2A8C">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Vales">
+<link rel="apple-touch-icon" href="vales-icon-192.png">
+<link rel="icon" type="image/png" href="vales-icon-192.png">
 <title>Vales de traslado</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500;600&display=swap" rel="stylesheet">
@@ -302,6 +309,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
       <button type="button" id="hVales">Ver vales <span class="cnt hidden" id="hCamino"></span></button>
       <button type="button" id="hVerif">¿Este vale es real?</button>
       <button type="button" class="full" id="hGuia">¿Cómo se usa?</button>
+      <button type="button" class="full hidden" id="hInst">📲 Instalar la app en este celular</button>
     </div>
   </section>
 
@@ -549,10 +557,10 @@ $('goLogin').onclick=()=>{$('vVerif').classList.add('hidden');$('vLogin').classL
 
 /* ---------- menú ---------- */
 $('userBtn').onclick=e=>{e.stopPropagation();const m=$('menu');if(!m.classList.contains('hidden')){m.classList.add('hidden');return}
-  m.innerHTML=`<div class="who"><b>${esc(USER.nombre)}</b>DNI ${esc(USER.dni)} · ${USER.rol==='admin'?'Administrador':'Usuario'}</div>${USER.rol==='admin'?'<button type="button" data-m="admin">Usuarios y ajustes</button>':''}<button type="button" data-m="guia">¿Cómo se usa?</button><button type="button" data-m="logo">Cambiar logo de este celular</button><button type="button" data-m="salir">Cerrar sesión</button>`;
+  m.innerHTML=`<div class="who"><b>${esc(USER.nombre)}</b>DNI ${esc(USER.dni)} · ${USER.rol==='admin'?'Administrador':'Usuario'}</div>${USER.rol==='admin'?'<button type="button" data-m="admin">Usuarios y ajustes</button>':''}<button type="button" data-m="instalar">Instalar la app en el celular</button><button type="button" data-m="guia">¿Cómo se usa?</button><button type="button" data-m="logo">Cambiar logo de este celular</button><button type="button" data-m="salir">Cerrar sesión</button>`;
   m.classList.remove('hidden')};
 document.addEventListener('click',e=>{const m=$('menu');if(m.classList.contains('hidden'))return;const b=e.target.closest('[data-m]');
-  if(b){const a=b.dataset.m;if(a==='admin'){loadAdmin();show('admin')}if(a==='salir')logout();if(a==='logo')$('logoIn').click();if(a==='guia')openGuide()}
+  if(b){const a=b.dataset.m;if(a==='admin'){loadAdmin();show('admin')}if(a==='salir')logout();if(a==='logo')$('logoIn').click();if(a==='guia')openGuide();if(a==='instalar')instalar()}
   if(!e.target.closest('#menu'))m.classList.add('hidden')});
 
 /* ---------- ítems ---------- */
@@ -1102,6 +1110,17 @@ function show(t){
   window.scrollTo(0,0);
 }
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>show(b.dataset.tab));
+
+/* ---------- app instalable ---------- */
+let installEvt=null;
+if('serviceWorker' in navigator&&location.protocol==='https:'){window.addEventListener('load',()=>navigator.serviceWorker.register('sw-vales.js').catch(()=>{}))}
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;$('hInst').classList.remove('hidden')});
+window.addEventListener('appinstalled',()=>{installEvt=null;$('hInst').classList.add('hidden');toast('App instalada. Búscala como "Vales" en tu celular.')});
+async function instalar(){
+  if(installEvt){installEvt.prompt();const r=await installEvt.userChoice;installEvt=null;if(r.outcome!=='accepted')toast('Instalación cancelada');return}
+  if(window.matchMedia('(display-mode: standalone)').matches){toast('Ya estás usando la app instalada.');return}
+  toast('En Chrome toca ⋮ y luego "Instalar app" o "Agregar a pantalla principal".');
+}
 /* ---------- inicio ---------- */
 function lastMine(){return USER?vales.filter(v=>v.emisor&&v.emisor.id===USER.id&&v.estado!=='ANULADO').sort((a,b)=>b.numero-a.numero)[0]:null}
 function renderHome(){
@@ -1117,6 +1136,7 @@ $('hRecv').onclick=()=>{scanMode='recibir';startScan()};
 $('hVales').onclick=()=>show('hist');
 $('hVerif').onclick=()=>show('verif');
 $('hGuia').onclick=()=>openGuide();
+$('hInst').onclick=()=>instalar();
 $('hRepeat').onclick=async()=>{const l=lastMine();if(!l)return;let v=l;
   if(!v.items||!v.items.length){try{v=await api('vale_obtener',{p_token:TOKEN,p_numero:l.numero})}catch(e){toast(e.message);return}}
   repetir(v,`Copiado de tu vale N° ${pad(v.numero)}. Revisa las cantidades y firma.`)};

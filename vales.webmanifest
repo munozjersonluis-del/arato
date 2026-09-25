@@ -1,0 +1,17 @@
+{
+  "name": "Vales de traslado · Mission",
+  "short_name": "Vales",
+  "description": "Vales de traslado de materiales con correlativo, firmas y QR.",
+  "id": "vale-traslado",
+  "start_url": "vale-traslado.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#EDF0F7",
+  "theme_color": "#0A2A8C",
+  "lang": "es-PE",
+  "icons": [
+    { "src": "vales-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "vales-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
