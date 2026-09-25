@@ -375,6 +375,32 @@
   .baja-row { opacity:.85; }
   .baja-info { font-size:.72rem; color: var(--ink-dim); }
   .baja-banner { background:#eef0f6; color:#4a5275; border-radius:8px; padding:8px 10px; font-size:.74rem; font-weight:700; margin: 8px 0 4px; }
+  .prog { padding: 8px 2px 10px; border-bottom: 1px solid var(--line); margin-bottom: 4px; }
+  .prog-top { display:flex; justify-content:space-between; align-items:center; font-size:.84rem; color: var(--ink-dim); margin-bottom:6px; }
+  .prog-top b { color: var(--ink); font-size:1rem; }
+  .prog-top .falt { font-weight:800; color:#c27c0e; } .prog-top .ok { font-weight:800; color:#1a8a55; }
+  .prog-bar { height:8px; background: var(--surface-2); border-radius:99px; overflow:hidden; }
+  .prog-bar i { display:block; height:100%; background: linear-gradient(90deg,#1a8a55,#34c27f); border-radius:99px; transition: width .3s; }
+  .prog-chk { display:flex; align-items:center; gap:6px; font-size:.8rem; color: var(--ink-dim); margin-top:8px; cursor:pointer; }
+  .trab-check-row.tareado { background: color-mix(in srgb, #1a8a55 10%, transparent); border-radius:10px; }
+  .trab-check-row.tareado label > span:first-of-type { color:#1a8a55; font-weight:700; }
+  .trab-check-row { flex-wrap: wrap; }
+  .trab-check-row > label { flex: 1 1 180px; min-width: 0; }
+  .trab-check-row .tareo-tag { order: 5; flex-basis: 100%; padding: 0 0 2px 34px; font-size:.74rem; }
+  .tareo-tag .pillt { display:inline-block; font-weight:800; color:#1a8a55; background: color-mix(in srgb, #1a8a55 16%, transparent); padding:3px 9px; border-radius:999px; white-space:nowrap; }
+  .tareo-tag .aus-lbl { font-weight:700; color: var(--ink-dim); }
+  .tareo-tag .pillt small { font-weight:600; opacity:.8; margin-left:2px; }
+  .trab-check-row.oculto-t { display:none; }
+  .apy-tag { display:inline-block; font-size:.56rem; font-weight:800; color:#fff; background:#3a8fd9; padding:1px 5px; border-radius:4px; letter-spacing:.03em; vertical-align:1px; white-space:nowrap; }
+  .apy-b { display:inline-block; font-family: var(--font-display); font-weight:800; font-size:.66rem; color:#1f6fb8; background:#e3f0fb; padding:1px 5px; border-radius:5px; }
+  .apy-n { font-size:.72rem; font-weight:800; color:#1f6fb8; background:#e3f0fb; padding:1px 6px; border-radius:99px; margin-left:4px; }
+  .tareo-tag .pillt.apy { color:#1f6fb8; background:#e3f0fb; }
+  .apoyo-h { font-size:.72rem; font-weight:800; color:#1f6fb8; text-transform:uppercase; letter-spacing:.05em; padding: 12px 2px 4px; border-top: 2px dashed #b9d6f2; margin-top: 6px; }
+  .apoyo-row { background: color-mix(in srgb, #3a8fd9 7%, transparent); border-radius: 10px; }
+  .apo-list { max-height: 50vh; overflow-y:auto; border:1px solid var(--line); border-radius:10px; }
+  .apo-op { display:flex; gap:10px; align-items:flex-start; padding:10px 12px; border-bottom:1px solid var(--line); cursor:pointer; font-size:.92rem; }
+  .apo-op small { color: var(--ink-dim); font-size:.74rem; }
+  .apo-op input { margin-top:3px; width:18px; height:18px; }
   table.week td.sobre { color: var(--danger) !important; }
   .card-head { display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 2px solid var(--red); }
   .card-head .brandline { display:flex; align-items:center; gap:10px; }
@@ -723,7 +749,58 @@ function render(){
   else if(activeTab === 'semana') app.innerHTML = viewSemana();
   else if(activeTab === 'historial') app.innerHTML = viewHistorial();
   else if(activeTab === 'reporte') app.innerHTML = viewReporte();
-  if(activeTab === 'registrar'){ filtrarListaRegistrar(); actualizarPreview(); syncCount(); pintarTipo(); }
+  if(activeTab === 'registrar'){ marcarTareados(); filtrarListaRegistrar(); actualizarPreview(); syncCount(); pintarTipo(); }
+}
+
+// ---- Apoyos entre equipos: alguien de un equipo trabaja un día en el otro
+function otroMod(m){ return m === 'acopio' ? 'estibas' : 'acopio'; }
+const MOD_CORTO = { acopio: 'Acopio', estibas: 'Estibas y T.' };
+const apoyosSel = {}; // 'mod|fecha' -> Set de DNIs agregados a mano
+function apoyoEnOtro(m, dni, fecha){ const d = stores[otroMod(m)] && stores[otroMod(m)].data; return d ? d.registros.filter(r => r.apoyoDe === m && r.trabajadorDni === dni && r.fecha === fecha && !esAus(r)) : []; }
+function esApoyoAqui(m, dni){ const d = stores[m] && stores[m].data; return !!d && !d.trabajadores.some(t => t.dni === dni) && d.registros.some(r => r.trabajadorDni === dni && r.apoyoDe); }
+function tagApoyo(m, dni){ const d = stores[m] && stores[m].data; const r = d && d.registros.find(x => x.trabajadorDni === dni && x.apoyoDe); return esApoyoAqui(m, dni) && r ? `<span class="apy-tag" title="Apoyo de ${MOD_CORTO[r.apoyoDe]}">APOYO ${r.apoyoDe === 'acopio' ? 'ACO' : 'EST'}</span>` : ''; }
+function apoyosDelDia(fecha){
+  const otro = otroMod(mod), set = new Set(apoyosSel[mod + '|' + fecha] || []);
+  state.registros.filter(r => r.fecha === fecha && r.apoyoDe).forEach(r => set.add(r.trabajadorDni));
+  return [...set].map(dni => trabDe(otro, dni) || { dni, nombre: (state.registros.find(r => r.trabajadorDni === dni) || {}).trabajador || dni })
+    .filter(t => !state.trabajadores.some(x => x.dni === t.dni)).sort((a,b) => a.nombre.localeCompare(b.nombre));
+}
+function pintarApoyos(){
+  const box = document.getElementById('apoyoBox'); if(!box) return;
+  const fecha = document.getElementById('fechaInput')?.value; if(!fecha) return;
+  const marcados = new Set([...box.querySelectorAll('.chk-trab:checked')].map(b => b.value));
+  const lista = apoyosDelDia(fecha);
+  box.innerHTML = lista.length ? `<div class="apoyo-h">🤝 Apoyo de ${MOD_CORTO[otroMod(mod)]} · ${diaCortoFijo(fecha)}</div>` + lista.map(t => {
+    const reg = state.registros.some(r => r.trabajadorDni === t.dni && r.fecha === fecha);
+    return `<div class="trab-check-row apoyo-row" data-n="${esc(t.nombre)}" data-d="${esc(t.dni)}" data-apoyo="1">
+      <label><input type="checkbox" class="chk-trab" data-apoyo="1" value="${esc(t.dni)}" ${marcados.has(t.dni)?'checked':''} onchange="syncCount()"> <span>${esc(t.nombre)}</span> <span class="apy-tag">APOYO</span></label>
+      <span class="tareo-tag"></span>${reg ? '' : `<button class="del-btn" onclick="quitarApoyo('${esc(t.dni)}')" title="Quitar de la lista">✕</button>`}
+    </div>`; }).join('') : '';
+}
+function quitarApoyo(dni){ const k = mod + '|' + (document.getElementById('fechaInput')?.value || hoyStr()); if(apoyosSel[k]) apoyosSel[k].delete(dni); marcarTareados(); filtrarListaRegistrar(); }
+function abrirApoyo(){
+  const fecha = document.getElementById('fechaInput')?.value || hoyStr();
+  const otro = otroMod(mod), d = stores[otro] && stores[otro].data;
+  if(!d){ alert('Aún no cargan los datos del otro equipo.'); return; }
+  const ya = new Set(apoyosDelDia(fecha).map(t => t.dni));
+  const lista = d.trabajadores.filter(t => activoEn(t, fecha) && !ya.has(t.dni)).sort((a,b) => a.nombre.localeCompare(b.nombre));
+  abrirModal(`
+    <div class="modal-h"><b>🤝 Apoyo de ${MOD_TXT[otro]}</b><button class="x" onclick="cerrarModal()">✕</button></div>
+    <div class="muted" style="margin-bottom:10px">Elige quién viene a apoyar a <b>${MOD_TXT[mod]}</b> el <b>${diaCortoFijo(fecha)}</b>. Sus horas de ese día se cuentan aquí y en su equipo aparece como "Apoyó en ${MOD_CORTO[mod]}". No se cambia de equipo.</div>
+    <div class="searchbar"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input type="search" placeholder="Buscar" oninput="const q=norm(this.value); document.querySelectorAll('.apo-op').forEach(r=>r.style.display=norm(r.dataset.n+' '+r.dataset.d).includes(q)?'':'none')"></div>
+    <div class="apo-list">${lista.length ? lista.map(t => { const r = d.registros.filter(x => x.trabajadorDni === t.dni && x.fecha === fecha); return `
+      <label class="apo-op" data-n="${esc(t.nombre)}" data-d="${esc(t.dni)}"><input type="checkbox" value="${esc(t.dni)}"> <span>${esc(t.nombre)}<br><small>${esc(t.dni)}${r.length ? ` · <b style="color:#c27c0e">ya tiene tareo en ${MOD_CORTO[otro]} ese día</b>` : ''}</small></span></label>`; }).join('') : '<div class="muted">No hay trabajadores disponibles.</div>'}</div>
+    <button class="primary" style="margin-top:12px" onclick="agregarApoyos()">Agregar al tareo</button>`);
+}
+function agregarApoyos(){
+  const fecha = document.getElementById('fechaInput')?.value || hoyStr();
+  const sel = [...document.querySelectorAll('.apo-list input:checked')].map(b => b.value);
+  if(!sel.length){ alert('Marca al menos una persona.'); return; }
+  const k = mod + '|' + fecha; apoyosSel[k] = apoyosSel[k] || new Set(); sel.forEach(d => apoyosSel[k].add(d));
+  cerrarModal(); marcarTareados(); filtrarListaRegistrar();
+  sel.forEach(d => { const b = document.querySelector(`#apoyoBox .chk-trab[value="${d}"]`); if(b) b.checked = true; });
+  syncCount();
+  toast(`🤝 ${sel.length} de apoyo agregado${sel.length>1?'s':''} · marca horario y guarda`);
 }
 
 // ---- Bajas (cese / cambio de área): se guardan en el trabajador, sus registros no se tocan
@@ -757,7 +834,7 @@ function viewRegistrar(){
   const filas = activos.map(t => `
     <div class="trab-check-row" data-n="${esc(t.nombre)}" data-d="${esc(t.dni)}">
       <label><input type="checkbox" class="chk-trab" value="${esc(t.dni)}" onchange="syncCount()"> <span>${esc(t.nombre)}</span> ${cargoTag(t)} <span class="dni-tag">${esc(t.dni)}</span></label>
-      ${t.baja ? tagBaja(t) : ''}<button class="del-btn" onclick="abrirBaja('${esc(t.dni)}')" title="Dar de baja">🚪</button>
+      <span class="tareo-tag"></span>${t.baja ? tagBaja(t) : ''}<button class="del-btn" onclick="abrirBaja('${esc(t.dni)}')" title="Dar de baja">🚪</button>
     </div>
   `).join('');
   const cargoBtns = M().cargos ? `
@@ -772,10 +849,12 @@ function viewRegistrar(){
       <div class="card" style="padding-bottom:6px;">
         <div class="trab-check-row all">
           <label><input type="checkbox" id="chkAll" onchange="toggleAll(this.checked)"> <strong id="chkAllLbl">Seleccionar todos</strong></label>
-          <button class="icon-btn" onclick="nuevoTrabajador()" title="Agregar trabajador">➕</button>
+          <span style="display:flex;gap:6px"><button class="icon-btn" onclick="abrirApoyo()" title="Apoyo de ${MOD_CORTO[otroMod(mod)]}">🤝</button><button class="icon-btn" onclick="nuevoTrabajador()" title="Agregar trabajador">➕</button></span>
         </div>
         ${state.trabajadores.length > 0 ? cargoBtns : ''}
+        ${activos.length ? `<div id="progTareo" class="prog"></div>` : ''}
         ${activos.length === 0 ? '<div class="muted">Sin trabajadores activos — agrega uno con ➕</div>' : filas}
+        <div id="apoyoBox"></div>
       </div>
       ${bajas.length ? `<details class="card bajas-box"><summary>🚪 Dados de baja (${bajas.length})</summary>${filasBaja}</details>` : ''}
       </div><div class="reg-form">
@@ -789,7 +868,7 @@ function viewRegistrar(){
           <button data-t="dm" class="${regTipo==='dm'?'on':''}" onclick="setRegTipo('dm')">Desc. médico</button>
         </div>
         <label class="field">Fecha</label>
-        <input class="field" type="date" id="fechaInput" value="${fmtDate(new Date())}">
+        <input class="field" type="date" id="fechaInput" value="${regFecha || fmtDate(new Date())}" onchange="regFecha=this.value; marcarTareados()">
         <div id="bloqueAus" style="display:${regTipo==='asistencia'?'none':'block'}">
           <label class="field">Motivo / observación (opcional)</label>
           <input class="field" id="obsInput" placeholder="Ej. cita en EsSalud, trámite, no avisó…">
@@ -845,7 +924,45 @@ function filtrarListaRegistrar(){
   if(lbl) lbl.textContent = filtro.q ? `Seleccionar los ${vis} filtrados` : 'Seleccionar todos';
   syncCount();
 }
-function visiblesChk(){ return [...document.querySelectorAll('.trab-check-row:not(.oculto) .chk-trab')]; }
+function visiblesChk(){ return [...document.querySelectorAll('.trab-check-row:not(.oculto):not(.oculto-t) .chk-trab')]; }
+// ---- Marcar quién ya está tareado en la fecha elegida
+let regFecha = null, soloPendientes = false;
+function marcarTareados(){
+  const fecha = document.getElementById('fechaInput')?.value; if(!fecha) return;
+  pintarApoyos();
+  const rows = [...document.querySelectorAll('.trab-check-row[data-d]')];
+  let hechos = 0, apoyosN = 0;
+  rows.forEach(r => {
+    const regs = state.registros.filter(x => x.trabajadorDni === r.dataset.d && x.fecha === fecha);
+    const tag = r.querySelector('.tareo-tag');
+    const aus = regs.find(esAus), h = regs.filter(x => !esAus(x)).reduce((s,x)=>s+x.horas,0);
+    const fuera = r.dataset.apoyo ? [] : apoyoEnOtro(mod, r.dataset.d, fecha);
+    const hecho = regs.length > 0 || fuera.length > 0;
+    r.classList.toggle('tareado', hecho);
+    r.classList.toggle('oculto-t', hecho && soloPendientes);
+    if(tag){
+      if(!hecho){ tag.innerHTML = ''; tag.style.display = 'none'; }
+      else {
+        tag.style.display = '';
+        const ult = regs.filter(x => !esAus(x)).sort((a,b)=>b.fin.localeCompare(a.fin))[0];
+        if(!regs.length && fuera.length){ const hf = fuera.reduce((s,x)=>s+x.horas,0); tag.innerHTML = `<span class="pillt apy">🤝 Apoyó en ${MOD_CORTO[otroMod(mod)]} · ${hf.toFixed(1)} h</span>`; r.classList.add('tareado'); if(hecho && !r.dataset.apoyo) hechos++; return; }
+        tag.innerHTML = aus && !h ? `${badgeAus(aus.tipo)} <span class="aus-lbl">${AUSENCIAS[aus.tipo].label}</span>` : `<span class="pillt">✔ Tareado · ${h.toFixed(1)} h${ult ? ` <small>${ult.inicio}–${ult.fin}</small>` : ''}</span>`;
+        tag.classList.toggle('aus-t', !!(aus && !h));
+      }
+    }
+    if(r.dataset.apoyo){ if(hecho) apoyosN++; return; }
+    if(hecho) hechos++;
+  });
+  const p = document.getElementById('progTareo');
+  if(p){
+    const tot = rows.filter(r => !r.dataset.apoyo).length, falt = tot - hechos, pct = tot ? hechos/tot*100 : 0;
+    const f = parseDate(fecha), esHoy = fecha === hoyStr();
+    p.innerHTML = `<div class="prog-top"><span><b>${hechos}</b> de ${tot} tareados ${esHoy ? 'hoy' : 'el ' + diaCortoFijo(fecha)}${apoyosN ? ` <span class="apy-n">+${apoyosN} apoyo</span>` : ''}</span>
+        ${falt ? `<span class="falt">Faltan ${falt}</span>` : `<span class="ok">✔ Completo</span>`}</div>
+      <div class="prog-bar"><i style="width:${pct.toFixed(1)}%"></i></div>
+      ${hechos ? `<label class="prog-chk"><input type="checkbox" ${soloPendientes?'checked':''} onchange="soloPendientes=this.checked; marcarTareados(); filtrarListaRegistrar()"> Ocultar los ya tareados</label>` : ''}`;
+  }
+}
 function toggleAll(checked){ visiblesChk().forEach(b => b.checked = checked); syncCount(); }
 function marcarCargo(c){
   const dnis = new Set(state.trabajadores.filter(t => t.cargo === c).map(t => t.dni));
@@ -931,6 +1048,13 @@ function pintarTipo(){
   if(btn){ btn.textContent = aus ? `Guardar ${aus.label.toLowerCase()}` : 'Guardar registro'; btn.style.background = aus ? aus.color : ''; }
 }
 
+function trasGuardar(n){
+  document.querySelectorAll('.chk-trab:checked').forEach(b => b.checked = false);
+  const o = document.getElementById('obsInput'); if(o) o.value = '';
+  marcarTareados(); filtrarListaRegistrar(); syncCount();
+  toast(`✔ Guardado · ${n} trabajador${n>1?'es':''}`);
+}
+
 async function registrarHora(){
   const dnis = [...document.querySelectorAll('.chk-trab:checked')].map(b => b.value);
   if(dnis.length === 0){ alert('Marca al menos un trabajador.'); return; }
@@ -938,6 +1062,8 @@ async function registrarHora(){
   if(fecha && semanaCerrada(mod, fecha)){ alert(`La semana ${semanaISO(parseDate(fecha))} está cerrada. Reábrela en la pestaña Semana si necesitas registrar.`); return; }
   const fuera = dnis.map(d => state.trabajadores.find(x => x.dni === d)).filter(t => t && fecha && !activoEn(t, fecha));
   if(fuera.length){ alert(`No se puede registrar el ${fCorta(fecha)} porque ya están de baja:\n\n${fuera.map(t => `• ${t.nombre} (último día ${fCorta(t.baja)})`).join('\n')}\n\nDesmárcalos o elige una fecha anterior.`); return; }
+  const esApoyoChk = new Set([...document.querySelectorAll('.chk-trab[data-apoyo]:checked')].map(b => b.value));
+  if(AUSENCIAS[regTipo] && esApoyoChk.size){ alert('Las faltas, permisos y descansos médicos de un apoyo se registran en su propio equipo. Desmarca a los de apoyo.'); return; }
   if(AUSENCIAS[regTipo]){
     if(!fecha){ alert('Elige la fecha.'); return; }
     const obs = (document.getElementById('obsInput')?.value || '').trim();
@@ -950,7 +1076,8 @@ async function registrarHora(){
     });
     await saveState();
     regTipo = 'asistencia';
-    setTab('historial');
+    trasGuardar(dnis.length);
+    pintarTipo();
     return;
   }
   const inicio = document.getElementById('inicioInput').value;
@@ -958,6 +1085,13 @@ async function registrarHora(){
   const descanso = parseInt(document.getElementById('descansoInput').value || '0', 10);
   if(!fecha || !inicio || !fin){ alert('Completa fecha, hora de inicio y hora de fin.'); return; }
   const horas = calcHoras(inicio, fin, descanso);
+  const enSuEquipo = [...esApoyoChk].filter(d => { const dd = stores[otroMod(mod)]?.data; return dd && dd.registros.some(r => r.trabajadorDni === d && r.fecha === fecha && !esAus(r)); });
+  if(enSuEquipo.length && !confirm(`Ya tienen horas en ${MOD_TXT[otroMod(mod)]} el ${fCorta(fecha)}:\n\n${enSuEquipo.map(d => '• ' + nombreCorto((trabDe(otroMod(mod), d) || {}).nombre || d)).join('\n')}\n\n¿Registrar también estas horas de apoyo? (se sumarán en su semana)`)) return;
+  const yaTiene = dnis.filter(d => state.registros.some(r => r.trabajadorDni === d && r.fecha === fecha));
+  if(yaTiene.length){
+    const nom = d => nombreCorto((state.trabajadores.find(x => x.dni === d) || {}).nombre || d);
+    if(!confirm(`Ya están tareados el ${fCorta(fecha)}:\n\n${yaTiene.map(d => '• ' + nom(d)).join('\n')}\n\n¿Agregar otro registro igual? (Si era para corregir, cancela y edítalo en Historial)`)) return;
+  }
   // Aviso si alguien pasaría las 60 h de la semana
   const pasan = dnis.map(d => ({ d, t: horasSemanaTrab(mod, d, fecha) + horas })).filter(x => x.t > MAX_SEMANA);
   if(pasan.length){
@@ -967,13 +1101,14 @@ async function registrarHora(){
   const conExtra = dnis.filter(d => { const t = horasSemanaTrab(mod, d, fecha) + horas; return t > JORNADA_SEMANA && t <= MAX_SEMANA; }).length;
   const ahora = Date.now();
   dnis.forEach((dni, i) => {
-    const t = state.trabajadores.find(x => x.dni === dni);
+    const t = state.trabajadores.find(x => x.dni === dni) || trabDe(otroMod(mod), dni);
     const reg = { id: ahora + i, fecha, trabajadorDni: dni, trabajador: t ? t.nombre : dni, inicio, fin, descanso, horas };
+    if(esApoyoChk.has(dni)) reg.apoyoDe = otroMod(mod);
     if(t && t.cargo) reg.cargo = t.cargo;
     state.registros.push(reg);
   });
   await saveState();
-  setTab('semana');
+  trasGuardar(dnis.length);
   if(conExtra) toast(`${conExtra} trabajador${conExtra>1?'es':''} ya pasa${conExtra>1?'n':''} de ${JORNADA_SEMANA} h esta semana (horas extra)`);
 }
 
@@ -994,9 +1129,9 @@ function datosSemana(){
 
   const horasDe = t => dayKeys.map(k => state.registros.filter(r => r.trabajadorDni === t.dni && r.fecha === k && !esAus(r)).reduce((s,r)=>s+r.horas,0));
   const ausDe = t => dayKeys.map(k => { const a = state.registros.find(r => r.trabajadorDni === t.dni && r.fecha === k && esAus(r)); return a ? a.tipo : null; });
-  const filas = catalogo.map(t => ({ t, horas: horasDe(t), aus: ausDe(t) }))
+  const filas = catalogo.map(t => ({ t, horas: horasDe(t), aus: ausDe(t), ap: dayKeys.map(k => apoyoEnOtro(mod, t.dni, k).reduce((s,r)=>s+r.horas,0)) }))
     .filter(f => coincide(f.t.nombre, f.t.dni))
-    .filter(f => !filtro.soloConHoras || f.horas.some(h => h > 0) || f.aus.some(Boolean));
+    .filter(f => !filtro.soloConHoras || f.horas.some(h => h > 0) || f.aus.some(Boolean) || f.ap.some(h => h > 0));
   const totalesDia = dayKeys.map((k,i) => filas.reduce((s,f)=>s+f.horas[i],0));
   const totalSemana = totalesDia.reduce((a,b)=>a+b,0);
   return { days, dayKeys, filas, totalesDia, totalSemana };
@@ -1030,7 +1165,7 @@ function cuerpoSemana(){
   const rangeLabel = rangoSemana(days);
   const filaHTML = f => {
     const total = f.horas.reduce((a,b)=>a+b,0);
-    return `<tr><td><a class="lnk" onclick="abrirFicha('${esc(f.t.dni)}')"><span class="nf">${esc(f.t.nombre)}</span><span class="nc">${esc(nombreCorto(f.t.nombre))}</span></a> ${tagBaja(trabDe(mod, f.t.dni))}</td>${f.horas.map((h,i) => h===0 && f.aus[i] ? `<td>${badgeAus(f.aus[i])}</td>` : `<td class="${h===0?'zero':''}">${h===0?'–':h.toFixed(1)}</td>`).join('')}<td style="font-weight:800;color:${total > JORNADA_SEMANA ? COL_SEM[estadoSemana(total)] : 'var(--green)'}">${total.toFixed(1)}</td></tr>`;
+    return `<tr><td><a class="lnk" onclick="abrirFicha('${esc(f.t.dni)}')"><span class="nf">${esc(f.t.nombre)}</span><span class="nc">${esc(nombreCorto(f.t.nombre))}</span></a> ${tagBaja(trabDe(mod, f.t.dni))}${tagApoyo(mod, f.t.dni)}</td>${f.horas.map((h,i) => h===0 && f.aus[i] ? `<td>${badgeAus(f.aus[i])}</td>` : h===0 && f.ap && f.ap[i] ? `<td><span class="apy-b" title="Apoyó en ${MOD_CORTO[otroMod(mod)]}: ${f.ap[i].toFixed(1)} h">AP</span></td>` : `<td class="${h===0?'zero':''}">${h===0?'–':h.toFixed(1)}</td>`).join('')}<td style="font-weight:800;color:${total > JORNADA_SEMANA ? COL_SEM[estadoSemana(total)] : 'var(--green)'}">${total.toFixed(1)}</td></tr>`;
   };
   let cuerpo = '';
   if(filas.length === 0){
@@ -1058,7 +1193,7 @@ function cuerpoSemana(){
             <tbody>${cuerpo}${totalRow}</tbody>
           </table>
         </div>
-        <div style="font-size:.66rem;color:var(--ink-dim);margin-top:8px;">${Object.values(AUSENCIAS).map(a => `<span class="aus" style="color:${a.color};background:${a.bg}">${a.cod}</span> ${a.label}`).join(' &nbsp; ')}<br>Total: <b style="color:${COL_SEM.ok}">≤${JORNADA_SEMANA} h normal</b> · <b style="color:${COL_SEM.ext}">${JORNADA_SEMANA}–${MAX_SEMANA} h con extra</b> · <b style="color:${COL_SEM.exc}">+${MAX_SEMANA} h excede</b></div>
+        <div style="font-size:.66rem;color:var(--ink-dim);margin-top:8px;">${Object.values(AUSENCIAS).map(a => `<span class="aus" style="color:${a.color};background:${a.bg}">${a.cod}</span> ${a.label}`).join(' &nbsp; ')} &nbsp; <span class="apy-b">AP</span> Apoyó en ${MOD_CORTO[otroMod(mod)]}<br>Total: <b style="color:${COL_SEM.ok}">≤${JORNADA_SEMANA} h normal</b> · <b style="color:${COL_SEM.ext}">${JORNADA_SEMANA}–${MAX_SEMANA} h con extra</b> · <b style="color:${COL_SEM.exc}">+${MAX_SEMANA} h excede</b></div>
         <div class="weeksum">
           <span class="name" style="color:var(--ink-dim);font-weight:600;">${filtrado ? 'Total filtrado' : 'Total del equipo esta semana'}</span>
           <span class="big">${totalSemana.toFixed(1)}h</span>
@@ -1249,7 +1384,7 @@ function hojaPie(nota){ return `<div class="rep-nota"><span>${nota || ''}</span>
 function kpi(v, l, cls, sty){ return `<div class="rep-kpi ${cls||''}" style="${sty||''}"><b>${v}</b><span>${l}</span></div>`; }
 function modTag(m){ return repMod === 'ambos' ? `<span class="mtag" style="background:${MOD_COL[m]}">${m==='acopio'?'ACO':'EST'}</span>` : ''; }
 function diaCorto(f){ const d = parseDate(f); return repPer === 'mes' ? `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}` : DIAS[(d.getDay()+6)%7] + ' ' + d.getDate(); }
-function leyendaAus(){ return Object.values(AUSENCIAS).map(a => `<span class="aus" style="color:${a.color};background:${a.bg}">${a.cod}</span> ${a.label}`).join(' &nbsp;'); }
+function leyendaAus(){ return Object.values(AUSENCIAS).map(a => `<span class="aus" style="color:${a.color};background:${a.bg}">${a.cod}</span> ${a.label}`).join(' &nbsp;') + ' &nbsp;<span class="apy-b">AP</span> Apoyó en el otro equipo'; }
 function reglaTxt(){ return repPer === 'dia' ? `Extra = horas del día − ${JORNADA_DIA} h` : `Extra = horas de cada semana − ${JORNADA_SEMANA} h · máx. ${MAX_SEMANA} h`; }
 
 function graficoBarras(vals, labels, sub){
@@ -1270,11 +1405,15 @@ function costoTxt(A){ return A.sinCosto && !A.costo ? '—' : soles(A.costo); }
 
 // ---- Hoja 1: Resumen ejecutivo
 function hojaResumen(){
-  const A = agregado(modsSel(), fechasPer());
+  const f = fechasPer(), A = agregado(modsSel(), f);
   const alertas = [];
   if(A.sem && A.exceden) alertas.push(['#d12a18', `<b>${A.exceden}</b> pasan el máximo de ${MAX_SEMANA} h: ${A.trab.filter(w=>w.pasa60).map(w=>esc(nombreCorto(w.nombre))).join(', ')}`]);
   if(A.conExtra) alertas.push(['#c27c0e', `<b>${A.conExtra}</b> con horas extra · <b>${A.extra.toFixed(1)} h</b>${A.costo ? ` · costo aprox. <b>${soles(A.costo)}</b>` : ''}`]);
   if(A.ausItems.length) alertas.push(['#6b46c1', `Ausencias: <b>${A.faltas}</b> faltas · <b>${A.permisos}</b> permisos · <b>${A.dm}</b> desc. médicos`]);
+  const apoyos = []; modsSel().forEach(m => { const d = stores[m] && stores[m].data; if(!d) return; const setF = new Set(f); const por = {};
+    d.registros.filter(r => r.apoyoDe && setF.has(r.fecha) && !esAus(r)).forEach(r => { const k = r.trabajadorDni; (por[k] = por[k] || { n: r.trabajador, de: r.apoyoDe, a: m, h: 0, dias: new Set() }); por[k].h += r.horas; por[k].dias.add(r.fecha); });
+    apoyos.push(...Object.values(por)); });
+  if(apoyos.length) alertas.push(['#3a8fd9', `🤝 Apoyos: ${apoyos.map(x => `<b>${esc(nombreCorto(x.n))}</b> (${MOD_CORTO[x.de]} → ${MOD_CORTO[x.a]}, ${x.dias.size} día${x.dias.size>1?'s':''}, ${x.h.toFixed(1)} h)`).join(', ')}`]);
   if(A.bajasPer.length) alertas.push(['#636b8a', `Bajas en el periodo: ${A.bajasPer.map(t => `<b>${esc(nombreCorto(t.nombre))}</b> (${fCorta(t.baja)}, ${esc((MOTIVOS_BAJA[t.bajaMotivo]||'baja').toLowerCase())})`).join(', ')}`]);
   if(!alertas.length) alertas.push(['#1a8a55', 'Sin horas extra ni ausencias en el periodo ✔']);
   let grafico;
@@ -1310,19 +1449,19 @@ function hojaHoras(){
   if(A.modo === 'semana'){
     const dias = diasDeSemana(parseDate(repFecha)); cols = 10;
     head = `<tr><th style="text-align:left">Nombre</th>${dias.map((d,i)=>`<th>${DIAS[i].slice(0,2)}<br>${d.getDate()}</th>`).join('')}<th>Tot</th><th>Ext</th></tr>`;
-    filaFn = w => `<tr><td class="n">${esc(nombreCorto(w.nombre))} ${tagBaja(trabDe(w.m, w.dni))}</td>${f.map(k => { const h = w.porDia[k]; const a = w.aus.find(x => x.fecha === k); return h ? `<td>${h.toFixed(1)}</td>` : a ? `<td>${badgeAus(a.tipo)}</td>` : '<td class="z">–</td>'; }).join('')}<td class="h" style="color:${COL_SEM[w.est]}">${w.horas.toFixed(1)}</td>${extCell(w)}</tr>`;
+    filaFn = w => `<tr><td class="n">${esc(nombreCorto(w.nombre))} ${tagBaja(trabDe(w.m, w.dni))}${tagApoyo(w.m, w.dni)}</td>${f.map(k => { const h = w.porDia[k]; const a = w.aus.find(x => x.fecha === k); const ap = !h && !a ? apoyoEnOtro(w.m, w.dni, k) : []; return h ? `<td>${h.toFixed(1)}</td>` : a ? `<td>${badgeAus(a.tipo)}</td>` : ap.length ? `<td><span class="apy-b" title="Apoyó en ${MOD_CORTO[otroMod(w.m)]}">AP</span></td>` : '<td class="z">–</td>'; }).join('')}<td class="h" style="color:${COL_SEM[w.est]}">${w.horas.toFixed(1)}</td>${extCell(w)}</tr>`;
     totRow = X => `<tr class="tot"><td class="n">${X.label}</td>${f.map(k => { const v = X.l.reduce((s,w)=>s+(w.porDia[k]||0),0); return `<td>${v?v.toFixed(0):'–'}</td>`; }).join('')}<td>${X.l.reduce((s,w)=>s+w.horas,0).toFixed(1)}</td><td>${sumExt(X.l)}</td></tr>`;
   } else if(A.modo === 'mes'){
     cols = A.semanas.length + 6;
     head = `<tr><th style="text-align:left">Nombre</th>${A.porSemana.map(s=>`<th>S${s.n}</th>`).join('')}<th>Tot</th><th>Ext</th><th>F</th><th>P</th><th>DM</th></tr>`;
     const c = (w,t) => { const n = w.aus.filter(a=>a.tipo===t).length; return n ? `<td style="color:${AUSENCIAS[t].color};font-weight:800">${n}</td>` : '<td class="z">–</td>'; };
-    filaFn = w => `<tr><td class="n">${esc(nombreCorto(w.nombre))} ${tagBaja(trabDe(w.m, w.dni))}</td>${A.semanas.map(k => { const h = w.porSem[k]; return h ? `<td style="color:${COL_SEM[estadoSemana(h)]};font-weight:${h>JORNADA_SEMANA?800:400}">${h.toFixed(1)}</td>` : '<td class="z">–</td>'; }).join('')}<td class="h">${w.horas.toFixed(1)}</td>${extCell(w)}${c(w,'falta')}${c(w,'permiso')}${c(w,'dm')}</tr>`;
+    filaFn = w => `<tr><td class="n">${esc(nombreCorto(w.nombre))} ${tagBaja(trabDe(w.m, w.dni))}${tagApoyo(w.m, w.dni)}</td>${A.semanas.map(k => { const h = w.porSem[k]; return h ? `<td style="color:${COL_SEM[estadoSemana(h)]};font-weight:${h>JORNADA_SEMANA?800:400}">${h.toFixed(1)}</td>` : '<td class="z">–</td>'; }).join('')}<td class="h">${w.horas.toFixed(1)}</td>${extCell(w)}${c(w,'falta')}${c(w,'permiso')}${c(w,'dm')}</tr>`;
     totRow = X => `<tr class="tot"><td class="n">${X.label}</td>${A.semanas.map(k => { const v = X.l.reduce((s,w)=>s+(w.porSem[k]||0),0); return `<td>${v?v.toFixed(0):'–'}</td>`; }).join('')}<td>${X.l.reduce((s,w)=>s+w.horas,0).toFixed(0)}</td><td>${sumExt(X.l)}</td>${['falta','permiso','dm'].map(t=>`<td>${X.l.reduce((s,w)=>s+w.aus.filter(a=>a.tipo===t).length,0)||'–'}</td>`).join('')}</tr>`;
   } else {
     cols = 5;
     head = `<tr><th style="text-align:left">Nombre</th><th>Entr.</th><th>Sal.</th><th>Horas</th><th>Ext</th></tr>`;
-    filaFn = w => { const a = w.aus[0]; return w.horas ? `<tr><td class="n">${esc(nombreCorto(w.nombre))} ${tagBaja(trabDe(w.m, w.dni))}</td><td>${w.ini[repFecha]}</td><td>${w.fin[repFecha]}</td><td class="h">${w.horas.toFixed(1)}</td>${extCell(w)}</tr>`
-      : `<tr><td class="n">${esc(nombreCorto(w.nombre))} ${tagBaja(trabDe(w.m, w.dni))}</td><td colspan="3">${badgeAus(a.tipo)} ${AUSENCIAS[a.tipo].label}</td><td>–</td></tr>`; };
+    filaFn = w => { const a = w.aus[0]; return w.horas ? `<tr><td class="n">${esc(nombreCorto(w.nombre))} ${tagBaja(trabDe(w.m, w.dni))}${tagApoyo(w.m, w.dni)}</td><td>${w.ini[repFecha]}</td><td>${w.fin[repFecha]}</td><td class="h">${w.horas.toFixed(1)}</td>${extCell(w)}</tr>`
+      : `<tr><td class="n">${esc(nombreCorto(w.nombre))} ${tagBaja(trabDe(w.m, w.dni))}${tagApoyo(w.m, w.dni)}</td><td colspan="3">${badgeAus(a.tipo)} ${AUSENCIAS[a.tipo].label}</td><td>–</td></tr>`; };
     totRow = X => `<tr class="tot"><td class="n">${X.label}</td><td></td><td></td><td>${X.l.reduce((s,w)=>s+w.horas,0).toFixed(1)}</td><td>${sumExt(X.l)}</td></tr>`;
   }
   let cuerpo = '';
@@ -1553,7 +1692,7 @@ function abrirModal(html){
   document.body.appendChild(bg);
 }
 function cerrarModal(){ const m = document.getElementById('modalBg'); if(m) m.remove(); }
-function toast(txt, ms){ const t = document.createElement('div'); t.className = 'toast'; t.style.top = 'auto'; t.style.bottom = '100px'; t.style.transform = 'translateX(-50%)'; t.innerHTML = txt; document.body.appendChild(t); setTimeout(() => t.remove(), ms || 3500); }
+function toast(txt, ms){ document.querySelectorAll('.toast.tmsg').forEach(x => x.remove()); const t = document.createElement('div'); t.className = 'toast tmsg'; t.style.top = 'auto'; t.style.bottom = '100px'; t.style.transform = 'translateX(-50%)'; t.innerHTML = txt; document.body.appendChild(t); setTimeout(() => t.remove(), ms || 3500); }
 
 // --- Ajustes: horario por defecto y costo por hora de cada equipo
 function abrirAjustes(){
@@ -1625,7 +1764,7 @@ async function guardarEdicion(id){
 }
 function horasSemanaTrab(m, dni, fecha, excluirId){
   const k = semKey(fecha);
-  return stores[m].data.registros.filter(r => r.trabajadorDni === dni && !esAus(r) && semKey(r.fecha) === k && r.id !== excluirId).reduce((s,r)=>s+r.horas,0);
+  return ['acopio','estibas'].reduce((tot, mm) => tot + ((stores[mm] && stores[mm].data.registros) || []).filter(r => r.trabajadorDni === dni && !esAus(r) && semKey(r.fecha) === k && r.id !== excluirId).reduce((s,r)=>s+r.horas,0), 0);
 }
 
 // --- Cierre de semana
