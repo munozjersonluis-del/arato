@@ -1,0 +1,17 @@
+{
+  "name": "Peso de bandejas · Blueberries",
+  "short_name": "Pesos",
+  "description": "Registro rápido del peso de bandejas por grupo, directo a Google Sheets.",
+  "id": "registro-pesos-bandejas",
+  "start_url": "registro-pesos-bandejas.html",
+  "scope": "registro-pesos-bandejas.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F1F2F8",
+  "theme_color": "#2B2E83",
+  "lang": "es-PE",
+  "icons": [
+    { "src": "pesos-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "pesos-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
