@@ -74,6 +74,46 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
 .hidden{display:none!important}
 .stephide{display:none!important}
+.cv{background:var(--panel);border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px}
+.cv .h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.cv .h b{font:600 19px "Barlow Semi Condensed",sans-serif;color:var(--red,#E8291A)}
+.cv .ru{font-weight:600;margin:2px 0}
+.cv .mt{font-size:14px;color:var(--ink2)}
+.cv .acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.cv .acts .btn{min-height:48px}
+.cv .acts .full{grid-column:1/-1}
+.sec2{font:600 18px "Barlow Semi Condensed",sans-serif;margin:16px 2px 8px;color:var(--accent)}
+.bigcode{font:600 54px/1 "Barlow Semi Condensed",sans-serif;letter-spacing:8px;text-align:center;color:var(--accent);margin:10px 0 4px}
+.cdown{text-align:center;font-weight:600;color:var(--ink2);margin-bottom:12px}
+.qrbig{display:block;width:min(78vw,320px);height:auto;margin:6px auto 10px;image-rendering:pixelated;background:#fff;padding:10px;border-radius:12px}
+.info{border-radius:12px;padding:10px 12px;margin-bottom:10px;font-size:14.5px}
+.info.ok{background:#E3F3EA;color:#1E7B4A}.info.warn{background:#FFF3DC;color:#8A5A00}.info.bad{background:#FDEBE9;color:#B3261E}.info.neu{background:var(--soft,#E6ECF8);color:var(--accent)}
+.info b{font-weight:600}
+.chnote{font-size:13.5px;font-weight:600;color:#1E7B4A;margin-top:4px}
+.alerta{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;border-radius:14px;padding:14px 16px;margin-bottom:12px;cursor:pointer;font-weight:600}
+.alerta b{display:block;font:600 18px "Barlow Semi Condensed",sans-serif}
+.alerta small{display:block;font-weight:500;font-size:13.5px;opacity:.9}
+.alerta.roja{background:#FDEBE9;color:#B3261E;border:1.5px solid #E8291A}
+.alerta.azul{background:var(--soft,#E6ECF8);color:var(--accent);border:1.5px dashed var(--accent)}
+.alerta .ico{font-size:24px;line-height:1}
+.qm{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin:0 0 10px;scrollbar-width:none}
+.qm::-webkit-scrollbar{display:none}
+.qm button{flex:none;border:1.5px solid var(--line);background:var(--bg);border-radius:20px;min-height:42px;padding:6px 14px;font-weight:600;cursor:pointer;color:var(--ink);white-space:nowrap}
+.qm button:active{background:var(--accent);color:var(--accent-ink)}
+.tag.p{background:#FFF3DC;color:#946200}.tag.t{background:#FDEBE9;color:#B3261E}
+.modal{position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:40;display:flex;align-items:flex-end;justify-content:center;padding:12px 12px calc(12px + env(safe-area-inset-bottom,0px))}
+.modal .mc{background:var(--panel);border-radius:18px;max-width:520px;width:100%;padding:18px 16px 14px;max-height:88vh;display:flex;flex-direction:column}
+.modal h3{font:600 21px "Barlow Semi Condensed",sans-serif;margin:0 0 10px}
+.modal pre{flex:1;overflow:auto;white-space:pre-wrap;background:var(--bg);border-radius:12px;padding:12px;font:15px/1.45 "Barlow",sans-serif;margin:0 0 12px}
+.modal .gb{display:flex;gap:8px;flex-wrap:wrap}.modal .gb .btn{flex:1;min-width:120px}
+/* ---- modo sol: letras grandes y contraste alto ---- */
+:root.sol{--bg:#FFFFFF;--panel:#FFFFFF;--ink:#000000;--ink2:#1F2937;--line:#6B7280;--accent:#001E6E;--accent-ink:#FFFFFF}
+:root.sol body{font-size:18.5px;background:#fff}
+:root.sol .card,:root.sol .hrow,:root.sol .hsmall button{border-width:2px;border-color:#374151}
+:root.sol .btn,:root.sol .opt,:root.sol .in,:root.sol input,:root.sol select{font-size:18px;border-width:2px}
+:root.sol .small,:root.sol small{font-size:15px!important;color:#111!important}
+:root.sol .hbig small{color:#fff!important}
+:root.sol .hbig b{font-size:27px}
 .hello{margin:6px 2px 14px}.hello h1{font:600 26px "Barlow Semi Condensed",sans-serif;margin:2px 0 0}
 .hbig{display:flex;align-items:center;gap:16px;width:100%;text-align:left;border:0;border-radius:16px;padding:20px 18px;margin-bottom:12px;cursor:pointer;min-height:104px;color:#fff}
 .hbig.a{background:#0A2A8C}.hbig.b{background:#1E7B4A}
@@ -301,15 +341,30 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
   <div class="menu hidden" id="menu"></div>
 
   <section id="vHome" class="hidden">
-    <div class="hello"><div class="small" id="hDate"></div><h1 id="hName">Hola</h1></div>
+    <div class="hello"><div class="small" id="hDate"></div><h1 id="hName">Hola</h1><div class="small" id="hRol"></div></div>
+    <div id="homeChofer" class="hidden">
+      <div class="sec2">Mis viajes</div>
+      <div id="chList"></div>
+    </div>
     <button class="hbig a" id="hNuevo" type="button"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><path d="M12 11v6M9 14h6"/></svg></span><span><b>Hacer vale</b><small>Para mandar material a otro fundo</small></span></button>
     <button class="hbig b" id="hRecv" type="button"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><path d="M8 8h3v3H8zM13 13h3v3h-3zM13 8h3M8 16h3"/></svg></span><span><b>Recibir vale</b><small>Te llegó una carga: escanea el QR del vale</small></span></button>
+    <div id="homeAux" class="hidden">
+      <button class="hbig a" id="hCodigo" type="button"><span class="ic" style="font-size:28px;color:#fff">🔢</span><span><b>Dar código</b><small>Si el chofer no puede mostrarte el QR, dale este código para validar la entrega</small></span></button>
+    </div>
+
+    <button class="alerta azul hidden" id="hPend" type="button"><span class="ico">📶</span><span><b id="hPendT"></b><small>Se envían solos cuando vuelva la señal. Toca para enviar ahora.</small></span></button>
+    <button class="alerta roja hidden" id="hAtras" type="button"><span class="ico">⚠️</span><span><b id="hAtrasT"></b><small>Llevan más de 3 horas en camino sin recibirse. Toca para verlos.</small></span></button>
     <button class="hmid hidden" id="hRepeat" type="button"><span><b>Repetir mi último vale</b><small id="hRepTxt"></small></span></button>
     <div class="hsmall">
       <button type="button" id="hVales">Ver vales <span class="cnt hidden" id="hCamino"></span></button>
       <button type="button" id="hVerif">¿Este vale es real?</button>
+      <button type="button" class="full" id="hResumen">📋 Resumen de hoy</button>
       <button type="button" class="full" id="hGuia">¿Cómo se usa?</button>
       <button type="button" class="full hidden" id="hInst">📲 Instalar la app en este celular</button>
+    </div>
+    <div id="auxLists" class="hidden">
+      <div class="sec2">Vienen en camino</div><div id="auxCamino"></div>
+      <div class="sec2">Mis recepciones</div><div id="auxMine"></div>
     </div>
   </section>
 
@@ -328,7 +383,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
         <label class="f">Hora de salida<input id="fHora" type="time"></label>
         <label class="f">Placa<input id="fPlaca" data-ac="placas" autocomplete="off" style="text-transform:uppercase"></label>
         <label class="f">Marca del vehículo<input id="fMarca" data-ac="marcas" autocomplete="off"></label>
-        <label class="f full">Conductor<input id="fCond" data-ac="cond" autocomplete="off"></label>
+        <label class="f full">Conductor<input id="fCond" data-ac="cond" autocomplete="off"><span class="chnote hidden" id="chNote">📱 Este chofer tiene la app: firmará el vale desde su celular.</span></label>
         <input id="fCel" type="hidden">
         <label class="f">Licencia<input id="fLic" autocomplete="off" style="text-transform:uppercase"></label>
         <label class="f">Precinto<input id="fPrec" inputmode="numeric" autocomplete="off"></label>
@@ -336,6 +391,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
     </div>
     <div class="card" data-step="2">
       <h2>Materiales <button class="btn ghost" id="addItem" type="button">+ Otro material</button></h2>
+      <div class="qm" id="qm" aria-label="Materiales frecuentes"></div>
       <div class="items" id="items"></div>
       <div class="total" id="tCant">Total: 0</div>
     </div>
@@ -365,7 +421,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
     <div class="card">
       <label class="f">Buscar<input id="q" placeholder="N°, placa, conductor o fundo" autocomplete="off"></label>
       <div class="chipbar" id="fEst">
-        <button type="button" data-e="" aria-pressed="true">Todos</button><button type="button" data-e="VIGENTE" aria-pressed="false">En camino</button><button type="button" data-e="RECIBIDO" aria-pressed="false">Recibidos</button><button type="button" data-e="RECIBIDO CON DIFERENCIA" aria-pressed="false">Con diferencia</button><button type="button" data-e="ANULADO" aria-pressed="false">Anulados</button><button type="button" data-e="MIOS" aria-pressed="false">Emitidos por mí</button>
+        <button type="button" data-e="" aria-pressed="true">Todos</button><button type="button" data-e="VIGENTE" aria-pressed="false">En camino</button><button type="button" data-e="ATRASADOS" aria-pressed="false">Atrasados</button><button type="button" data-e="PENDIENTE" aria-pressed="false">Por enviar</button><button type="button" data-e="RECIBIDO" aria-pressed="false">Recibidos</button><button type="button" data-e="RECIBIDO CON DIFERENCIA" aria-pressed="false">Con diferencia</button><button type="button" data-e="ANULADO" aria-pressed="false">Anulados</button><button type="button" data-e="MIOS" aria-pressed="false">Emitidos por mí</button>
       </div>
       <p class="small" style="margin:8px 0 0" id="histSum"></p>
     </div>
@@ -404,6 +460,17 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
   <section id="vAdmin" class="hidden">
     <div class="card"><h2>Código de equipo</h2><p class="small" style="margin:0 0 8px">Quien se registre necesita este código. Cámbialo si alguien que ya no debe acceder lo conoce.</p>
       <div class="row"><label class="f" style="flex:1">Código<input id="aInv" style="text-transform:uppercase"></label><button class="btn" id="aInvSave" type="button">Guardar</button></div></div>
+    <div class="card"><h2>Crear usuario</h2><p class="small" style="margin:0 0 8px">Crea la cuenta y te doy un PIN temporal. La persona entra con su DNI y ese PIN, y la app le pide crear su propio PIN.</p>
+      <div class="grid"><label class="f full">Nombre completo<input id="cuNom" style="text-transform:uppercase" autocomplete="off"></label>
+      <label class="f">DNI<input id="cuDni" inputmode="numeric" maxlength="8" autocomplete="off"></label>
+      <label class="f">Rol<select id="cuRol" class="in"><option value="chofer">Chofer</option><option value="auxiliar">Auxiliar</option><option value="usuario">Despacho</option></select></label></div>
+      <p class="err" id="errCu"></p>
+      <button class="btn primary" id="cuSave" type="button" style="width:100%;margin-top:10px">Crear usuario</button>
+      <div id="cuRes"></div></div>
+    <div class="card"><h2>Código para choferes</h2><p class="small" style="margin:0 0 8px">Los choferes se registran con este código. Solo ven y firman sus propios vales.</p>
+      <div class="row"><label class="f" style="flex:1">Código<input id="aInvC" style="text-transform:uppercase"></label><button class="btn" id="aInvCSave" type="button">Guardar</button></div></div>
+    <div class="card"><h2>Código para auxiliares</h2><p class="small" style="margin:0 0 8px">Los auxiliares se registran con este código. Solo pueden recibir vales y dar códigos de recepción.</p>
+      <div class="row"><label class="f" style="flex:1">Código<input id="aInvA" style="text-transform:uppercase"></label><button class="btn" id="aInvASave" type="button">Guardar</button></div></div>
     <div class="card"><h2>Usuarios</h2><div id="aUsers"></div></div>
     <div class="card"><h2>Numeración</h2><p class="small" style="margin:0 0 8px">Solo puede avanzar. Úsalo si ya tienes vales en papel.</p>
       <div class="row"><label class="f" style="flex:1">Próximo N°<input id="nextNum" type="number" inputmode="numeric" min="1"></label><button class="btn" id="saveNext" type="button">Aplicar</button></div>
@@ -419,6 +486,46 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
       <button class="btn" id="btnConf" type="button">El chofer dijo CONFORME</button>
       <button class="btn danger" id="btnAnular" type="button">Anular</button>
       <button class="btn danger" id="btnDel" type="button">Eliminar</button>
+    </div>
+    <div id="viajeInfo"></div>
+    <div class="card hidden" id="chPanel">
+      <h2>Acciones del chofer</h2>
+      <div class="cv" style="border:0;padding:0;margin:0"><div class="acts">
+        <button class="btn primary full" id="chFirmar" type="button">✍️ Firmar: estoy conforme con la carga</button>
+        <button class="btn danger full" id="chNo" type="button">✋ No conforme</button>
+        <button class="btn" id="chSali" type="button">🚚 Salí</button>
+        <button class="btn" id="chLlegue" type="button">📍 Llegué</button>
+        <button class="btn" id="chQR" type="button">🔳 Mostrar QR</button>
+        <button class="btn" id="chProb" type="button">⚠️ Reportar problema</button>
+        <button class="btn primary full" id="chEnt" type="button">🔢 Entregar con código del auxiliar</button>
+      </div></div>
+    </div>
+    <div class="card hidden" id="chFirmaP">
+      <h2>Firma del chofer</h2><p class="small" style="margin:0 0 8px">Firma con el dedo solo si la carga coincide con el vale.</p>
+      <div class="sig"><div class="t">Tu firma <button class="clr" id="chFirmaClr" type="button">Borrar</button></div><canvas id="chSig"></canvas></div>
+      <p class="err" id="errChF"></p>
+      <div class="row" style="margin-top:10px"><button class="btn" id="chFirmaNo" type="button">Cancelar</button><button class="btn primary" id="chFirmaSi" type="button" style="flex:1">Firmar vale</button></div>
+    </div>
+    <div class="card hidden" id="chNoP">
+      <h2>No conforme</h2>
+      <label class="f">¿Qué no cuadra?<input id="chNoTxt" placeholder="Son 45 jabas, no 50"></label>
+      <p class="err" id="errChN"></p>
+      <div class="row" style="margin-top:10px"><button class="btn" id="chNoNo" type="button">Cancelar</button><button class="btn danger" id="chNoSi" type="button" style="flex:1">Enviar</button></div>
+    </div>
+    <div class="card hidden" id="chProbP">
+      <h2>Reportar problema</h2>
+      <label class="f">¿Qué pasó?<input id="chProbTxt" placeholder="2 jabas rotas en el camino"></label>
+      <div class="row" style="margin-top:10px"><label class="btn ghost">📷 Foto (opcional)<input type="file" id="chProbFoto" accept="image/*" capture="environment" class="hidden"></label><span class="small" id="chProbFotoTxt"></span></div>
+      <p class="err" id="errChP"></p>
+      <div class="row" style="margin-top:10px"><button class="btn" id="chProbNo" type="button">Cancelar</button><button class="btn primary" id="chProbSi" type="button" style="flex:1">Enviar reporte</button></div>
+    </div>
+    <div class="card hidden" id="chEntP">
+      <h2>Entregar con código</h2>
+      <p class="small" style="margin:0 0 8px">Cuenten juntos lo que llegó. Luego el auxiliar te dicta el código de 6 números que aparece en su app.</p>
+      <div id="chEntItems"></div>
+      <label class="f" style="margin-top:10px">Código del auxiliar<input id="chEntCod" inputmode="numeric" maxlength="6" class="in" style="font-size:26px;letter-spacing:6px;text-align:center" placeholder="000000"></label>
+      <p class="err" id="errChE"></p>
+      <div class="row" style="margin-top:10px"><button class="btn" id="chEntNo" type="button">Cancelar</button><button class="btn primary" id="chEntSi" type="button" style="flex:1">Validar entrega</button></div>
     </div>
     <div class="card hidden" id="delPanel">
       <h2>Eliminar vale</h2>
@@ -474,6 +581,31 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 </div>
 <div class="cam hidden" id="cam"><video id="camVideo" playsinline muted></video><div class="frame"></div><div class="cb"><span id="camTxt">Apunta al código QR del vale</span><button class="btn" id="camClose" type="button">Cerrar</button></div></div>
 <div class="lightbox hidden" id="lightbox"><img id="lbImg" alt="Foto"></div>
+<div class="modal hidden" id="pinModal" role="dialog" aria-modal="true" aria-labelledby="pinT"><div class="mc">
+  <h3 id="pinT">Crea tu PIN</h3>
+  <p class="small" style="margin:0 0 10px" id="pinTxt">Estás usando un PIN temporal. Elige uno propio de 4 a 6 números que solo tú sepas.</p>
+  <label class="f">PIN nuevo<input id="pinN1" class="in pin" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password"></label>
+  <label class="f" style="margin-top:8px">Repite el PIN<input id="pinN2" class="in pin" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password"></label>
+  <p class="err" id="errPin"></p>
+  <div class="gb" style="margin-top:12px"><button class="btn hidden" id="pinCancel" type="button">Cancelar</button><button class="btn primary" id="pinSave" type="button">Guardar mi PIN</button></div>
+</div></div>
+<div class="modal hidden" id="codModal" role="dialog" aria-modal="true" aria-labelledby="codT"><div class="mc" style="text-align:center">
+  <h3 id="codT">Código de recepción</h3>
+  <p class="small" style="margin:0">Díctaselo al chofer después de contar la carga.</p>
+  <div class="bigcode" id="codNum">------</div><div class="cdown" id="codTime"></div>
+  <p class="small" style="margin:0 0 12px">Sirve una sola vez y vence en 5 minutos. No lo compartas por WhatsApp.</p>
+  <div class="gb"><button class="btn" id="codCerrar" type="button">Cerrar</button><button class="btn primary" id="codOtro" type="button">Generar otro</button></div>
+</div></div>
+<div class="modal hidden" id="qrModal" role="dialog" aria-modal="true" aria-labelledby="qrT"><div class="mc" style="text-align:center">
+  <h3 id="qrT">Muestra este QR al auxiliar</h3><img class="qrbig" id="qrBig" alt="QR del vale"><p class="small" id="qrTxt" style="margin:0 0 12px"></p>
+  <div class="gb"><button class="btn primary" id="qrCerrar" type="button">Listo</button></div>
+</div></div>
+<div class="modal hidden" id="resModal" role="dialog" aria-modal="true" aria-labelledby="resT"><div class="mc">
+  <h3 id="resT">Resumen de hoy</h3>
+  <label class="f" style="margin-bottom:10px">Día<input type="date" id="resFecha"></label>
+  <pre id="resTxt"></pre>
+  <div class="gb"><button class="btn" id="resCerrar" type="button">Cerrar</button><button class="btn" id="resCopiar" type="button">Copiar</button><button class="btn wa" id="resWa" type="button">Enviar por WhatsApp</button></div>
+</div></div>
 <div class="guide hidden" id="guide" role="dialog" aria-modal="true" aria-labelledby="gTitle"><div class="gc">
   <div id="gArt"></div><h3 id="gTitle"></h3><p id="gTxt"></p>
   <div class="dots" id="gDots"></div>
@@ -504,7 +636,7 @@ function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clear
 async function saveFile(name,blob){const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000)}
 
 /* ---------- API ---------- */
-const ERR={SESION:'Tu sesión venció. Vuelve a ingresar.',INVITACION:'El código de equipo no es correcto.',DNI:'El DNI debe tener 8 dígitos.',PIN:'El PIN debe tener de 4 a 6 números.',NOMBRE:'Escribe tu nombre completo.',EXISTE:'Ese DNI ya está registrado. Usa Ingresar.',CREDENCIALES:'DNI o PIN incorrecto.',INACTIVO:'Tu usuario está desactivado. Habla con el administrador.',BLOQUEADO:'Demasiados intentos. Espera 15 minutos.',PERMISO:'Solo quien emitió el vale o un administrador puede hacer esto.',ESTADO:'Este vale ya no se puede modificar (fue recibido o anulado).',MOTIVO:'Escribe el motivo.',NOEXISTE:'El vale no existe.',AVANZAR:'El número solo puede avanzar.',FOTO:'La foto no es válida o es muy pesada.',FOTOS:'Este vale ya tiene el máximo de 6 fotos.',CANTIDAD:'Las cantidades no pueden ser negativas.',PROPIO:'No puedes cambiar tu propio usuario.',ANULAR_PRIMERO:'Primero anula el vale; solo se pueden eliminar vales anulados.'};
+const ERR={SESION:'Tu sesión venció. Vuelve a ingresar.',INVITACION:'El código de equipo no es correcto.',DNI:'El DNI debe tener 8 dígitos.',PIN:'El PIN debe tener de 4 a 6 números.',NOMBRE:'Escribe tu nombre completo.',EXISTE:'Ese DNI ya está registrado. Usa Ingresar.',CREDENCIALES:'DNI o PIN incorrecto.',INACTIVO:'Tu usuario está desactivado. Habla con el administrador.',BLOQUEADO:'Demasiados intentos. Espera 15 minutos.',PERMISO:'Solo quien emitió el vale o un administrador puede hacer esto.',ESTADO:'Este vale ya no se puede modificar (fue recibido o anulado).',MOTIVO:'Escribe el motivo.',NOEXISTE:'El vale no existe.',AVANZAR:'El número solo puede avanzar.',FOTO:'La foto no es válida o es muy pesada.',FOTOS:'Este vale ya tiene el máximo de 6 fotos.',CANTIDAD:'Las cantidades no pueden ser negativas.',PROPIO:'No puedes cambiar tu propio usuario.',CODIGO:'El código no es correcto o ya venció. Pide uno nuevo al auxiliar.',BLOQUEO_COD:'Demasiados códigos incorrectos. Espera 15 minutos.',FIRMA:'Firma primero en el recuadro.',ANULAR_PRIMERO:'Primero anula el vale; solo se pueden eliminar vales anulados.'};
 async function api(fn,args={}){
   let r;
   try{r=await fetch(`${SB_URL}/rest/v1/rpc/${fn}`,{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify(args)})}
@@ -516,11 +648,14 @@ async function api(fn,args={}){
 }
 
 /* ---------- sesión ---------- */
-function setUser(u){USER=u;ls('user',JSON.stringify(u));$('userBtn').textContent=u.nombre.split(' ').slice(0,2).join(' ');$('tabRep').classList.toggle('hidden',u.rol!=='admin')}
+function setUser(u){USER=u;ls('user',JSON.stringify(u));$('userBtn').textContent=u.nombre.split(' ').slice(0,2).join(' ');$('tabRep').classList.toggle('hidden',u.rol!=='admin');document.querySelector('[data-tab="hist"]').textContent=u.rol==='chofer'?'Mis vales':u.rol==='auxiliar'?'Recepciones':'Vales'}
 async function startSession(){
   $('vLogin').classList.add('hidden');$('topBar').classList.remove('hidden');
   try{const u=await api('vales_sesion',{p_token:TOKEN});setUser(u)}catch(e){if(!USER)return}
-  resetForm();show('home');if(USER&&!ls('guia:'+USER.dni))openGuide();await Promise.all([loadCat(),loadVales()]);updateNumPrev();renderHome();
+  resetForm();show('home');
+  if(USER&&USER.cambiar_pin)abrirPin(true);
+  if(esDesp()){if(!ls('guia:'+USER.dni))openGuide();await Promise.all([loadCat(),loadVales(),loadChoferes()]);updateNumPrev();renderHome();sincronizar()}
+  else{await loadVales();renderHome()}
 }
 function logout(expired){
   if(TOKEN&&!expired)api('vales_salir',{p_token:TOKEN}).catch(()=>{});
@@ -557,10 +692,10 @@ $('goLogin').onclick=()=>{$('vVerif').classList.add('hidden');$('vLogin').classL
 
 /* ---------- menú ---------- */
 $('userBtn').onclick=e=>{e.stopPropagation();const m=$('menu');if(!m.classList.contains('hidden')){m.classList.add('hidden');return}
-  m.innerHTML=`<div class="who"><b>${esc(USER.nombre)}</b>DNI ${esc(USER.dni)} · ${USER.rol==='admin'?'Administrador':'Usuario'}</div>${USER.rol==='admin'?'<button type="button" data-m="admin">Usuarios y ajustes</button>':''}<button type="button" data-m="instalar">Instalar la app en el celular</button><button type="button" data-m="guia">¿Cómo se usa?</button><button type="button" data-m="logo">Cambiar logo de este celular</button><button type="button" data-m="salir">Cerrar sesión</button>`;
+  m.innerHTML=`<div class="who"><b>${esc(USER.nombre)}</b>DNI ${esc(USER.dni)} · ${USER.rol==='admin'?'Administrador':'Usuario'}</div>${USER.rol==='admin'?'<button type="button" data-m="admin">Usuarios y ajustes</button>':''}<button type="button" data-m="pin">🔑 Cambiar mi PIN</button><button type="button" data-m="sol">☀️ Modo sol (letras grandes): <span id="solTxt">${ls('sol')?'Activado':'Desactivado'}</span></button><button type="button" data-m="instalar">Instalar la app en el celular</button><button type="button" data-m="guia">¿Cómo se usa?</button><button type="button" data-m="logo">Cambiar logo de este celular</button><button type="button" data-m="salir">Cerrar sesión</button>`;
   m.classList.remove('hidden')};
 document.addEventListener('click',e=>{const m=$('menu');if(m.classList.contains('hidden'))return;const b=e.target.closest('[data-m]');
-  if(b){const a=b.dataset.m;if(a==='admin'){loadAdmin();show('admin')}if(a==='salir')logout();if(a==='logo')$('logoIn').click();if(a==='guia')openGuide();if(a==='instalar')instalar()}
+  if(b){const a=b.dataset.m;if(a==='admin'){loadAdmin();show('admin')}if(a==='salir')logout();if(a==='logo')$('logoIn').click();if(a==='guia')openGuide();if(a==='instalar')instalar();if(a==='pin')abrirPin(false);if(a==='sol'){setSol(!ls('sol'));toast(ls('sol')?'Modo sol activado':'Modo sol desactivado')}}
   if(!e.target.closest('#menu'))m.classList.add('hidden')});
 
 /* ---------- ítems ---------- */
@@ -636,6 +771,7 @@ function setStep(n){
   $('sFill').style.width=(n/3*100)+'%';$('sTitle').textContent=STEPS[n-1];$('sNum').textContent='Paso '+n+' de 3';
   $('btnNuevo').textContent=n>1?'← Atrás':(editing?'Cancelar':'Salir');
   $('btnGuardar').textContent=n<3?'Siguiente →':(editing?'Guardar corrección':'Guardar vale');
+  if(n===2)renderQM();
   if(n===3)setTimeout(()=>sigs.forEach(s=>s.size()),0);
   clearErr();window.scrollTo(0,0);
 }
@@ -665,7 +801,7 @@ function startEdit(v){
 function collect(){
   const g=i=>$(i).value.trim().toUpperCase().replace(/\s+/g,' ');
   return{salida:g('fSal'),llegada:g('fLle'),fecha:$('fFecha').value,hora:$('fHora').value,marca:g('fMarca'),placa:g('fPlaca').replace(/\s/g,''),conductor:g('fCond'),licencia:g('fLic'),precinto:g('fPrec'),obs:$('fObs').value.trim(),items:readItems(),modalidad:modo,celular:$('fCel').value.replace(/\D/g,''),
-    firmas:[{nombre:USER.nombre,dni:USER.dni,img:sigs[0].get()},{nombre:g('sN1'),dni:$('sD1').value.trim(),img:modo==='A DISTANCIA'?'':sigs[1].get(),registrada:modo!=='A DISTANCIA'&&sigs[1].isReused()},{nombre:'',dni:'',img:''}]}
+    firmas:[{nombre:USER.nombre,dni:USER.dni,img:sigs[0].get()},{nombre:g('sN1'),dni:$('sD1').value.trim(),img:modo==='A DISTANCIA'?'':sigs[1].get(),registrada:modo!=='A DISTANCIA'&&sigs[1].isReused()},{nombre:'',dni:'',img:''}],chofer:choferSel()}
 }
 function validate(v){
   const need=[['fSal',v.salida,'Falta de qué fundo sale.'],['fLle',v.llegada,'Falta a qué fundo llega.'],['fFecha',v.fecha,'Falta la fecha.'],['fHora',v.hora,'Falta la hora de salida.'],['fPlaca',v.placa,'Falta la placa.'],['fCond',v.conductor,'Falta el conductor.']];
@@ -685,9 +821,55 @@ async function save(){
     if(fotoNueva){try{await api('vale_foto_guardar',{p_token:TOKEN,p_numero:d.numero,p_tipo:'salida',p_img:fotoNueva})}catch(e){toast('El vale se guardó, pero la foto no: '+e.message)}}
     registrar(d);toast(editing?`Vale N° ${pad(d.numero)} corregido`:`Vale N° ${pad(d.numero)} guardado`);
     editing=null;await openVale(d);loadVales();
-  }catch(e){showErr(null,'No se guardó: '+e.message)}
+  }catch(e){
+    if(!editing&&esSinSenal(e)){b.disabled=false;b.textContent=lbl;guardarSinSenal(v);return}
+    showErr(null,'No se guardó: '+e.message)}
   b.disabled=false;b.textContent=lbl;
 }
+/* ---------- vales sin señal ---------- */
+function esSinSenal(e){return navigator.onLine===false||/conexi/i.test(e&&e.message||'')}
+function resKey(){return 'res:'+(USER?USER.id:'')}
+function reservas(){try{return JSON.parse(ls(resKey())||'[]')}catch(e){return[]}}
+function pendientes(){try{return JSON.parse(ls('pend')||'[]')}catch(e){return[]}}
+function setPend(a){ls('pend',JSON.stringify(a));renderPendBadge()}
+function pendVales(){return pendientes().filter(x=>USER&&x.uid===USER.id).map(x=>x.d)}
+async function asegurarReservas(){
+  if(!TOKEN||!USER||navigator.onLine===false)return;
+  try{const r=await api('vale_reservar',{p_token:TOKEN,p_cant:3});ls(resKey(),JSON.stringify(r||[]))}catch(e){}
+}
+function ahoraLima(){const d=new Date(Date.now()-5*3600e3);return d.toISOString().slice(0,19)+'-05:00'}
+function guardarSinSenal(v){
+  const rs=reservas().filter(n=>!pendientes().some(p=>p.n===n));
+  if(!rs.length){showErr(null,'Sin señal y sin números apartados. Conéctate un momento a internet para apartar números y vuelve a intentar.');return}
+  const n=rs[0];const creado=ahoraLima();
+  const firmas=JSON.parse(JSON.stringify(v.firmas||[{},{},{}]));firmas[0]=Object.assign({},firmas[0],{nombre:USER.nombre,dni:USER.dni});
+  const d=Object.assign({},v,{numero:n,version:1,estado:'VIGENTE',pendiente:true,creado,codigo:'',firmas,emisor:{id:USER.id,nombre:USER.nombre},historial:[{fecha:creado,tipo:'Emisión sin señal',motivo:'Pendiente de enviar',usuario:USER.nombre}]});
+  const a=pendientes();a.push({n,uid:USER.id,p:v,creado,foto:fotoNueva||null,d});
+  try{setPend(a)}catch(e){a[a.length-1].foto=null;a[a.length-1].d.firmas=a[a.length-1].d.firmas.map(f=>Object.assign({},f,{img:''}));setPend(a)}
+  ls(resKey(),JSON.stringify(reservas().filter(x=>x!==n)));
+  registrar(d);vales=[d,...vales.filter(x=>x.numero!==n)];
+  toast(`Sin señal: vale N° ${pad(n)} guardado en el celular. Se enviará solo.`);
+  editing=null;openVale(d);
+}
+let sincronizando=false;
+async function sincronizar(manual){
+  if(sincronizando||!TOKEN||!USER)return;const a=pendientes().filter(x=>x.uid===USER.id);if(!a.length){if(manual)toast('No hay vales por enviar');asegurarReservas();return}
+  if(navigator.onLine===false){if(manual)toast('Todavía sin señal');return}
+  sincronizando=true;let ok=0,err='';
+  for(const x of a){
+    try{const d=await api('vale_emitir_reservado',{p_token:TOKEN,p_numero:x.n,p:x.p,p_creado:x.creado});
+      if(x.foto){try{await api('vale_foto_guardar',{p_token:TOKEN,p_numero:x.n,p_tipo:'salida',p_img:x.foto})}catch(e){}}
+      setPend(pendientes().filter(y=>y.n!==x.n));ok++;
+      if(current&&current.numero===x.n&&!$('vVer').classList.contains('hidden')){current=null;openVale(d)}
+    }catch(e){if(esSinSenal(e))break;err=e.message}
+  }
+  sincronizando=false;
+  if(ok)toast(ok===1?'1 vale sin señal ya se envió':ok+' vales sin señal ya se enviaron');else if(err&&manual)toast('No se pudo enviar: '+err);
+  await asegurarReservas();loadVales();
+}
+function renderPendBadge(){if(!$('hPend'))return;const n=USER?pendientes().filter(x=>x.uid===USER.id).length:0;$('hPend').classList.toggle('hidden',!n);$('hPendT').textContent=n===1?'1 vale por enviar':n+' vales por enviar'}
+window.addEventListener('online',()=>sincronizar());
+setInterval(()=>{if(!document.hidden&&pendientes().length)sincronizar()},20000);
 
 /* ---------- fotos ---------- */
 function compress(file,max=1280){return new Promise((res,rej)=>{const r=new FileReader();r.onerror=rej;r.onload=()=>{const i=new Image();i.onerror=rej;i.onload=()=>{const s=Math.min(1,max/Math.max(i.width,i.height));const c=document.createElement('canvas');c.width=Math.round(i.width*s);c.height=Math.round(i.height*s);c.getContext('2d').drawImage(i,0,0,c.width,c.height);let q=.78,u=c.toDataURL('image/jpeg',q);while(u.length>850000&&q>.4){q-=.1;u=c.toDataURL('image/jpeg',q)}res(u)};i.src=r.result};r.readAsDataURL(file)})}
@@ -752,14 +934,14 @@ function verifUrl(v){return`${BASE}?v=${pad(v.numero)}&c=${v.codigo}`}
 function docHTML(v){
   const rec=v.recepcion;const rv=rec?rec.recibidos:null;
   const rows=[...v.items];while(rows.length<5)rows.push(null);
-  const q=qr(verifUrl(v));
+  const q=v.pendiente?'':qr(verifUrl(v));
   const ult=(v.historial||[]).filter(h=>h.tipo==='Corrección').pop();
   const L=(ic,t)=>`<div class="lb">${ICN(ic)}${t}</div>`;
   const m={};v.items.forEach(i=>m[i.um]=(m[i.um]||0)+Number(i.cant));
   const tot=Object.entries(m).map(([u,c])=>`<b>${Math.round(c*100)/100}</b>${u}`).join('<span>+</span>')||'<b>0</b>';
   const caps=['Responsable de despacho','Conductor','Responsable de recepción'];
   const firma=(t,i)=>{const f=v.firmas[i]||{};
-    const box=(i===1&&v.modalidad==='A DISTANCIA')?`<div class="rm">${v.conformidad?`CONFORME VÍA ${esc(v.conformidad.via.toUpperCase())} · ${fmtDT(v.conformidad.fecha)}`:'CONFORMIDAD PENDIENTE'}</div>`:`<div class="im">${f.img?`<img src="${f.img}" alt="">`:''}</div>`;
+    const box=(i===1&&v.chofer&&!f.img)?`<div class="rm">${v.firma_chofer&&v.firma_chofer.estado==='NO CONFORME'?'CHOFER NO CONFORME':'FIRMA PENDIENTE (DESDE SU CELULAR)'}</div>`:(i===2&&f.via==='codigo'&&!f.img)?`<div class="rm">VALIDADO CON CÓDIGO<br>${v.recepcion?fmtDT(v.recepcion.fecha):''}</div>`:(i===1&&v.modalidad==='A DISTANCIA')?`<div class="rm">${v.conformidad?`CONFORME VÍA ${esc(v.conformidad.via.toUpperCase())} · ${fmtDT(v.conformidad.fecha)}`:'CONFORMIDAD PENDIENTE'}</div>`:`<div class="im">${f.img?`<img src="${f.img}" alt="">`:''}</div>`;
     const who=f.nombre?`<div class="nm">${esc(f.nombre)}<br>DNI: ${esc(f.dni)||'__________'}</div>`:`<div class="bl">Nombre: _______________<br>DNI: __________________</div>`;
     return`<div>${box}<span class="pill">${t}</span>${who}<span class="cap">${caps[i]}${f.registrada?' · firma registrada':''}</span></div>`};
   const cols=rv?'<col style="width:9%"><col style="width:47%"><col style="width:16%"><col style="width:16%"><col style="width:12%">':'<col style="width:10.5%"><col style="width:56.5%"><col style="width:18%"><col style="width:15%">';
@@ -792,7 +974,7 @@ function docHTML(v){
   ${recBox}
   <div class="ob">${ICN('obs')}<div><b>OBSERVACIONES</b>${esc(v.obs)||'Sin observaciones.'}</div></div>
   <div class="fs">${firma('DESPACHO',0)}${firma('CONDUCTOR',1)}${firma('RECEPCIÓN',2)}</div>
-  <div class="sec">${ICN('shield').replace('<img','<img class="sh"')}<div class="k"><div class="t1">Código de seguridad</div><div class="cd">${v.codigo}</div>Versión ${v.version} - Emitido ${fmtDT(v.creado)}${v.emisor?' por '+esc(v.emisor.nombre):''}${ult?` - Corregido ${fmtDT(ult.fecha)}: ${esc(ult.motivo)}`:''}<div class="sm">Escanea el QR con la cámara para verificar el vale. Cualquier cambio al documento invalida el código.</div></div>${q?`<div class="qrw"><img class="qr" src="${q}" alt="QR"></div>`:''}</div>
+  <div class="sec">${ICN('shield').replace('<img','<img class="sh"')}<div class="k"><div class="t1">Código de seguridad</div><div class="cd">${v.pendiente?'POR ENVIAR':v.codigo}</div>${v.pendiente?'<div class="sm" style="color:#B3261E;font-weight:600">Hecho sin señal. El código y el QR se generan al enviarse.</div>':''}Versión ${v.version} - Emitido ${fmtDT(v.creado)}${v.emisor?' por '+esc(v.emisor.nombre):''}${ult?` - Corregido ${fmtDT(ult.fecha)}: ${esc(ult.motivo)}`:''}<div class="sm">Escanea el QR con la cámara para verificar el vale. Cualquier cambio al documento invalida el código.</div></div>${q?`<div class="qrw"><img class="qr" src="${q}" alt="QR"></div>`:''}</div>
   <div class="corner"></div>
   <div class="ft"><span class="lf">${ICN('leaf')}<span>Original: Despacho &nbsp;|&nbsp; <b>Copia: Recepción</b></span></span><span class="br">Mission Produce Perú</span></div>
   ${v.estado==='ANULADO'?'<div class="anul"><span>ANULADO</span></div>':''}
@@ -800,15 +982,25 @@ function docHTML(v){
 }
 function puede(v){return USER&&(USER.rol==='admin'||(v.emisor&&v.emisor.id===USER.id))}
 async function openVale(v){
-  if(!v.firmas||v.firmas.some(f=>f.img===undefined)){try{v=await api('vale_obtener',{p_token:TOKEN,p_numero:v.numero})}catch(e){toast(e.message);return}}
+  if(v.pendiente){const x=pendientes().find(p=>p.n===v.numero);if(x)v=x.d}
+  else if(!v.firmas||v.firmas.some(f=>f.img===undefined)){try{v=await api('vale_obtener',{p_token:TOKEN,p_numero:v.numero})}catch(e){toast(e.message);return}}
   current=v;$('printArea').innerHTML=docHTML(v);
   ['anularPanel','recvPanel','sharePanel','confPanel','delPanel'].forEach(i=>$(i).classList.add('hidden'));
   $('btnDel').classList.toggle('hidden',!(USER&&USER.rol==='admin'&&v.estado==='ANULADO'));
   const vig=v.estado==='VIGENTE';
   $('btnRecv').classList.toggle('hidden',!vig);$('btnEdit').classList.toggle('hidden',!(vig&&puede(v)));$('btnAnular').classList.toggle('hidden',!(vig&&puede(v)));
   $('btnConf').classList.toggle('hidden',!(v.modalidad==='A DISTANCIA'&&!v.conformidad&&vig));
+  const ch=USER&&USER.rol==='chofer',ax=USER&&USER.rol==='auxiliar';
+  if(!esDesp()){['btnEdit','btnAnular','btnDel','dupVale','btnConf'].forEach(id=>$(id).classList.add('hidden'))}
+  if(ch)$('btnRecv').classList.add('hidden');
+  ['chPanel','chFirmaP','chNoP','chProbP','chEntP'].forEach(id=>$(id).classList.add('hidden'));
+  if(ch&&vig){$('chPanel').classList.remove('hidden');const fc=v.firma_chofer&&v.firma_chofer.estado;$('chFirmar').classList.toggle('hidden',fc==='FIRMADO');$('chNo').classList.toggle('hidden',fc==='FIRMADO');
+    const ex=v.extra||{};$('chSali').disabled=!!ex.salio;$('chSali').textContent=ex.salio?'🚚 Salió '+fmtT(ex.salio):'🚚 Salí';$('chLlegue').disabled=!!ex.llego;$('chLlegue').textContent=ex.llego?'📍 Llegó '+fmtT(ex.llego):'📍 Llegué'}
+  if(ch&&!vig)$('chPanel').classList.add('hidden');
+  $('backHist').textContent=ch?'← Inicio':'← Vales';
+  $('viajeInfo').innerHTML=infoViaje(v);
   $('logList').innerHTML=(v.historial||[]).map(h=>`<li>${fmtDT(h.fecha)} · ${esc(h.tipo)}${h.motivo?': '+esc(h.motivo):''}${h.usuario?' · '+esc(h.usuario):''}</li>`).join('');
-  show('ver');loadFotos(v.numero);
+  show('ver');if(!v.pendiente)loadFotos(v.numero);else $('fotos').innerHTML='<span class="small">Las fotos se suben cuando se envíe el vale.</span>';
 }
 
 async function pdf(){
@@ -898,18 +1090,18 @@ $('recvSi').onclick=async()=>{
 };
 
 /* ---------- lista de vales ---------- */
-const estTag=v=>v.estado==='ANULADO'?'<span class="tag a">Anulado</span>':v.estado==='RECIBIDO'?'<span class="tag r">Recibido</span>':v.estado==='RECIBIDO CON DIFERENCIA'?'<span class="tag d">Con diferencia</span>':'<span class="tag c">En camino</span>';
+const estTag=v=>(v.extra&&v.extra.alerta)?'<span class="tag t">No fui yo</span>':(v.estado==='VIGENTE'&&v.firma_chofer&&v.firma_chofer.estado==='NO CONFORME')?'<span class="tag t">No conforme</span>':v.pendiente?'<span class="tag p">Por enviar</span>':atrasado(v)?'<span class="tag t">Atrasado</span>':v.estado==='ANULADO'?'<span class="tag a">Anulado</span>':v.estado==='RECIBIDO'?'<span class="tag r">Recibido</span>':v.estado==='RECIBIDO CON DIFERENCIA'?'<span class="tag d">Con diferencia</span>':'<span class="tag c">En camino</span>';
 function renderHist(){
   const box=$('histList');const q=$('q').value.trim().toUpperCase();
   let list=vales;
-  if(filtroEst==='MIOS')list=list.filter(v=>v.emisor&&USER&&v.emisor.id===USER.id);else if(filtroEst)list=list.filter(v=>v.estado===filtroEst);
+  if(filtroEst==='MIOS')list=list.filter(v=>v.emisor&&USER&&v.emisor.id===USER.id);else if(filtroEst==='ATRASADOS')list=list.filter(atrasado);else if(filtroEst==='ALERTAS')list=list.filter(v=>atrasado(v)||(v.estado==='VIGENTE'&&v.firma_chofer&&v.firma_chofer.estado==='NO CONFORME')||(v.extra&&v.extra.alerta));else if(filtroEst==='PENDIENTE')list=list.filter(v=>v.pendiente);else if(filtroEst)list=list.filter(v=>v.estado===filtroEst);
   if(q)list=list.filter(v=>[pad(v.numero),String(v.numero),v.placa,v.conductor,v.salida,v.llegada].some(x=>String(x||'').includes(q)));
   const c=e=>vales.filter(v=>v.estado===e).length;
   $('histSum').textContent=vales.length?`${vales.length} vales · ${c('VIGENTE')} en camino · ${c('RECIBIDO')} recibidos · ${c('RECIBIDO CON DIFERENCIA')} con diferencia · ${c('ANULADO')} anulados`:'';
   if(!vales.length){box.innerHTML='<div class="empty">Aún no hay vales. Crea el primero en la pestaña Nuevo.</div>';return}
   if(!list.length){box.innerHTML='<div class="empty">Ningún vale coincide.</div>';return}
   box.innerHTML='';list.slice(0,300).forEach(v=>{const b=document.createElement('button');b.className='hrow';b.type='button';
-    b.innerHTML=`<div><b>N° ${pad(v.numero)}</b> ${esc(v.salida)} → ${esc(v.llegada)}<small>${fmtDate(v.fecha)} ${esc(v.hora)} · ${esc(v.placa)} · ${totals(v.items)}${v.emisor?' · '+esc(v.emisor.nombre.split(' ')[0]):''}</small></div>${estTag(v)}`;
+    b.innerHTML=`<div><b>N° ${pad(v.numero)}</b> ${esc(v.salida)} → ${esc(v.llegada)}<small>${fmtDate(v.fecha)} ${esc(v.hora)} · ${esc(v.placa)} · ${totals(v.items)}${v.emisor?' · '+esc(v.emisor.nombre.split(' ')[0]):''}${firmaTxt(v)}</small></div>${estTag(v)}`;
     b.onclick=()=>openVale(v);box.appendChild(b)});
 }
 $('q').addEventListener('input',renderHist);
@@ -917,7 +1109,7 @@ $('fEst').onclick=e=>{const b=e.target.closest('[data-e]');if(!b)return;filtroEs
 let loadingVales=false;
 async function loadVales(){
   if(!TOKEN||loadingVales)return;loadingVales=true;
-  try{vales=await api('vales_listar',{p_token:TOKEN});renderHist();if(!$('vHome').classList.contains('hidden'))renderHome();if(!$('vRep').classList.contains('hidden'))renderRep()}catch(e){if(!vales.length)$('histList').innerHTML=`<div class="empty">${esc(e.message)}</div>`}
+  try{const srv=await api('vales_listar',{p_token:TOKEN});const nums=new Set(srv.map(x=>x.numero));vales=[...pendVales().filter(x=>!nums.has(x.numero)),...srv];renderHist();if(!$('vHome').classList.contains('hidden'))renderHome();if(!$('vRep').classList.contains('hidden'))renderRep()}catch(e){if(!vales.length)$('histList').innerHTML=`<div class="empty">${esc(e.message)}</div>`}
   loadingVales=false;
 }
 setInterval(()=>{if(!document.hidden)loadVales()},20000);
@@ -946,15 +1138,15 @@ function simple(list,k){const seen=new Set(),o=cat.ocultos[k];return list.filter
 const SRC={
   placas(){const m=new Map();byUse([...cat.vehiculos]).forEach(v=>m.set(v.placa,v));vales.forEach(v=>{if(v.placa&&!m.has(v.placa))m.set(v.placa,{placa:v.placa,marca:v.marca,conductor:v.conductor})});
     return [...m.values()].filter(v=>!cat.ocultos.placas.includes(v.placa)).map(v=>({value:v.placa,label:v.placa,sub:[v.marca,v.conductor].filter(Boolean).join(' · '),hide:'placas'}))},
-  cond(){const m=new Map();byUse([...cat.conductores]).forEach(c=>m.set(c.nombre,c));vales.forEach(v=>{if(v.conductor&&!m.has(v.conductor))m.set(v.conductor,{nombre:v.conductor,licencia:v.licencia,celular:v.celular})});
-    return [...m.values()].filter(c=>!cat.ocultos.conductores.includes(c.nombre)).map(c=>({value:c.nombre,label:c.nombre,sub:[c.licencia&&'Lic. '+c.licencia,c.placa].filter(Boolean).join(' · '),hide:'conductores'}))},
+  cond(){const m=new Map();CHOFERES.forEach(c=>m.set(c.nombre,{nombre:c.nombre,dni:c.dni,app:true}));byUse([...cat.conductores]).forEach(c=>{if(!m.has(c.nombre))m.set(c.nombre,c)});if(false)byUse([...cat.conductores]).forEach(c=>m.set(c.nombre,c));vales.forEach(v=>{if(v.conductor&&!m.has(v.conductor))m.set(v.conductor,{nombre:v.conductor,licencia:v.licencia,celular:v.celular})});
+    return [...m.values()].filter(c=>!cat.ocultos.conductores.includes(c.nombre)).map(c=>({value:c.nombre,label:(c.app?'📱 ':'')+c.nombre,sub:[c.app?'Tiene la app: firma desde su celular':'',c.licencia&&'Lic. '+c.licencia,c.placa].filter(Boolean).join(' · '),hide:'conductores'}))},
   marcas(){return simple([...byUse([...cat.vehiculos]).map(v=>v.marca),...vales.map(v=>v.marca)],'marcas')},
   fundos(){return simple([...DEF.fundos,...vales.flatMap(v=>[v.salida,v.llegada])],'fundos')},
   desc(){return simple([...DEF.desc,...vales.flatMap(v=>v.items.map(i=>i.desc))],'desc')}
 };
 const PICK={
   placas(val){const v=veh(val);if(!v)return;if(v.marca)$('fMarca').value=v.marca;if(v.conductor){$('fCond').value=v.conductor;delete $('sN1').dataset.touched;PICK.cond(v.conductor);toast('Datos de '+v.conductor+' cargados')}},
-  cond(val){const c=cond(val);syncCond();if(!c)return;if(c.firma&&modo!=='A DISTANCIA'){sigs[1].load(c.firma,true)}else if(sigs[1].isReused()){sigs[1].clear()}if(c.licencia)$('fLic').value=c.licencia;if(c.dni)$('sD1').value=c.dni;if(c.celular)$('fCel').value=c.celular}
+  cond(val){chNoteUpd();const ca=CHOFERES.find(x=>x.nombre===val);if(ca&&!$('sD1').value)$('sD1').value=ca.dni;const c=cond(val);syncCond();if(!c)return;if(c.firma&&modo!=='A DISTANCIA'){sigs[1].load(c.firma,true)}else if(sigs[1].isReused()){sigs[1].clear()}if(c.licencia)$('fLic').value=c.licencia;if(c.dni)$('sD1').value=c.dni;if(c.celular)$('fCel').value=c.celular}
 };
 let acOpen=null;
 function closeAc(){if(acOpen){acOpen.remove();acOpen=null}}
@@ -1081,19 +1273,41 @@ async function startScan(){
 };
 
 /* ---------- administración ---------- */
+const ROLES={admin:'Administrador',usuario:'Despacho',chofer:'Chofer',auxiliar:'Auxiliar'};
+function abrirPin(obligatorio){$('pinN1').value='';$('pinN2').value='';$('errPin').style.display='none';$('pinCancel').classList.toggle('hidden',!!obligatorio);
+  $('pinTxt').textContent=obligatorio?'Estás usando un PIN temporal. Elige uno propio de 4 a 6 números que solo tú sepas.':'Elige un PIN nuevo de 4 a 6 números.';$('pinModal').classList.remove('hidden');setTimeout(()=>$('pinN1').focus(),100)}
+$('pinCancel').onclick=()=>$('pinModal').classList.add('hidden');
+$('pinSave').onclick=async()=>{const a=$('pinN1').value.trim(),b=$('pinN2').value.trim();
+  if(!/^\d{4,6}$/.test(a))return showErr('pinN1',ERR.PIN,'errPin');if(a!==b)return showErr('pinN2','Los dos PIN no coinciden.','errPin');
+  try{await api('vales_cambiar_pin',{p_token:TOKEN,p_nuevo:a});USER.cambiar_pin=false;ls('user',JSON.stringify(USER));$('pinModal').classList.add('hidden');toast('Tu PIN quedó guardado')}catch(e){showErr(null,e.message,'errPin')}};
+$('cuSave').onclick=async()=>{const nombre=$('cuNom').value.trim(),dni=$('cuDni').value.trim(),rol=$('cuRol').value;$('errCu').style.display='none';
+  if(nombre.length<5)return showErr('cuNom','Escribe el nombre completo.','errCu');if(!/^\d{8}$/.test(dni))return showErr('cuDni',ERR.DNI,'errCu');
+  const b=$('cuSave');b.disabled=true;
+  try{const r=await api('vales_admin',{p_token:TOKEN,p_accion:'crear',p:{nombre,dni,rol}});
+    const msg=`Hola ${nombre.split(' ')[0]}, ya tienes tu usuario en la app de Vales (${ROLES[rol]}).\n\n1. Abre: ${BASE}\n2. Toca Ingresar\n3. DNI: ${dni}\n4. PIN temporal: ${r.pin}\n\nAl entrar, la app te pedirá crear tu propio PIN.`;
+    $('cuRes').innerHTML=`<div class="info ok" style="margin-top:10px">✅ Usuario creado: <b>${esc(nombre.toUpperCase())}</b> (${ROLES[rol]})<br>PIN temporal: <b style="font-size:22px;letter-spacing:3px">${r.pin}</b><br><span class="small">Pásaselo solo a esa persona. Al entrar la primera vez, la app le pedirá crear su propio PIN.</span></div><button class="btn wa" id="cuWa" type="button" style="width:100%">Enviar datos por WhatsApp</button>`;
+    $('cuWa').onclick=()=>{if(navigator.share)navigator.share({text:msg}).catch(()=>{});else window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank')};
+    $('cuNom').value='';$('cuDni').value='';loadAdmin();if(rol==='chofer')loadChoferes();
+  }catch(e){showErr(null,e.message,'errCu')}
+  b.disabled=false};
+function esDesp(){return USER&&(USER.rol==='admin'||USER.rol==='usuario')}
 async function loadAdmin(){
   $('aUsers').innerHTML='<span class="small">Cargando…</span>';
-  try{const r=await api('vales_admin',{p_token:TOKEN,p_accion:'usuarios',p:{}});$('aInv').value=r.invitacion;
-    $('aUsers').innerHTML=r.usuarios.map(u=>`<div class="admrow"><div><b>${esc(u.nombre)}</b><small>DNI ${esc(u.dni)} · ${u.rol==='admin'?'Administrador':'Usuario'}${u.activo?'':' · <span style="color:var(--red)">desactivado</span>'}</small></div>${u.id===USER.id?'<span class="small">Tú</span>':`<div class="acts"><button class="btn" data-u="${u.id}" data-a="activo" data-v="${!u.activo}">${u.activo?'Desactivar':'Activar'}</button><button class="btn" data-u="${u.id}" data-a="rol" data-v="${u.rol==='admin'?'usuario':'admin'}">${u.rol==='admin'?'Quitar admin':'Hacer admin'}</button><button class="btn" data-u="${u.id}" data-a="pin">Nuevo PIN</button></div>`}</div>`).join('');
+  try{const r=await api('vales_admin',{p_token:TOKEN,p_accion:'usuarios',p:{}});$('aInv').value=r.invitacion;$('aInvC').value=r.invitacion_chofer||'';$('aInvA').value=r.invitacion_auxiliar||'';
+    $('aUsers').innerHTML=r.usuarios.map(u=>`<div class="admrow"><div><b>${esc(u.nombre)}</b><small>DNI ${esc(u.dni)} · ${ROLES[u.rol]||u.rol}${u.activo?'':' · <span style="color:var(--red)">desactivado</span>'}</small></div>${u.id===USER.id?'<span class="small">Tú</span>':`<div class="acts"><button class="btn" data-u="${u.id}" data-a="activo" data-v="${!u.activo}">${u.activo?'Desactivar':'Activar'}</button><select class="in rolsel" data-u="${u.id}" aria-label="Rol" style="min-height:40px;width:auto">${Object.entries(ROLES).map(([k,t])=>`<option value="${k}" ${u.rol===k?'selected':''}>${t}</option>`).join('')}</select><button class="btn" data-u="${u.id}" data-a="pin">Nuevo PIN</button></div>`}</div>`).join('');
     updateNumPrev();
   }catch(e){$('aUsers').innerHTML=`<span class="small">${esc(e.message)}</span>`}
 }
+$('aUsers').onchange=async e=>{const sel=e.target.closest('.rolsel');if(!sel)return;
+  try{await api('vales_admin',{p_token:TOKEN,p_accion:'rol',p:{id:sel.dataset.u,rol:sel.value}});toast('Rol cambiado a '+ROLES[sel.value]);loadAdmin()}catch(x){toast(x.message);loadAdmin()}};
 $('aUsers').onclick=async e=>{const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a;let p={id:b.dataset.u};
   if(a==='activo')p.activo=b.dataset.v==='true';
   if(a==='rol')p.rol=b.dataset.v;
   if(a==='pin'){const row=b.closest('.admrow');if(!row.querySelector('.npin')){row.insertAdjacentHTML('beforeend',`<div style="display:flex;gap:6px;width:100%"><input class="in npin pin" inputmode="numeric" maxlength="6" placeholder="PIN nuevo"><button class="btn" data-u="${p.id}" data-a="pinok">Guardar</button></div>`);row.style.flexWrap='wrap'}return}
   if(a==='pinok'){p.pin=b.closest('.admrow').querySelector('.npin').value.trim();if(!/^\d{4,6}$/.test(p.pin)){toast(ERR.PIN);return}}
   try{await api('vales_admin',{p_token:TOKEN,p_accion:a==='pinok'?'pin':a,p});toast(a==='pinok'?'PIN cambiado. Díselo a la persona.':'Usuario actualizado');loadAdmin()}catch(x){toast(x.message)}};
+$('aInvCSave').onclick=async()=>{try{await api('vales_admin',{p_token:TOKEN,p_accion:'invitacion',p:{valor:$('aInvC').value,tipo:'chofer'}});toast('Código de choferes actualizado')}catch(e){toast(e.message)}};
+$('aInvASave').onclick=async()=>{try{await api('vales_admin',{p_token:TOKEN,p_accion:'invitacion',p:{valor:$('aInvA').value,tipo:'auxiliar'}});toast('Código de auxiliares actualizado')}catch(e){toast(e.message)}};
 $('aInvSave').onclick=async()=>{try{await api('vales_admin',{p_token:TOKEN,p_accion:'invitacion',p:{valor:$('aInv').value}});toast('Código de equipo actualizado')}catch(e){toast(e.message)}};
 $('saveNext').onclick=async()=>{const n=parseInt($('nextNum').value,10);$('errNum').style.display='none';
   try{await api('vales_contador_fijar',{p_token:TOKEN,p_ultimo:n-1});toast(`El próximo vale será N° ${pad(n)}`);updateNumPrev()}catch(e){showErr('nextNum',e.message,'errNum')}};
@@ -1123,8 +1337,121 @@ async function instalar(){
 }
 /* ---------- inicio ---------- */
 function lastMine(){return USER?vales.filter(v=>v.emisor&&v.emisor.id===USER.id&&v.estado!=='ANULADO').sort((a,b)=>b.numero-a.numero)[0]:null}
+/* ---------- choferes y auxiliares ---------- */
+let CHOFERES=[];
+async function loadChoferes(){try{CHOFERES=await api('vales_choferes',{p_token:TOKEN})||[]}catch(e){CHOFERES=[]}}
+function choferSel(){const n=($('fCond').value||'').trim().toUpperCase();const c=CHOFERES.find(x=>x.nombre===n);return c?{id:c.id}:null}
+function chNoteUpd(){$('chNote').classList.toggle('hidden',!choferSel())}
+$('fCond').addEventListener('input',()=>setTimeout(chNoteUpd,0));
+function fmtT(iso){const d=new Date(iso);return isNaN(d)?'':d.toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'})}
+function firmaTxt(v){if(!v.chofer)return'';const f=v.firma_chofer;return f&&f.estado==='FIRMADO'?' · ✍️ firmó '+fmtT(f.fecha):f&&f.estado==='NO CONFORME'?' · ✋ no conforme':v.estado==='VIGENTE'?' · ✍️ por firmar':''}
+function infoViaje(v){
+  const o=[],ex=v.extra||{};
+  if(ex.alerta)o.push(`<div class="info bad"><b>⚠️ ${esc(ex.alerta.usuario)} dice que NO recibió este vale</b> (${fmtDT(ex.alerta.fecha)}). Revisa con el chofer y el auxiliar.</div>`);
+  if(v.chofer){const f=v.firma_chofer;
+    if(f&&f.estado==='FIRMADO')o.push(`<div class="info ok">✍️ <b>${esc(v.chofer.nombre||v.conductor)}</b> firmó conforme el ${fmtDT(f.fecha)}.</div>`);
+    else if(f&&f.estado==='NO CONFORME')o.push(`<div class="info bad">✋ <b>Chofer NO conforme:</b> ${esc(f.motivo)} (${fmtDT(f.fecha)}). Corrige el vale si corresponde.</div>`);
+    else if(v.estado==='VIGENTE')o.push(`<div class="info warn">✍️ Falta que <b>${esc(v.chofer.nombre||v.conductor)}</b> firme desde su celular.</div>`)}
+  if(ex.salio||ex.llego){const min=ex.salio&&ex.llego?Math.round((Date.parse(ex.llego)-Date.parse(ex.salio))/60000):null;
+    o.push(`<div class="info neu">🚚 ${ex.salio?'Salió '+fmtT(ex.salio):''}${ex.llego?' · 📍 Llegó '+fmtT(ex.llego):''}${min!=null?' · Viaje de '+(min>=60?Math.floor(min/60)+' h '+(min%60)+' min':min+' min'):''}</div>`)}
+  (ex.problemas||[]).forEach(p=>o.push(`<div class="info bad">⚠️ <b>Problema reportado</b> ${fmtDT(p.fecha)}: ${esc(p.texto)}${p.foto?' (ver foto abajo)':''}</div>`));
+  if(v.recepcion&&v.recepcion.via==='codigo')o.push(`<div class="info ok">🔢 Entrega validada con código por <b>${esc(v.recepcion.usuario)}</b> el ${fmtDT(v.recepcion.fecha)}.</div>`);
+  return o.join('');
+}
+function renderChofer(){
+  const mis=vales.filter(v=>v.estado==='VIGENTE'),hist=vales.filter(v=>v.estado!=='VIGENTE').slice(0,10);
+  const card=v=>{const f=v.firma_chofer,ex=v.extra||{};const st=f&&f.estado==='FIRMADO'?'<span class="tag r">Firmado</span>':f&&f.estado==='NO CONFORME'?'<span class="tag t">No conforme</span>':'<span class="tag p">Por firmar</span>';
+    return`<div class="cv"><div class="h"><b>N° ${pad(v.numero)}</b>${v.estado==='VIGENTE'?st:estTag(v)}</div><div class="ru">${esc(v.salida)} → ${esc(v.llegada)}</div><div class="mt">${fmtDate(v.fecha)} ${esc(v.hora)} · ${esc(v.placa)} · ${totals(v.items)}</div>
+    ${v.estado==='VIGENTE'?`<div class="acts">${!(f&&f.estado==='FIRMADO')?`<button class="btn primary full" data-ca="firmar" data-n="${v.numero}">✍️ Revisar y firmar</button>`:''}
+      <button class="btn" data-ca="${ex.salio?'':'sali'}" data-n="${v.numero}" ${ex.salio?'disabled':''}>${ex.salio?'🚚 Salió '+fmtT(ex.salio):'🚚 Salí'}</button>
+      <button class="btn" data-ca="${ex.llego?'':'llegue'}" data-n="${v.numero}" ${ex.llego?'disabled':''}>${ex.llego?'📍 Llegó '+fmtT(ex.llego):'📍 Llegué'}</button>
+      <button class="btn" data-ca="qr" data-n="${v.numero}">🔳 Mostrar QR</button><button class="btn" data-ca="ver" data-n="${v.numero}">Ver vale</button></div>`:''}</div>`};
+  $('chList').innerHTML=(mis.length?mis.map(card).join(''):'<div class="empty">No tienes vales en camino. Cuando despacho te asigne uno, aparecerá aquí.</div>')+(hist.length?'<div class="sec2">Entregados</div>'+hist.map(card).join(''):'');
+  const n=mis.filter(v=>!(v.firma_chofer&&v.firma_chofer.estado)).length;$('hRol').textContent='Chofer'+(n?' · '+n+' vale'+(n>1?'s':'')+' por firmar':'');
+}
+$('chList').onclick=async e=>{const b=e.target.closest('[data-ca]');if(!b||!b.dataset.ca)return;const n=+b.dataset.n;const v=vales.find(x=>x.numero===n);if(!v)return;
+  const a=b.dataset.ca;
+  if(a==='ver'){openVale(v);return}
+  if(a==='qr'){mostrarQR(v);return}
+  if(a==='firmar'){await openVale(v);$('chFirmar').click();return}
+  if(a==='sali'||a==='llegue'){await eventoChofer(n,a==='sali'?'SALI':'LLEGUE')}};
+async function eventoChofer(n,tipo,texto,img){
+  try{const d=await api('vale_chofer_evento',{p_token:TOKEN,p_numero:n,p_tipo:tipo,p_texto:texto||'',p_img:img||''});
+    toast(tipo==='SALI'?'Salida registrada':tipo==='LLEGUE'?'Llegada registrada':'Reporte enviado');
+    const i=vales.findIndex(x=>x.numero===n);if(i>=0)vales[i]=Object.assign({},vales[i],{extra:d.extra});
+    if(current&&current.numero===n&&!$('vVer').classList.contains('hidden')){current=null;await openVale(d)}else renderHome();
+    return true}catch(e){toast(e.message);return false}}
+function mostrarQR(v){if(!v.codigo){toast('Este vale aún no tiene QR');return}$('qrBig').src=qr(verifUrl(v));$('qrTxt').textContent=`Vale N° ${pad(v.numero)} · ${v.salida} → ${v.llegada}`;$('qrModal').classList.remove('hidden')}
+$('qrCerrar').onclick=()=>$('qrModal').classList.add('hidden');
+let chSig=null;
+$('chFirmar').onclick=()=>{$('chFirmaP').classList.remove('hidden');$('errChF').style.display='none';if(!chSig)chSig=setupSig($('chSig'));setTimeout(()=>{chSig.size();chSig.clear()},0);$('chFirmaP').scrollIntoView({behavior:'smooth',block:'center'})};
+$('chFirmaClr').onclick=()=>chSig&&chSig.clear();
+$('chFirmaNo').onclick=()=>$('chFirmaP').classList.add('hidden');
+$('chFirmaSi').onclick=async()=>{const img=chSig&&chSig.get();if(!img)return showErr(null,ERR.FIRMA,'errChF');
+  const b=$('chFirmaSi');b.disabled=true;b.textContent='Firmando…';
+  try{const d=await api('vale_chofer_firmar',{p_token:TOKEN,p_numero:current.numero,p_img:img});toast('Vale firmado');const i=vales.findIndex(x=>x.numero===d.numero);if(i>=0)vales[i]=d;current=null;await openVale(d)}catch(e){showErr(null,e.message,'errChF')}
+  b.disabled=false;b.textContent='Firmar vale'};
+$('chNo').onclick=()=>{$('chNoP').classList.remove('hidden');$('chNoTxt').value='';$('errChN').style.display='none';$('chNoTxt').focus()};
+$('chNoNo').onclick=()=>$('chNoP').classList.add('hidden');
+$('chNoSi').onclick=async()=>{const m=$('chNoTxt').value.trim();if(m.length<3)return showErr('chNoTxt','Escribe qué no cuadra.','errChN');
+  try{const d=await api('vale_chofer_noconforme',{p_token:TOKEN,p_numero:current.numero,p_motivo:m});toast('Se avisó a despacho');const i=vales.findIndex(x=>x.numero===d.numero);if(i>=0)vales[i]=d;current=null;await openVale(d)}catch(e){showErr(null,e.message,'errChN')}};
+$('chSali').onclick=()=>eventoChofer(current.numero,'SALI');
+$('chLlegue').onclick=()=>eventoChofer(current.numero,'LLEGUE');
+$('chQR').onclick=()=>mostrarQR(current);
+let chProbFoto=null;
+$('chProb').onclick=()=>{$('chProbP').classList.remove('hidden');$('chProbTxt').value='';chProbFoto=null;$('chProbFotoTxt').textContent='';$('errChP').style.display='none'};
+$('chProbFoto').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{chProbFoto=await compress(f);$('chProbFotoTxt').textContent='Foto lista'}catch(x){toast('No se pudo leer la foto')}};
+$('chProbNo').onclick=()=>$('chProbP').classList.add('hidden');
+$('chProbSi').onclick=async()=>{const t=$('chProbTxt').value.trim();if(t.length<3)return showErr('chProbTxt','Cuenta qué pasó.','errChP');if(await eventoChofer(current.numero,'PROBLEMA',t,chProbFoto))$('chProbP').classList.add('hidden')};
+$('chEnt').onclick=()=>{$('chEntP').classList.remove('hidden');$('errChE').style.display='none';$('chEntCod').value='';
+  $('chEntItems').innerHTML=current.items.map((it,i)=>`<div class="recv"><div class="d">${esc(it.desc)}<small>Enviado: ${it.cant} ${esc(it.um)}</small></div><div class="e">Llegó</div><input class="in" type="number" inputmode="decimal" min="0" data-ce="${i}" value="${it.cant}"></div>`).join('');
+  $('chEntP').scrollIntoView({behavior:'smooth',block:'start'})};
+$('chEntNo').onclick=()=>$('chEntP').classList.add('hidden');
+$('chEntSi').onclick=async()=>{const rv=[...document.querySelectorAll('[data-ce]')].map(i=>i.value===''?NaN:Number(i.value));
+  if(rv.some(x=>!(x>=0)))return showErr(null,'Escribe cuánto llegó de cada material.','errChE');
+  const c=$('chEntCod').value.replace(/\D/g,'');if(c.length!==6)return showErr('chEntCod','El código tiene 6 números.','errChE');
+  const b=$('chEntSi');b.disabled=true;b.textContent='Validando…';
+  try{const d=await api('vale_recibir_con_codigo',{p_token:TOKEN,p_numero:current.numero,p_codigo:c,r:{recibidos:rv}});toast('Entrega validada');await loadVales();current=null;await openVale(d)}catch(e){showErr('chEntCod',e.message,'errChE')}
+  b.disabled=false;b.textContent='Validar entrega'};
+/* auxiliar */
+function renderAux(){
+  const cam=vales.filter(v=>v.estado==='VIGENTE'),mine=vales.filter(v=>v.recepcion&&USER&&v.recepcion.usuario_id===USER.id).slice(0,15);
+  $('auxCamino').innerHTML=cam.length?cam.map(v=>`<button class="hrow" type="button" data-an="${v.numero}"><div><b>N° ${pad(v.numero)}</b> ${esc(v.salida)} → ${esc(v.llegada)}<small>${esc(v.placa)} · ${esc(v.conductor)} · ${totals(v.items)}${v.extra&&v.extra.salio?' · salió '+fmtT(v.extra.salio):''}</small></div>${estTag(v)}</button>`).join(''):'<div class="empty">No hay unidades en camino.</div>';
+  $('auxMine').innerHTML=mine.length?mine.map(v=>`<div class="cv"><div class="h"><b>N° ${pad(v.numero)}</b>${estTag(v)}</div><div class="mt">${esc(v.salida)} → ${esc(v.llegada)} · recibido ${fmtDT(v.recepcion.fecha)}${v.recepcion.via==='codigo'?' con código':''}</div>
+    <div class="acts"><button class="btn" data-an="${v.numero}">Ver vale</button>${v.extra&&v.extra.alerta?'<span class="tag t" style="align-self:center">Reportado</span>':`<button class="btn danger" data-nfy="${v.numero}">No fui yo</button>`}</div></div>`).join(''):'<div class="empty">Aún no recibiste vales.</div>';
+}
+$('auxLists').onclick=async e=>{const a=e.target.closest('[data-an]'),nf=e.target.closest('[data-nfy]');
+  if(a){const v=vales.find(x=>x.numero===+a.dataset.an);if(v)openVale(v);return}
+  if(nf){if(!nf.classList.contains('sure')){nf.classList.add('sure');nf.textContent='¿Seguro? Toca otra vez';setTimeout(()=>{nf.classList.remove('sure');nf.textContent='No fui yo'},3500);return}
+    try{await api('vale_no_fui_yo',{p_token:TOKEN,p_numero:+nf.dataset.nfy});toast('Se avisó al administrador');loadVales()}catch(x){toast(x.message)}}};
+let codTimer=null;
+async function darCodigo(){
+  $('codNum').textContent='······';$('codTime').textContent='';$('codModal').classList.remove('hidden');
+  try{const r=await api('vale_codigo_recepcion',{p_token:TOKEN});$('codNum').textContent=r.codigo.slice(0,3)+' '+r.codigo.slice(3);
+    const fin=Date.now()+r.segundos*1000;clearInterval(codTimer);
+    const tick=()=>{const s=Math.max(0,Math.round((fin-Date.now())/1000));$('codTime').textContent=s?`Vence en ${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`:'Venció. Genera otro.';if(!s){clearInterval(codTimer);$('codNum').style.opacity=.3}else $('codNum').style.opacity=1};tick();codTimer=setInterval(tick,1000);
+  }catch(e){$('codNum').textContent='------';$('codTime').textContent=e.message}}
+$('hCodigo').onclick=darCodigo;$('codOtro').onclick=darCodigo;
+$('codCerrar').onclick=()=>{clearInterval(codTimer);$('codModal').classList.add('hidden')};
+function tsVale(v){const t=Date.parse(v.creado||'');if(!isNaN(t))return t;const t2=Date.parse((v.fecha||'')+'T'+(v.hora||'00:00')+':00-05:00');return isNaN(t2)?0:t2}
+function atrasado(v){const t=v.extra&&v.extra.salio?Date.parse(v.extra.salio):tsVale(v);return v.estado==='VIGENTE'&&!v.pendiente&&t>0&&Date.now()-t>3*3600e3}
 function renderHome(){
   if(!USER)return;
+  const rol=USER.rol,desp=esDesp();
+  $('hRol').textContent=ROLES[rol]||'';
+  ['hNuevo','hPend','hAtras','hRepeat','hResumen'].forEach(id=>{if(!desp)$(id).classList.add('hidden')});
+  $('hNuevo').classList.toggle('hidden',!desp);$('hResumen').classList.toggle('hidden',!desp);
+  $('hRecv').classList.toggle('hidden',rol==='chofer');$('hVales').classList.toggle('hidden',rol==='chofer');
+  $('hVerif').classList.toggle('hidden',rol==='chofer');
+  $('homeChofer').classList.toggle('hidden',rol!=='chofer');$('homeAux').classList.toggle('hidden',rol!=='auxiliar');$('auxLists').classList.toggle('hidden',rol!=='auxiliar');
+  const h0=new Date().getHours();$('hName').textContent=(h0<12?'Buenos días, ':h0<19?'Buenas tardes, ':'Buenas noches, ')+USER.nombre.split(' ')[0].charAt(0)+USER.nombre.split(' ')[0].slice(1).toLowerCase();
+  $('hDate').textContent=new Date().toLocaleDateString('es-PE',{weekday:'long',day:'numeric',month:'long'});
+  if(rol==='chofer'){renderChofer();return}
+  if(rol==='auxiliar'){renderAux();return}
+  renderPendBadge();
+  const at=vales.filter(atrasado).length;$('hAtras').classList.toggle('hidden',!at);$('hAtrasT').textContent=at===1?'1 vale sin recibir':at+' vales sin recibir';
+  const nc=vales.filter(v=>v.estado==='VIGENTE'&&v.firma_chofer&&v.firma_chofer.estado==='NO CONFORME').length,al=vales.filter(v=>v.extra&&v.extra.alerta).length;
+  if(nc||al){$('hAtras').classList.remove('hidden');$('hAtrasT').textContent=[at?at+' sin recibir':'',nc?nc+' chofer NO conforme':'',al?al+' receptor dice "No fui yo"':''].filter(Boolean).join(' · ')}
   const h=new Date().getHours();$('hName').textContent=(h<12?'Buenos días, ':h<19?'Buenas tardes, ':'Buenas noches, ')+USER.nombre.split(' ')[0].charAt(0)+USER.nombre.split(' ')[0].slice(1).toLowerCase();
   $('hDate').textContent=new Date().toLocaleDateString('es-PE',{weekday:'long',day:'numeric',month:'long'});
   const l=lastMine();$('hRepeat').classList.toggle('hidden',!l);
@@ -1136,6 +1463,47 @@ $('hRecv').onclick=()=>{scanMode='recibir';startScan()};
 $('hVales').onclick=()=>show('hist');
 $('hVerif').onclick=()=>show('verif');
 $('hGuia').onclick=()=>openGuide();
+$('hPend').onclick=()=>sincronizar(true);
+$('hAtras').onclick=()=>{filtroEst='ALERTAS';$('fEst').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed','false'));show('hist');renderHist()};
+/* ---------- resumen del día ---------- */
+function hoyISO(){const d=new Date(Date.now()-5*3600e3);return d.toISOString().slice(0,10)}
+function resumenTexto(f){
+  const del=vales.filter(v=>v.fecha===f&&v.estado!=='ANULADO');
+  const L=[`*RESUMEN DE VALES · ${fmtDate(f)}*`,`Mission Produce · Blueberries`,''];
+  if(!del.length){L.push('No hay vales emitidos este día.');return L.join('\n')}
+  const rec=del.filter(v=>v.estado==='RECIBIDO').length,dif=del.filter(v=>v.estado==='RECIBIDO CON DIFERENCIA'),cam=del.filter(v=>v.estado==='VIGENTE'||v.pendiente);
+  L.push(`Vales emitidos: *${del.length}*  (✅ ${rec} recibidos · ⚠️ ${dif.length} con diferencia · 🚚 ${cam.length} en camino)`,'');
+  const mat={};del.forEach(v=>(v.items||[]).forEach(i=>{const k=i.desc+'|'+i.um;mat[k]=(mat[k]||0)+Number(i.cant)}));
+  L.push('*Materiales que salieron*');Object.entries(mat).sort((a,b)=>b[1]-a[1]).forEach(([k,c])=>{const[d,u]=k.split('|');L.push(`• ${d}: ${Math.round(c*100)/100} ${u}`)});L.push('');
+  const rut={};del.forEach(v=>{const k=v.salida+' → '+v.llegada;rut[k]=(rut[k]||0)+1});
+  L.push('*Rutas*');Object.entries(rut).forEach(([k,c])=>L.push(`• ${k}: ${c} vale${c>1?'s':''}`));
+  if(cam.length){L.push('','*Falta recibir*');cam.forEach(v=>L.push(`• N° ${pad(v.numero)} · ${v.salida} → ${v.llegada} · ${v.placa}${atrasado(v)?' ⏰ atrasado':''}${v.pendiente?' (sin enviar)':''}`))}
+  if(dif.length){L.push('','*Recibidos con diferencia*');dif.forEach(v=>L.push(`• N° ${pad(v.numero)} · ${v.salida} → ${v.llegada}`))}
+  return L.join('\n');
+}
+function abrirResumen(){$('resFecha').value=$('resFecha').value||hoyISO();$('resTxt').textContent=resumenTexto($('resFecha').value);$('resModal').classList.remove('hidden')}
+$('hResumen').onclick=abrirResumen;
+$('resFecha').onchange=()=>$('resTxt').textContent=resumenTexto($('resFecha').value);
+$('resCerrar').onclick=()=>$('resModal').classList.add('hidden');
+$('resCopiar').onclick=async()=>{try{await navigator.clipboard.writeText($('resTxt').textContent);toast('Resumen copiado')}catch(e){toast('Mantén presionado el texto para copiarlo')}};
+$('resWa').onclick=()=>{const t=$('resTxt').textContent;if(navigator.share){navigator.share({text:t}).catch(()=>{})}else window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank')};
+/* ---------- materiales frecuentes ---------- */
+const MAT_BASE=['JABAS VACÍAS','JABAS CON FRUTA','BANDEJAS','PARIHUELAS','BINES VACÍOS'];
+function renderQM(){
+  const cnt={};vales.forEach(v=>(v.items||[]).forEach(i=>{if(i.desc)cnt[i.desc]=(cnt[i.desc]||0)+1}));
+  const top=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]);
+  const list=[...new Set([...top,...MAT_BASE])].slice(0,8);
+  $('qm').innerHTML=list.map(m=>`<button type="button" data-m="${esc(m)}">+ ${esc(m.charAt(0)+m.slice(1).toLowerCase())}</button>`).join('');
+}
+$('qm').onclick=e=>{const b=e.target.closest('[data-m]');if(!b)return;
+  let row=[...$('items').children].find(x=>!x.querySelector('.d').value.trim());
+  if(!row){addItem();row=$('items').lastElementChild}
+  row.querySelector('.d').value=b.dataset.m;row.querySelector('.q').value='';
+  const q=row.querySelector('.q');q.focus();calc();clearErr();
+  row.scrollIntoView({behavior:'smooth',block:'center'})};
+/* ---------- modo sol ---------- */
+function setSol(on){document.documentElement.classList.toggle('sol',!!on);ls('sol',on?'1':null);if(on)document.documentElement.setAttribute('data-theme','light');else document.documentElement.removeAttribute('data-theme')}
+if(ls('sol'))setSol(true);
 $('hInst').onclick=()=>instalar();
 $('hRepeat').onclick=async()=>{const l=lastMine();if(!l)return;let v=l;
   if(!v.items||!v.items.length){try{v=await api('vale_obtener',{p_token:TOKEN,p_numero:l.numero})}catch(e){toast(e.message);return}}
@@ -1161,7 +1529,7 @@ $('btnNuevo').onclick=()=>{if(step>1){setStep(step-1);return}const e=editing;res
 $('btnGuardar').onclick=()=>{if(step<3)nextStep();else save()};
 $('btnPdf').onclick=pdf;
 $('btnPrint').onclick=()=>{try{window.print()}catch(e){toast('Usa Descargar PDF para imprimir')}};
-$('backHist').onclick=()=>show('hist');
+$('backHist').onclick=()=>show(USER&&USER.rol==='chofer'?'home':'hist');
 $('btnEdit').onclick=()=>startEdit(current);
 $('dupVale').onclick=()=>repetir(current,`Copiado del vale N° ${pad(current.numero)}. Revisa las cantidades y firma.`);
 document.querySelectorAll('[data-clr]').forEach(b=>b.onclick=()=>sigs[+b.dataset.clr].clear());
