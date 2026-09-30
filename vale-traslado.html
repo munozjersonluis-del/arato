@@ -362,6 +362,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
       <button type="button" class="full" id="hGuia">¿Cómo se usa?</button>
       <button type="button" class="full hidden" id="hInst">📲 Instalar la app en este celular</button>
     </div>
+    <p class="small" id="appVer" style="text-align:center;margin:14px 0 0;opacity:.7"></p>
     <div id="auxLists" class="hidden">
       <div class="sec2">Vienen en camino</div><div id="auxCamino"></div>
       <div class="sec2">Mis recepciones</div><div id="auxMine"></div>
@@ -627,7 +628,10 @@ const pad=n=>String(n).padStart(6,'0');
 const DEF={fundos:['VALLE AZUL 1','VALLE AZUL 3','ARATO 1','ARATO 2'],desc:['JABAS CON FRUTA (DESCARTE)','JABAS VACÍAS','BINES VACÍOS','BINES CON FRUTA','PARIHUELAS','BANDEJAS'],um:['UND','JABA','BIN','PARIHUELA','KG']};
 const SB_URL='https://rqvcvffyynpnighzwxju.supabase.co';
 const SB_KEY='sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn';
-const BASE=location.origin+location.pathname;
+// Link oficial de la app: se usa en los QR y en los mensajes aunque la app se abra desde otro lugar
+const APP_URL='https://blueberries-mission.vercel.app/vale-traslado.html';
+const APP_VER='v3.2 · choferes y auxiliares';
+const BASE=APP_URL;
 let TOKEN=null,USER=null,vales=[],current=null,editing=null,sigs=[],rcSig=null,fotoNueva=null,fotoRecv=null,filtroEst='';
 
 function ls(k,v){try{k='vt:'+k;if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){return null}}
@@ -833,7 +837,10 @@ function reservas(){try{return JSON.parse(ls(resKey())||'[]')}catch(e){return[]}
 function pendientes(){try{return JSON.parse(ls('pend')||'[]')}catch(e){return[]}}
 function setPend(a){ls('pend',JSON.stringify(a));renderPendBadge()}
 function pendVales(){return pendientes().filter(x=>USER&&x.uid===USER.id).map(x=>x.d)}
+// Pausado: apartar números hacía que la numeración saltara. Se reactiva cuando el servidor use primero los números apartados.
+const RESERVAS_ACTIVAS=false;
 async function asegurarReservas(){
+  if(!RESERVAS_ACTIVAS){try{ls(resKey(),'[]')}catch(e){}return}
   if(!TOKEN||!USER||navigator.onLine===false)return;
   try{const r=await api('vale_reservar',{p_token:TOKEN,p_cant:3});ls(resKey(),JSON.stringify(r||[]))}catch(e){}
 }
@@ -1437,6 +1444,7 @@ function tsVale(v){const t=Date.parse(v.creado||'');if(!isNaN(t))return t;const 
 function atrasado(v){const t=v.extra&&v.extra.salio?Date.parse(v.extra.salio):tsVale(v);return v.estado==='VIGENTE'&&!v.pendiente&&t>0&&Date.now()-t>3*3600e3}
 function renderHome(){
   if(!USER)return;
+  $('appVer').textContent='Versión '+APP_VER;
   const rol=USER.rol,desp=esDesp();
   $('hRol').textContent=ROLES[rol]||'';
   ['hNuevo','hPend','hAtras','hRepeat','hResumen'].forEach(id=>{if(!desp)$(id).classList.add('hidden')});
