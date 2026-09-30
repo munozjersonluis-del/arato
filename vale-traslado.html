@@ -74,6 +74,18 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
 .hidden{display:none!important}
 .stephide{display:none!important}
+.fq{display:flex;align-items:center;gap:10px;background:var(--panel);border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.fq.on{border-color:var(--accent);background:var(--soft,#E6ECF8)}
+.fq input[type=checkbox]{width:24px;height:24px;flex:none;accent-color:var(--accent)}
+.fq .tx{flex:1;min-width:0}.fq .tx b{display:block;font-weight:600}.fq .tx small{display:block;color:var(--ink2);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fq .x{background:none;border:0;color:var(--ink2);font-size:20px;min-width:40px;min-height:40px;cursor:pointer}
+.fq .x.sure{color:var(--red)}
+.qe{border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px}
+.qe h4{margin:0 0 6px;font:600 16px "Barlow Semi Condensed",sans-serif}
+.qe .ln{display:grid;grid-template-columns:1fr 90px 60px;gap:6px;align-items:center;margin-top:6px;font-size:14px}
+.qe .ln input{min-height:42px;text-align:center;font-weight:600}
+.qe .ru{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.qr2{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)}
 .cv{background:var(--panel);border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px}
 .cv .h{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .cv .h b{font:600 19px "Barlow Semi Condensed",sans-serif;color:var(--red,#E8291A)}
@@ -354,6 +366,11 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 
     <button class="alerta azul hidden" id="hPend" type="button"><span class="ico">📶</span><span><b id="hPendT"></b><small>Se envían solos cuando vuelva la señal. Toca para enviar ahora.</small></span></button>
     <button class="alerta roja hidden" id="hAtras" type="button"><span class="ico">⚠️</span><span><b id="hAtrasT"></b><small>Llevan más de 3 horas en camino sin recibirse. Toca para verlos.</small></span></button>
+    <div id="frecBox" class="hidden">
+      <div class="sec2" style="display:flex;justify-content:space-between;align-items:center">⭐ Vales frecuentes <button class="btn ghost" id="fqTodos" type="button" style="min-height:36px;font-size:14px">Marcar todos</button></div>
+      <div id="fqList"></div>
+      <button class="btn primary hidden" id="fqEmitir" type="button" style="width:100%;min-height:52px;margin-bottom:12px"></button>
+    </div>
     <button class="hmid hidden" id="hRepeat" type="button"><span><b>Repetir mi último vale</b><small id="hRepTxt"></small></span></button>
     <div class="hsmall">
       <button type="button" id="hVales">Ver vales <span class="cnt hidden" id="hCamino"></span></button>
@@ -484,6 +501,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
       <button class="btn primary" id="btnRecv" type="button">Recibir carga</button>
       <button class="btn" id="btnEdit" type="button">Editar</button>
       <button class="btn" id="dupVale" type="button">Hacer uno igual</button>
+      <button class="btn" id="btnFrec" type="button">⭐ Guardar como frecuente</button>
       <button class="btn" id="btnConf" type="button">El chofer dijo CONFORME</button>
       <button class="btn danger" id="btnAnular" type="button">Anular</button>
       <button class="btn danger" id="btnDel" type="button">Eliminar</button>
@@ -590,6 +608,12 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
   <p class="err" id="errPin"></p>
   <div class="gb" style="margin-top:12px"><button class="btn hidden" id="pinCancel" type="button">Cancelar</button><button class="btn primary" id="pinSave" type="button">Guardar mi PIN</button></div>
 </div></div>
+<div class="modal hidden" id="fqModal" role="dialog" aria-modal="true" aria-labelledby="fqT"><div class="mc">
+  <h3 id="fqT">Emitir vales</h3>
+  <div id="fqForm" style="overflow:auto;flex:1"></div>
+  <p class="err" id="errFq"></p>
+  <div class="gb" style="margin-top:10px"><button class="btn" id="fqCancel" type="button">Cancelar</button><button class="btn primary" id="fqGo" type="button">Emitir</button></div>
+</div></div>
 <div class="modal hidden" id="codModal" role="dialog" aria-modal="true" aria-labelledby="codT"><div class="mc" style="text-align:center">
   <h3 id="codT">Código de recepción</h3>
   <p class="small" style="margin:0">Díctaselo al chofer después de contar la carga.</p>
@@ -630,7 +654,7 @@ const SB_URL='https://rqvcvffyynpnighzwxju.supabase.co';
 const SB_KEY='sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn';
 // Link oficial de la app: se usa en los QR y en los mensajes aunque la app se abra desde otro lugar
 const APP_URL='https://blueberries-mission.vercel.app/vale-traslado.html';
-const APP_VER='v3.2 · choferes y auxiliares';
+const APP_VER='v3.5 · vales frecuentes';
 const BASE=APP_URL;
 let TOKEN=null,USER=null,vales=[],current=null,editing=null,sigs=[],rcSig=null,fotoNueva=null,fotoRecv=null,filtroEst='';
 
@@ -823,6 +847,7 @@ async function save(){
   try{
     const d=editing?await api('vale_corregir',{p_token:TOKEN,p_numero:editing.numero,p:v,p_motivo:$('fMotivo').value.trim()}):await api('vale_emitir',{p_token:TOKEN,p:v});
     if(fotoNueva){try{await api('vale_foto_guardar',{p_token:TOKEN,p_numero:d.numero,p_tipo:'salida',p_img:fotoNueva})}catch(e){toast('El vale se guardó, pero la foto no: '+e.message)}}
+    if(v.firmas[0].img)ls('miFirma:'+USER.id,v.firmas[0].img);
     registrar(d);toast(editing?`Vale N° ${pad(d.numero)} corregido`:`Vale N° ${pad(d.numero)} guardado`);
     editing=null;await openVale(d);loadVales();
   }catch(e){
@@ -837,8 +862,8 @@ function reservas(){try{return JSON.parse(ls(resKey())||'[]')}catch(e){return[]}
 function pendientes(){try{return JSON.parse(ls('pend')||'[]')}catch(e){return[]}}
 function setPend(a){ls('pend',JSON.stringify(a));renderPendBadge()}
 function pendVales(){return pendientes().filter(x=>USER&&x.uid===USER.id).map(x=>x.d)}
-// Pausado: apartar números hacía que la numeración saltara. Se reactiva cuando el servidor use primero los números apartados.
-const RESERVAS_ACTIVAS=false;
+// Números apartados para trabajar sin señal: el servidor los usa primero también con señal, así la numeración sigue en orden.
+const RESERVAS_ACTIVAS=true;
 async function asegurarReservas(){
   if(!RESERVAS_ACTIVAS){try{ls(resKey(),'[]')}catch(e){}return}
   if(!TOKEN||!USER||navigator.onLine===false)return;
@@ -868,7 +893,7 @@ async function sincronizar(manual){
       if(x.foto){try{await api('vale_foto_guardar',{p_token:TOKEN,p_numero:x.n,p_tipo:'salida',p_img:x.foto})}catch(e){}}
       setPend(pendientes().filter(y=>y.n!==x.n));ok++;
       if(current&&current.numero===x.n&&!$('vVer').classList.contains('hidden')){current=null;openVale(d)}
-    }catch(e){if(esSinSenal(e))break;err=e.message}
+    }catch(e){if(esSinSenal(e))break;if(/RESERVA|apartad/i.test(e.message||'')){setPend(pendientes().filter(y=>y.n!==x.n));vales=vales.filter(v=>v.numero!==x.n||!v.pendiente);err='El vale '+pad(x.n)+' sin señal ya no tenía número válido; vuelve a hacerlo.';continue}err=e.message}
   }
   sincronizando=false;
   if(ok)toast(ok===1?'1 vale sin señal ya se envió':ok+' vales sin señal ya se enviaron');else if(err&&manual)toast('No se pudo enviar: '+err);
@@ -998,6 +1023,7 @@ async function openVale(v){
   $('btnRecv').classList.toggle('hidden',!vig);$('btnEdit').classList.toggle('hidden',!(vig&&puede(v)));$('btnAnular').classList.toggle('hidden',!(vig&&puede(v)));
   $('btnConf').classList.toggle('hidden',!(v.modalidad==='A DISTANCIA'&&!v.conformidad&&vig));
   const ch=USER&&USER.rol==='chofer',ax=USER&&USER.rol==='auxiliar';
+  $('btnFrec').classList.toggle('hidden',!esDesp()||!!v.pendiente);
   if(!esDesp()){['btnEdit','btnAnular','btnDel','dupVale','btnConf'].forEach(id=>$(id).classList.add('hidden'))}
   if(ch)$('btnRecv').classList.add('hidden');
   ['chPanel','chFirmaP','chNoP','chProbP','chEntP'].forEach(id=>$(id).classList.add('hidden'));
@@ -1125,7 +1151,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadVales(
 /* ---------- catálogo ---------- */
 /* ---------- catálogo de placas y conductores ---------- */
 let cat={vehiculos:[],conductores:[],ocultos:{placas:[],conductores:[],marcas:[],fundos:[],desc:[]}};
-function catNorm(c){c=c||{};c.vehiculos=c.vehiculos||[];c.conductores=c.conductores||[];c.ocultos=Object.assign({placas:[],conductores:[],marcas:[],fundos:[],desc:[]},c.ocultos||{});return c}
+function catNorm(c){c=c||{};c.vehiculos=c.vehiculos||[];c.conductores=c.conductores||[];c.ocultos=Object.assign({placas:[],conductores:[],marcas:[],fundos:[],desc:[]},c.ocultos||{});c.plantillas=c.plantillas||[];return c}
 async function catSave(){await api('vales_catalogo_guardar',{p_token:TOKEN,p:cat})}
 function unhide(k,val){cat.ocultos[k]=cat.ocultos[k].filter(x=>x!==val)}
 function registrar(v){
@@ -1344,6 +1370,59 @@ async function instalar(){
 }
 /* ---------- inicio ---------- */
 function lastMine(){return USER?vales.filter(v=>v.emisor&&v.emisor.id===USER.id&&v.estado!=='ANULADO').sort((a,b)=>b.numero-a.numero)[0]:null}
+/* ---------- vales frecuentes ---------- */
+let fqSel=new Set();
+function plantillaDe(v){return{id:(v.placa+'|'+v.conductor).toUpperCase(),nombre:`${v.placa} · ${(v.conductor||'').split(' ').slice(0,2).join(' ')}`,salida:v.salida,llegada:v.llegada,marca:v.marca||'',placa:v.placa,conductor:v.conductor,licencia:v.licencia||'',dni:(v.firmas&&v.firmas[1]&&v.firmas[1].dni)||'',chofer:v.chofer&&v.chofer.id?{id:v.chofer.id}:null,items:(v.items||[]).map(i=>({desc:i.desc,um:i.um,cant:i.cant})),obs:v.obs||''}}
+$('btnFrec').onclick=async()=>{const t=plantillaDe(current);cat.plantillas=(cat.plantillas||[]).filter(x=>x.id!==t.id);cat.plantillas.push(t);
+  try{await catSave();toast('⭐ Guardado como frecuente: '+t.nombre)}catch(e){toast(e.message)}};
+function renderFrec(){
+  const L=(cat.plantillas||[]).slice().sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  $('frecBox').classList.toggle('hidden',!esDesp()||!L.length);
+  [...fqSel].forEach(id=>{if(!L.some(x=>x.id===id))fqSel.delete(id)});
+  $('fqList').innerHTML=L.map(t=>`<label class="fq ${fqSel.has(t.id)?'on':''}"><input type="checkbox" data-fq="${esc(t.id)}" ${fqSel.has(t.id)?'checked':''}><span class="tx"><b>${esc(t.nombre)}</b><small>${esc(t.salida)} → ${esc(t.llegada)} · ${esc(t.items.map(i=>i.cant+' '+i.desc.toLowerCase()).join(', '))}</small></span><button type="button" class="x" data-fqdel="${esc(t.id)}" aria-label="Quitar de frecuentes">×</button></label>`).join('');
+  const n=fqSel.size;$('fqEmitir').classList.toggle('hidden',!n);$('fqEmitir').textContent=n===1?'Emitir 1 vale':'Emitir '+n+' vales';
+  $('fqTodos').textContent=n&&n===L.length?'Quitar todos':'Marcar todos';
+}
+$('fqList').onchange=e=>{const c=e.target.closest('[data-fq]');if(!c)return;c.checked?fqSel.add(c.dataset.fq):fqSel.delete(c.dataset.fq);renderFrec()};
+$('fqList').onclick=async e=>{const x=e.target.closest('[data-fqdel]');if(!x)return;e.preventDefault();
+  if(!x.classList.contains('sure')){x.classList.add('sure');x.textContent='¿Quitar?';setTimeout(()=>{x.classList.remove('sure');x.textContent='×'},3000);return}
+  cat.plantillas=cat.plantillas.filter(t=>t.id!==x.dataset.fqdel);fqSel.delete(x.dataset.fqdel);try{await catSave()}catch(err){}renderFrec();toast('Quitado de frecuentes')};
+$('fqTodos').onclick=()=>{const L=cat.plantillas||[];if(fqSel.size===L.length)fqSel.clear();else L.forEach(t=>fqSel.add(t.id));renderFrec()};
+$('fqEmitir').onclick=()=>{
+  const L=(cat.plantillas||[]).filter(t=>fqSel.has(t.id));
+  $('fqT').textContent=L.length===1?'Emitir 1 vale':'Emitir '+L.length+' vales';$('errFq').style.display='none';
+  const fundos=[...new Set([...DEF.fundos,...L.flatMap(t=>[t.salida,t.llegada])])];
+  const sel=(v,k)=>`<select class="in" data-k="${k}">${fundos.map(f=>`<option ${f===v?'selected':''}>${esc(f)}</option>`).join('')}</select>`;
+  $('fqForm').innerHTML=L.map(t=>`<div class="qe" data-t="${esc(t.id)}"><h4>${esc(t.nombre)}</h4><div class="ru">${sel(t.salida,'salida')}${sel(t.llegada,'llegada')}</div>
+    ${t.items.map((i,k)=>`<div class="ln"><span>${esc(i.desc)}</span><input class="in" type="number" inputmode="decimal" min="0" data-i="${k}" value="${i.cant}"><span>${esc(i.um)}</span></div>`).join('')}</div>`).join('');
+  delete $('fqGo').dataset.done;$('fqCancel').classList.remove('hidden');$('fqGo').disabled=false;$('fqGo').textContent='Emitir';$('fqModal').classList.remove('hidden')};
+$('fqCancel').onclick=()=>$('fqModal').classList.add('hidden');
+$('fqGo').onclick=async()=>{
+  if($('fqGo').dataset.done){$('fqModal').classList.add('hidden');delete $('fqGo').dataset.done;$('fqCancel').classList.remove('hidden');return}
+  const blocks=[...$('fqForm').querySelectorAll('.qe')];const now=new Date(Date.now()-5*3600e3).toISOString();
+  const miFirma=ls('miFirma:'+USER.id)||'';const lista=[];
+  for(const b of blocks){const t=cat.plantillas.find(x=>x.id===b.dataset.t);if(!t)continue;
+    const salida=b.querySelector('[data-k=salida]').value,llegada=b.querySelector('[data-k=llegada]').value;
+    if(salida===llegada)return showErr(null,`${t.nombre}: la salida y la llegada no pueden ser iguales.`,'errFq');
+    const items=t.items.map((i,k)=>({desc:i.desc,um:i.um,cant:Number(b.querySelector(`[data-i="${k}"]`).value)})).filter(i=>i.cant>0);
+    if(!items.length)return showErr(null,`${t.nombre}: pon al menos una cantidad.`,'errFq');
+    const ca=t.chofer&&CHOFERES.find(c=>c.id===t.chofer.id);const co=cond(t.conductor);
+    const f1=ca?{nombre:t.conductor,dni:ca.dni,img:''}:{nombre:t.conductor,dni:t.dni||(co&&co.dni)||'',img:(co&&co.firma)||'',registrada:!!(co&&co.firma)};
+    lista.push({t,v:{salida,llegada,fecha:now.slice(0,10),hora:now.slice(11,16),marca:t.marca,placa:t.placa,conductor:t.conductor,licencia:t.licencia,precinto:'',obs:t.obs,items,modalidad:'PRESENCIAL',celular:'',
+      firmas:[{nombre:USER.nombre,dni:USER.dni,img:miFirma},f1,{nombre:'',dni:'',img:''}],chofer:ca?{id:ca.id}:null}})}
+  const g=$('fqGo');g.disabled=true;const res=[];
+  for(let k=0;k<lista.length;k++){g.textContent=`Emitiendo ${k+1} de ${lista.length}…`;
+    try{const d=await api('vale_emitir',{p_token:TOKEN,p:lista[k].v});registrar(d);res.push({ok:true,d,t:lista[k].t})}
+    catch(e){res.push({ok:false,err:e.message,t:lista[k].t});if(esSinSenal(e))break}}
+  $('fqForm').innerHTML=res.map((x,k)=>x.ok?`<div class="qr2"><span>✅ <b>N° ${pad(x.d.numero)}</b> · ${esc(x.t.nombre)}</span><span><button class="btn" data-rv="${k}" type="button">Ver</button> <button class="btn wa" data-rw="${k}" type="button">WhatsApp</button></span></div>`:`<div class="qr2"><span>❌ ${esc(x.t.nombre)}: ${esc(x.err)}</span></div>`).join('');
+  $('fqForm').onclick=async e=>{const v=e.target.closest('[data-rv]'),w=e.target.closest('[data-rw]');
+    if(v){$('fqModal').classList.add('hidden');openVale(res[+v.dataset.rv].d)}
+    if(w){$('fqModal').classList.add('hidden');await openVale(res[+w.dataset.rw].d);$('btnWa')&&$('btnWa').click()}};
+  const okN=res.filter(x=>x.ok).length;$('fqT').textContent=okN===1?'1 vale emitido':okN+' vales emitidos';
+  g.disabled=false;g.textContent='Listo';g.dataset.done='1';$('fqCancel').classList.add('hidden');
+  fqSel.clear();loadVales();
+};
+$('fqModal').addEventListener('click',e=>{if(e.target.id==='fqModal'&&$('fqGo').dataset.done){$('fqModal').classList.add('hidden');delete $('fqGo').dataset.done;$('fqCancel').classList.remove('hidden')}});
 /* ---------- choferes y auxiliares ---------- */
 let CHOFERES=[];
 async function loadChoferes(){try{CHOFERES=await api('vales_choferes',{p_token:TOKEN})||[]}catch(e){CHOFERES=[]}}
@@ -1454,9 +1533,10 @@ function renderHome(){
   $('homeChofer').classList.toggle('hidden',rol!=='chofer');$('homeAux').classList.toggle('hidden',rol!=='auxiliar');$('auxLists').classList.toggle('hidden',rol!=='auxiliar');
   const h0=new Date().getHours();$('hName').textContent=(h0<12?'Buenos días, ':h0<19?'Buenas tardes, ':'Buenas noches, ')+USER.nombre.split(' ')[0].charAt(0)+USER.nombre.split(' ')[0].slice(1).toLowerCase();
   $('hDate').textContent=new Date().toLocaleDateString('es-PE',{weekday:'long',day:'numeric',month:'long'});
+  $('frecBox').classList.toggle('hidden',!desp);
   if(rol==='chofer'){renderChofer();return}
   if(rol==='auxiliar'){renderAux();return}
-  renderPendBadge();
+  renderPendBadge();renderFrec();
   const at=vales.filter(atrasado).length;$('hAtras').classList.toggle('hidden',!at);$('hAtrasT').textContent=at===1?'1 vale sin recibir':at+' vales sin recibir';
   const nc=vales.filter(v=>v.estado==='VIGENTE'&&v.firma_chofer&&v.firma_chofer.estado==='NO CONFORME').length,al=vales.filter(v=>v.extra&&v.extra.alerta).length;
   if(nc||al){$('hAtras').classList.remove('hidden');$('hAtrasT').textContent=[at?at+' sin recibir':'',nc?nc+' chofer NO conforme':'',al?al+' receptor dice "No fui yo"':''].filter(Boolean).join(' · ')}
