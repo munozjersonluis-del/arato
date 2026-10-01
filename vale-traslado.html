@@ -108,6 +108,9 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .alerta.roja{background:#FDEBE9;color:#B3261E;border:1.5px solid #E8291A}
 .alerta.azul{background:var(--soft,#E6ECF8);color:var(--accent);border:1.5px dashed var(--accent)}
 .alerta .ico{font-size:24px;line-height:1}
+.kits{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px}
+.kits .btn{min-height:46px}
+.kits .kit{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
 .qm{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin:0 0 10px;scrollbar-width:none}
 .qm::-webkit-scrollbar{display:none}
 .qm button{flex:none;border:1.5px solid var(--line);background:var(--bg);border-radius:20px;min-height:42px;padding:6px 14px;font-weight:600;cursor:pointer;color:var(--ink);white-space:nowrap}
@@ -196,6 +199,10 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .doc .nb{border:2px solid #E8291A;border-radius:6px;background:#fff;text-align:center;padding:8px 12px 5px;min-width:158px}
 .doc .nb small{display:block;font:600 14px "Barlow Semi Condensed",Arial,sans-serif;color:#E8291A;letter-spacing:.4px}
 .doc .nb b{display:block;font:600 38px/1.05 "Barlow Semi Condensed",Arial,sans-serif;color:#E8291A;letter-spacing:.5px;white-space:nowrap}
+.doc .ctl{display:grid;grid-template-columns:1fr 1fr;border:1.5px solid #B9C9E6;border-radius:7px;overflow:hidden;margin:0 0 12px;background:#E7EEF9}
+.doc .ctl span{text-align:center;padding:6px 8px;font-size:13px;color:#0A2A8C}
+.doc .ctl span+span{border-left:1px solid #C9D6EE}
+.doc .ctl b{font-weight:600}
 .doc .box{border:1.5px solid #B9C9E6;border-radius:7px;overflow:hidden;background:#fff}
 .doc .ir{display:flex;border-top:1px solid #C9D6EE;min-height:43px}
 .doc .ir:first-child{border-top:0}
@@ -409,6 +416,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
     </div>
     <div class="card" data-step="2">
       <h2>Materiales <button class="btn ghost" id="addItem" type="button">+ Otro material</button></h2>
+      <div class="kits" id="kits"></div>
       <div class="qm" id="qm" aria-label="Materiales frecuentes"></div>
       <div class="items" id="items"></div>
       <div class="total" id="tCant">Total: 0</div>
@@ -653,8 +661,10 @@ const DEF={fundos:['VALLE AZUL 1','VALLE AZUL 3','ARATO 1','ARATO 2'],desc:['JAB
 const SB_URL='https://rqvcvffyynpnighzwxju.supabase.co';
 const SB_KEY='sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn';
 // Link oficial de la app: se usa en los QR y en los mensajes aunque la app se abra desde otro lugar
+// Datos del formato oficial (cambiar aquí si calidad asigna otro código o versión)
+const FORMATO={codigo:'MPP-LOG-F-001',version:'01'};
 const APP_URL='https://blueberries-mission.vercel.app/vale-traslado.html';
-const APP_VER='v3.5 · vales frecuentes';
+const APP_VER='v3.8 · formato MPP-LOG-F-001';
 const BASE=APP_URL;
 let TOKEN=null,USER=null,vales=[],current=null,editing=null,sigs=[],rcSig=null,fotoNueva=null,fotoRecv=null,filtroEst='';
 
@@ -799,7 +809,7 @@ function setStep(n){
   $('sFill').style.width=(n/3*100)+'%';$('sTitle').textContent=STEPS[n-1];$('sNum').textContent='Paso '+n+' de 3';
   $('btnNuevo').textContent=n>1?'← Atrás':(editing?'Cancelar':'Salir');
   $('btnGuardar').textContent=n<3?'Siguiente →':(editing?'Guardar corrección':'Guardar vale');
-  if(n===2)renderQM();
+  if(n===2){renderQM();renderKits()}
   if(n===3)setTimeout(()=>sigs.forEach(s=>s.size()),0);
   clearErr();window.scrollTo(0,0);
 }
@@ -993,6 +1003,7 @@ function docHTML(v){
    <div class="ti"><h1>VALE DE TRASLADO<br>DE MATERIALES</h1><p>En el mismo establecimiento</p></div>
    <div class="nb"><small>N° DE VALE</small><b>${pad(v.numero)}</b></div>
   </div></div>
+  <div class="ctl"><span><b>Código:</b> ${esc(FORMATO.codigo)}</span><span><b>Versión:</b> ${esc(FORMATO.version)}</span></div>
   <div class="box">
    <div class="ir"><div class="half">${L('pinc','FUNDO SALIDA')}<div class="vl">${esc(v.salida)}</div></div><div class="half">${L('cal','FECHA')}<div class="vl">${fmtDate(v.fecha)}</div></div></div>
    <div class="ir"><div class="half">${L('pin','FUNDO LLEGADA')}<div class="vl">${esc(v.llegada)}</div></div><div class="half">${L('clock','HORA SALIDA')}<div class="vl">${esc(v.hora)}</div></div></div>
@@ -1151,7 +1162,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadVales(
 /* ---------- catálogo ---------- */
 /* ---------- catálogo de placas y conductores ---------- */
 let cat={vehiculos:[],conductores:[],ocultos:{placas:[],conductores:[],marcas:[],fundos:[],desc:[]}};
-function catNorm(c){c=c||{};c.vehiculos=c.vehiculos||[];c.conductores=c.conductores||[];c.ocultos=Object.assign({placas:[],conductores:[],marcas:[],fundos:[],desc:[]},c.ocultos||{});c.plantillas=c.plantillas||[];return c}
+function catNorm(c){c=c||{};c.vehiculos=c.vehiculos||[];c.conductores=c.conductores||[];c.ocultos=Object.assign({placas:[],conductores:[],marcas:[],fundos:[],desc:[]},c.ocultos||{});c.plantillas=c.plantillas||[];c.kits=c.kits||[];return c}
 async function catSave(){await api('vales_catalogo_guardar',{p_token:TOKEN,p:cat})}
 function unhide(k,val){cat.ocultos[k]=cat.ocultos[k].filter(x=>x!==val)}
 function registrar(v){
@@ -1370,6 +1381,20 @@ async function instalar(){
 }
 /* ---------- inicio ---------- */
 function lastMine(){return USER?vales.filter(v=>v.emisor&&v.emisor.id===USER.id&&v.estado!=='ANULADO').sort((a,b)=>b.numero-a.numero)[0]:null}
+/* ---------- contenidos (kits de materiales) ---------- */
+function renderKits(){
+  if(!esDesp()){$('kits').innerHTML='';return}
+  $('kits').innerHTML=(cat.kits||[]).map(k=>`<button type="button" class="btn kit" data-kit="${esc(k.id)}">📦 ${esc(k.nombre)}</button>`).join('')+`<button type="button" class="btn ghost" id="kitSave">＋ Guardar como contenido</button>`;
+}
+$('kits').onclick=async e=>{
+  const b=e.target.closest('[data-kit]');
+  if(b){const k=cat.kits.find(x=>x.id===b.dataset.kit);if(!k)return;
+    $('items').innerHTML='';k.items.forEach(i=>addItem({desc:i.desc,cant:i.cant,um:i.um}));calc();clearErr();toast('Contenido cargado: '+k.nombre+'. Ajusta las cantidades si cambian.');return}
+  if(e.target.id==='kitSave'){const items=readItems().filter(i=>i.desc&&i.cant>0);if(!items.length){toast('Primero agrega los materiales');return}
+    const nombre=(prompt('Nombre del contenido (ej.: Grupo, Bandejero)')||'').trim();if(!nombre)return;
+    const id=nombre.toUpperCase();cat.kits=(cat.kits||[]).filter(k=>k.id!==id);cat.kits.push({id,nombre,items});
+    try{await catSave();renderKits();toast('Contenido guardado: '+nombre)}catch(x){toast(x.message)}}
+};
 /* ---------- vales frecuentes ---------- */
 let fqSel=new Set();
 function plantillaDe(v){return{id:(v.placa+'|'+v.conductor).toUpperCase(),nombre:`${v.placa} · ${(v.conductor||'').split(' ').slice(0,2).join(' ')}`,salida:v.salida,llegada:v.llegada,marca:v.marca||'',placa:v.placa,conductor:v.conductor,licencia:v.licencia||'',dni:(v.firmas&&v.firmas[1]&&v.firmas[1].dni)||'',chofer:v.chofer&&v.chofer.id?{id:v.chofer.id}:null,items:(v.items||[]).map(i=>({desc:i.desc,um:i.um,cant:i.cant})),obs:v.obs||''}}
@@ -1576,11 +1601,11 @@ $('resCerrar').onclick=()=>$('resModal').classList.add('hidden');
 $('resCopiar').onclick=async()=>{try{await navigator.clipboard.writeText($('resTxt').textContent);toast('Resumen copiado')}catch(e){toast('Mantén presionado el texto para copiarlo')}};
 $('resWa').onclick=()=>{const t=$('resTxt').textContent;if(navigator.share){navigator.share({text:t}).catch(()=>{})}else window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank')};
 /* ---------- materiales frecuentes ---------- */
-const MAT_BASE=['JABAS VACÍAS','JABAS CON FRUTA','BANDEJAS','PARIHUELAS','BINES VACÍOS'];
+const MAT_BASE=['BANDEJAS LIMPIAS','JARRAS LIMPIAS','JABAS LIMPIAS','PARIHUELAS','DESCARTE','JARRAS DE NACIONAL','BIDONES DE AGUA','MALETA CON CORREAS','JARRAS DE FLEJES','CARRITO LAVA MANOS','JABAS VACÍAS','JABAS CON FRUTA'];
 function renderQM(){
   const cnt={};vales.forEach(v=>(v.items||[]).forEach(i=>{if(i.desc)cnt[i.desc]=(cnt[i.desc]||0)+1}));
   const top=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]);
-  const list=[...new Set([...top,...MAT_BASE])].slice(0,8);
+  const list=[...new Set([...top,...MAT_BASE])].slice(0,14);
   $('qm').innerHTML=list.map(m=>`<button type="button" data-m="${esc(m)}">+ ${esc(m.charAt(0)+m.slice(1).toLowerCase())}</button>`).join('');
 }
 $('qm').onclick=e=>{const b=e.target.closest('[data-m]');if(!b)return;
