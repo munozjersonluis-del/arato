@@ -193,7 +193,11 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .sharepanel{margin-bottom:10px}
 .imgacts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
 .imgacts .btn{min-height:50px;font-size:16px}
-.docwrap{overflow-x:auto;background:#fff;border-radius:8px;border:1px solid var(--line)}
+.docwrap{overflow:hidden;background:#fff;border-radius:8px;border:1px solid var(--line);position:relative;touch-action:manipulation}
+.docwrap.full{overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;max-height:78vh}
+.docwrap .doc{transform-origin:0 0}
+.zhint{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:6px 2px 10px;font-size:13px;color:var(--ink2)}
+.zhint button{border:1px solid var(--line);background:var(--panel);border-radius:10px;min-height:38px;padding:4px 12px;font-weight:600;cursor:pointer;color:var(--ink)}
 .panel-anular{margin-bottom:10px}
 .res{border-radius:10px;padding:12px;margin-top:12px;font-weight:500}
 .res.ok{background:var(--ok-soft);color:var(--ok)}.res.no{background:var(--bad-soft);color:var(--red)}
@@ -279,7 +283,9 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
   .wrap>*:not(#vVer),#vVer>*:not(#printArea),.bar,.toast{display:none!important}
   #vVer{display:block!important}
   .doc{width:100%;padding:0}
-  .docwrap{border:0;overflow:visible}
+  .docwrap{border:0;overflow:visible;height:auto!important}
+  .docwrap .doc{transform:none!important}
+  .zhint{display:none!important}
 }
 
 </style>
@@ -368,6 +374,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
     <div class="tabs" role="tablist">
       <button role="tab" aria-selected="true" data-tab="home">Inicio</button>
       <button role="tab" aria-selected="false" data-tab="hist">Vales</button>
+      <button role="tab" aria-selected="false" data-tab="sol" id="tabSol" class="hidden">Solicitudes</button>
       <button role="tab" aria-selected="false" data-tab="rep" id="tabRep">Reporte</button>
     </div>
     <button class="userbtn" id="userBtn" type="button"></button>
@@ -390,10 +397,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 
     <button class="alerta azul hidden" id="hPend" type="button"><span class="ico">📶</span><span><b id="hPendT"></b><small>Se envían solos cuando vuelva la señal. Toca para enviar ahora.</small></span></button>
     <button class="alerta roja hidden" id="hAtras" type="button"><span class="ico">⚠️</span><span><b id="hAtrasT"></b><small>Llevan más de 3 horas en camino sin recibirse. Toca para verlos.</small></span></button>
-    <div id="solBox" class="hidden">
-      <div class="sec2">📝 Solicitudes de vale <span class="cnt" id="solN" style="font-size:14px"></span></div>
-      <div id="solList"></div>
-    </div>
+    <button class="alerta azul hidden" id="hSol" type="button"><span class="ico">📝</span><span><b id="hSolT"></b><small>Los choferes piden su vale. Toca para verlas y llenar el contenido.</small></span></button>
     <div id="frecBox" class="hidden">
       <div class="sec2" style="display:flex;justify-content:space-between;align-items:center">⭐ Vales frecuentes <button class="btn ghost" id="fqTodos" type="button" style="min-height:36px;font-size:14px">Marcar todos</button></div>
       <div id="fqList"></div>
@@ -463,6 +467,12 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
     <p class="err" id="err"></p>
   </section>
 
+  <section id="vSol" class="hidden">
+    <div class="sec2" style="margin-top:4px">Pendientes</div>
+    <div id="solList"></div>
+    <div class="sec2">Atendidas y rechazadas (últimos 2 días)</div>
+    <div id="solHist"></div>
+  </section>
   <section id="vHist" class="hidden">
     <button class="btn primary" id="btnScanRecv" type="button" style="width:100%;margin-bottom:12px">Escanear QR para recibir un vale</button>
     <div class="card">
@@ -581,7 +591,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
     </div>
     <div class="card hidden" id="delPanel">
       <h2>Eliminar vale</h2>
-      <p class="small" style="margin:0 0 8px">Se borra por completo junto con sus fotos. Si es el último número emitido, el correlativo regresa para reutilizarlo. Queda un registro interno de quién lo eliminó y por qué.</p>
+      <p class="small" style="margin:0 0 8px">Se borra por completo junto con sus fotos. Si es el último número emitido, ese número se vuelve a usar en el siguiente vale. Si venía de una solicitud de un chofer, la solicitud vuelve a pendientes. Queda un registro interno de quién lo eliminó y por qué.</p>
       <label class="f">Motivo<input id="fDel" placeholder="Vale duplicado"></label>
       <p class="err" id="errDel"></p>
       <div class="row" style="margin-top:8px"><button class="btn" id="delNo" type="button">Cancelar</button><button class="btn danger" id="delSi" type="button">Eliminar definitivamente</button></div>
@@ -647,7 +657,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
   <div class="grid">
     <label class="f">Placa<input id="sPla" class="in" style="text-transform:uppercase" autocomplete="off"></label>
     <label class="f">Marca<input id="sMar" class="in" style="text-transform:uppercase" autocomplete="off"></label>
-    <label class="f full">Licencia<input id="sLic" class="in" style="text-transform:uppercase" autocomplete="off"></label>
+    <label class="f">Licencia<input id="sLic" class="in" style="text-transform:uppercase" autocomplete="off"></label>
+    <label class="f">N° de precinto<input id="sPre" class="in" style="text-transform:uppercase" placeholder="012691 - 012692" autocomplete="off"></label>
     <label class="f">Sale de<select id="sSal" class="in"></select></label>
     <label class="f">Va a<select id="sLle" class="in"></select></label>
     <label class="f full">Nota (opcional)<input id="sObs" class="in" placeholder="Ej.: salgo con el grupo B" autocomplete="off"></label>
@@ -725,7 +736,7 @@ async function api(fn,args={}){
 }
 
 /* ---------- sesión ---------- */
-function setUser(u){USER=u;ls('user',JSON.stringify(u));$('userBtn').textContent=u.nombre.split(' ').slice(0,2).join(' ');$('tabRep').classList.toggle('hidden',u.rol!=='admin');document.querySelector('[data-tab="hist"]').textContent=u.rol==='chofer'?'Mis vales':u.rol==='auxiliar'?'Recepciones':'Vales'}
+function setUser(u){USER=u;ls('user',JSON.stringify(u));$('userBtn').textContent=u.nombre.split(' ').slice(0,2).join(' ');$('tabRep').classList.toggle('hidden',u.rol!=='admin');$('tabSol').classList.toggle('hidden',!(u.rol==='admin'||u.rol==='usuario'));document.querySelector('[data-tab="hist"]').textContent=u.rol==='chofer'?'Mis vales':u.rol==='auxiliar'?'Recepciones':'Vales'}
 async function startSession(){
   $('vLogin').classList.add('hidden');$('topBar').classList.remove('hidden');
   try{const u=await api('vales_sesion',{p_token:TOKEN});setUser(u)}catch(e){if(!USER)return}
@@ -769,10 +780,10 @@ $('goLogin').onclick=()=>{$('vVerif').classList.add('hidden');$('vLogin').classL
 
 /* ---------- menú ---------- */
 $('userBtn').onclick=e=>{e.stopPropagation();const m=$('menu');if(!m.classList.contains('hidden')){m.classList.add('hidden');return}
-  m.innerHTML=`<div class="who"><b>${esc(USER.nombre)}</b>DNI ${esc(USER.dni)} · ${USER.rol==='admin'?'Administrador':'Usuario'}</div>${USER.rol==='admin'?'<button type="button" data-m="admin">Usuarios y ajustes</button>':''}<button type="button" data-m="pin">🔑 Cambiar mi PIN</button><button type="button" data-m="sol">☀️ Modo sol (letras grandes): <span id="solTxt">${ls('sol')?'Activado':'Desactivado'}</span></button><button type="button" data-m="instalar">Instalar la app en el celular</button><button type="button" data-m="guia">¿Cómo se usa?</button><button type="button" data-m="logo">Cambiar logo de este celular</button><button type="button" data-m="salir">Cerrar sesión</button>`;
+  m.innerHTML=`<div class="who"><b>${esc(USER.nombre)}</b>DNI ${esc(USER.dni)} · ${USER.rol==='admin'?'Administrador':'Usuario'}</div>${USER.rol==='admin'?'<button type="button" data-m="admin">Usuarios y ajustes</button>':''}${USER.rol!=='auxiliar'?`<button type="button" data-m="avisos">🔔 Avisos de solicitudes: ${avisosOn()?'Activados':'Desactivados'}</button>`:''}<button type="button" data-m="pin">🔑 Cambiar mi PIN</button><button type="button" data-m="sol">☀️ Modo sol (letras grandes): <span id="solTxt">${ls('sol')?'Activado':'Desactivado'}</span></button><button type="button" data-m="instalar">Instalar la app en el celular</button><button type="button" data-m="guia">¿Cómo se usa?</button><button type="button" data-m="logo">Cambiar logo de este celular</button><button type="button" data-m="salir">Cerrar sesión</button>`;
   m.classList.remove('hidden')};
 document.addEventListener('click',e=>{const m=$('menu');if(m.classList.contains('hidden'))return;const b=e.target.closest('[data-m]');
-  if(b){const a=b.dataset.m;if(a==='admin'){loadAdmin();show('admin')}if(a==='salir')logout();if(a==='logo')$('logoIn').click();if(a==='guia')openGuide();if(a==='instalar')instalar();if(a==='pin')abrirPin(false);if(a==='sol'){setSol(!ls('sol'));toast(ls('sol')?'Modo sol activado':'Modo sol desactivado')}}
+  if(b){const a=b.dataset.m;if(a==='admin'){loadAdmin();show('admin')}if(a==='salir')logout();if(a==='logo')$('logoIn').click();if(a==='guia')openGuide();if(a==='instalar')instalar();if(a==='pin')abrirPin(false);if(a==='avisos'){if(avisosOn()&&ls('avisos')==='1'){ls('avisos','0');toast('🔕 Avisos desactivados')}else activarAvisos()}if(a==='sol'){setSol(!ls('sol'));toast(ls('sol')?'Modo sol activado':'Modo sol desactivado')}}
   if(!e.target.closest('#menu'))m.classList.add('hidden')});
 
 /* ---------- ítems ---------- */
@@ -1068,9 +1079,9 @@ function puede(v){return USER&&(USER.rol==='admin'||(v.emisor&&v.emisor.id===USE
 async function openVale(v){
   if(v.pendiente){const x=pendientes().find(p=>p.n===v.numero);if(x)v=x.d}
   else if(!v.firmas||v.firmas.some(f=>f.img===undefined)){try{v=await api('vale_obtener',{p_token:TOKEN,p_numero:v.numero})}catch(e){toast(e.message);return}}
-  current=v;$('printArea').innerHTML=docHTML(v);
+  current=v;$('printArea').innerHTML=docHTML(v);docZoom=false;setTimeout(fitDoc,0);
   ['anularPanel','recvPanel','sharePanel','confPanel','delPanel'].forEach(i=>$(i).classList.add('hidden'));
-  $('btnDel').classList.toggle('hidden',!(USER&&USER.rol==='admin'&&v.estado==='ANULADO'));
+  $('btnDel').classList.toggle('hidden',!(USER&&USER.rol==='admin'&&!v.pendiente));
   const vig=v.estado==='VIGENTE';
   $('btnRecv').classList.toggle('hidden',!vig);$('btnEdit').classList.toggle('hidden',!(vig&&puede(v)));$('btnAnular').classList.toggle('hidden',!(vig&&puede(v)));
   $('btnConf').classList.toggle('hidden',!(v.modalidad==='A DISTANCIA'&&!v.conformidad&&vig));
@@ -1104,6 +1115,9 @@ async function renderCanvas(){
   const off=$('offscreen');off.innerHTML=docHTML(current);
   await Promise.all([...off.querySelectorAll('img')].map(i=>i.complete?1:new Promise(r=>{i.onload=i.onerror=r})));
   try{await document.fonts.ready}catch(e){}
+  // En algunos celulares la imagen juntaba las palabras (ej. "JERSONMONCADA"): se fijan los espacios antes de dibujar
+  const w=document.createTreeWalker(off.firstElementChild,NodeFilter.SHOW_TEXT);let t;while((t=w.nextNode()))if(/ /.test(t.nodeValue))t.nodeValue=t.nodeValue.replace(/ /g,'\u00a0\u200b');
+  off.firstElementChild.querySelectorAll('*').forEach(e=>{e.style.fontKerning='none';e.style.textRendering='geometricPrecision'});
   const c=await html2canvas(off.firstElementChild,{scale:3,backgroundColor:'#ffffff'});off.innerHTML='';return c;
 }
 async function renderPng(){const c=await renderCanvas();return await new Promise(r=>c.toBlob(r,'image/png'))}
@@ -1121,13 +1135,13 @@ $('btnWa').onclick=async()=>{
   const b=$('btnWa');b.disabled=true;b.textContent='Preparando…';
   const name=`Vale_${pad(current.numero)}.png`;let enviado=false,guardado=false;
   try{const blob=await renderPng();const file=new File([blob],name,{type:'image/png'});
-    if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],text:waText(current)});enviado=true}catch(e){if(e&&e.name==='AbortError'){b.disabled=false;b.textContent='Enviar a WhatsApp';return}}}
+    if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file]});enviado=true}catch(e){if(e&&e.name==='AbortError'){b.disabled=false;b.textContent='Enviar a WhatsApp';return}}}
     if(!enviado){try{await saveFile(name,blob);guardado=true}catch(e){}}
   }catch(e){}
   b.disabled=false;b.textContent='Enviar a WhatsApp';
   if(enviado){toast('Vale compartido');return}
-  $('waLink').href=waUrl(current);
-  $('shareMsg').textContent=guardado?'La imagen del vale quedó guardada. Abre el chat, envía el mensaje y adjunta la imagen desde tu galería.':'Abre el chat con el resumen del vale ya escrito.';
+  $('waLink').href='https://wa.me/';
+  $('shareMsg').textContent=guardado?'La imagen del vale quedó guardada en tu galería. Abre WhatsApp, elige el chat y adjunta la imagen.':'No se pudo preparar la imagen. Usa Descargar PDF o Guardar imagen y envíala desde WhatsApp.';
   $('sharePanel').classList.remove('hidden');$('sharePanel').scrollIntoView({behavior:'smooth',block:'nearest'});
 };
 $('btnImg').onclick=async()=>{const b=$('btnImg');b.disabled=true;b.textContent='Preparando…';
@@ -1415,7 +1429,7 @@ $('saveNext').onclick=async()=>{const n=parseInt($('nextNum').value,10);$('errNu
 
 /* ---------- navegación ---------- */
 function show(t){
-  const map={home:'vHome',nuevo:'vNuevo',hist:'vHist',rep:'vRep',verif:'vVerif',ver:'vVer',admin:'vAdmin'};
+  const map={sol:'vSol',home:'vHome',nuevo:'vNuevo',hist:'vHist',rep:'vRep',verif:'vVerif',ver:'vVer',admin:'vAdmin'};
   Object.entries(map).forEach(([k,id])=>$(id).classList.toggle('hidden',k!==t));
   $('barNuevo').classList.toggle('hidden',t!=='nuevo');$('barVer').classList.toggle('hidden',t!=='ver');$('verifLogin').classList.add('hidden');
   document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===t||(t==='ver'&&b.dataset.tab==='hist'))));
@@ -1440,15 +1454,48 @@ async function instalar(){
 function lastMine(){return USER?vales.filter(v=>v.emisor&&v.emisor.id===USER.id&&v.estado!=='ANULADO').sort((a,b)=>b.numero-a.numero)[0]:null}
 /* ---------- solicitudes de vale ---------- */
 let SOLS=[],SOL_ACTIVA=null;
-async function loadSol(){if(!TOKEN||!USER||USER.rol==='auxiliar')return;try{SOLS=await api('vales_solicitudes_listar',{p_token:TOKEN})||[];renderSol()}catch(e){}}
-setInterval(()=>{if(!document.hidden&&USER&&(esDesp()||USER.rol==='chofer'))loadSol()},30000);
+async function loadSol(){if(!TOKEN||!USER||USER.rol==='auxiliar')return;try{SOLS=await api('vales_solicitudes_listar',{p_token:TOKEN})||[];renderSol();revisarNuevas()}catch(e){}}
+// Revisa solicitudes: cada 20 s con la app a la vista, cada 60 s en segundo plano
+let solTick=0;setInterval(()=>{if(!USER||!(esDesp()||USER.rol==='chofer'))return;solTick++;if(!document.hidden||solTick%3===0)loadSol()},20000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&USER&&(esDesp()||USER.rol==='chofer'))loadSol()});
+/* ---------- avisos de nuevas solicitudes ---------- */
+let audioCtx=null;
+function prepAudio(){try{if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume()}catch(e){}}
+document.addEventListener('pointerdown',prepAudio,{passive:true});
+function sonar(){try{prepAudio();if(!audioCtx)return;const t=audioCtx.currentTime;[0,0.22].forEach((d,i)=>{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sine';o.frequency.value=i?1046:784;
+  g.gain.setValueAtTime(0.0001,t+d);g.gain.exponentialRampToValueAtTime(0.35,t+d+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+d+0.2);o.connect(g);g.connect(audioCtx.destination);o.start(t+d);o.stop(t+d+0.22)})}catch(e){}}
+function avisosOn(){return ls('avisos')!=='0'}
+async function notificar(titulo,cuerpo){
+  if(avisosOn()){sonar();if(navigator.vibrate)navigator.vibrate([250,120,250])}
+  toast(titulo+(cuerpo?': '+cuerpo:''));
+  try{if(document.hidden&&'Notification' in window&&Notification.permission==='granted'&&navigator.serviceWorker){const reg=await navigator.serviceWorker.getRegistration();if(reg)reg.showNotification(titulo,{body:cuerpo,icon:'vales-icon-192.png',badge:'vales-icon-192.png',tag:'solicitudes',renotify:true,vibrate:[250,120,250]})}}catch(e){}
+}
+function revisarNuevas(){
+  if(!USER)return;
+  const key='solVistas:'+USER.id;let vistas;try{vistas=new Set(JSON.parse(ls(key)||'[]'))}catch(e){vistas=new Set()}
+  const primera=!ls(key);
+  if(esDesp()){const nuevas=SOLS.filter(x=>x.estado==='PENDIENTE'&&!vistas.has('p'+x.id));
+    if(nuevas.length&&!primera)notificar(nuevas.length===1?'📝 Nueva solicitud de vale':'📝 '+nuevas.length+' nuevas solicitudes',nuevas.map(x=>`${x.nombre.split(' ')[0]} · ${x.placa} · ${x.salida} → ${x.llegada}`).join(' | '));
+    nuevas.forEach(x=>vistas.add('p'+x.id))}
+  else if(USER.rol==='chofer'){const listas=SOLS.filter(x=>x.estado!=='PENDIENTE'&&x.estado!=='CANCELADA'&&!vistas.has('r'+x.id));
+    listas.forEach(x=>{if(!primera)notificar(x.estado==='ATENDIDA'?'✅ Tu vale está listo':'❌ Solicitud rechazada',x.estado==='ATENDIDA'?`Vale N° ${pad(x.numero_vale)}: ábrelo y fírmalo`:(x.motivo||''));vistas.add('r'+x.id)})}
+  ls(key,JSON.stringify([...vistas].slice(-300)));
+  const n=esDesp()?SOLS.filter(x=>x.estado==='PENDIENTE').length:0;document.title=(n?'('+n+') ':'')+'Vales de traslado';
+}
+async function activarAvisos(){
+  ls('avisos','1');prepAudio();sonar();
+  if('Notification' in window&&Notification.permission==='default'){try{await Notification.requestPermission()}catch(e){}}
+  toast(('Notification' in window&&Notification.permission==='granted')?'🔔 Avisos activados, también con la app en segundo plano':'🔔 Avisos activados mientras la app esté abierta');
+}
 function solHora(x){const d=new Date(x.creado);return d.toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'})}
 function renderSol(){
   if(!USER)return;
-  if(esDesp()){const P=SOLS.filter(x=>x.estado==='PENDIENTE');$('solBox').classList.toggle('hidden',!P.length);$('solN').textContent=P.length;
+  if(esDesp()){const P=SOLS.filter(x=>x.estado==='PENDIENTE');$('hSol').classList.toggle('hidden',!P.length);$('hSolT').textContent=P.length===1?'1 solicitud de vale':P.length+' solicitudes de vale';$('tabSol').textContent=P.length?'Solicitudes ('+P.length+')':'Solicitudes';
+    const H=SOLS.filter(x=>x.estado==='ATENDIDA'||x.estado==='RECHAZADA');
+    $('solHist').innerHTML=H.length?H.map(x=>`<div class="hrow" style="cursor:default"><div><b style="color:var(--accent)">${esc(x.nombre)}</b> · ${esc(x.placa)}<small>${esc(x.salida)} → ${esc(x.llegada)} · ${solHora(x)}${x.estado==='RECHAZADA'&&x.motivo?' · '+esc(x.motivo):''}</small></div>${x.estado==='ATENDIDA'?'<span class="tag v">Vale '+pad(x.numero_vale)+'</span>':'<span class="tag t">Rechazada</span>'}</div>`).join(''):'<div class="empty">Nada todavía.</div>';
     $('solList').innerHTML=P.map(x=>`<div class="cv"><div class="h"><b style="color:var(--accent)">${esc(x.nombre)}</b><span class="small">${solHora(x)}</span></div>
-      <div class="ru">${esc(x.salida)} → ${esc(x.llegada)}</div><div class="mt">${esc([x.marca,x.placa].filter(Boolean).join(' / '))}${x.licencia?' · Lic. '+esc(x.licencia):''}${x.obs?'<br>📝 '+esc(x.obs):''}</div>
-      <div class="acts"><button class="btn primary" data-sh="${x.id}" type="button">Hacer vale</button><button class="btn danger" data-sr="${x.id}" type="button">Rechazar</button></div></div>`).join('');}
+      <div class="ru">${esc(x.salida)} → ${esc(x.llegada)}</div><div class="mt">${esc([x.marca,x.placa].filter(Boolean).join(' / '))}${x.licencia?' · Lic. '+esc(x.licencia):''}${x.precinto?'<br>🔒 Precinto: '+esc(x.precinto):''}${x.obs?'<br>📝 '+esc(x.obs):''}</div>
+      <div class="acts"><button class="btn primary" data-sh="${x.id}" type="button">Hacer vale</button><button class="btn danger" data-sr="${x.id}" type="button">Rechazar</button></div></div>`).join('')||'<div class="empty">No hay solicitudes pendientes.</div>';}
   else if(USER.rol==='chofer'){const M=SOLS.filter(x=>x.estado!=='CANCELADA').slice(0,5);
     $('misSol').innerHTML=M.map(x=>{const st=x.estado==='PENDIENTE'?'<span class="tag p">Esperando a despacho</span>':x.estado==='ATENDIDA'?`<span class="tag v">Vale N° ${pad(x.numero_vale)}</span>`:'<span class="tag t">Rechazada</span>';
       return`<div class="cv"><div class="h"><b style="color:var(--accent)">${esc(x.salida)} → ${esc(x.llegada)}</b>${st}</div><div class="mt">${esc(x.placa)} · pedido a las ${solHora(x)}${x.estado==='RECHAZADA'&&x.motivo?'<br>Motivo: '+esc(x.motivo):''}</div>
@@ -1457,7 +1504,7 @@ function renderSol(){
 $('solList').onclick=async e=>{const h=e.target.closest('[data-sh]'),rj=e.target.closest('[data-sr]');
   if(h){const x=SOLS.find(y=>y.id===+h.dataset.sh);if(!x)return;
     resetForm({salida:x.salida,llegada:x.llegada,placa:x.placa,marca:x.marca,conductor:x.nombre,licencia:x.licencia,items:[]});
-    SOL_ACTIVA=x.id;$('sD1').value=x.dni||'';chNoteUpd();if(PICK.cond)PICK.cond(x.nombre);$('sD1').value=x.dni||$('sD1').value;
+    SOL_ACTIVA=x.id;$('fPrec').value=x.precinto||'';$('sD1').value=x.dni||'';chNoteUpd();if(PICK.cond)PICK.cond(x.nombre);$('sD1').value=x.dni||$('sD1').value;
     $('editBanner').textContent=`Solicitud de ${x.nombre}${x.obs?' ('+x.obs+')':''}: llena el contenido y guarda. Le llegará para firmar.`;$('editBanner').classList.remove('hidden');
     show('nuevo');setStep(2);return}
   if(rj){if(!rj.classList.contains('sure')){rj.classList.add('sure');rj.textContent='¿Seguro?';setTimeout(()=>{rj.classList.remove('sure');rj.textContent='Rechazar'},3000);return}
@@ -1467,11 +1514,13 @@ $('misSol').onclick=async e=>{const c=e.target.closest('[data-sc]'),o=e.target.c
   if(c){try{await api('vale_solicitud_cancelar',{p_token:TOKEN,p_id:+c.dataset.sc});toast('Pedido cancelado');loadSol()}catch(x){toast(x.message)}}
   if(o){await loadVales();const v=vales.find(y=>y.numero===+o.dataset.so);if(v){await openVale(v);if(v.estado==='VIGENTE'&&!(v.firma_chofer&&v.firma_chofer.estado))$('chFirmar').click()}else toast('El vale aún no aparece, intenta en un momento')}};
 function fillFundos(id,val){$(id).innerHTML='<option value="">Elegir</option>'+DEF.fundos.map(f=>`<option ${f===val?'selected':''}>${f}</option>`).join('')}
+$('hSol').onclick=()=>show('sol');
 $('hPedir').onclick=()=>{const l=JSON.parse(ls('sol:last')||'{}');$('sPla').value=l.placa||'';$('sMar').value=l.marca||'';$('sLic').value=l.licencia||'';
-  fillFundos('sSal',l.salida||'');fillFundos('sLle',l.llegada||'');$('sObs').value='';$('errSol').style.display='none';$('solModal').classList.remove('hidden')};
+  fillFundos('sSal',l.salida||'');fillFundos('sLle',l.llegada||'');$('sObs').value='';$('sPre').value='';$('errSol').style.display='none';$('solModal').classList.remove('hidden')};
 $('solNo').onclick=()=>$('solModal').classList.add('hidden');
-$('solSi').onclick=async()=>{const p={placa:$('sPla').value.trim(),marca:$('sMar').value.trim(),licencia:$('sLic').value.trim(),salida:$('sSal').value,llegada:$('sLle').value,obs:$('sObs').value.trim()};
+$('solSi').onclick=async()=>{const p={placa:$('sPla').value.trim(),marca:$('sMar').value.trim(),licencia:$('sLic').value.trim(),precinto:$('sPre').value.trim(),salida:$('sSal').value,llegada:$('sLle').value,obs:$('sObs').value.trim()};
   if(!p.placa||!p.salida||!p.llegada||p.salida===p.llegada)return showErr(null,ERR.SOLICITUD,'errSol');
+  if(!p.precinto)return showErr('sPre','Escribe el número de precinto.','errSol');
   const b=$('solSi');b.disabled=true;b.textContent='Enviando…';
   try{await api('vale_solicitar',{p_token:TOKEN,p});ls('sol:last',JSON.stringify(p));$('solModal').classList.add('hidden');toast('Solicitud enviada. Te avisaremos cuando tu vale esté listo.');loadSol()}catch(e){showErr(null,e.message,'errSol')}
   b.disabled=false;b.textContent='Enviar solicitud'};
@@ -1638,6 +1687,19 @@ async function darCodigo(){
   }catch(e){$('codNum').textContent='------';$('codTime').textContent=e.message}}
 $('hCodigo').onclick=darCodigo;$('codOtro').onclick=darCodigo;
 $('codCerrar').onclick=()=>{clearInterval(codTimer);$('codModal').classList.add('hidden')};
+/* ---------- vale ajustado a la pantalla, con zoom ---------- */
+let docZoom=false;
+function fitDoc(){
+  const w=$('printArea'),d=w&&w.querySelector('.doc');if(!d)return;
+  if(!$('zhint')){const z=document.createElement('div');z.className='zhint';z.id='zhint';z.innerHTML='<span id="zTxt"></span><button type="button" id="zBtn"></button>';w.parentNode.insertBefore(z,w);
+    $('zBtn').onclick=()=>{docZoom=!docZoom;fitDoc()}}
+  w.classList.toggle('full',docZoom);
+  if(docZoom){d.style.transform='none';w.style.height='';$('zTxt').textContent='Tamaño real: desliza para ver todo';$('zBtn').textContent='Ajustar a pantalla'}
+  else{const sc=Math.min(1,(w.clientWidth||d.offsetWidth)/d.offsetWidth);d.style.transform=`scale(${sc})`;w.style.height=Math.ceil(d.offsetHeight*sc)+'px';
+    $('zTxt').textContent='Pellizca para acercar, o toca dos veces el vale';$('zBtn').textContent='🔍 Ver en grande'}
+}
+window.addEventListener('resize',()=>{if(!$('vVer').classList.contains('hidden'))fitDoc()});
+$('printArea').addEventListener('dblclick',()=>{docZoom=!docZoom;fitDoc()});
 function tsVale(v){const t=Date.parse(v.creado||'');if(!isNaN(t))return t;const t2=Date.parse((v.fecha||'')+'T'+(v.hora||'00:00')+':00-05:00');return isNaN(t2)?0:t2}
 function atrasado(v){const t=v.extra&&v.extra.salio?Date.parse(v.extra.salio):tsVale(v);return v.estado==='VIGENTE'&&!v.pendiente&&t>0&&Date.now()-t>3*3600e3}
 function renderHome(){

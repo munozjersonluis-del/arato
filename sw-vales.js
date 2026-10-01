@@ -1,6 +1,6 @@
 // Service worker de "Vales de traslado": abre la app aunque la señal sea mala.
 // Los datos (Supabase) siempre van por internet; aquí solo se guarda la app.
-const CACHE = 'vales-v2';
+const CACHE = 'vales-v3';
 const APP = ['vale-traslado.html', 'vales.webmanifest', 'vales-icon-192.png', 'vales-icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -30,4 +30,13 @@ self.addEventListener('fetch', e => {
       return hit || net;
     }));
   }
+});
+
+// Al tocar el aviso de una solicitud, abre (o enfoca) la app de vales
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+    const w = list.find(c => c.url.includes('vale-traslado'));
+    return w ? w.focus() : self.clients.openWindow('vale-traslado.html');
+  }));
 });
