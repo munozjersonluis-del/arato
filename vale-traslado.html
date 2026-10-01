@@ -74,6 +74,21 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
 .hidden{display:none!important}
 .stephide{display:none!important}
+.pchips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}.pchips::-webkit-scrollbar{display:none}
+.pchips button{flex:none;border:1.5px solid var(--line);background:var(--bg);border-radius:20px;min-height:42px;padding:6px 14px;font-weight:600;cursor:pointer;color:var(--ink)}
+.pchips button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.rsum{background:var(--accent);color:var(--accent-ink);border-radius:14px;padding:14px 16px;margin-bottom:12px}
+.rsum b{display:block;font:600 21px "Barlow Semi Condensed",sans-serif;margin-bottom:2px}
+.rsum span{font-size:15px;opacity:.95}
+.mcard{border:1.5px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px}
+.mcard .mn{font-weight:600;margin-bottom:8px}
+.mcard .mv{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center}
+.mcard .mv div{background:var(--bg);border-radius:10px;padding:8px 4px}
+.mcard .mv b{display:block;font:600 22px "Barlow Semi Condensed",sans-serif}
+.mcard .mv small{font-size:12.5px;color:var(--ink2)}
+.mcard .mv .bad b{color:#B3261E}.mcard .mv .ok b{color:#1E7B4A}
+.tline{padding:10px 0;border-top:1px solid var(--line);font-size:15px}.tline:first-child{border-top:0}
+.tline b{font-weight:600}
 .fq{display:flex;align-items:center;gap:10px;background:var(--panel);border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
 .fq.on{border-color:var(--accent);background:var(--soft,#E6ECF8)}
 .fq input[type=checkbox]{width:24px;height:24px;flex:none;accent-color:var(--accent)}
@@ -362,6 +377,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
   <section id="vHome" class="hidden">
     <div class="hello"><div class="small" id="hDate"></div><h1 id="hName">Hola</h1><div class="small" id="hRol"></div></div>
     <div id="homeChofer" class="hidden">
+      <button class="hbig a" id="hPedir" type="button"><span class="ic" style="font-size:28px">📝</span><span><b>Pedir vale de salida</b><small>Envía tu placa y tu ruta; despacho llena el contenido</small></span></button>
+      <div id="misSol"></div>
       <div class="sec2">Mis viajes</div>
       <div id="chList"></div>
     </div>
@@ -373,6 +390,10 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 
     <button class="alerta azul hidden" id="hPend" type="button"><span class="ico">📶</span><span><b id="hPendT"></b><small>Se envían solos cuando vuelva la señal. Toca para enviar ahora.</small></span></button>
     <button class="alerta roja hidden" id="hAtras" type="button"><span class="ico">⚠️</span><span><b id="hAtrasT"></b><small>Llevan más de 3 horas en camino sin recibirse. Toca para verlos.</small></span></button>
+    <div id="solBox" class="hidden">
+      <div class="sec2">📝 Solicitudes de vale <span class="cnt" id="solN" style="font-size:14px"></span></div>
+      <div id="solList"></div>
+    </div>
     <div id="frecBox" class="hidden">
       <div class="sec2" style="display:flex;justify-content:space-between;align-items:center">⭐ Vales frecuentes <button class="btn ghost" id="fqTodos" type="button" style="min-height:36px;font-size:14px">Marcar todos</button></div>
       <div id="fqList"></div>
@@ -456,17 +477,21 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 
   <section id="vRep" class="hidden">
     <div class="card">
-      <div class="grid">
+      <div class="pchips" id="rPer">
+        <button type="button" data-p="hoy" aria-pressed="true">Hoy</button><button type="button" data-p="ayer" aria-pressed="false">Ayer</button><button type="button" data-p="semana" aria-pressed="false">Esta semana</button><button type="button" data-p="mes" aria-pressed="false">Este mes</button><button type="button" data-p="todo" aria-pressed="false">Todo</button><button type="button" data-p="otro" aria-pressed="false">Elegir fechas</button>
+      </div>
+      <div class="grid hidden" id="rFechas" style="margin-top:10px">
         <label class="f">Desde<input id="rDesde" type="date"></label>
         <label class="f">Hasta<input id="rHasta" type="date"></label>
-        <label class="f full">Fundo<select id="rFundo"></select></label>
       </div>
-      <button class="btn primary" id="rXls" type="button" style="width:100%;margin-top:12px">Exportar a Excel</button>
+      <label class="f" style="margin-top:10px">Fundo<select id="rFundo"></select></label>
     </div>
-    <div class="kpis" id="rKpis"></div>
-    <div class="card"><h2>Saldo por material</h2><div class="small" style="margin:-4px 0 8px">Enviado vs recibido. "En camino" son vales aún sin recepción.</div><div class="tscroll" id="rSaldo"></div></div>
-    <div class="card"><h2>Por ruta</h2><div class="tscroll" id="rRutas"></div></div>
-    <div class="card"><h2>Tiempos de traslado por placa</h2><div class="tscroll" id="rTiempos"></div></div>
+    <div class="rsum" id="rSum"></div>
+    <div class="card"><h2>Vales <span class="small" id="rDetN"></span></h2><div id="rDet"></div></div>
+    <div class="card"><h2>Materiales</h2><div id="rSaldo"></div></div>
+    <div class="card"><h2>Tiempo de viaje</h2><div class="small" style="margin:-4px 0 8px">Desde que se hizo el vale hasta que se recibió.</div><div id="rTiempos"></div></div>
+    <button class="btn" id="rXls" type="button" style="width:100%;margin-bottom:12px">Descargar en Excel</button>
+    <div class="hidden"><div id="rKpis"></div><div id="rRutas"></div></div>
   </section>
 
   <section id="vVerif" class="hidden">
@@ -616,6 +641,20 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
   <p class="err" id="errPin"></p>
   <div class="gb" style="margin-top:12px"><button class="btn hidden" id="pinCancel" type="button">Cancelar</button><button class="btn primary" id="pinSave" type="button">Guardar mi PIN</button></div>
 </div></div>
+<div class="modal hidden" id="solModal" role="dialog" aria-modal="true" aria-labelledby="solT"><div class="mc">
+  <h3 id="solT">Pedir vale de salida</h3>
+  <div style="overflow:auto;flex:1">
+  <div class="grid">
+    <label class="f">Placa<input id="sPla" class="in" style="text-transform:uppercase" autocomplete="off"></label>
+    <label class="f">Marca<input id="sMar" class="in" style="text-transform:uppercase" autocomplete="off"></label>
+    <label class="f full">Licencia<input id="sLic" class="in" style="text-transform:uppercase" autocomplete="off"></label>
+    <label class="f">Sale de<select id="sSal" class="in"></select></label>
+    <label class="f">Va a<select id="sLle" class="in"></select></label>
+    <label class="f full">Nota (opcional)<input id="sObs" class="in" placeholder="Ej.: salgo con el grupo B" autocomplete="off"></label>
+  </div></div>
+  <p class="err" id="errSol"></p>
+  <div class="gb" style="margin-top:10px"><button class="btn" id="solNo" type="button">Cancelar</button><button class="btn primary" id="solSi" type="button">Enviar solicitud</button></div>
+</div></div>
 <div class="modal hidden" id="fqModal" role="dialog" aria-modal="true" aria-labelledby="fqT"><div class="mc">
   <h3 id="fqT">Emitir vales</h3>
   <div id="fqForm" style="overflow:auto;flex:1"></div>
@@ -657,14 +696,14 @@ const LOGO_DEF='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAaQAAACxCAYAAACLIM
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pad=n=>String(n).padStart(6,'0');
-const DEF={fundos:['VALLE AZUL 1','VALLE AZUL 3','ARATO 1','ARATO 2'],desc:['JABAS CON FRUTA (DESCARTE)','JABAS VACÍAS','BINES VACÍOS','BINES CON FRUTA','PARIHUELAS','BANDEJAS'],um:['UND','JABA','BIN','PARIHUELA','KG']};
+const DEF={fundos:['VALLE AZUL 1','VALLE AZUL 2','VALLE AZUL 3','VALLE AZUL 4','DUNA AZUL'],desc:['JABAS CON FRUTA (DESCARTE)','JABAS VACÍAS','BINES VACÍOS','BINES CON FRUTA','PARIHUELAS','BANDEJAS'],um:['UND','JABA','BIN','PARIHUELA','KG']};
 const SB_URL='https://rqvcvffyynpnighzwxju.supabase.co';
 const SB_KEY='sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn';
 // Link oficial de la app: se usa en los QR y en los mensajes aunque la app se abra desde otro lugar
 // Datos del formato oficial (cambiar aquí si calidad asigna otro código o versión)
 const FORMATO={codigo:'MPP-LOG-F-001',version:'01'};
 const APP_URL='https://blueberries-mission.vercel.app/vale-traslado.html';
-const APP_VER='v3.8 · formato MPP-LOG-F-001';
+const APP_VER='v3.9 · reporte por día';
 const BASE=APP_URL;
 let TOKEN=null,USER=null,vales=[],current=null,editing=null,sigs=[],rcSig=null,fotoNueva=null,fotoRecv=null,filtroEst='';
 
@@ -674,7 +713,7 @@ function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clear
 async function saveFile(name,blob){const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000)}
 
 /* ---------- API ---------- */
-const ERR={SESION:'Tu sesión venció. Vuelve a ingresar.',INVITACION:'El código de equipo no es correcto.',DNI:'El DNI debe tener 8 dígitos.',PIN:'El PIN debe tener de 4 a 6 números.',NOMBRE:'Escribe tu nombre completo.',EXISTE:'Ese DNI ya está registrado. Usa Ingresar.',CREDENCIALES:'DNI o PIN incorrecto.',INACTIVO:'Tu usuario está desactivado. Habla con el administrador.',BLOQUEADO:'Demasiados intentos. Espera 15 minutos.',PERMISO:'Solo quien emitió el vale o un administrador puede hacer esto.',ESTADO:'Este vale ya no se puede modificar (fue recibido o anulado).',MOTIVO:'Escribe el motivo.',NOEXISTE:'El vale no existe.',AVANZAR:'El número solo puede avanzar.',FOTO:'La foto no es válida o es muy pesada.',FOTOS:'Este vale ya tiene el máximo de 6 fotos.',CANTIDAD:'Las cantidades no pueden ser negativas.',PROPIO:'No puedes cambiar tu propio usuario.',CODIGO:'El código no es correcto o ya venció. Pide uno nuevo al auxiliar.',BLOQUEO_COD:'Demasiados códigos incorrectos. Espera 15 minutos.',FIRMA:'Firma primero en el recuadro.',ANULAR_PRIMERO:'Primero anula el vale; solo se pueden eliminar vales anulados.'};
+const ERR={SESION:'Tu sesión venció. Vuelve a ingresar.',INVITACION:'El código de equipo no es correcto.',DNI:'El DNI debe tener 8 dígitos.',PIN:'El PIN debe tener de 4 a 6 números.',NOMBRE:'Escribe tu nombre completo.',EXISTE:'Ese DNI ya está registrado. Usa Ingresar.',CREDENCIALES:'DNI o PIN incorrecto.',INACTIVO:'Tu usuario está desactivado. Habla con el administrador.',BLOQUEADO:'Demasiados intentos. Espera 15 minutos.',PERMISO:'Solo quien emitió el vale o un administrador puede hacer esto.',ESTADO:'Este vale ya no se puede modificar (fue recibido o anulado).',MOTIVO:'Escribe el motivo.',NOEXISTE:'El vale no existe.',AVANZAR:'El número solo puede avanzar.',FOTO:'La foto no es válida o es muy pesada.',FOTOS:'Este vale ya tiene el máximo de 6 fotos.',CANTIDAD:'Las cantidades no pueden ser negativas.',PROPIO:'No puedes cambiar tu propio usuario.',CODIGO:'El código no es correcto o ya venció. Pide uno nuevo al auxiliar.',BLOQUEO_COD:'Demasiados códigos incorrectos. Espera 15 minutos.',FIRMA:'Firma primero en el recuadro.',SOLICITUD:'Completa la placa y elige de dónde sale y a dónde va (deben ser distintos).',SOLICITUD_MAX:'Ya tienes 3 solicitudes esperando. Espera a que despacho las atienda.',ANULAR_PRIMERO:'Primero anula el vale; solo se pueden eliminar vales anulados.'};
 async function api(fn,args={}){
   let r;
   try{r=await fetch(`${SB_URL}/rest/v1/rpc/${fn}`,{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify(args)})}
@@ -692,8 +731,8 @@ async function startSession(){
   try{const u=await api('vales_sesion',{p_token:TOKEN});setUser(u)}catch(e){if(!USER)return}
   resetForm();show('home');
   if(USER&&USER.cambiar_pin)abrirPin(true);
-  if(esDesp()){if(!ls('guia:'+USER.dni))openGuide();await Promise.all([loadCat(),loadVales(),loadChoferes()]);updateNumPrev();renderHome();sincronizar()}
-  else{await loadVales();renderHome()}
+  if(esDesp()){if(!ls('guia:'+USER.dni))openGuide();await Promise.all([loadCat(),loadVales(),loadChoferes(),loadSol()]);updateNumPrev();renderHome();sincronizar()}
+  else{await Promise.all([loadVales(),loadSol()]);renderHome()}
 }
 function logout(expired){
   if(TOKEN&&!expired)api('vales_salir',{p_token:TOKEN}).catch(()=>{});
@@ -790,6 +829,7 @@ $('fCond').addEventListener('input',syncCond);
 $('sN1').addEventListener('input',()=>$('sN1').dataset.touched=1);
 document.querySelectorAll('#vNuevo input,#vNuevo textarea').forEach(e=>e.addEventListener('input',clearErr));
 function resetForm(base){
+  SOL_ACTIVA=null;
   editing=null;['fSal','fLle','fMarca','fPlaca','fCond','fLic','fPrec','fObs','sN1','sD1','fMotivo','fCel'].forEach(i=>$(i).value='');delete $('sN1').dataset.touched;setModo('PRESENCIAL');
   $('fFecha').value=today();$('fHora').value=nowTime();
   if(USER){$('sN0').value=USER.nombre;$('sD0').value='DNI '+USER.dni}
@@ -858,6 +898,7 @@ async function save(){
     const d=editing?await api('vale_corregir',{p_token:TOKEN,p_numero:editing.numero,p:v,p_motivo:$('fMotivo').value.trim()}):await api('vale_emitir',{p_token:TOKEN,p:v});
     if(fotoNueva){try{await api('vale_foto_guardar',{p_token:TOKEN,p_numero:d.numero,p_tipo:'salida',p_img:fotoNueva})}catch(e){toast('El vale se guardó, pero la foto no: '+e.message)}}
     if(v.firmas[0].img)ls('miFirma:'+USER.id,v.firmas[0].img);
+    if(!editing&&SOL_ACTIVA){const sid=SOL_ACTIVA;SOL_ACTIVA=null;api('vale_solicitud_cerrar',{p_token:TOKEN,p_id:sid,p_numero:d.numero,p_motivo:null}).then(loadSol).catch(()=>{})}
     registrar(d);toast(editing?`Vale N° ${pad(d.numero)} corregido`:`Vale N° ${pad(d.numero)} guardado`);
     editing=null;await openVale(d);loadVales();
   }catch(e){
@@ -1227,22 +1268,38 @@ $('saveNext').onclick=async()=>{
 async function loadCat(){try{cat=catNorm(await api('vales_catalogo_leer',{p_token:TOKEN}))}catch(e){}}
 
 /* ---------- reporte ---------- */
+let rPer='hoy';
+function isoLima(d){return new Date(d.getTime()-5*3600e3).toISOString().slice(0,10)}
+function rango(){const hoy=new Date(Date.now()-5*3600e3);const H=hoy.toISOString().slice(0,10);
+  if(rPer==='hoy')return[H,H];
+  if(rPer==='ayer'){const a=new Date(hoy.getTime()-864e5).toISOString().slice(0,10);return[a,a]}
+  if(rPer==='semana'){const dow=(hoy.getUTCDay()+6)%7;return[new Date(hoy.getTime()-dow*864e5).toISOString().slice(0,10),H]}
+  if(rPer==='mes')return[H.slice(0,8)+'01',H];
+  if(rPer==='otro')return[$('rDesde').value,$('rHasta').value];
+  return['',''];}
 function repData(){
-  const d1=$('rDesde').value,d2=$('rHasta').value,f=$('rFundo').value;
-  return vales.filter(v=>v.estado!=='ANULADO'&&(!d1||v.fecha>=d1)&&(!d2||v.fecha<=d2)&&(!f||v.salida===f||v.llegada===f));
+  const[d1,d2]=rango(),f=$('rFundo').value;
+  return vales.filter(v=>v.estado!=='ANULADO'&&!v.pendiente&&(!d1||v.fecha>=d1)&&(!d2||v.fecha<=d2)&&(!f||v.salida===f||v.llegada===f));
 }
+function nomPer(){const[d1,d2]=rango();return{hoy:'Hoy',ayer:'Ayer',semana:'Esta semana',mes:'Este mes',todo:'Todos los vales'}[rPer]||(d1&&d2?(d1===d2?fmtDate(d1):fmtDate(d1)+' al '+fmtDate(d2)):'Periodo elegido')}
 function renderRep(){
   const fs=[...new Set(vales.flatMap(v=>[v.salida,v.llegada]))].sort();const cur=$('rFundo').value;
   $('rFundo').innerHTML='<option value="">Todos los fundos</option>'+fs.map(f=>`<option>${esc(f)}</option>`).join('');$('rFundo').value=fs.includes(cur)?cur:'';
-  const L=repData();const c=e=>L.filter(v=>v.estado===e).length;
-  $('rKpis').innerHTML=[['Vales',L.length],['En camino',c('VIGENTE')],['Recibidos',c('RECIBIDO')],['Con diferencia',c('RECIBIDO CON DIFERENCIA')]].map(([t,n])=>`<div class="kpi"><small>${t}</small><b>${n}</b></div>`).join('');
-  const S=saldo(L);
-  $('rSaldo').innerHTML=S.length?`<table class="rt"><tr><th>Material</th><th>UM</th><th>Enviado</th><th>Recibido</th><th>Diferencia</th><th>En camino</th></tr>${S.map(s=>`<tr><td>${esc(s.desc)}</td><td>${s.um}</td><td class="n">${s.env}</td><td class="n">${s.rec}</td><td class="n ${s.dif<0?'neg':s.dif>0?'pos':''}">${s.dif>0?'+':''}${s.dif}</td><td class="n">${s.cam}</td></tr>`).join('')}</table>`:'<div class="empty">Sin datos en este rango.</div>';
-  const R=rutas(L);
-  $('rRutas').innerHTML=R.length?`<table class="rt"><tr><th>Ruta</th><th>Vales</th><th>Total enviado</th><th>En camino</th></tr>${R.map(r=>`<tr><td>${esc(r.ruta)}</td><td class="n">${r.n}</td><td>${r.tot}</td><td class="n">${r.cam}</td></tr>`).join('')}</table>`:'<div class="empty">Sin datos.</div>';
+  const L=repData();const S=saldo(L);
+  const cam=L.filter(v=>v.estado==='VIGENTE').length,dif=L.filter(v=>v.estado==='RECIBIDO CON DIFERENCIA').length;
+  let est=!L.length?'No hay vales en este periodo.':cam?`${cam} vale${cam>1?'s':''} todavía por llegar.`:dif?`${dif} vale${dif>1?'s':''} llegó con diferencia.`:'Todo llegó completo ✅';
+  $('rSum').innerHTML=`<b>${nomPer()}: ${L.length} vale${L.length===1?'':'s'}</b><span>${S.slice(0,3).map(s=>`${s.env} ${esc(s.desc.toLowerCase())}`).join(' · ')}${S.length>3?' · …':''}${S.length?'<br>':''}${est}</span>`;
+  $('rDetN').textContent='';
+  $('rDet').innerHTML=L.length?L.slice().sort((a,b)=>b.numero-a.numero).map(v=>`<button class="hrow" type="button" data-rdv="${v.numero}"><div><b>N° ${pad(v.numero)}</b> ${fmtDate(v.fecha)} · ${esc(v.placa)}<small>${esc(v.salida)} → ${esc(v.llegada)} · ${esc((v.items||[]).map(i=>i.cant+' '+i.desc.toLowerCase()).join(', '))}</small></div>${estTag(v)}</button>`).join(''):'<div class="empty">No hay vales en este periodo.</div>';
+  $('rSaldo').innerHTML=S.length?S.map(s=>{const falt=s.rec-s.env+s.cam;return`<div class="mcard"><div class="mn">${esc(s.desc)} <span class="small">(${esc(s.um)})</span></div><div class="mv">
+    <div><small>Salió</small><b>${s.env}</b></div>
+    <div class="${s.cam?'':'ok'}"><small>${s.cam?'Llegó (falta recibir '+s.cam+')':'Llegó'}</small><b>${s.rec}</b></div>
+    <div class="${s.dif<0?'bad':'ok'}"><small>${s.dif<0?'Faltó':s.dif>0?'Sobró':'Diferencia'}</small><b>${s.dif<0?-s.dif:s.dif}</b></div></div></div>`}).join(''):'<div class="empty">Sin materiales en este periodo.</div>';
   const T=tiempos(L);
-  $('rTiempos').innerHTML=T.length?`<table class="rt"><tr><th>Placa</th><th>Viajes</th><th>Promedio</th><th>Máximo</th></tr>${T.map(t=>`<tr><td>${esc(t.placa)}</td><td class="n">${t.n}</td><td>${fmtDur(t.avg)}</td><td>${fmtDur(t.max)}</td></tr>`).join('')}</table>`:'<div class="empty">Aún no hay vales recibidos en este rango.</div>';
+  $('rTiempos').innerHTML=T.length?T.map(t=>`<div class="tline"><b>${esc(t.placa)}</b>: ${t.n} viaje${t.n>1?'s':''}, demora promedio <b>${fmtDur(t.avg)}</b>${t.n>1?` (la más larga: ${fmtDur(t.max)})`:''}</div>`).join(''):'<div class="empty">Aún no hay vales recibidos en este periodo.</div>';
 }
+$('rPer').onclick=e=>{const b=e.target.closest('[data-p]');if(!b)return;rPer=b.dataset.p;$('rPer').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+  $('rFechas').classList.toggle('hidden',rPer!=='otro');if(rPer==='otro'&&!$('rDesde').value){const H=new Date(Date.now()-5*3600e3).toISOString().slice(0,10);$('rDesde').value=H;$('rHasta').value=H}renderRep()};
 function saldo(L){const m={};L.forEach(v=>v.items.forEach((it,i)=>{const k=it.desc+'|'+it.um;const s=m[k]||(m[k]={desc:it.desc,um:it.um,env:0,rec:0,dif:0,cam:0});const q=Number(it.cant);s.env+=q;
   if(v.recepcion){const r=Number(v.recepcion.recibidos[i]);s.rec+=r;s.dif+=r-q}else s.cam+=q}));return Object.values(m).sort((a,b)=>b.env-a.env)}
 function rutas(L){const m={};L.forEach(v=>{const k=v.salida+' → '+v.llegada;const r=m[k]||(m[k]={ruta:k,n:0,items:[],cam:0});r.n++;r.items.push(...v.items);if(!v.recepcion)r.cam++});return Object.values(m).map(r=>({...r,tot:totals(r.items)})).sort((a,b)=>b.n-a.n)}
@@ -1363,7 +1420,7 @@ function show(t){
   $('barNuevo').classList.toggle('hidden',t!=='nuevo');$('barVer').classList.toggle('hidden',t!=='ver');$('verifLogin').classList.add('hidden');
   document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===t||(t==='ver'&&b.dataset.tab==='hist'))));
   if(t==='nuevo')setTimeout(()=>sigs.forEach(s=>s.size()),0);
-  if(t==='rep')renderRep();
+  if(t==='rep'){if(!$('rDesde').value&&!$('rHasta').value){const h=hoyISO();$('rDesde').value=h;$('rHasta').value=h}renderRep()}
   if(t==='home')renderHome();
   window.scrollTo(0,0);
 }
@@ -1381,6 +1438,43 @@ async function instalar(){
 }
 /* ---------- inicio ---------- */
 function lastMine(){return USER?vales.filter(v=>v.emisor&&v.emisor.id===USER.id&&v.estado!=='ANULADO').sort((a,b)=>b.numero-a.numero)[0]:null}
+/* ---------- solicitudes de vale ---------- */
+let SOLS=[],SOL_ACTIVA=null;
+async function loadSol(){if(!TOKEN||!USER||USER.rol==='auxiliar')return;try{SOLS=await api('vales_solicitudes_listar',{p_token:TOKEN})||[];renderSol()}catch(e){}}
+setInterval(()=>{if(!document.hidden&&USER&&(esDesp()||USER.rol==='chofer'))loadSol()},30000);
+function solHora(x){const d=new Date(x.creado);return d.toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'})}
+function renderSol(){
+  if(!USER)return;
+  if(esDesp()){const P=SOLS.filter(x=>x.estado==='PENDIENTE');$('solBox').classList.toggle('hidden',!P.length);$('solN').textContent=P.length;
+    $('solList').innerHTML=P.map(x=>`<div class="cv"><div class="h"><b style="color:var(--accent)">${esc(x.nombre)}</b><span class="small">${solHora(x)}</span></div>
+      <div class="ru">${esc(x.salida)} → ${esc(x.llegada)}</div><div class="mt">${esc([x.marca,x.placa].filter(Boolean).join(' / '))}${x.licencia?' · Lic. '+esc(x.licencia):''}${x.obs?'<br>📝 '+esc(x.obs):''}</div>
+      <div class="acts"><button class="btn primary" data-sh="${x.id}" type="button">Hacer vale</button><button class="btn danger" data-sr="${x.id}" type="button">Rechazar</button></div></div>`).join('');}
+  else if(USER.rol==='chofer'){const M=SOLS.filter(x=>x.estado!=='CANCELADA').slice(0,5);
+    $('misSol').innerHTML=M.map(x=>{const st=x.estado==='PENDIENTE'?'<span class="tag p">Esperando a despacho</span>':x.estado==='ATENDIDA'?`<span class="tag v">Vale N° ${pad(x.numero_vale)}</span>`:'<span class="tag t">Rechazada</span>';
+      return`<div class="cv"><div class="h"><b style="color:var(--accent)">${esc(x.salida)} → ${esc(x.llegada)}</b>${st}</div><div class="mt">${esc(x.placa)} · pedido a las ${solHora(x)}${x.estado==='RECHAZADA'&&x.motivo?'<br>Motivo: '+esc(x.motivo):''}</div>
+      ${x.estado==='PENDIENTE'?`<div class="acts"><button class="btn" data-sc="${x.id}" type="button">Cancelar pedido</button></div>`:x.estado==='ATENDIDA'?`<div class="acts"><button class="btn primary full" data-so="${x.numero_vale}" type="button">✍️ Ver y firmar mi vale</button></div>`:''}</div>`}).join('');}
+}
+$('solList').onclick=async e=>{const h=e.target.closest('[data-sh]'),rj=e.target.closest('[data-sr]');
+  if(h){const x=SOLS.find(y=>y.id===+h.dataset.sh);if(!x)return;
+    resetForm({salida:x.salida,llegada:x.llegada,placa:x.placa,marca:x.marca,conductor:x.nombre,licencia:x.licencia,items:[]});
+    SOL_ACTIVA=x.id;$('sD1').value=x.dni||'';chNoteUpd();if(PICK.cond)PICK.cond(x.nombre);$('sD1').value=x.dni||$('sD1').value;
+    $('editBanner').textContent=`Solicitud de ${x.nombre}${x.obs?' ('+x.obs+')':''}: llena el contenido y guarda. Le llegará para firmar.`;$('editBanner').classList.remove('hidden');
+    show('nuevo');setStep(2);return}
+  if(rj){if(!rj.classList.contains('sure')){rj.classList.add('sure');rj.textContent='¿Seguro?';setTimeout(()=>{rj.classList.remove('sure');rj.textContent='Rechazar'},3000);return}
+    const m=(prompt('Motivo del rechazo (el chofer lo verá)')||'').trim();if(m.length<3)return;
+    try{await api('vale_solicitud_cerrar',{p_token:TOKEN,p_id:+rj.dataset.sr,p_numero:null,p_motivo:m});toast('Solicitud rechazada');loadSol()}catch(x){toast(x.message)}}};
+$('misSol').onclick=async e=>{const c=e.target.closest('[data-sc]'),o=e.target.closest('[data-so]');
+  if(c){try{await api('vale_solicitud_cancelar',{p_token:TOKEN,p_id:+c.dataset.sc});toast('Pedido cancelado');loadSol()}catch(x){toast(x.message)}}
+  if(o){await loadVales();const v=vales.find(y=>y.numero===+o.dataset.so);if(v){await openVale(v);if(v.estado==='VIGENTE'&&!(v.firma_chofer&&v.firma_chofer.estado))$('chFirmar').click()}else toast('El vale aún no aparece, intenta en un momento')}};
+function fillFundos(id,val){$(id).innerHTML='<option value="">Elegir</option>'+DEF.fundos.map(f=>`<option ${f===val?'selected':''}>${f}</option>`).join('')}
+$('hPedir').onclick=()=>{const l=JSON.parse(ls('sol:last')||'{}');$('sPla').value=l.placa||'';$('sMar').value=l.marca||'';$('sLic').value=l.licencia||'';
+  fillFundos('sSal',l.salida||'');fillFundos('sLle',l.llegada||'');$('sObs').value='';$('errSol').style.display='none';$('solModal').classList.remove('hidden')};
+$('solNo').onclick=()=>$('solModal').classList.add('hidden');
+$('solSi').onclick=async()=>{const p={placa:$('sPla').value.trim(),marca:$('sMar').value.trim(),licencia:$('sLic').value.trim(),salida:$('sSal').value,llegada:$('sLle').value,obs:$('sObs').value.trim()};
+  if(!p.placa||!p.salida||!p.llegada||p.salida===p.llegada)return showErr(null,ERR.SOLICITUD,'errSol');
+  const b=$('solSi');b.disabled=true;b.textContent='Enviando…';
+  try{await api('vale_solicitar',{p_token:TOKEN,p});ls('sol:last',JSON.stringify(p));$('solModal').classList.add('hidden');toast('Solicitud enviada. Te avisaremos cuando tu vale esté listo.');loadSol()}catch(e){showErr(null,e.message,'errSol')}
+  b.disabled=false;b.textContent='Enviar solicitud'};
 /* ---------- contenidos (kits de materiales) ---------- */
 function renderKits(){
   if(!esDesp()){$('kits').innerHTML='';return}
@@ -1559,6 +1653,7 @@ function renderHome(){
   const h0=new Date().getHours();$('hName').textContent=(h0<12?'Buenos días, ':h0<19?'Buenas tardes, ':'Buenas noches, ')+USER.nombre.split(' ')[0].charAt(0)+USER.nombre.split(' ')[0].slice(1).toLowerCase();
   $('hDate').textContent=new Date().toLocaleDateString('es-PE',{weekday:'long',day:'numeric',month:'long'});
   $('frecBox').classList.toggle('hidden',!desp);
+  renderSol();
   if(rol==='chofer'){renderChofer();return}
   if(rol==='auxiliar'){renderAux();return}
   renderPendBadge();renderFrec();
@@ -1596,6 +1691,7 @@ function resumenTexto(f){
 }
 function abrirResumen(){$('resFecha').value=$('resFecha').value||hoyISO();$('resTxt').textContent=resumenTexto($('resFecha').value);$('resModal').classList.remove('hidden')}
 $('hResumen').onclick=abrirResumen;
+$('rDet').onclick=e=>{const b=e.target.closest('[data-rdv]');if(!b)return;const v=vales.find(x=>x.numero===+b.dataset.rdv);if(v)openVale(v)};
 $('resFecha').onchange=()=>$('resTxt').textContent=resumenTexto($('resFecha').value);
 $('resCerrar').onclick=()=>$('resModal').classList.add('hidden');
 $('resCopiar').onclick=async()=>{try{await navigator.clipboard.writeText($('resTxt').textContent);toast('Resumen copiado')}catch(e){toast('Mantén presionado el texto para copiarlo')}};
