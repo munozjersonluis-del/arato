@@ -226,24 +226,36 @@ function validate(r){
 }
 function save(){
   const r=collect();const bad=validate(r);if(bad){fail(...bad);return}
-  cola.push(r);ls('cola',JSON.stringify(cola));
+  if(window._ultSave&&Date.now()-window._ultSave<600)return;window._ultSave=Date.now(); // un toque = un registro (evita el doble toque)
+  cola=sinRepetidos([...lsj('cola',[]),r]);ls('cola',JSON.stringify(cola));
   if(navigator.vibrate)navigator.vibrate(30);
   showUndo(r);
   $('kg').value='';preview();renderList();$('kg').focus();
   flush();
 }
+// Solo una pestaña/ventana envía a la vez (evita mandar el mismo registro desde la app instalada y desde Chrome)
+const TAB=Math.random().toString(36).slice(2);
+function tomarTurno(){try{const l=JSON.parse(localStorage.getItem(K+'lock')||'null');if(l&&l.tab!==TAB&&Date.now()-l.t<45000)return false;localStorage.setItem(K+'lock',JSON.stringify({tab:TAB,t:Date.now()}));return JSON.parse(localStorage.getItem(K+'lock')).tab===TAB}catch(e){return true}}
+function soltarTurno(){try{const l=JSON.parse(localStorage.getItem(K+'lock')||'null');if(l&&l.tab===TAB)localStorage.removeItem(K+'lock')}catch(e){}}
+function sinRepetidos(a){const v=new Set();return a.filter(x=>{if(!x.id)return true;if(v.has(x.id))return false;v.add(x.id);return true})}
 async function flush(){
-  if(enviando||!cola.length||!API)return;
+  if(enviando||!API)return;
+  // la cola real es la guardada en el celular (por si otra ventana ya envió algo)
+  cola=sinRepetidos(lsj('cola',[]));
+  const enviados=new Set(registros.filter(x=>x.id).map(x=>x.id));cola=cola.filter(x=>!enviados.has(x.id));
+  if(!cola.length){ls('cola','[]');status();return}
+  if(!tomarTurno())return;
   enviando=true;status();
   const lote=cola.slice(0,20);
   try{
     const res=await fetch(API,{method:'POST',body:JSON.stringify({registros:lote})});
     const j=await res.json();if(!j.ok)throw new Error(j.error||'Error');
-    const ok=new Set(j.guardados);const sent=cola.filter(x=>ok.has(x.id));
-    registros.push(...sent);cola=cola.filter(x=>!ok.has(x.id));
+    const ok=new Set(j.guardados);const sent=lote.filter(x=>ok.has(x.id));
+    const ya=new Set(registros.filter(x=>x.id).map(x=>x.id));registros.push(...sent.filter(x=>!ya.has(x.id)));
+    cola=sinRepetidos(lsj('cola',[])).filter(x=>!ok.has(x.id));
     ls('cola',JSON.stringify(cola));ls('registros',JSON.stringify(registros.slice(-300)));online=true;
   }catch(e){online=false}
-  enviando=false;status();renderList();
+  enviando=false;soltarTurno();status();renderList();
   if(cola.length&&online)setTimeout(flush,300);
 }
 function status(){
@@ -256,7 +268,8 @@ function status(){
 /* ---------- resumen del día ---------- */
 function renderList(){
   const f=$('fecha').value||today();
-  const all=[...registros.filter(r=>r.fecha===f).map(r=>({...r,p:false})),...cola.filter(r=>r.fecha===f).map(r=>({...r,p:true}))];
+  const enHoja=new Set(registros.filter(x=>x.id).map(x=>x.id));
+  const all=sinRepetidos([...registros.filter(r=>r.fecha===f).map(r=>({...r,p:false})),...cola.filter(r=>r.fecha===f&&!enHoja.has(r.id)).map(r=>({...r,p:true}))]);
   $('cnt').textContent=fmt(f)+' · '+all.length+' registro'+(all.length===1?'':'s');
   const g={};all.forEach(r=>{const t=r.tipo in JARRAS?r.tipo:'Normal';const e=esperado(+r.cantidad,t);if(!(e>0))return;(g[r.grupo]=g[r.grupo]||{n:0,kg:0,e:0});g[r.grupo].n++;g[r.grupo].kg+=+r.kg;g[r.grupo].e+=e});
   $('sum').innerHTML=Object.keys(g).sort().map(k=>{const p=g[k].kg/g[k].e*100;return`<div class="${nivel(p)}"><small>Grupo ${esc(k)} · ${g[k].n}</small><b>${p.toFixed(1)}%</b></div>`}).join('');
