@@ -180,7 +180,9 @@ function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clear
 const TARA=0.292,JARRA=1.25,JARRAS={Normal:2.5,Humeda:1.5};
 const VAR_BASE=['ARANA','BREEZE','CASCADE','CORRINA','KIRRA','RAYMI','ROSITA','TERRAPIN']; // lista de la hoja
 const MOD_BASE=[['M01','DUNA AZUL'],['M02','DUNA AZUL'],['M03','DUNA AZUL'],['M04','DUNA AZUL'],['M05','DUNA AZUL'],['M06','DUNA AZUL'],['M09','VALLE AZUL 1'],['M10','VALLE AZUL 1'],['M11','VALLE AZUL 1'],['M12','VALLE AZUL 1'],['M13','VALLE AZUL 2'],['M14','VALLE AZUL 2'],['M19','VALLE AZUL 2'],['M15','VALLE AZUL 3'],['M16','VALLE AZUL 3'],['M17','VALLE AZUL 3'],['M18','VALLE AZUL 3'],['M20','VALLE AZUL 4']].map(([modulo,fundo])=>({modulo,fundo}));
-const API_DEF='https://script.google.com/macros/s/AKfycbxDGEiboTzCglD0jaEOoQdNX5KZVs8EwW0Tjn9BHCDODP2Kvm2ClcZravP5RRYKds9U/exec';
+const API_DEF='https://script.google.com/macros/s/AKfycbwhK53Cj21HYT7irdMvqonPvhEjAzo2ab-cJ4wytAtoUnIV0dpA8LHrt6GBrOcXWFx8/exec'; // proyecto "Pesos y descarte"
+// links viejos guardados en el celular: se cambian solos al nuevo
+if(/AKfycbxDGEiboTzCglD0jaEOoQdNX5KZVs8EwW0Tjn9BHCDODP2Kvm2ClcZravP5RRYKds9U/.test(ls('api')||''))ls('api',null);
 
 let API=new URLSearchParams(location.search).get('api')||ls('api')||API_DEF;
 let S={acopio:ls('acopio')||'',variedad:ls('variedad')||'',grupo:ls('grupo')||'',tipo:ls('tipo')||'Normal'};
