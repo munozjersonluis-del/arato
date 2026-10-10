@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2B2E83">
+<title>Tallas de EPP · Blueberries</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F1F2F8;--panel:#fff;--ink:#1C1E45;--ink2:#5E6285;--line:#D5D7E6;--accent:#2B2E83;--accent-ink:#fff;--soft:#E8E9F5;--leaf:#4E8A1F;--leaf-soft:#EDF5E3;--red:#C8321F;--red-soft:#FCEBE9}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12132A;--panel:#1C1E3B;--ink:#ECEDF8;--ink2:#A3A6C8;--line:#34375E;--accent:#9DA1F5;--accent-ink:#14163A;--soft:#26295A;--leaf:#8FD14F;--leaf-soft:#1F3318;--red:#FF7465;--red-soft:#3A1D1B}}
+:root[data-theme="dark"]{--bg:#12132A;--panel:#1C1E3B;--ink:#ECEDF8;--ink2:#A3A6C8;--line:#34375E;--accent:#9DA1F5;--accent-ink:#14163A;--soft:#26295A;--leaf:#8FD14F;--leaf-soft:#1F3318;--red:#FF7465;--red-soft:#3A1D1B}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 "Barlow",system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input{font:inherit;color:inherit}
+.wrap{max-width:520px;margin:0 auto;padding:14px 16px 110px}
+.top{display:flex;align-items:center;gap:12px;margin:4px 2px 14px}
+.logo{width:52px;height:52px;border-radius:14px;background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;font-size:28px;flex:none}
+.top h1{font:600 25px/1.05 "Barlow Semi Condensed",sans-serif;margin:0;color:var(--accent)}
+.top p{margin:2px 0 0;color:var(--ink2);font-size:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.sec{display:flex;align-items:center;gap:8px;font:600 18px "Barlow Semi Condensed",sans-serif;margin:0 0 10px;color:var(--accent)}
+.sec i{font-style:normal;width:26px;height:26px;border-radius:13px;background:var(--accent);color:var(--accent-ink);display:inline-flex;align-items:center;justify-content:center;font-size:15px}
+.in{width:100%;min-height:52px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);padding:10px 14px;font-size:17px}
+.in:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.list{margin-top:8px;max-height:46vh;overflow:auto;border-radius:12px}
+.p{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;border-top:1px solid var(--line);background:none;padding:11px 4px;cursor:pointer;min-height:54px}
+.p:first-child{border-top:0}
+.p b{font-weight:600;display:block;font-size:15.5px}
+.p small{color:var(--ink2);font-size:12.5px}
+.p .ok{margin-left:auto;font-size:12px;font-weight:600;color:var(--leaf);background:var(--leaf-soft);border-radius:20px;padding:3px 9px;white-space:nowrap}
+.sel{display:flex;align-items:center;gap:10px;background:var(--soft);border-radius:12px;padding:10px 12px}
+.sel b{flex:1;font-weight:600}
+.sel button{border:0;background:none;color:var(--accent);font-weight:600;cursor:pointer;padding:6px}
+.grid{display:grid;gap:8px}.g5{grid-template-columns:repeat(5,1fr)}
+.opt{border:1.5px solid var(--line);background:var(--bg);border-radius:12px;min-height:56px;font:600 22px "Barlow Semi Condensed",sans-serif;cursor:pointer}
+.opt[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.lbl{display:block;font-size:14px;font-weight:600;color:var(--ink2);margin:12px 0 6px}
+.lbl:first-child{margin-top:0}
+.hint{font-size:13px;color:var(--ink2);margin:6px 0 0}
+.err{color:var(--red);background:var(--red-soft);border-radius:12px;padding:10px 12px;font-weight:600;font-size:14.5px;margin:0 0 12px;display:none}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px))}
+.bar div{max-width:520px;margin:0 auto}
+.save{width:100%;min-height:58px;border:0;border-radius:14px;background:var(--leaf);color:#fff;font:600 21px "Barlow Semi Condensed",sans-serif;cursor:pointer}
+.save:disabled{opacity:.55}
+.link{background:none;border:0;color:var(--accent);text-decoration:underline;font-size:14.5px;cursor:pointer;padding:10px 0;font-weight:600}
+.done{text-align:center;padding:26px 16px}
+.done .big{font-size:56px;line-height:1}
+.done h2{font:600 24px "Barlow Semi Condensed",sans-serif;margin:10px 0 4px;color:var(--leaf)}
+.done p{margin:4px 0;color:var(--ink2)}
+.chipT{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.chipT .opt{font-size:18px}
+.hidden{display:none!important}
+.empty{color:var(--ink2);text-align:center;padding:14px 0;font-size:14.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><div class="logo" aria-hidden="true">🦺</div><div><h1>Tallas de EPP</h1><p>Zapatos y chaleco · Estibas</p></div></div>
+
+  <div id="form">
+    <section class="card" id="cQuien">
+      <div class="sec"><i>1</i>¿Quién eres?</div>
+      <div id="buscar">
+        <input class="in" id="q" placeholder="Escribe tu nombre o apellido" autocomplete="off" enterkeyhint="search">
+        <div class="list" id="list"><div class="empty">Cargando lista…</div></div>
+        <button class="link" id="noEsta" type="button">No estoy en la lista</button>
+      </div>
+      <div id="elegido" class="hidden">
+        <div class="sel"><b id="selNom"></b><button type="button" id="cambiar">Cambiar</button></div>
+        <div id="dniBox"><label class="lbl" for="dni">Últimos 4 dígitos de tu DNI</label>
+          <input class="in" id="dni" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="0000" style="letter-spacing:6px;font-size:22px;text-align:center">
+          <p class="hint">Solo para confirmar que eres tú.</p></div>
+        <p class="hint" id="yaTiene"></p>
+      </div>
+      <div id="nuevo" class="hidden">
+        <label class="lbl" for="nom">Tu nombre completo</label>
+        <input class="in" id="nom" autocomplete="name" style="text-transform:uppercase" placeholder="Nombres y apellidos">
+                <button class="link" id="volver" type="button">← Volver a la lista</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="sec"><i>2</i>Talla de zapato</div>
+      <div class="grid g5" id="zap"></div>
+    </section>
+
+    <section class="card">
+      <div class="sec"><i>3</i>Talla de chaleco</div>
+      <div class="grid g5" id="cha"></div>
+    </section>
+    <p class="err" id="err"></p>
+  </div>
+
+  <section class="card done hidden" id="done">
+    <div class="big">✅</div>
+    <h2 id="doneT">¡Listo!</h2>
+    <p id="doneN"></p>
+    <p id="doneD" style="font-weight:600;color:var(--ink)"></p>
+    <button class="link" id="otro" type="button">Registrar a otra persona</button>
+  </section>
+</div>
+<div class="bar" id="bar"><div><button class="save" id="btn" type="button">Enviar mis tallas</button></div></div>
+
+<script>
+const API_DEF='https://script.google.com/macros/s/AKfycbzYyTdMBlcvEv5vmCrFnSHD3lTeYAvG-PSnywvp_ZVlc65_orCpd6P1FniMeSfwW6skkQ/exec'; // proyecto "Tallas EPP"
+const API=new URLSearchParams(location.search).get('api')||API_DEF;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase();
+let personas=[],sel=null,modoNuevo=false,S={z:null,ch:null,tipo:'ESTIBA'},enviando=false;
+const ZAP=[36,37,38,39,40,41,42,43,44,45],CHA=['S','M','L','XL','XXL'];
+
+function press(box,v){box.querySelectorAll('.opt').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===String(v))))}
+$('zap').innerHTML=ZAP.map(z=>`<button type="button" class="opt" data-v="${z}">${z}</button>`).join('');
+$('cha').innerHTML=CHA.map(c=>`<button type="button" class="opt" data-v="${c}">${c}</button>`).join('');
+$('zap').onclick=e=>{const b=e.target.closest('.opt');if(!b)return;S.z=+b.dataset.v;press($('zap'),S.z);err('')};
+$('cha').onclick=e=>{const b=e.target.closest('.opt');if(!b)return;S.ch=b.dataset.v;press($('cha'),S.ch);err('')};
+
+function err(m){const e=$('err');e.textContent=m;e.style.display=m?'block':'none';if(m)e.scrollIntoView({behavior:'smooth',block:'center'})}
+function render(){
+  const q=norm($('q').value.trim());
+  const f=personas.filter(p=>!q||q.split(/\s+/).every(w=>norm(p.n).includes(w)));
+  $('list').innerHTML=f.length?f.map(p=>`<button type="button" class="p" data-c="${esc(p.c)}"><span><b>${esc(p.n)}</b><small>Grupo ${esc(p.g)}</small></span>${p.r?`<span class="ok">✓ Zap ${esc(p.r.z)} · ${esc(p.r.ch)}</span>`:''}</button>`).join(''):'<div class="empty">No encontré ese nombre. Prueba solo con tu apellido o toca "No estoy en la lista".</div>';
+}
+$('q').oninput=render;
+$('list').onclick=e=>{const b=e.target.closest('.p');if(!b)return;elegir(personas.find(p=>p.c===b.dataset.c))};
+function elegir(p){
+  sel=p;modoNuevo=false;$('buscar').classList.add('hidden');$('nuevo').classList.add('hidden');$('elegido').classList.remove('hidden');
+  $('selNom').textContent=p.n;$('dniBox').classList.toggle('hidden',!p.v);$('dni').value='';
+  $('yaTiene').textContent=p.r?`Ya registraste zapato ${p.r.z} y chaleco ${p.r.ch}. Si envías de nuevo, se cambia.`:'';
+  if(p.r){S.z=+p.r.z||null;S.ch=p.r.ch||null;press($('zap'),S.z);press($('cha'),S.ch)}
+  err('');if(p.v)setTimeout(()=>$('dni').focus(),50);
+}
+$('cambiar').onclick=$('volver').onclick=()=>{sel=null;modoNuevo=false;$('elegido').classList.add('hidden');$('nuevo').classList.add('hidden');$('buscar').classList.remove('hidden');$('q').focus()};
+$('noEsta').onclick=()=>{sel=null;modoNuevo=true;$('buscar').classList.add('hidden');$('nuevo').classList.remove('hidden');$('nom').focus()};
+$('dni').oninput=()=>{$('dni').value=$('dni').value.replace(/\D/g,'').slice(0,4);err('')};
+
+async function cargar(){
+  if(!API){$('list').innerHTML='<div class="empty">Falta conectar el formulario a la hoja.</div>';return}
+  try{const r=await fetch(API);const j=await r.json();if(!j.ok)throw new Error(j.error);personas=j.personas.sort((a,b)=>a.n.localeCompare(b.n));render()}
+  catch(e){$('list').innerHTML='<div class="empty">No se pudo cargar la lista. Revisa tu señal y vuelve a abrir el link.</div>'}
+}
+$('btn').onclick=async()=>{
+  if(enviando)return;
+  let body;
+  if(modoNuevo){const n=$('nom').value.trim();if(n.length<5)return err('Escribe tu nombre completo.');body={codigo:'NUEVO',nombre:n}}
+  else{if(!sel)return err('Primero busca y toca tu nombre.');if(sel.v&&$('dni').value.length!==4)return err('Escribe los 4 últimos dígitos de tu DNI.');body={codigo:sel.c,dni4:$('dni').value}}
+  if(!S.z)return err('Elige tu talla de zapato.');if(!S.ch)return err('Elige tu talla de chaleco.');
+  body.zapato=S.z;body.chaleco=S.ch;
+  enviando=true;$('btn').disabled=true;$('btn').textContent='Enviando…';
+  try{
+    const r=await fetch(API,{method:'POST',body:JSON.stringify(body)});const j=await r.json();
+    if(!j.ok){err(j.error||'No se pudo guardar.');return}
+    $('form').classList.add('hidden');$('bar').classList.add('hidden');$('done').classList.remove('hidden');
+    $('doneT').textContent=j.actualizado?'¡Tallas actualizadas!':'¡Listo, quedó registrado!';
+    $('doneN').textContent=j.nombre;$('doneD').textContent=`Zapato ${S.z} · Chaleco ${S.ch}`;
+    if(sel){sel.r={z:S.z,ch:S.ch}}
+  }catch(e){err('Sin señal: no se envió. Inténtalo de nuevo.')}
+  finally{enviando=false;$('btn').disabled=false;$('btn').textContent='Enviar mis tallas'}
+};
+$('otro').onclick=()=>{S={z:null,ch:null,tipo:'ESTIBA'};press($('zap'),'');press($('cha'),'');$('nom').value='';$('q').value='';
+  $('done').classList.add('hidden');$('form').classList.remove('hidden');$('bar').classList.remove('hidden');$('cambiar').onclick();render()};
+cargar();
+</script>
+</body>
+</html>

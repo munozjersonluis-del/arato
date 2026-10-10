@@ -9,6 +9,7 @@
     { "source": "/stock", "destination": "/stock-bins.html" },
     { "source": "/despacho", "destination": "/cosecha-despacho.html" },
     { "source": "/maquinaria", "destination": "/control-maquinaria.html" },
-    { "source": "/((?!api/|fichas|menu|guia|reporte|acopio|cosecha|stock|despacho|maquinaria).*)", "destination": "/index.html" }
+    { "source": "/tallas", "destination": "/tallas-epp.html" },
+    { "source": "/((?!api/|fichas|menu|guia|reporte|acopio|cosecha|stock|despacho|maquinaria|tallas).*)", "destination": "/index.html" }
   ]
 }
