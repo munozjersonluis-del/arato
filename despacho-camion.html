@@ -56,6 +56,18 @@ input{font:inherit;color:var(--tx)}
 .lh h3{margin:0;font-size:15px;color:var(--nv)}
 .lh span{font-size:12px;color:var(--mu);font-weight:700}
 .sel{outline:3px solid var(--or);border-radius:8px}
+.nk{cursor:pointer;caret-color:transparent}
+.hb.act{border-color:var(--or);box-shadow:0 0 0 3px #E07B3955}
+.kg.act{border-color:var(--or);box-shadow:0 0 0 3px #E07B3955}
+#pad{position:fixed;left:0;right:0;bottom:0;background:#DDE1EC;padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px));z-index:15;transform:translateY(110%);transition:transform .18s;box-shadow:0 -4px 14px #0002}
+#pad.on{transform:translateY(0)}
+#pad .g{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;max-width:520px;margin:0 auto}
+#pad button{min-height:54px;border:0;border-radius:10px;background:#fff;font-size:24px;font-weight:800;color:var(--tx);touch-action:manipulation}
+#pad button:active{background:#C9CFDF}
+#pad .f{background:#F3F5FA;font-size:18px;color:var(--mu)}
+#pad .nx{background:var(--nv);color:#fff;font-size:16px;grid-row:span 2}
+#pad .tt{grid-column:1/-1;text-align:center;font-size:12px;font-weight:800;color:var(--nv);padding:2px 0}
+body.padon main{padding-bottom:300px}
 #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(120px);background:var(--gr);color:#fff;padding:12px 18px;border-radius:12px;font-weight:800;transition:.25s;z-index:20;max-width:90%;text-align:center}
 #toast.on{transform:translateX(-50%) translateY(0)}
 #net{font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;background:#ffffff22}
@@ -105,12 +117,12 @@ input{font:inherit;color:var(--tx)}
       <div class="addrow" id="addRow"><input id="plIn" class="in" placeholder="ABC-123" maxlength="10" style="text-transform:uppercase"><button class="opt" id="plOk" style="flex:0 0 70px" aria-pressed="true">OK</button></div>
       <div class="l">Horas</div>
       <div class="hrs">
-        <label class="hb" id="hbIni"><span>INICIO COSECHA</span><input type="text" inputmode="numeric" maxlength="5" placeholder="--:--" class="tm" id="ini"></label>
-        <label class="hb"><span>FIN COSECHA</span><input type="text" inputmode="numeric" maxlength="5" placeholder="--:--" class="tm" id="fin"></label>
-        <label class="hb"><span>SALIDA CAMIÓN</span><input type="text" inputmode="numeric" maxlength="5" placeholder="--:--" class="tm" id="sal"></label>
+        <label class="hb" id="hbIni"><span>INICIO COSECHA</span><input type="text" inputmode="none" readonly placeholder="--:--" class="tm nk" id="ini"></label>
+        <label class="hb"><span>FIN COSECHA</span><input type="text" inputmode="none" readonly placeholder="--:--" class="tm nk" id="fin"></label>
+        <label class="hb"><span>SALIDA CAMIÓN</span><input type="text" inputmode="none" readonly placeholder="--:--" class="tm nk" id="sal"></label>
       </div>
       <div class="l">Kilos</div>
-      <input id="kg" class="in kg" type="number" inputmode="numeric" min="0" step="1" placeholder="0">
+      <input id="kg" class="in kg nk" type="text" inputmode="none" readonly placeholder="0">
       <div class="l">Observación</div>
       <input id="obs" class="in" maxlength="120">
       <div class="err" id="err"></div>
@@ -129,6 +141,12 @@ input{font:inherit;color:var(--tx)}
     <div id="res"></div>
   </section>
 </main>
+<div id="pad"><div class="g"><div class="tt" id="padT"></div>
+<button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button><button data-k="B" class="f">⌫</button>
+<button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button><button data-k="N" class="nx" id="padN">Sig. →</button>
+<button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
+<button data-k="C" class="f">C</button><button data-k="0">0</button><button data-k="X" class="f">✕</button>
+</div></div>
 <div id="toast"></div>
 
 <script>
@@ -188,9 +206,9 @@ function clearErr(){$('err').style.display='none';document.querySelectorAll('.ba
 function fail(m,id){$('err').textContent=m;$('err').style.display='block';const el=id&&$(id);if(el){(el.closest('.hb')||el).classList.add('bad');}}
 function resetForm(){S.edit=null;S.placa=null;['fin','sal','kg','obs'].forEach(i=>$(i).value='');$('ini').value='';$('save').textContent='💾 GUARDAR';$('cancel').classList.add('hidden');$('del').classList.add('hidden');clearErr();renderReg()}
 function save(){
-  clearErr();
+  activar(null);clearErr();
   ['ini','fin','sal'].forEach(i=>{const t=normT($(i).value);if(t)$(i).value=t});
-  const r={id:S.edit||('c'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)),fecha:HOY,acopio:S.acopio,placa:S.placa,inicio:$('ini').value,fin:$('fin').value,salida:$('sal').value,kilos:Math.round(+$('kg').value),obs:$('obs').value.trim(),t:Date.now()};
+  const r={id:S.edit||('c'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)),fecha:HOY,acopio:S.acopio,placa:S.placa,inicio:$('ini').value,fin:$('fin').value,salida:$('sal').value,kilos:Math.round(+$('kg').value.replace(/\D/g,'')),obs:$('obs').value.trim(),t:Date.now()};
   if(!r.placa)return fail('Elige la placa','placas');
   for(const[i,n]of[['ini','inicio'],['fin','fin'],['sal','salida']])if(r[n]&&normT(r[n])===null)return fail('Hora no válida',i);
   if(!r.inicio)return fail('Falta inicio de cosecha','ini');
@@ -209,7 +227,7 @@ function save(){
 }
 function editar(id){
   const r=delDia().find(x=>x.id===id);if(!r)return;
-  S.edit=id;S.acopio=r.acopio;S.placa=r.placa;$('ini').value=r.inicio;$('fin').value=r.fin;$('sal').value=r.salida;$('kg').value=r.kilos;$('obs').value=r.obs||'';
+  S.edit=id;S.acopio=r.acopio;S.placa=r.placa;$('ini').value=r.inicio;$('fin').value=r.fin;$('sal').value=r.salida;$('kg').value=kgf(r.kilos);$('obs').value=r.obs||'';
   $('save').textContent='💾 ACTUALIZAR';$('cancel').classList.remove('hidden');$('del').classList.remove('hidden');$('hbIni').classList.remove('auto');
   press($('acopio'),S.acopio);renderPlacas();renderList();
   window.scrollTo({top:0,behavior:'smooth'});
@@ -316,7 +334,29 @@ $('plOk').onclick=addPlaca;$('plIn').onkeydown=e=>{if(e.key==='Enter')addPlaca()
 $('ini').addEventListener('input',()=>$('hbIni').classList.remove('auto'));
 function hhmm(v){const d=String(v).replace(/\D/g,'').slice(0,4);if(d.length<=2)return d;return d.slice(0,d.length-2)+':'+d.slice(-2)}
 function normT(v){const d=String(v).replace(/\D/g,'');if(!d)return'';const n=d.length<=2?d+'00':d;const h=+n.slice(0,n.length-2),m=+n.slice(-2);if(h>23||m>59)return null;return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')}
-document.querySelectorAll('.tm').forEach(el=>{el.addEventListener('input',()=>{el.value=hhmm(el.value)});el.addEventListener('blur',()=>{const t=normT(el.value);if(t===null){el.closest('.hb').classList.add('bad')}else el.value=t})});
+/* teclado numérico propio (no abre el teclado del celular) */
+const ORD=['ini','fin','sal','kg'],TIT={ini:'INICIO COSECHA',fin:'FIN COSECHA',sal:'SALIDA CAMIÓN',kg:'KILOS'};
+let ACT=null,FRESH=false;
+function box(id){return id==='kg'?$('kg'):$(id).closest('.hb')}
+function cerrarT(){if(ACT&&ACT!=='kg'){const t=normT($(ACT).value);if(t===null)box(ACT).classList.add('bad');else $(ACT).value=t}}
+function activar(id){cerrarT();ORD.forEach(i=>box(i).classList.remove('act'));ACT=id;FRESH=true;
+  if(!id){$('pad').classList.remove('on');document.body.classList.remove('padon');return}
+  box(id).classList.add('act');box(id).classList.remove('bad');$('padT').textContent=TIT[id];$('padN').textContent=id==='kg'?'OK ✓':'Sig. →';
+  $('pad').classList.add('on');document.body.classList.add('padon');
+  setTimeout(()=>box(id).scrollIntoView({behavior:'smooth',block:'center'}),60)}
+function tecla(k){
+  if(!ACT)return;const el=$(ACT);let d=el.value.replace(/\D/g,'');
+  if(k==='N'){const i=ORD.indexOf(ACT);activar(i<ORD.length-1?ORD[i+1]:null);return}
+  if(k==='X'){activar(null);return}
+  if(k==='C')d='';else if(k==='B')d=FRESH?'':d.slice(0,-1);else{if(FRESH)d='';d=(d+k).slice(0,ACT==='kg'?5:4)}
+  FRESH=false;
+  el.value=ACT==='kg'?(d?kgf(+d):''):hhmm(d);
+  if(ACT==='ini')$('hbIni').classList.remove('auto');clearErr();
+  if(ACT!=="kg"&&d.length===4&&normT(d)){const i=ORD.indexOf(ACT);activar(ORD[i+1])}
+}
+ORD.forEach(i=>$(i).addEventListener('click',e=>{e.preventDefault();$(i).blur();activar(i)}));
+$('pad').addEventListener('click',e=>{const b=e.target.closest('button');if(b)tecla(b.dataset.k)});
+document.addEventListener('click',e=>{if(ACT&&!e.target.closest('#pad')&&!e.target.closest('.nk')&&!e.target.closest('.hb'))activar(null)});
 ['ini','fin','sal','kg'].forEach(i=>$(i).addEventListener('input',clearErr));
 $('save').onclick=save;$('cancel').onclick=resetForm;
 $('list').onclick=e=>{const li=e.target.closest('.li');if(!li)return;editar(li.dataset.id)};
