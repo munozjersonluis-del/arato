@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#14246B">
+<title>Salida de camión</title>
+<style>
+:root{--nv:#14246B;--gr:#1E7145;--rd:#C0321F;--or:#E07B39;--bg:#EEF0F6;--ln:#d6d9e4;--tx:#1C1E45;--mu:#667085}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--tx);-webkit-tap-highlight-color:transparent}
+header{background:var(--nv);color:#fff;padding:14px 16px 0;position:sticky;top:0;z-index:5}
+.hd{display:flex;justify-content:space-between;align-items:center;max-width:1200px;margin:0 auto}
+.hd b{font-size:18px}.hd small{opacity:.8;font-size:12px}
+.tabs{display:flex;gap:4px;max-width:1200px;margin:10px auto 0}
+.tab{flex:1;max-width:200px;padding:10px;border:0;border-radius:10px 10px 0 0;background:#ffffff22;color:#fff;font-weight:700;font-size:14px}
+.tab[aria-pressed=true]{background:var(--bg);color:var(--nv)}
+main{padding:14px 16px 90px;max-width:1200px;margin:0 auto}
+.card{background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 1px 3px #0001}
+.reg{max-width:520px;margin:0 auto}
+.l{font-size:11px;font-weight:700;color:var(--mu);margin:12px 0 6px;text-transform:uppercase;letter-spacing:.3px}
+.l:first-child{margin-top:0}
+.seg{display:flex;gap:6px}
+.opt{flex:1;padding:12px 6px;border-radius:10px;background:#fff;border:2px solid var(--ln);font-weight:700;font-size:14px;color:var(--tx)}
+.opt[aria-pressed=true]{background:var(--nv);border-color:var(--nv);color:#fff}
+.pls{display:flex;flex-wrap:wrap;gap:6px}
+.pl{position:relative;padding:12px 14px;border-radius:10px;background:#fff;border:2px solid var(--ln);font-weight:700;font-size:14px;color:var(--tx)}
+.pl[aria-pressed=true]{background:var(--gr);border-color:var(--gr);color:#fff}
+.pl .x{position:absolute;top:-8px;right:-8px;width:20px;height:20px;border-radius:50%;background:var(--rd);color:#fff;font-size:12px;line-height:20px;text-align:center;display:none}
+.edp .pl .x{display:block}
+.pl.add{border-style:dashed;color:var(--mu)}
+.addrow{display:none;gap:6px;margin-top:8px}.addrow.on{display:flex}
+input{font:inherit;color:var(--tx)}
+.in{width:100%;padding:12px;border:2px solid var(--ln);border-radius:10px;font-size:16px;background:#fff}
+.in:focus{outline:0;border-color:var(--nv)}
+.hrs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.hb{border:2px solid var(--nv);border-radius:10px;padding:6px 4px;text-align:center;background:#fff}
+.hb span{display:block;font-size:9.5px;font-weight:700;color:var(--mu)}
+.hb input{width:100%;min-width:0;border:0;font-size:22px;font-weight:800;text-align:center;background:transparent;padding:4px 0}
+.hb.auto{border-color:var(--or);background:#FFF4EA}
+.kg{font-size:26px;font-weight:800;text-align:center}
+.btn{width:100%;margin-top:14px;padding:16px;border:0;border-radius:12px;background:var(--gr);color:#fff;font-weight:800;font-size:17px}
+.btn.sec{background:#fff;color:var(--mu);border:2px solid var(--ln);margin-top:8px;padding:12px;font-size:14px}
+.btn:disabled{opacity:.6}
+.err{display:none;margin-top:10px;background:#FDE8E5;color:var(--rd);padding:10px;border-radius:10px;font-weight:700;font-size:13px}
+.bad{border-color:var(--rd)!important}
+.li{display:grid;grid-template-columns:30px 1fr auto;gap:8px;align-items:center;padding:10px 4px;border-bottom:1px solid #eef0f4}
+.li:last-child{border-bottom:0}
+.li .n{width:28px;height:28px;border-radius:50%;background:var(--nv);color:#fff;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center}
+.li b{font-size:14px}.li small{display:block;color:var(--mu);font-size:12px;margin-top:2px}
+.li .r{text-align:right;font-weight:800;font-size:14px}
+.li .r small{font-weight:700}
+.ok{color:var(--gr)}.at{color:var(--rd)}
+.pend{opacity:.6}
+.lh{display:flex;justify-content:space-between;align-items:center}
+.lh h3{margin:0;font-size:15px;color:var(--nv)}
+.lh span{font-size:12px;color:var(--mu);font-weight:700}
+.sel{outline:3px solid var(--or);border-radius:8px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(120px);background:var(--gr);color:#fff;padding:12px 18px;border-radius:12px;font-weight:800;transition:.25s;z-index:20;max-width:90%;text-align:center}
+#toast.on{transform:translateX(-50%) translateY(0)}
+#net{font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;background:#ffffff22}
+.hidden{display:none!important}
+/* resumen */
+.rtop{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+.rtop input{max-width:180px}
+.cmp{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.cmp canvas{width:100%;height:150px}
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pn{border-radius:16px;padding:10px;border:3px solid var(--nv);background:#E9ECF7}
+.pn.v3{border-color:#7B1FA2;background:#F3E8F7}
+.pn h2{margin:0 0 10px;background:var(--nv);color:#fff;border-radius:10px;padding:10px 12px;font-size:17px}
+.pn.v3 h2{background:#7B1FA2}
+.kp{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.kp div{background:#fff;border-radius:10px;padding:10px 8px;border-bottom:4px solid var(--nv)}
+.pn.v3 .kp div{border-bottom-color:#7B1FA2}
+.kp b{display:block;font-size:20px}.kp small{font-size:10px;font-weight:700;color:var(--mu)}
+.kp .m b{color:var(--rd)}.kp div.m{border-bottom-color:var(--rd)!important}
+.kp .g b{color:var(--gr)}.kp div.g{border-bottom-color:var(--gr)!important}
+.ch{background:#fff;border-radius:10px;padding:10px;margin-bottom:8px}
+.ch h4{margin:0 0 6px;font-size:13px;color:var(--nv)}
+.ch canvas{width:100%;display:block}
+.empty{text-align:center;color:var(--mu);padding:40px 10px;font-weight:700}
+@media (max-width:860px){.panels{grid-template-columns:1fr}.cmp{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:420px){.kp{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<header>
+  <div class="hd"><div><b>🚚 Salida de camión</b><br><small id="hoy"></small></div><span id="net"></span></div>
+  <div class="tabs" id="tabs"><button class="tab" data-t="reg" aria-pressed="true">Registro</button><button class="tab" data-t="res" aria-pressed="false">Resumen</button></div>
+</header>
+<main>
+  <section id="setup" class="card reg hidden">
+    <div class="l">Link</div>
+    <input id="apiIn" class="in" placeholder="https://script.google.com/macros/s/…/exec">
+    <button class="btn" id="apiOk">Guardar</button>
+  </section>
+
+  <section id="vReg" class="reg">
+    <div class="card" id="form">
+      <div class="l">Acopio</div>
+      <div class="seg" id="acopio"><button class="opt" data-v="VALLE AZUL 1">VALLE AZUL 1</button><button class="opt" data-v="VALLE AZUL 3">VALLE AZUL 3</button></div>
+      <div class="lh" style="margin-top:12px"><div class="l" style="margin:0">Placa</div><span id="edPl" style="cursor:pointer">✏️</span></div>
+      <div class="pls" id="placas" style="margin-top:6px"></div>
+      <div class="addrow" id="addRow"><input id="plIn" class="in" placeholder="ABC-123" maxlength="10" style="text-transform:uppercase"><button class="opt" id="plOk" style="flex:0 0 70px" aria-pressed="true">OK</button></div>
+      <div class="l">Horas</div>
+      <div class="hrs">
+        <label class="hb" id="hbIni"><span>INICIO COSECHA</span><input type="text" inputmode="numeric" maxlength="5" placeholder="--:--" class="tm" id="ini"></label>
+        <label class="hb"><span>FIN COSECHA</span><input type="text" inputmode="numeric" maxlength="5" placeholder="--:--" class="tm" id="fin"></label>
+        <label class="hb"><span>SALIDA CAMIÓN</span><input type="text" inputmode="numeric" maxlength="5" placeholder="--:--" class="tm" id="sal"></label>
+      </div>
+      <div class="l">Kilos</div>
+      <input id="kg" class="in kg" type="number" inputmode="numeric" min="0" step="1" placeholder="0">
+      <div class="l">Observación</div>
+      <input id="obs" class="in" maxlength="120">
+      <div class="err" id="err"></div>
+      <button class="btn" id="save">💾 GUARDAR</button>
+      <button class="btn sec hidden" id="cancel">Cancelar</button>
+      <button class="btn sec hidden" id="del" style="color:#C0321F;border-color:#F3C4BC">🗑️ Borrar viaje</button>
+    </div>
+    <div class="card">
+      <div class="lh"><h3 id="lTit">Hoy</h3><span id="lTot"></span></div>
+      <div id="list"></div>
+    </div>
+  </section>
+
+  <section id="vRes" class="hidden">
+    <div class="rtop"><input type="date" id="rFecha" class="in"><button class="opt" id="rReload" style="flex:0 0 52px" aria-pressed="false">↻</button></div>
+    <div id="res"></div>
+  </section>
+</main>
+<div id="toast"></div>
+
+<script>
+const API_DEF='';
+const K='camion_';
+const META=60, R_INI=750, R_FIN=810;
+const ACOPIOS=['VALLE AZUL 1','VALLE AZUL 3'];
+const COLS=['#14246B','#1E7145','#E07B39','#0E8A94','#7B1FA2','#B8860B','#C0321F','#5B6B8C'];
+const $=id=>document.getElementById(id);
+function ls(k,v){try{if(v===undefined)return localStorage.getItem(K+k);if(v===null)localStorage.removeItem(K+k);else localStorage.setItem(K+k,v)}catch(e){return null}}
+function lsj(k,d){try{return JSON.parse(ls(k))??d}catch(e){return d}}
+function today(){const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function fmt(d){const[y,m,x]=String(d).split('-');return`${x}/${m}/${y}`}
+function mins(t){const m=String(t||'').match(/^(\d{1,2}):(\d{2})/);return m?+m[1]*60+ +m[2]:null}
+function kgf(n){return Math.round(n).toLocaleString('en-US')}
+function toast(m,c){const t=$('toast');t.textContent=m;t.style.background=c||'#1E7145';t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),2200)}
+let API=ls('api')||API_DEF;
+const HOY=today();
+let S={acopio:ls('acopio')||ACOPIOS[0],placa:null,edit:null};
+let srv=lsj('srv_'+HOY,[]);           // registros del día traídos de la hoja
+let pend=lsj('pend',[]);              // por enviar
+// limpiar datos de días anteriores (las placas y la lista empiezan de cero cada día)
+try{Object.keys(localStorage).forEach(k=>{if(k.startsWith(K)&&/_(\d{4}-\d{2}-\d{2})$/.test(k)&&!k.endsWith(HOY))localStorage.removeItem(k)})}catch(e){}
+
+/* ---------- datos del día ---------- */
+function delDia(){
+  const m=new Map();srv.forEach(r=>m.set(r.id,{...r}));
+  pend.filter(p=>p.fecha===HOY).forEach(p=>{if(p.borrar)m.delete(p.id);else m.set(p.id,{...m.get(p.id),...p,_p:1})});
+  return [...m.values()];
+}
+function calc(rows){ // mismo cálculo que la hoja
+  const out={};ACOPIOS.forEach(a=>out[a]=[]);
+  rows.forEach(r=>{(out[r.acopio]=out[r.acopio]||[]).push(r)});
+  Object.values(out).forEach(a=>{a.sort((x,y)=>(mins(x.salida)??9999)-(mins(y.salida)??9999));let prev=null;const v={};
+    a.forEach((r,i)=>{const s=mins(r.salida);r.n=i+1;r.me=null;if(prev!=null&&s!=null){const c=(prev<R_FIN&&s>R_FIN)?R_FIN-R_INI:0;r.me=Math.max(0,s-prev-c)}if(s!=null)prev=s;v[r.placa]=(v[r.placa]||0)+1;r.vu=v[r.placa]})});
+  return out;
+}
+function placasDia(){const set=new Set(lsj('placas_'+HOY,[]));delDia().forEach(r=>set.add(r.placa));return [...set]}
+
+/* ---------- registro ---------- */
+function press(box,v){box.querySelectorAll('.opt').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===v)))}
+function renderPlacas(){
+  const ps=placasDia();
+  $('placas').innerHTML=ps.map(p=>`<button class="pl" data-v="${p}" aria-pressed="${p===S.placa}">${p}<span class="x" data-x="${p}">×</span></button>`).join('')+`<button class="pl add" id="plAdd">+ placa</button>`;
+}
+function ultimoFin(){const a=calc(delDia())[S.acopio]||[];const l=a.filter(r=>!S.edit||r.id!==S.edit).slice(-1)[0];return l?l.fin:''}
+function autoIni(){if(S.edit)return;const f=ultimoFin();$('ini').value=f||$('ini').value;$('hbIni').classList.toggle('auto',!!f)}
+function renderList(){
+  const a=(calc(delDia())[S.acopio]||[]).slice().reverse();
+  $('lTit').textContent='Hoy · '+S.acopio.replace('VALLE AZUL','Valle Azul');
+  $('lTot').textContent=a.length?`${a.length} viajes · ${kgf(a.reduce((s,r)=>s+(+r.kilos||0),0))} kg`:'';
+  $('list').innerHTML=a.length?a.map(r=>`<div class="li ${r._p?'pend':''} ${S.edit===r.id?'sel':''}" data-id="${r.id}"><div class="n">${r.n}</div><div><b>${r.placa}</b> <small>${r.inicio} → ${r.fin} · sale ${r.salida}${r.obs?' · '+esc(r.obs):''}</small></div><div class="r">${kgf(+r.kilos)} kg<small class="${r.me==null?'':r.me<=META?'ok':'at'}">${r.me==null?(r._p?'⏳':''):r.me+' min'}${r._p&&r.me!=null?' ⏳':''}</small></div></div>`).join(''):'<div class="empty" style="padding:18px">—</div>';
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function renderReg(){press($('acopio'),S.acopio);renderPlacas();renderList();autoIni()}
+function clearErr(){$('err').style.display='none';document.querySelectorAll('.bad').forEach(e=>e.classList.remove('bad'))}
+function fail(m,id){$('err').textContent=m;$('err').style.display='block';const el=id&&$(id);if(el){(el.closest('.hb')||el).classList.add('bad');}}
+function resetForm(){S.edit=null;S.placa=null;['fin','sal','kg','obs'].forEach(i=>$(i).value='');$('ini').value='';$('save').textContent='💾 GUARDAR';$('cancel').classList.add('hidden');$('del').classList.add('hidden');clearErr();renderReg()}
+function save(){
+  clearErr();
+  ['ini','fin','sal'].forEach(i=>{const t=normT($(i).value);if(t)$(i).value=t});
+  const r={id:S.edit||('c'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)),fecha:HOY,acopio:S.acopio,placa:S.placa,inicio:$('ini').value,fin:$('fin').value,salida:$('sal').value,kilos:Math.round(+$('kg').value),obs:$('obs').value.trim(),t:Date.now()};
+  if(!r.placa)return fail('Elige la placa','placas');
+  for(const[i,n]of[['ini','inicio'],['fin','fin'],['sal','salida']])if(r[n]&&normT(r[n])===null)return fail('Hora no válida',i);
+  if(!r.inicio)return fail('Falta inicio de cosecha','ini');
+  if(!r.fin)return fail('Falta fin de cosecha','fin');
+  if(!r.salida)return fail('Falta salida del camión','sal');
+  if(mins(r.fin)<mins(r.inicio))return fail('Fin de cosecha antes del inicio','fin');
+  if(mins(r.salida)<mins(r.fin))return fail('Salida antes del fin de cosecha','sal');
+  if(!(r.kilos>0))return fail('Falta kilos','kg');
+  if(r.kilos>40000)return fail('Kilos muy alto','kg');
+  const dup=delDia().find(x=>x.id!==r.id&&x.acopio===r.acopio&&x.placa===r.placa&&x.salida===r.salida);
+  if(dup&&!confirm(`${r.placa} ya tiene salida ${r.salida}. ¿Guardar otra vez?`))return;
+  pend=pend.filter(p=>p.id!==r.id);pend.push(r);ls('pend',JSON.stringify(pend));
+  const ed=!!S.edit;
+  toast(ed?'✅ Actualizado':`✅ Guardado · ${r.placa} · ${kgf(r.kilos)} kg`);
+  resetForm();flush();
+}
+function editar(id){
+  const r=delDia().find(x=>x.id===id);if(!r)return;
+  S.edit=id;S.acopio=r.acopio;S.placa=r.placa;$('ini').value=r.inicio;$('fin').value=r.fin;$('sal').value=r.salida;$('kg').value=r.kilos;$('obs').value=r.obs||'';
+  $('save').textContent='💾 ACTUALIZAR';$('cancel').classList.remove('hidden');$('del').classList.remove('hidden');$('hbIni').classList.remove('auto');
+  press($('acopio'),S.acopio);renderPlacas();renderList();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function borrar(id){
+  const r=delDia().find(x=>x.id===id);if(!r)return;
+  if(!confirm(`¿Borrar viaje ${r.placa} · salida ${r.salida}?`))return;
+  pend=pend.filter(p=>p.id!==id);
+  if(srv.some(x=>x.id===id))pend.push({id,fecha:HOY,acopio:r.acopio,borrar:true,t:Date.now()});
+  ls('pend',JSON.stringify(pend));resetForm();toast('🗑️ Borrado','#C0321F');flush();
+}
+
+/* ---------- servidor ---------- */
+let enviando=false;
+function net(){const n=pend.length;$('net').textContent=!API?'':n?`⏳ ${n} por enviar`:navigator.onLine?'● en línea':'○ sin señal';}
+async function flush(){
+  net();if(!API||enviando||!pend.length)return;enviando=true;
+  const lote=pend.slice(0,20);
+  try{
+    const res=await fetch(API,{method:'POST',body:JSON.stringify({fecha:HOY,registros:lote})});
+    const j=await res.json();if(!j.ok)throw new Error(j.error);
+    const ids=new Set(lote.map(x=>x.id+'|'+x.t));pend=pend.filter(p=>!ids.has(p.id+'|'+p.t));ls('pend',JSON.stringify(pend));
+    srv=j.registros||srv;ls('srv_'+HOY,JSON.stringify(srv));
+  }catch(e){}
+  enviando=false;net();renderReg();if(VIEW==='res'&&$('rFecha').value===HOY)renderRes(delDia());
+  if(pend.length&&navigator.onLine)setTimeout(flush,8000);
+}
+async function load(){
+  if(!API)return;
+  try{const r=await fetch(API+'?fecha='+HOY);const j=await r.json();if(j.ok){srv=j.registros;ls('srv_'+HOY,JSON.stringify(srv))}}catch(e){}
+  renderReg();flush();
+}
+
+/* ---------- resumen ---------- */
+let VIEW='reg';
+function setTab(t){VIEW=t;$('tabs').querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.t===t)));$('vReg').classList.toggle('hidden',t!=='reg');$('vRes').classList.toggle('hidden',t!=='res');if(t==='res')loadRes()}
+async function loadRes(){
+  const f=$('rFecha').value||HOY;
+  if(f===HOY){renderRes(delDia());}
+  if(!API)return;
+  try{const r=await fetch(API+'?fecha='+f);const j=await r.json();if(j.ok){if(f===HOY){srv=j.registros;ls('srv_'+HOY,JSON.stringify(srv));renderRes(delDia())}else renderRes(j.registros)}}catch(e){if(f!==HOY)$('res').innerHTML='<div class="card empty">Sin conexión</div>'}
+}
+function stats(a){
+  const me=a.map(r=>r.me).filter(v=>v!=null);
+  return{n:a.length,prom:me.length?Math.round(me.reduce((s,v)=>s+v,0)/me.length):0,max:me.length?Math.max(...me):0,kg:a.reduce((s,r)=>s+(+r.kilos||0),0)};
+}
+function renderRes(rows){
+  const g=calc(rows.map(r=>({...r})));
+  const con=ACOPIOS.filter(a=>(g[a]||[]).length);
+  if(!con.length){$('res').innerHTML='<div class="card empty">Sin despachos</div>';return}
+  const st={};con.forEach(a=>st[a]=stats(g[a]));
+  let h='';
+  if(con.length>1)h+=`<div class="card"><div class="cmp"><canvas id="c0"></canvas><canvas id="c1"></canvas><canvas id="c2"></canvas><canvas id="c3"></canvas></div></div>`;
+  h+='<div class="panels">'+con.map((a,i)=>{const s=st[a];return`<div class="pn ${a.endsWith('3')?'v3':''}"><h2>${a}</h2>
+  <div class="kp"><div><b>${s.n}</b><small>DESPACHOS</small></div><div><b>${s.prom} min</b><small>ENTRE DESPACHOS</small></div><div class="m"><b>${s.max} min</b><small>MÁXIMO</small></div><div class="g"><b>${kgf(s.kg)}</b><small>KILOS</small></div></div>
+  <div class="ch"><h4>⏱ Minutos entre despachos</h4><canvas id="m${i}"></canvas></div>
+  <div class="ch"><h4>⚖️ Kilos por despacho</h4><canvas id="k${i}"></canvas></div>
+  <div class="ch"><h4>🔁 Viajes por camión</h4><canvas id="v${i}"></canvas></div></div>`}).join('')+'</div>';
+  $('res').innerHTML=h;
+  requestAnimationFrame(()=>{
+    if(con.length>1){const lab=[['🚚 Despachos','n',''],['⏱ Min. entre despachos','prom',' min'],['⚠️ Máximo','max',' min'],['⚖️ Kilos','kg','']];
+      lab.forEach(([t,k,u],i)=>cmp('c'+i,t,con.map(a=>({lab:a.replace('VALLE AZUL','Valle'),v:st[a][k],c:a.endsWith('3')?'#7B1FA2':'#14246B'})),u))}
+    con.forEach((a,i)=>{const d=g[a];const pc={};[...new Set(d.map(r=>r.placa))].forEach((p,j)=>pc[p]=COLS[j%COLS.length]);
+      const m=d.filter(r=>r.me!=null);
+      bars('m'+i,m.map(r=>r.salida),m.map(r=>r.me),m.map(r=>r.me<=META?'#1E7145':'#C0321F'),v=>v,META);
+      bars('k'+i,d.map(r=>r.salida),d.map(r=>+r.kilos),d.map(r=>pc[r.placa]),kgf,null,d.map(r=>r.placa));
+      viajes('v'+i,d,pc)});
+  });
+}
+function ctx(id,h){const c=$(id);if(!c)return null;const w=c.clientWidth||300,r=window.devicePixelRatio||1;c.width=w*r;c.height=h*r;c.style.height=h+'px';const x=c.getContext('2d');x.scale(r,r);return[x,w,h]}
+function bars(id,lab,val,col,f,meta,leg){
+  const H=leg?200:180,o=ctx(id,H);if(!o)return;const[c,W]=o;const L=8,B=leg?40:22,T=20,max=Math.max(meta?meta*1.5:0,...val)*1.12||1,n=val.length,bw=Math.min(78,(W-L*2)/Math.max(n,1)),x0=(W-bw*n)/2;
+  const y=v=>H-B-v/max*(H-B-T);
+  if(meta){c.strokeStyle='#E07B39';c.setLineDash([6,4]);c.lineWidth=1.5;c.beginPath();c.moveTo(L,y(meta));c.lineTo(W-L,y(meta));c.stroke();c.setLineDash([]);c.fillStyle='#E07B39';c.font='bold 10px system-ui';c.textAlign='right';c.fillText('meta '+meta,W-L,y(meta)-4)}
+  val.forEach((v,i)=>{const x=x0+i*bw+bw*.15,w=bw*.7;c.fillStyle=col[i];c.fillRect(x,y(v),w,H-B-y(v));c.fillStyle='#1C1E45';c.textAlign='center';c.font=`bold ${n>12?9:11}px system-ui`;c.fillText(f(v),x+w/2,y(v)-4);c.fillStyle='#667085';c.font=`${n>12?9:10}px system-ui`;c.fillText(lab[i],x+w/2,H-B+13)});
+  if(leg){const u=[...new Set(leg)];let x=L;c.font='bold 10px system-ui';c.textAlign='left';u.forEach(p=>{const i=leg.indexOf(p);c.fillStyle=col[i];c.fillRect(x,H-12,10,10);c.fillStyle='#1C1E45';c.fillText(p,x+14,H-3);x+=c.measureText(p).width+30})}
+}
+function viajes(id,d,pc){
+  const cnt={},kg={};d.forEach(r=>{cnt[r.placa]=(cnt[r.placa]||0)+1;kg[r.placa]=(kg[r.placa]||0)+(+r.kilos||0)});
+  const ps=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]),rh=30,H=ps.length*(rh+8)+6,o=ctx(id,H);if(!o)return;const[c,W]=o;const L=78,max=Math.max(...Object.values(cnt)),R=110,bw=Math.min(58,(W-L-R)/max);
+  ps.forEach((p,i)=>{const y=4+i*(rh+8);c.fillStyle='#1C1E45';c.font='bold 12px system-ui';c.textAlign='right';c.fillText(p,L-8,y+rh/2+4);
+    for(let k=0;k<cnt[p];k++){c.fillStyle=pc[p];const x=L+k*bw;c.beginPath();c.roundRect?c.roundRect(x+2,y,bw-4,rh,6):c.rect(x+2,y,bw-4,rh);c.fill();c.font=`${Math.min(16,rh-10)}px system-ui`;c.textAlign='center';c.fillText('🚚',x+bw/2,y+rh/2+6)}
+    c.fillStyle=pc[p];c.font='bold 18px system-ui';c.textAlign='left';c.fillText(cnt[p],L+cnt[p]*bw+8,y+rh/2+6);c.fillStyle='#667085';c.font='bold 11px system-ui';c.fillText(kgf(kg[p])+' kg',L+cnt[p]*bw+30,y+rh/2+5)});
+}
+function cmp(id,t,items,u){
+  const H=150,o=ctx(id,H);if(!o)return;const[c,W]=o;const max=Math.max(...items.map(i=>i.v))*1.25||1,B=22,T=34,bw=Math.min(54,W/4);
+  c.fillStyle='#1C1E45';c.font='bold 12px system-ui';c.textAlign='left';c.fillText(t,4,13);
+  items.forEach((it,j)=>{const h=it.v/max*(H-B-T),x=W/2-bw-6+j*(bw+12);c.fillStyle=it.c;c.fillRect(x,H-B-h,bw,h);c.fillStyle='#1C1E45';c.font='bold 13px system-ui';c.textAlign='center';c.fillText((u?it.v:kgf(it.v))+u,x+bw/2,H-B-h-5);c.fillStyle=it.c;c.font='bold 11px system-ui';c.fillText(it.lab,x+bw/2,H-6)});
+}
+
+/* ---------- eventos ---------- */
+$('hoy').textContent=fmt(HOY);$('rFecha').value=HOY;
+$('tabs').onclick=e=>{const b=e.target.closest('.tab');if(b)setTab(b.dataset.t)};
+$('acopio').onclick=e=>{const b=e.target.closest('.opt');if(!b)return;S.acopio=b.dataset.v;ls('acopio',S.acopio);if(!S.edit)$('ini').value='';renderReg()};
+$('placas').onclick=e=>{
+  const x=e.target.closest('.x');
+  if(x&&$('form').classList.contains('edp')){const p=x.dataset.x;if(delDia().some(r=>r.placa===p))return toast('Tiene viajes hoy','#C0321F');ls('placas_'+HOY,JSON.stringify(lsj('placas_'+HOY,[]).filter(v=>v!==p)));if(S.placa===p)S.placa=null;renderPlacas();return}
+  if(e.target.closest('#plAdd')){$('addRow').classList.add('on');$('plIn').focus();return}
+  const b=e.target.closest('.pl');if(!b)return;S.placa=b.dataset.v;renderPlacas();clearErr();
+};
+$('edPl').onclick=()=>$('form').classList.toggle('edp');
+function addPlaca(){const p=$('plIn').value.trim().toUpperCase().replace(/\s+/g,'');if(!p)return;const a=lsj('placas_'+HOY,[]);if(!a.includes(p))a.push(p);ls('placas_'+HOY,JSON.stringify(a));S.placa=p;$('plIn').value='';$('addRow').classList.remove('on');renderPlacas()}
+$('plOk').onclick=addPlaca;$('plIn').onkeydown=e=>{if(e.key==='Enter')addPlaca()};
+$('ini').addEventListener('input',()=>$('hbIni').classList.remove('auto'));
+function hhmm(v){const d=String(v).replace(/\D/g,'').slice(0,4);if(d.length<=2)return d;return d.slice(0,d.length-2)+':'+d.slice(-2)}
+function normT(v){const d=String(v).replace(/\D/g,'');if(!d)return'';const n=d.length<=2?d+'00':d;const h=+n.slice(0,n.length-2),m=+n.slice(-2);if(h>23||m>59)return null;return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')}
+document.querySelectorAll('.tm').forEach(el=>{el.addEventListener('input',()=>{el.value=hhmm(el.value)});el.addEventListener('blur',()=>{const t=normT(el.value);if(t===null){el.closest('.hb').classList.add('bad')}else el.value=t})});
+['ini','fin','sal','kg'].forEach(i=>$(i).addEventListener('input',clearErr));
+$('save').onclick=save;$('cancel').onclick=resetForm;
+$('list').onclick=e=>{const li=e.target.closest('.li');if(!li)return;editar(li.dataset.id)};
+$('del').onclick=()=>{if(S.edit)borrar(S.edit)};
+$('rFecha').onchange=loadRes;$('rReload').onclick=loadRes;
+window.addEventListener('online',flush);window.addEventListener('offline',net);
+let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{if(VIEW==='res')loadRes()},250)});
+$('apiOk').onclick=()=>{const u=$('apiIn').value.trim();if(!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec/.test(u))return toast('Link no válido','#C0321F');API=u;ls('api',u);$('setup').classList.add('hidden');load()};
+if(new URLSearchParams(location.search).get('api')){API=new URLSearchParams(location.search).get('api');ls('api',API)}
+if(!API)$('setup').classList.remove('hidden');
+renderReg();net();load();
+setInterval(()=>{if(!S.edit&&VIEW==='reg')load()},60000);
+</script>
+</body>
+</html>
