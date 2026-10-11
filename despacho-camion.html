@@ -218,7 +218,7 @@ function calc(rows){ // mismo cálculo que la hoja
   const out={};ACOPIOS.forEach(a=>out[a]=[]);
   rows.forEach(r=>{(out[r.acopio]=out[r.acopio]||[]).push(r)});
   Object.values(out).forEach(a=>{a.sort((x,y)=>(mins(x.salida)??9999)-(mins(y.salida)??9999));let prev=null;const v={};
-    a.forEach((r,i)=>{const s=mins(r.salida);r.n=i+1;r.me=null;r._p0=prev;if(prev!=null&&s!=null)r.me=s-prev;if(s!=null)prev=s;v[r.placa]=(v[r.placa]||0)+1;r.vu=v[r.placa]});a.forEach(r=>{r.rf=esRefri(r.obs);if(r.rf&&r.me!=null)r.me=Math.max(0,r.me-R_MIN)})});
+    a.forEach((r,i)=>{const s=mins(r.salida);r.n=i+1;r.me=null;r._p0=prev;if(prev!=null&&s!=null)r.me=s-prev;else if(prev==null&&s!=null&&mins(r.inicio)!=null)r.me=Math.max(0,s-mins(r.inicio));if(s!=null)prev=s;v[r.placa]=(v[r.placa]||0)+1;r.vu=v[r.placa]});a.forEach(r=>{r.rf=esRefri(r.obs);if(r.rf&&r.me!=null)r.me=Math.max(0,r.me-R_MIN)})});
   return out;
 }
 function placasDia(){const set=new Set(lsj('placas_'+HOY,[]));delDia().forEach(r=>set.add(r.placa));return [...set]}
