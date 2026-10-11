@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#14246B">
 <title>Salida de camión</title>
+<link rel="manifest" href="camion.webmanifest">
+<link rel="apple-touch-icon" href="camion-icon-192.png">
 <style>
 :root{--nv:#14246B;--gr:#1E7145;--rd:#C0321F;--or:#E07B39;--bg:#EEF0F6;--ln:#d6d9e4;--tx:#1C1E45;--mu:#667085}
 *{box-sizing:border-box}
@@ -94,11 +96,12 @@ body.padon main{padding-bottom:300px}
 .empty{text-align:center;color:var(--mu);padding:40px 10px;font-weight:700}
 @media (max-width:860px){.panels{grid-template-columns:1fr}.cmp{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:420px){.kp{grid-template-columns:repeat(2,1fr)}}
+.inst{border:0;background:#fff;color:var(--nv);border-radius:10px;min-height:36px;padding:0 12px;font-weight:700}.inst.hidden{display:none}
 </style>
 </head>
 <body>
 <header>
-  <div class="hd"><div><b>🚚 Salida de camión</b><br><small id="hoy"></small></div><span id="net"></span></div>
+  <div class="hd"><div><b>🚚 Salida de camión</b><br><small id="hoy"></small></div><span><button type="button" id="inst" class="inst hidden">📲 Instalar</button> <span id="net"></span></span></div>
   <div class="tabs" id="tabs"><button class="tab" data-t="reg" aria-pressed="true">Registro</button><button class="tab" data-t="res" aria-pressed="false">Resumen</button></div>
 </header>
 <main>
@@ -369,6 +372,12 @@ if(new URLSearchParams(location.search).get('api')){API=new URLSearchParams(loca
 if(!API)$('setup').classList.remove('hidden');
 renderReg();net();load();
 setInterval(()=>{if(!S.edit&&VIEW==='reg')load()},60000);
+/* instalar como app */
+if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw-camion.js').catch(()=>{});
+let instEv=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();instEv=e;document.getElementById('inst').classList.remove('hidden')});
+document.getElementById('inst').onclick=async()=>{if(!instEv)return;instEv.prompt();await instEv.userChoice.catch(()=>{});instEv=null;document.getElementById('inst').classList.add('hidden')};
+window.addEventListener('appinstalled',()=>document.getElementById('inst').classList.add('hidden'));
 </script>
 </body>
 </html>

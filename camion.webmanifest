@@ -1,0 +1,16 @@
+{
+  "name": "Salida de camión · Blueberries",
+  "short_name": "Camión",
+  "description": "Registro de salida de camiones y tiempos de despacho",
+  "start_url": "despacho-camion.html",
+  "scope": "despacho-camion.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#EEF0F6",
+  "theme_color": "#14246B",
+  "lang": "es",
+  "icons": [
+    { "src": "camion-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "camion-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
