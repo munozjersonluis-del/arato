@@ -152,7 +152,7 @@ body.padon main{padding-bottom:300px}
 <script>
 const API_DEF='';
 const K='camion_';
-const META=60, R_INI=750, R_FIN=810;
+const META=60, R_MIN=60, R_DESDE=690, R_HASTA=900;
 const ACOPIOS=['VALLE AZUL 1','VALLE AZUL 3'];
 const COLS=['#14246B','#1E7145','#E07B39','#0E8A94','#7B1FA2','#B8860B','#C0321F','#5B6B8C'];
 const $=id=>document.getElementById(id);
@@ -181,7 +181,7 @@ function calc(rows){ // mismo cálculo que la hoja
   const out={};ACOPIOS.forEach(a=>out[a]=[]);
   rows.forEach(r=>{(out[r.acopio]=out[r.acopio]||[]).push(r)});
   Object.values(out).forEach(a=>{a.sort((x,y)=>(mins(x.salida)??9999)-(mins(y.salida)??9999));let prev=null;const v={};
-    a.forEach((r,i)=>{const s=mins(r.salida);r.n=i+1;r.me=null;if(prev!=null&&s!=null){const c=(prev<R_FIN&&s>R_FIN)?R_FIN-R_INI:0;r.me=Math.max(0,s-prev-c)}if(s!=null)prev=s;v[r.placa]=(v[r.placa]||0)+1;r.vu=v[r.placa]})});
+    a.forEach((r,i)=>{const s=mins(r.salida);r.n=i+1;r.me=null;r._p0=prev;if(prev!=null&&s!=null)r.me=s-prev;if(s!=null)prev=s;v[r.placa]=(v[r.placa]||0)+1;r.vu=v[r.placa]});{let q=null;a.forEach(r=>{if(r.me!=null&&r._p0<R_HASTA&&mins(r.salida)>R_DESDE&&(!q||r.me>q.me))q=r});if(q&&q.me>R_MIN)q.me-=R_MIN}});
   return out;
 }
 function placasDia(){const set=new Set(lsj('placas_'+HOY,[]));delDia().forEach(r=>set.add(r.placa));return [...set]}
