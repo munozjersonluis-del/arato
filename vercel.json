@@ -1,16 +1,56 @@
 {
   "rewrites": [
-    { "source": "/fichas", "destination": "/fichas-medicas-110.html" },
-    { "source": "/menu", "destination": "/menu.html" },
-    { "source": "/guia", "destination": "/guia_bins.html" },
-    { "source": "/reporte", "destination": "/Reporte_Diario_WSP.html" },
-    { "source": "/acopio", "destination": "/acopio-palta.html" },
-    { "source": "/cosecha", "destination": "/cosecha-track.html" },
-    { "source": "/stock", "destination": "/stock-bins.html" },
-    { "source": "/despacho", "destination": "/cosecha-despacho.html" },
-    { "source": "/maquinaria", "destination": "/control-maquinaria.html" },
-    { "source": "/tallas", "destination": "/tallas-epp.html" },
-    { "source": "/camion", "destination": "/despacho-camion.html" },
-    { "source": "/((?!api/|fichas|menu|guia|reporte|acopio|cosecha|stock|despacho|maquinaria|tallas|camion).*)", "destination": "/index.html" }
+    {
+      "source": "/fichas",
+      "destination": "/fichas-medicas-110.html"
+    },
+    {
+      "source": "/menu",
+      "destination": "/menu.html"
+    },
+    {
+      "source": "/guia",
+      "destination": "/guia_bins.html"
+    },
+    {
+      "source": "/reporte",
+      "destination": "/Reporte_Diario_WSP.html"
+    },
+    {
+      "source": "/acopio",
+      "destination": "/acopio-palta.html"
+    },
+    {
+      "source": "/cosecha",
+      "destination": "/cosecha-track.html"
+    },
+    {
+      "source": "/stock",
+      "destination": "/stock-bins.html"
+    },
+    {
+      "source": "/despacho",
+      "destination": "/cosecha-despacho.html"
+    },
+    {
+      "source": "/maquinaria",
+      "destination": "/control-maquinaria.html"
+    },
+    {
+      "source": "/tallas",
+      "destination": "/tallas-epp.html"
+    },
+    {
+      "source": "/camion",
+      "destination": "/despacho-camion.html"
+    },
+    {
+      "source": "/camion-resumen",
+      "destination": "/despacho-camion.html"
+    },
+    {
+      "source": "/((?!api/|fichas|menu|guia|reporte|acopio|cosecha|stock|despacho|maquinaria|tallas|camion|camion-resumen).*)",
+      "destination": "/index.html"
+    }
   ]
 }
