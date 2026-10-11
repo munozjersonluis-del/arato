@@ -414,7 +414,15 @@ function tecla(k){
   if(ACT==='ini')$('hbIni').classList.remove('auto');clearErr();
   if(ACT!=="kg"&&d.length===4&&normT(d)){const i=ORD.indexOf(ACT);activar(ORD[i+1])}
 }
-ORD.forEach(i=>$(i).addEventListener('click',e=>{e.preventDefault();$(i).blur();activar(i)}));
+/* laptop (mouse + teclado): se escribe directo, sin teclado en pantalla */
+const PC=matchMedia('(hover:hover) and (pointer:fine)').matches;
+if(PC){ORD.forEach(i=>{const el=$(i);el.removeAttribute('readonly');el.setAttribute('inputmode',i==='kg'?'numeric':'text');el.autocomplete='off';
+  el.addEventListener('focus',()=>{box(i).classList.add('act');box(i).classList.remove('bad');el.select()});
+  el.addEventListener('blur',()=>{box(i).classList.remove('act');if(i==='kg'){const n=el.value.replace(/\D/g,'');el.value=n?kgf(+n):''}else if(el.value){const t=normT(el.value);if(t===null)box(i).classList.add('bad');else el.value=t}});
+  el.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();const k=ORD.indexOf(i);if(k<ORD.length-1)$(ORD[k+1]).focus();else{el.blur();$('obs').focus()}}});
+  if(i!=='kg')el.addEventListener('input',()=>{const d=el.value.replace(/\D/g,'');if(d.length===4&&normT(d)){el.value=normT(d);const k=ORD.indexOf(i);if(k<ORD.length-1)$(ORD[k+1]).focus()}});
+})}
+else ORD.forEach(i=>$(i).addEventListener('click',e=>{e.preventDefault();$(i).blur();activar(i)}));
 $('pad').addEventListener('click',e=>{const b=e.target.closest('button');if(b)tecla(b.dataset.k)});
 document.addEventListener('click',e=>{if(ACT&&!e.target.closest('#pad')&&!e.target.closest('.nk')&&!e.target.closest('.hb'))activar(null)});
 ['ini','fin','sal','kg'].forEach(i=>$(i).addEventListener('input',clearErr));
