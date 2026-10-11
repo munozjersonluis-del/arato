@@ -123,6 +123,8 @@ body.padon main{padding-bottom:300px}
 .st{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:4px 10px;font-weight:700;font-size:12px}.st.ok{background:#E3F4E8;color:#1E7145}.st.bad{background:#FBE4E1;color:#C0321F}
 @media(max-width:520px){.fb{grid-template-columns:1fr!important}.upd{grid-column:auto!important}.kc{padding:10px;gap:8px}.kc h5{font-size:12px}.kc small{font-size:11px}.kc b{font-size:19px!important}.kc .ic{flex-basis:38px!important;height:38px!important;font-size:19px!important}.lg2{flex-wrap:wrap;gap:8px 14px}.tbh{flex-wrap:wrap}}
 @media(max-width:820px){.fb{grid-template-columns:1fr 1fr}.upd{grid-column:1/3}.kx{grid-template-columns:1fr 1fr}.cg{grid-template-columns:1fr}.kc b{font-size:22px}.kc .ic{flex-basis:44px;height:44px;font-size:22px}}
+body.solo #tabs,body.solo #inst{display:none}body.solo header{padding-bottom:14px}body.solo main,body.solo .hd{max-width:1500px}
+body.solo .hd b::after{content:' · Resumen'}
 </style>
 </head>
 <body>
@@ -311,7 +313,7 @@ let RES=[];
 function renderRes(rows){
   RES=rows;
   const g=calc(rows.map(r=>({...r})));let all=[];ACOPIOS.forEach(a=>all=all.concat(g[a]||[]));Object.keys(g).forEach(a=>{if(!ACOPIOS.includes(a))all=all.concat(g[a])});
-  const fs=$('rFundo'),us=$('rUni'),uv=us.value;let fv=fs.value;if(!fs.dataset.ini){fs.dataset.ini=1;fv=ls('acopio')||ACOPIOS[0]}
+  const fs=$('rFundo'),us=$('rUni'),uv=us.value;let fv=fs.dataset.ini?fs.value:(ls('acopio')||ACOPIOS[0]);if(all.length)fs.dataset.ini=1;
   fs.innerHTML='<option value="">Todos</option>'+[...new Set(all.map(r=>r.acopio))].map(a=>`<option ${a===fv?'selected':''}>${a}</option>`).join('');
   us.innerHTML='<option value="">Todos</option>'+[...new Set(all.map(r=>r.placa))].sort().map(a=>`<option ${a===uv?'selected':''}>${a}</option>`).join('');
   let d=all.filter(r=>(!fs.value||r.acopio===fs.value)&&(!us.value||r.placa===us.value));
@@ -420,6 +422,8 @@ $('apiOk').onclick=()=>{const u=$('apiIn').value.trim();if(!/^https:\/\/script\.
 if(new URLSearchParams(location.search).get('api')){API=new URLSearchParams(location.search).get('api');ls('api',API)}
 if(!API)$('setup').classList.remove('hidden');
 renderReg();net();load();
+/* vista solo resumen para laptop: /camion-resumen o ?vista=resumen */
+if(/camion-resumen/.test(location.pathname)||new URLSearchParams(location.search).get('vista')==='resumen'){document.body.classList.add('solo');document.title='Resumen de despachos';setTab('res')}
 setInterval(()=>{if(!S.edit&&VIEW==='reg')load()},60000);
 /* instalar como app */
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw-camion.js').catch(()=>{});
