@@ -1,6 +1,6 @@
 // Service worker de "Salida de camión": permite instalarla como app y abrirla sin señal.
 // Solo atiende su propia página; los envíos a la hoja (script.google.com) nunca se guardan en caché.
-const CACHE = 'camion-v1';
+const CACHE = 'camion-v2';
 const PAGINA = 'despacho-camion.html';
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll([PAGINA, 'camion-icon-192.png', 'camion-icon-512.png', 'camion.webmanifest'])).catch(() => {}));

@@ -127,6 +127,13 @@ body.solo #tabs,body.solo #inst{display:none}body.solo header{padding-bottom:14p
 body.solo .hd b::after{content:' · Resumen'}
 .rf{display:block;width:100%;margin-top:14px;padding:14px 8px;font-size:15px}.rf[aria-pressed=true]{background:#FFF3E0;border-color:#E07B39;color:#B4531A}
 
+/* horizontal (tablet / laptop): formulario a la izquierda, viajes del día a la derecha */
+@media (min-width:880px){
+  #vReg.reg{max-width:1200px;display:grid;grid-template-columns:minmax(420px,520px) 1fr;gap:16px;align-items:start}
+  #vReg #form{margin-bottom:0}
+  #vReg #form+.card{position:sticky;top:120px;max-height:calc(100vh - 140px);overflow:auto;margin-bottom:0}
+  #pad{left:auto;right:auto;width:520px;margin-left:max(16px,calc((100vw - 1200px)/2 + 16px));border-radius:16px 16px 0 0}
+}
 </style>
 </head>
 <body>
