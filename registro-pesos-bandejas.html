@@ -126,6 +126,11 @@ select.in{appearance:none;background-image:linear-gradient(45deg,transparent 50%
         <div><label class="lbl" for="jabas">N° de jabas</label><input class="in big" id="jabas" type="number" inputmode="numeric" min="1" step="1"></div>
         <div><label class="lbl" for="pesoD">Peso (kg)</label><input class="in big" id="pesoD" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00"></div>
       </div>
+      <div class="row2" style="margin-top:12px">
+        <div><label class="lbl" for="guiaD">N° de guía</label><input class="in" id="guiaD" type="text" autocomplete="off" autocapitalize="characters" placeholder="20261011-D000-…" style="font-size:15px;min-height:64px"></div>
+        <div><label class="lbl" for="jguiaD">Jarras en guía</label><input class="in big" id="jguiaD" type="number" inputmode="numeric" min="0" step="1"></div>
+      </div>
+      <p id="chkD" style="margin:10px 0 0;font-weight:800;font-size:15px"></p>
       <p class="err" id="errD"></p>
     </div>
   </form>
@@ -216,7 +221,13 @@ $('grupoD').innerHTML=$('grupo').innerHTML;
 $('variedadD').innerHTML=VAR_BASE.map(v=>`<button type="button" class="opt" data-v="${esc(v)}">${esc(v.charAt(0)+v.slice(1).toLowerCase())}</button>`).join('');
 $('grupoD').onclick=e=>{const b=e.target.closest('.opt');if(!b)return;SD.grupo=b.dataset.v;ls('grupoD',SD.grupo);press($('grupoD'),SD.grupo);clearErr()};
 $('variedadD').onclick=e=>{const b=e.target.closest('.opt');if(!b)return;SD.variedad=SD.variedad===b.dataset.v?'':b.dataset.v;ls('variedadD',SD.variedad);press($('variedadD'),SD.variedad)};
-['jabas','pesoD'].forEach(i=>$(i).oninput=clearErr);
+['jabas','pesoD','guiaD','jguiaD'].forEach(i=>$(i).oninput=()=>{clearErr();chkJarras()});
+const TARA_JABA=1.553,KG_JARRA=1.25,TOL_JARRAS=1;
+function jarrasReales(kg,jabas){return Math.max(0,(kg-jabas*TARA_JABA)/KG_JARRA)}
+function chkJarras(){const kg=parseFloat($('pesoD').value),jb=parseInt($('jabas').value,10),g=parseInt($('jguiaD').value,10),el=$('chkD');
+  if(!(kg>0)||!(jb>0)){el.textContent='';return}const jr=jarrasReales(kg,jb);
+  if(!(g>=0)){el.style.color='#334';el.textContent=`≈ ${jr.toFixed(1)} jarras reales`;return}
+  const d=g-jr;el.style.color=d>TOL_JARRAS?'#C0321F':'#1E7145';el.textContent=d>TOL_JARRAS?`⚠️ Faltan ${d.toFixed(1)} jarras (guía ${g} · reales ${jr.toFixed(1)})`:`✅ Cuadra (guía ${g} · reales ${jr.toFixed(1)})`}
 $('pesoD').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();save()}});
 $('fechaD').onchange=()=>renderList();
 function setTab(t){TABA=t;ls('tab',t);$('tabs').querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.t===t)));
@@ -262,7 +273,7 @@ function validate(r){
   if(p<0.6||p>1.4)return[`${r.kg} kg está muy lejos de lo normal para ${r.cantidad} bandejas (≈${esp.toFixed(1)} kg). Revisa el peso o la cantidad.`,'kg'];
   return null;
 }
-function collectD(){return{t:Date.now(),id:'d'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),tipoReg:'descarte',fecha:$('fechaD').value,grupo:SD.grupo,variedad:SD.variedad,jabas:parseInt($('jabas').value,10),kg:parseFloat($('pesoD').value)}}
+function collectD(){return{t:Date.now(),id:'d'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),tipoReg:'descarte',fecha:$('fechaD').value,grupo:SD.grupo,variedad:SD.variedad,jabas:parseInt($('jabas').value,10),kg:parseFloat($('pesoD').value),guia:$('guiaD').value.trim(),jarrasGuia:$('jguiaD').value===''?'':parseInt($('jguiaD').value,10)}}
 function validateD(r){
   if(!r.fecha)return['Elige la fecha.','fechaD'];
   if(!r.grupo)return['Elige el grupo.','grupoD'];
@@ -280,7 +291,7 @@ function save(){
     if(rep&&!confirm('Ya guardaste '+r.jabas+' jabas · '+r.kg+' kg del grupo '+r.grupo+' hace un momento.\n¿Es OTRO descarte distinto?'))return;
     cola=sinRepetidos([...lsj('cola',[]),r]);ls('cola',JSON.stringify(cola));
     if(navigator.vibrate)navigator.vibrate(30);showUndo(r);
-    $('jabas').value='';$('pesoD').value='';renderList();$('jabas').focus();flush();return;
+    $('jabas').value='';$('pesoD').value='';$('guiaD').value='';$('jguiaD').value='';$('chkD').textContent='';renderList();$('jabas').focus();flush();return;
   }
   const r=collect();const bad=validate(r);if(bad){fail(...bad);return}
   if(window._ultSave&&Date.now()-window._ultSave<600)return;window._ultSave=Date.now(); // un toque = un registro (evita el doble toque)
@@ -333,7 +344,7 @@ function renderList(){
     $('cnt').textContent=fmt(f)+' · '+all.length+' descarte'+(all.length===1?'':'s');
     const g={};all.forEach(r=>{(g[r.grupo]=g[r.grupo]||{j:0,kg:0});g[r.grupo].j+=+r.jabas||0;g[r.grupo].kg+=+r.kg||0});
     $('sum').innerHTML=Object.keys(g).sort().map(k=>`<div><small>Grupo ${esc(k)} · ${g[k].j} jabas</small><b>${g[k].kg.toFixed(1)} kg</b></div>`).join('');
-    $('list').innerHTML=all.length?all.slice().reverse().slice(0,40).map(r=>`<div class="reg"><div class="g">${esc(r.grupo)}</div><div>${esc(r.jabas)} jabas${r.variedad?' · '+esc(r.variedad):''}<small>Descarte${r.p?' · <span class="pend">enviando…</span>':''}</small></div><div class="kg">${Number(r.kg).toFixed(2)}<small> kg</small>${r.id&&r.t&&Date.now()-r.t<5.5*3600e3?`<br><button type="button" class="del" data-del="${esc(r.id)}">Deshacer</button>`:''}</div></div>`).join(''):'<div class="empty">Aún no hay descarte este día.</div>';
+    $('list').innerHTML=all.length?all.slice().reverse().slice(0,40).map(r=>`<div class="reg"><div class="g">${esc(r.grupo)}</div><div>${esc(r.jabas)} jabas${r.variedad?' · '+esc(r.variedad):''}${r.guia?' · Guía '+esc(r.guia):''}<small>${(()=>{if(r.jarrasGuia===''||r.jarrasGuia==null)return'';const jr=jarrasReales(+r.kg,+r.jabas),d=+r.jarrasGuia-jr;return d>TOL_JARRAS?`<b style="color:#C0321F">⚠️ faltan ${d.toFixed(1)} jarras</b> · `:`<b style="color:#1E7145">✅ ${r.jarrasGuia} jarras</b> · `})()}Descarte${r.p?' · <span class="pend">enviando…</span>':''}</small></div><div class="kg">${Number(r.kg).toFixed(2)}<small> kg</small>${r.id&&r.t&&Date.now()-r.t<5.5*3600e3?`<br><button type="button" class="del" data-del="${esc(r.id)}">Deshacer</button>`:''}</div></div>`).join(''):'<div class="empty">Aún no hay descarte este día.</div>';
     return;
   }
   const f=$('fecha').value||today();
