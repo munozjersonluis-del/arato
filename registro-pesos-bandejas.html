@@ -227,7 +227,7 @@ function jarrasReales(kg,jabas){return Math.max(0,(kg-jabas*TARA_JABA)/KG_JARRA)
 function chkJarras(){const kg=parseFloat($('pesoD').value),jb=parseInt($('jabas').value,10),g=parseInt($('jguiaD').value,10),el=$('chkD');
   if(!(kg>0)||!(jb>0)){el.textContent='';return}const jr=jarrasReales(kg,jb);
   if(!(g>=0)){el.style.color='#334';el.textContent=`≈ ${jr.toFixed(1)} jarras reales`;return}
-  const d=g-jr;el.style.color=d>TOL_JARRAS?'#C0321F':'#1E7145';el.textContent=d>TOL_JARRAS?`⚠️ Faltan ${d.toFixed(1)} jarras (guía ${g} · reales ${jr.toFixed(1)})`:`✅ Cuadra (guía ${g} · reales ${jr.toFixed(1)})`}
+  const d=g-jr;el.style.color=d>=TOL_JARRAS?'#C0321F':'#1E7145';el.textContent=d>=TOL_JARRAS?`⚠️ Faltan ${d.toFixed(1)} jarras (guía ${g} · reales ${jr.toFixed(1)})`:`✅ Cuadra (guía ${g} · reales ${jr.toFixed(1)})`}
 $('pesoD').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();save()}});
 $('fechaD').onchange=()=>renderList();
 function setTab(t){TABA=t;ls('tab',t);$('tabs').querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.t===t)));
@@ -344,7 +344,7 @@ function renderList(){
     $('cnt').textContent=fmt(f)+' · '+all.length+' descarte'+(all.length===1?'':'s');
     const g={};all.forEach(r=>{(g[r.grupo]=g[r.grupo]||{j:0,kg:0});g[r.grupo].j+=+r.jabas||0;g[r.grupo].kg+=+r.kg||0});
     $('sum').innerHTML=Object.keys(g).sort().map(k=>`<div><small>Grupo ${esc(k)} · ${g[k].j} jabas</small><b>${g[k].kg.toFixed(1)} kg</b></div>`).join('');
-    $('list').innerHTML=all.length?all.slice().reverse().slice(0,40).map(r=>`<div class="reg"><div class="g">${esc(r.grupo)}</div><div>${esc(r.jabas)} jabas${r.variedad?' · '+esc(r.variedad):''}${r.guia?' · Guía '+esc(r.guia):''}<small>${(()=>{if(r.jarrasGuia===''||r.jarrasGuia==null)return'';const jr=jarrasReales(+r.kg,+r.jabas),d=+r.jarrasGuia-jr;return d>TOL_JARRAS?`<b style="color:#C0321F">⚠️ faltan ${d.toFixed(1)} jarras</b> · `:`<b style="color:#1E7145">✅ ${r.jarrasGuia} jarras</b> · `})()}Descarte${r.p?' · <span class="pend">enviando…</span>':''}</small></div><div class="kg">${Number(r.kg).toFixed(2)}<small> kg</small>${r.id&&r.t&&Date.now()-r.t<5.5*3600e3?`<br><button type="button" class="del" data-del="${esc(r.id)}">Deshacer</button>`:''}</div></div>`).join(''):'<div class="empty">Aún no hay descarte este día.</div>';
+    $('list').innerHTML=all.length?all.slice().reverse().slice(0,40).map(r=>`<div class="reg"><div class="g">${esc(r.grupo)}</div><div>${esc(r.jabas)} jabas${r.variedad?' · '+esc(r.variedad):''}${r.guia?' · Guía '+esc(r.guia):''}<small>${(()=>{if(r.jarrasGuia===''||r.jarrasGuia==null)return'';const jr=jarrasReales(+r.kg,+r.jabas),d=+r.jarrasGuia-jr;return d>=TOL_JARRAS?`<b style="color:#C0321F">⚠️ faltan ${d.toFixed(1)} jarras</b> · `:`<b style="color:#1E7145">✅ ${r.jarrasGuia} jarras</b> · `})()}Descarte${r.p?' · <span class="pend">enviando…</span>':''}</small></div><div class="kg">${Number(r.kg).toFixed(2)}<small> kg</small>${r.id&&r.t&&Date.now()-r.t<5.5*3600e3?`<br><button type="button" class="del" data-del="${esc(r.id)}">Deshacer</button>`:''}</div></div>`).join(''):'<div class="empty">Aún no hay descarte este día.</div>';
     return;
   }
   const f=$('fecha').value||today();
