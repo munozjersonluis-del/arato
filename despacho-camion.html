@@ -284,7 +284,8 @@ function borrar(id){
 
 /* ---------- servidor ---------- */
 let enviando=false;
-function net(){const n=pend.length;$('net').textContent=!API?'':n?`⏳ ${n} por enviar`:navigator.onLine?'● en línea':'○ sin señal';}
+function net(){const n=pend.length;$('net').title=ERRS;$('net').textContent=!API?'':n?`⏳ ${n} por enviar`:navigator.onLine?'● en línea':'○ sin señal';}
+let ERRS='';
 async function flush(){
   net();if(!API||enviando||!pend.length)return;enviando=true;
   const lote=pend.slice(0,20);
@@ -292,8 +293,8 @@ async function flush(){
     const res=await fetch(API,{method:'POST',body:JSON.stringify({fecha:HOY,registros:lote})});
     const j=await res.json();if(!j.ok)throw new Error(j.error);
     const ids=new Set(lote.map(x=>x.id+'|'+x.t));pend=pend.filter(p=>!ids.has(p.id+'|'+p.t));ls('pend',JSON.stringify(pend));
-    srv=j.registros||srv;ls('srv_'+HOY,JSON.stringify(srv));
-  }catch(e){}
+    srv=j.registros||srv;ls('srv_'+HOY,JSON.stringify(srv));ERRS='';
+  }catch(e){ERRS=String(e&&e.message||e);toast('No guardó en la hoja: '+ERRS.slice(0,120),'#C0321F')}
   enviando=false;net();renderReg();if(VIEW==='res'&&$('rFecha').value===HOY)renderRes(delDia());
   if(pend.length&&navigator.onLine)setTimeout(flush,8000);
 }
