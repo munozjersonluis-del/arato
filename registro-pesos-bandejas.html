@@ -118,6 +118,7 @@ select.in{appearance:none;background-image:linear-gradient(45deg,transparent 50%
       <div class="sec"><i>1</i>Descarte del día</div>
       <div class="field"><label class="lbl" for="fechaD">Fecha</label><input class="in" type="date" id="fechaD"></div>
       <div class="field"><span class="lbl">Grupo</span><div class="grp c5" id="grupoD"></div></div>
+      <div class="field"><label class="lbl" for="moduloD">Módulo</label><select class="in" id="moduloD"></select></div>
       <div class="field"><span class="lbl">Variedad <small style="font-weight:500">(opcional)</small></span><div class="grp c3" id="variedadD"></div></div>
     </div>
     <div class="card">
@@ -204,7 +205,8 @@ function renderModulos(){
   sel.innerHTML='<option value="">Elige el módulo</option>'+grp(S.acopio?'De '+S.acopio:'Módulos',first)+grp('Otros fundos',rest);
   if(modulos.some(m=>m.modulo===cur))sel.value=cur;showFundo();
 }
-function showFundo(){const m=modulos.find(x=>x.modulo===$('modulo').value);$('fundo').textContent=m?'Fundo '+m.fundo:''}
+function fillModD(){const sel=$('moduloD');if(!sel)return;const cur=sel.value||ls('moduloD')||'';sel.innerHTML='<option value="">— elige —</option>'+modulos.map(m=>`<option value="${esc(m.modulo)}">${esc(m.modulo)} · ${esc(m.fundo)}</option>`).join('');if(modulos.some(m=>m.modulo===cur))sel.value=cur}
+function showFundo(){fillModD();const m=modulos.find(x=>x.modulo===$('modulo').value);$('fundo').textContent=m?'Fundo '+m.fundo:''}
 function renderVariedades(){
   const list=VAR_BASE;
   if(S.variedad&&!list.includes(S.variedad)){S.variedad='';ls('variedad',null)}
@@ -231,6 +233,7 @@ $('variedad').onclick=e=>{const b=e.target.closest('.opt');if(!b)return;
 $('varOtra').oninput=()=>{S.variedad=$('varOtra').value.trim().toUpperCase();ls('variedad',S.variedad);clearErr()};
 $('grupo').onclick=e=>{const b=e.target.closest('.opt');if(!b)return;S.grupo=b.dataset.v;ls('grupo',S.grupo);press($('grupo'),S.grupo);clearErr()};
 $('tipo').onclick=e=>{const b=e.target.closest('.opt');if(!b)return;S.tipo=b.dataset.v;ls('tipo',S.tipo);press($('tipo'),S.tipo);preview()};
+$('moduloD').onchange=()=>{ls('moduloD',$('moduloD').value);clearErr()};
 $('modulo').onchange=()=>{ls('modulo',$('modulo').value);showFundo();clearErr()};
 $('cant').oninput=()=>{if(S.acopio&&$('cant').value)ls('cant:'+S.acopio,$('cant').value);preview();clearErr()};
 $('kg').oninput=()=>{preview();clearErr()};
@@ -262,10 +265,11 @@ function validate(r){
   if(p<0.6||p>1.4)return[`${r.kg} kg está muy lejos de lo normal para ${r.cantidad} bandejas (≈${esp.toFixed(1)} kg). Revisa el peso o la cantidad.`,'kg'];
   return null;
 }
-function collectD(){return{t:Date.now(),id:'d'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),tipoReg:'descarte',fecha:$('fechaD').value,grupo:SD.grupo,variedad:SD.variedad,jabas:parseInt($('jabas').value,10),kg:parseFloat($('pesoD').value)}}
+function collectD(){return{t:Date.now(),id:'d'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),tipoReg:'descarte',fecha:$('fechaD').value,grupo:SD.grupo,modulo:$('moduloD').value,variedad:SD.variedad,jabas:parseInt($('jabas').value,10),kg:parseFloat($('pesoD').value)}}
 function validateD(r){
   if(!r.fecha)return['Elige la fecha.','fechaD'];
   if(!r.grupo)return['Elige el grupo.','grupoD'];
+  if(!r.modulo)return['Elige el módulo.','moduloD'];
   if(!(r.jabas>0))return['Escribe cuántas jabas.','jabas'];
   if(!(r.kg>0))return['Escribe el peso en kg.','pesoD'];
   const x=r.kg/r.jabas;if(x>45||x<2)return[`${r.kg} kg para ${r.jabas} jabas (${x.toFixed(1)} kg por jaba) no parece normal. Revisa.`,'pesoD'];
@@ -333,7 +337,7 @@ function renderList(){
     $('cnt').textContent=fmt(f)+' · '+all.length+' descarte'+(all.length===1?'':'s');
     const g={};all.forEach(r=>{(g[r.grupo]=g[r.grupo]||{j:0,kg:0});g[r.grupo].j+=+r.jabas||0;g[r.grupo].kg+=+r.kg||0});
     $('sum').innerHTML=Object.keys(g).sort().map(k=>`<div><small>Grupo ${esc(k)} · ${g[k].j} jabas</small><b>${g[k].kg.toFixed(1)} kg</b></div>`).join('');
-    $('list').innerHTML=all.length?all.slice().reverse().slice(0,40).map(r=>`<div class="reg"><div class="g">${esc(r.grupo)}</div><div>${esc(r.jabas)} jabas${r.variedad?' · '+esc(r.variedad):''}<small>Descarte${r.p?' · <span class="pend">enviando…</span>':''}</small></div><div class="kg">${Number(r.kg).toFixed(2)}<small> kg</small>${r.id&&r.t&&Date.now()-r.t<5.5*3600e3?`<br><button type="button" class="del" data-del="${esc(r.id)}">Deshacer</button>`:''}</div></div>`).join(''):'<div class="empty">Aún no hay descarte este día.</div>';
+    $('list').innerHTML=all.length?all.slice().reverse().slice(0,40).map(r=>`<div class="reg"><div class="g">${esc(r.grupo)}</div><div>${esc(r.jabas)} jabas${r.modulo?' · '+esc(r.modulo):''}${r.variedad?' · '+esc(r.variedad):''}<small>Descarte${r.p?' · <span class="pend">enviando…</span>':''}</small></div><div class="kg">${Number(r.kg).toFixed(2)}<small> kg</small>${r.id&&r.t&&Date.now()-r.t<5.5*3600e3?`<br><button type="button" class="del" data-del="${esc(r.id)}">Deshacer</button>`:''}</div></div>`).join(''):'<div class="empty">Aún no hay descarte este día.</div>';
     return;
   }
   const f=$('fecha').value||today();
