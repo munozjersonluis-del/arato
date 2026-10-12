@@ -5,7 +5,7 @@
   "start_url": "despacho-camion.html",
   "scope": "despacho-camion.html",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "any",
   "background_color": "#EEF0F6",
   "theme_color": "#14246B",
   "lang": "es",
