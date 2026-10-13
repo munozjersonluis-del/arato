@@ -49,7 +49,11 @@
       "destination": "/despacho-camion.html"
     },
     {
-      "source": "/((?!api/|fichas|menu|guia|reporte|acopio|cosecha|stock|despacho|maquinaria|tallas|camion|camion-resumen).*)",
+      "source": "/mapa",
+      "destination": "/mapa-bloques.html"
+    },
+    {
+      "source": "/((?!api/|fichas|menu|guia|reporte|acopio|cosecha|stock|despacho|maquinaria|tallas|camion|camion-resumen|mapa).*)",
       "destination": "/index.html"
     }
   ]
