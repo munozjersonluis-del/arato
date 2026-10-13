@@ -1,0 +1,66 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Mapa satélite · Blueberries</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+html,body,#map{margin:0;height:100%;background:#111;font-family:system-ui,Arial,sans-serif}
+#plano{position:absolute;left:0;top:0;transform-origin:0 0;pointer-events:none;user-select:none;-webkit-user-drag:none}
+.ajustando #plano{pointer-events:auto;cursor:move;outline:3px dashed #ffd400}
+.bar{position:absolute;z-index:1000;left:8px;right:8px;bottom:14px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.bar button,.top button{border:0;border-radius:12px;padding:11px 13px;font-size:17px;font-weight:700;background:#fff;box-shadow:0 2px 6px #0006}
+.bar .ok{background:#1E9E5A;color:#fff}.bar .x{background:#D2412C;color:#fff}
+.top{position:absolute;z-index:1000;top:10px;left:10px;right:10px;display:flex;gap:6px;align-items:center}
+.top .t{background:#123A5Ccc;color:#fff;padding:9px 12px;border-radius:12px;font-weight:800;font-size:15px}
+.top input{flex:1;min-width:60px}
+.aj{display:none}.ajustando .aj{display:inline-block}.ajustando .noaj{display:none}
+#msg{position:absolute;z-index:1001;top:62px;left:50%;transform:translateX(-50%);background:#000c;color:#fff;padding:8px 14px;border-radius:10px;font-size:14px;display:none;text-align:center;max-width:90%}
+</style></head><body>
+<div id="map"></div>
+<div class="top"><span class="t">🫐 Blueberries</span><input id="op" type="range" min="0" max="100" value="75" title="Transparencia"><button id="gps">📍</button></div>
+<div id="msg"></div>
+<div class="bar">
+ <button class="noaj" id="bAj">✋ Ajustar plano</button>
+ <button class="aj" data-r="-1">⟲</button><button class="aj" data-r="-0.2">↺</button><button class="aj" data-r="0.2">↻</button><button class="aj" data-r="1">⟳</button>
+ <button class="aj" data-s="0.98">➖</button><button class="aj" data-s="0.995">−</button><button class="aj" data-s="1.005">+</button><button class="aj" data-s="1.02">➕</button>
+ <button class="aj ok" id="bOk">💾 Guardar</button><button class="aj x" id="bNo">✖</button>
+ <button class="noaj" id="bCp">📋 Mandar ajuste</button>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+// Ajuste fijo para todos (Claude lo pega aquí cuando Jerson manda su código)
+const DEF={lat:-8.5045,lng:-78.6060,mpp:1.75,rot:0};
+const IMG_W=4000,IMG_H=3760;
+let A;try{A=JSON.parse(localStorage.getItem('ajustePlano'))||null}catch(e){}
+A=A||{...DEF};let prev=null;
+const map=L.map('map',{zoomControl:false,maxZoom:20}).setView([A.lat,A.lng],15);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'© Esri',maxZoom:20,maxNativeZoom:19}).addTo(map);
+const img=document.createElement('img');img.id='plano';img.src='/mapa/plano.webp';img.draggable=false;
+map.getPanes().overlayPane.appendChild(img);
+function dibujar(){const p=map.latLngToLayerPoint([A.lat,A.lng]);
+ const mps=40075016.686*Math.cos(A.lat*Math.PI/180)/(256*Math.pow(2,map.getZoom()));
+ const k=A.mpp/mps;
+ img.style.width=IMG_W+'px';img.style.height=IMG_H+'px';
+ img.style.transform=`translate(${p.x}px,${p.y}px) rotate(${A.rot}deg) scale(${k}) translate(${-IMG_W/2}px,${-IMG_H/2}px)`}
+map.on('zoom viewreset move zoomend',dibujar);img.onload=dibujar;dibujar();
+const op=document.getElementById('op');op.oninput=()=>img.style.opacity=op.value/100;op.oninput();
+const msg=t=>{const m=document.getElementById('msg');m.textContent=t;m.style.display='block';clearTimeout(msg.t);msg.t=setTimeout(()=>m.style.display='none',3500)};
+// mover arrastrando el plano
+let dr=null;
+img.addEventListener('pointerdown',e=>{if(!document.body.classList.contains('ajustando'))return;dr={x:e.clientX,y:e.clientY,c:map.latLngToContainerPoint([A.lat,A.lng])};img.setPointerCapture(e.pointerId);e.preventDefault()});
+img.addEventListener('pointermove',e=>{if(!dr)return;const ll=map.containerPointToLatLng([dr.c.x+e.clientX-dr.x,dr.c.y+e.clientY-dr.y]);A.lat=ll.lat;A.lng=ll.lng;dibujar()});
+img.addEventListener('pointerup',()=>dr=null);img.addEventListener('pointercancel',()=>dr=null);
+document.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{A.rot+=+b.dataset.r;dibujar()});
+document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{A.mpp*=+b.dataset.s;dibujar()});
+document.getElementById('bAj').onclick=()=>{prev={...A};document.body.classList.add('ajustando');map.dragging.disable();op.value=55;op.oninput();msg('Arrastra el plano con el dedo. Usa ↺ ↻ para girar y − + para el tamaño.')};
+function salir(){document.body.classList.remove('ajustando');map.dragging.enable();dr=null}
+document.getElementById('bOk').onclick=()=>{try{localStorage.setItem('ajustePlano',JSON.stringify(A))}catch(e){}salir();msg('✔ Guardado. Toca 📋 para mandármelo y lo dejo fijo para todos.')};
+document.getElementById('bNo').onclick=()=>{A=prev;dibujar();salir()};
+document.getElementById('bCp').onclick=async()=>{const t=`AJUSTE ${A.lat.toFixed(6)},${A.lng.toFixed(6)},${A.mpp.toFixed(4)},${A.rot.toFixed(2)}`;
+ try{if(navigator.share)await navigator.share({text:t});else{await navigator.clipboard.writeText(t);msg('Copiado: '+t)}}catch(e){prompt('Copia esto y mándamelo:',t)}};
+// GPS en vivo
+let yo=null,cir=null,seguir=true;
+document.getElementById('gps').onclick=()=>{seguir=true;if(yo)map.setView(yo.getLatLng(),18)};
+navigator.geolocation&&navigator.geolocation.watchPosition(p=>{const ll=[p.coords.latitude,p.coords.longitude];
+ if(!yo){yo=L.circleMarker(ll,{radius:9,color:'#fff',weight:3,fillColor:'#1a73e8',fillOpacity:1}).addTo(map);cir=L.circle(ll,{radius:p.coords.accuracy,weight:1,color:'#1a73e8',fillOpacity:.12}).addTo(map)}
+ else{yo.setLatLng(ll);cir.setLatLng(ll).setRadius(p.coords.accuracy)}},()=>{},{enableHighAccuracy:true});
+</script></body></html>
