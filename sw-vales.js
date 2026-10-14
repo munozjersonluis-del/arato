@@ -1,6 +1,6 @@
 // Service worker de "Vales de traslado": abre la app aunque la señal sea mala.
 // Los datos (Supabase) siempre van por internet; aquí solo se guarda la app.
-const CACHE = 'vales-v4';
+const CACHE = 'vales-v5';
 const APP = ['vale-traslado.html', 'vales.webmanifest', 'vales-icon-192.png', 'vales-icon-512.png'];
 
 self.addEventListener('install', e => {
