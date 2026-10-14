@@ -1,0 +1,90 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#123A5C">
+<title>Celulares · Blueberries</title>
+<style>
+:root{--nv:#123A5C;--gr:#1E9E5A;--rd:#D2412C;--bg:#EEF2F6;--mu:#6B7789;--ln:#DDE3EA}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:system-ui,"Segoe UI",Arial,sans-serif;color:#1E2A3A}
+header{background:var(--nv);color:#fff;padding:14px 16px;position:sticky;top:0;z-index:5}
+header h1{margin:0;font-size:20px}header small{opacity:.8}
+.tabs{display:flex;gap:6px;margin-top:10px}.tabs button{flex:1;border:0;border-radius:10px;padding:11px;font-size:16px;font-weight:800;background:#ffffff22;color:#fff}
+.tabs button[aria-pressed=true]{background:#fff;color:var(--nv)}
+main{padding:12px 14px 110px;max-width:640px;margin:auto}
+.card{background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 1px 4px #0001}
+h2{margin:0 0 10px;font-size:17px;color:var(--nv)}
+.grp{display:flex;gap:8px;flex-wrap:wrap}.grp button{flex:1;min-width:52px;border:2px solid var(--ln);background:#fff;border-radius:12px;padding:12px 0;font-size:20px;font-weight:900;color:var(--nv)}
+.grp button[aria-pressed=true]{background:var(--nv);border-color:var(--nv);color:#fff}
+.cel{border:2px solid var(--ln);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.cel.sel{border-color:var(--gr);background:#F0FAF4}.cel.out{opacity:.5}
+.cel .top{display:flex;align-items:center;gap:10px}.cel b{font-size:16px}.cel small{color:var(--mu);display:block}
+.chk{width:30px;height:30px;border-radius:8px;border:2px solid var(--ln);display:grid;place-items:center;font-size:18px;flex:none}
+.sel .chk{background:var(--gr);border-color:var(--gr);color:#fff}
+.cel input{width:100%;margin-top:8px;padding:11px;border:1.5px solid var(--ln);border-radius:10px;font-size:16px;text-transform:uppercase}
+.bar{position:fixed;left:0;right:0;bottom:0;padding:12px 14px;background:#fffffff2;border-top:1px solid var(--ln)}
+.btn{width:100%;border:0;border-radius:12px;padding:15px;font-size:18px;font-weight:800;background:var(--gr);color:#fff}
+.btn:disabled{background:#AAB4C0}
+.row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--ln)}.row:last-child{border:0}
+.row .i{flex:1}.row small{color:var(--mu);display:block}
+.dev{border:0;border-radius:10px;padding:10px 12px;font-weight:800;font-size:15px;background:var(--gr);color:#fff;white-space:nowrap}
+.ok{color:var(--gr);font-weight:800}
+.kp{display:flex;gap:8px;margin-bottom:12px}.kp div{flex:1;background:#fff;border-radius:12px;padding:10px;text-align:center;box-shadow:0 1px 4px #0001}
+.kp b{display:block;font-size:26px}.kp small{color:var(--mu);font-weight:700}
+.red b{color:var(--rd)}.grn b{color:var(--gr)}
+.empty{color:var(--mu);text-align:center;padding:14px}
+.tag{display:inline-block;background:var(--nv);color:#fff;border-radius:6px;padding:1px 7px;font-size:13px;font-weight:800;margin-right:4px}
+#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#1E2A3A;color:#fff;padding:10px 16px;border-radius:10px;display:none;z-index:9;max-width:90%;text-align:center}
+.hidden{display:none}
+input.url{width:100%;padding:12px;border:1.5px solid var(--ln);border-radius:10px;font-size:15px;margin:8px 0}
+</style></head><body>
+<header><h1>📱 Celulares de campo</h1><small id="fecha">…</small>
+<div class="tabs"><button data-t="sal" aria-pressed="true">🌅 Salida</button><button data-t="ent" aria-pressed="false">🌇 Entrada</button></div></header>
+<main>
+ <div id="cfg" class="card hidden"><h2>Conectar con la hoja</h2><div class="small">Pega aquí el link /exec del Apps Script de celulares:</div><input class="url" id="url" placeholder="https://script.google.com/macros/s/…/exec"><button class="btn" id="bUrl">Conectar</button></div>
+ <section id="sal">
+  <div class="card"><h2>1. Grupo</h2><div class="grp" id="grp"></div></div>
+  <div class="card"><h2>2. Celulares que salen</h2><div id="lista"><div class="empty">Cargando…</div></div></div>
+ </section>
+ <section id="ent" class="hidden">
+  <div class="kp"><div class="red"><b id="kF">0</b><small>Fuera</small></div><div class="grn"><b id="kD">0</b><small>Devueltos hoy</small></div></div>
+  <div id="fuera"></div>
+ </section>
+</main>
+<div class="bar" id="barSal"><button class="btn" id="bSal" disabled>Guardar salida</button></div>
+<div id="toast"></div>
+<script>
+const API_DEF='';
+const GRUPOS=['A','B','C','D','E'];
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function ls(k,v){try{if(v===undefined)return localStorage.getItem('cel:'+k);localStorage.setItem('cel:'+k,v)}catch(e){return null}}
+let API=API_DEF||ls('api')||'',D={celulares:[],salidas:[],hoy:''},grupo=ls('grupo')||'',sel={};
+const toast=m=>{const t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',3000)};
+async function cargar(){if(!API){$('cfg').classList.remove('hidden');return}
+ try{const r=await fetch(API);const j=await r.json();if(!j.ok)throw new Error(j.error);D=j;pintar()}catch(e){toast('No conecta con la hoja: '+e.message)}}
+async function enviar(body){const r=await fetch(API,{method:'POST',body:JSON.stringify(body)});const j=await r.json();if(!j.ok)throw new Error(j.error);D=j;pintar()}
+const fuera=()=>D.salidas.filter(s=>s.devuelto!=='SÍ');
+const cel=imei=>D.celulares.find(c=>c.imei===imei)||{};
+function pintar(){$('fecha').textContent='Hoy '+D.hoy;
+ $('grp').innerHTML=GRUPOS.map(g=>`<button data-g="${g}" aria-pressed="${g===grupo}">${g}</button>`).join('');
+ const F=new Set(fuera().map(s=>s.imei));
+ const L=D.celulares.filter(c=>!/BAJA|MALOGR|PERDID/i.test(c.status)).sort((a,b)=>((b.grupo===grupo)-(a.grupo===grupo))||a.codigo.localeCompare(b.codigo));
+ $('lista').innerHTML=!grupo?'<div class="empty">Primero elige el grupo.</div>':L.length?L.map(c=>{const o=F.has(c.imei),s=sel[c.imei];
+  return `<div class="cel ${s?'sel':''} ${o?'out':''}" data-i="${esc(c.imei)}"><div class="top"><span class="chk">${s?'✔':''}</span><div><b>${esc(c.codigo)} · ${esc(c.modelo)}</b><small>${o?'Ya está fuera':'N° '+esc(c.numero)+(c.grupo?' · grupo '+esc(c.grupo):'')}</small></div></div>${s?`<input data-p="${esc(c.imei)}" placeholder="Persona asignada" value="${esc(s.persona)}">`:''}</div>`}).join(''):'<div class="empty">No hay celulares en la pestaña CELULARES.</div>';
+ const n=Object.keys(sel).length;$('bSal').disabled=!n||!grupo;$('bSal').textContent=n?`Guardar salida (${n})`:'Guardar salida';
+ const FU=fuera();$('kF').textContent=FU.length;$('kD').textContent=D.salidas.filter(s=>s.devuelto==='SÍ'&&s.fecha===D.hoy).length;
+ const por={};FU.forEach(s=>(por[s.grupo]=por[s.grupo]||[]).push(s));
+ $('fuera').innerHTML=FU.length?Object.keys(por).sort().map(g=>`<div class="card"><h2>Grupo ${esc(g)} · ${por[g].length}</h2>${por[g].map(s=>{const c=cel(s.imei);return`<div class="row"><div class="i"><b>${esc(c.codigo||s.imei)} · ${esc(c.modelo||'')}</b><small>${esc(s.persona||'Sin persona')}${s.fecha!==D.hoy?' · <span style="color:#D2412C;font-weight:800">salió '+esc(s.fecha)+'</span>':''}</small></div><button class="dev" data-f="${s.fila}">✅ Devuelto</button></div>`}).join('')}</div>`).join(''):'<div class="card empty">✅ Todos los celulares están en el acopio.</div>'}
+document.querySelector('.tabs').onclick=e=>{const b=e.target.closest('[data-t]');if(!b)return;document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+ $('sal').classList.toggle('hidden',b.dataset.t!=='sal');$('ent').classList.toggle('hidden',b.dataset.t!=='ent');$('barSal').classList.toggle('hidden',b.dataset.t!=='sal');if(b.dataset.t==='ent')cargar()};
+$('grp').onclick=e=>{const b=e.target.closest('[data-g]');if(!b)return;grupo=b.dataset.g;ls('grupo',grupo);pintar()};
+$('lista').onclick=e=>{if(e.target.tagName==='INPUT')return;const c=e.target.closest('.cel');if(!c||c.classList.contains('out'))return;const i=c.dataset.i;if(sel[i])delete sel[i];else sel[i]={persona:''};pintar();const inp=document.querySelector(`[data-p="${CSS.escape(i)}"]`);inp&&inp.focus()};
+$('lista').oninput=e=>{const i=e.target.dataset.p;if(i&&sel[i])sel[i].persona=e.target.value};
+$('bSal').onclick=async()=>{const items=Object.entries(sel).map(([imei,v])=>({imei,persona:v.persona}));
+ if(items.some(x=>!x.persona.trim())&&!confirm('Hay celulares sin persona asignada. ¿Guardar igual?'))return;
+ const b=$('bSal');b.disabled=true;b.textContent='Guardando…';
+ try{await enviar({accion:'salida',grupo,items});sel={};pintar();toast(`✔ Salida guardada: ${items.length} celular${items.length>1?'es':''} · grupo ${grupo}`)}catch(e){toast('No guardó: '+e.message);pintar()}};
+$('fuera').onclick=async e=>{const b=e.target.closest('[data-f]');if(!b)return;b.disabled=true;b.textContent='…';
+ try{await enviar({accion:'devolver',filas:[{fila:+b.dataset.f}]});toast('✔ Devuelto')}catch(e){toast('No guardó: '+e.message);pintar()}};
+$('bUrl').onclick=()=>{const u=$('url').value.trim();if(!/^https:\/\/script\.google\.com\/.+\/exec/.test(u))return toast('Ese link no es /exec');API=u;ls('api',u);$('cfg').classList.add('hidden');cargar()};
+cargar();
+</script></body></html>
