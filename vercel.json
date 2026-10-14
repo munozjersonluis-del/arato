@@ -49,6 +49,10 @@
       "destination": "/despacho-camion.html"
     },
     {
+      "source": "/celulares",
+      "destination": "/celulares.html"
+    },
+    {
       "source": "/satelite",
       "destination": "/mapa-satelite.html"
     },
@@ -57,7 +61,7 @@
       "destination": "/mapa-bloques.html"
     },
     {
-      "source": "/((?!api/|fichas|menu|guia|reporte|acopio|cosecha|stock|despacho|maquinaria|tallas|camion|camion-resumen|mapa|satelite).*)",
+      "source": "/((?!api/|fichas|menu|guia|reporte|acopio|cosecha|stock|despacho|maquinaria|tallas|camion|camion-resumen|mapa|satelite|celulares).*)",
       "destination": "/index.html"
     }
   ]
