@@ -34,6 +34,10 @@ h2{margin:0 0 10px;font-size:17px;color:var(--nv)}
 .tag{display:inline-block;background:var(--nv);color:#fff;border-radius:6px;padding:1px 7px;font-size:13px;font-weight:800;margin-right:4px}
 #toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#1E2A3A;color:#fff;padding:10px 16px;border-radius:10px;display:none;z-index:9;max-width:90%;text-align:center}
 .hidden{display:none}
+.fal{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.fal button{border:1.5px solid var(--ln);background:#fff;border-radius:20px;padding:7px 11px;font-size:14px;font-weight:700;color:#556}
+.fal button[aria-pressed=true]{background:#FBE1DC;border-color:var(--rd);color:#B4321C}
+.res{font-size:16px;margin-bottom:4px}.small{color:var(--mu);font-size:14px}
+.otros{width:100%;border:1.5px dashed var(--ln);background:#fff;border-radius:12px;padding:12px;font-size:15px;font-weight:700;color:var(--nv);margin:6px 0 8px}
 input.url{width:100%;padding:12px;border:1.5px solid var(--ln);border-radius:10px;font-size:15px;margin:8px 0}
 </style></head><body>
 <header><h1>📱 Celulares de campo</h1><small id="fecha">…</small>
@@ -60,26 +64,42 @@ function ls(k,v){try{if(v===undefined)return localStorage.getItem('cel:'+k);loca
 let API=API_DEF||ls('api')||'',D={celulares:[],salidas:[],hoy:''},grupo=ls('grupo')||'',sel={};
 const toast=m=>{const t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',3000)};
 async function cargar(){if(!API){$('cfg').classList.remove('hidden');return}
- try{const r=await fetch(API);const j=await r.json();if(!j.ok)throw new Error(j.error);D=j;pintar()}catch(e){toast('No conecta con la hoja: '+e.message)}}
+ try{const r=await fetch(API);const j=await r.json();if(!j.ok)throw new Error(j.error);D=j;if(grupo&&!Object.keys(sel).length)iniGrupo();pintar()}catch(e){toast('No conecta con la hoja: '+e.message)}}
 async function enviar(body){const r=await fetch(API,{method:'POST',body:JSON.stringify(body)});const j=await r.json();if(!j.ok)throw new Error(j.error);D=j;pintar()}
 const fuera=()=>D.salidas.filter(s=>s.devuelto!=='SÍ');
 const cel=imei=>D.celulares.find(c=>c.imei===imei)||{};
+const FALLAS=['Pantalla','Cámara','Carcasa','Batería','Cargador','No enciende'];
+let verOtros=false;
+function iniGrupo(){sel={};const F=new Set(fuera().map(s=>s.imei));D.celulares.filter(c=>c.grupo===grupo&&!F.has(c.imei)&&!/BAJA|MALOGR|PERDID/i.test(c.status)).forEach(c=>sel[c.imei]={persona:c.responsable||'',falla:[]})}
+function tarjeta(c,F){const o=F.has(c.imei),s=sel[c.imei];
+ return `<div class="cel ${s?'sel':''} ${o?'out':''}" data-i="${esc(c.imei)}"><div class="top"><span class="chk">${s?'✔':''}</span><div style="flex:1"><b>${esc(c.codigo)} · ${esc(c.modelo)}</b><small>${o?'Ya está fuera':'N° '+esc(c.numero)}</small></div>${s?(s.falla.length?'<span style="color:#D2412C;font-weight:800">⚠️ '+s.falla.length+'</span>':'<span class="ok">Bien</span>'):''}</div>
+ ${s?`<input data-p="${esc(c.imei)}" placeholder="Persona asignada" value="${esc(s.persona)}"><div class="fal">${FALLAS.map(f=>`<button type="button" data-fi="${esc(c.imei)}" data-fa="${f}" aria-pressed="${s.falla.includes(f)}">${f}</button>`).join('')}</div>`:''}</div>`}
 function pintar(){$('fecha').textContent='Hoy '+D.hoy;
  $('grp').innerHTML=GRUPOS.map(g=>`<button data-g="${g}" aria-pressed="${g===grupo}">${g}</button>`).join('');
  const F=new Set(fuera().map(s=>s.imei));
- const L=D.celulares.filter(c=>!/BAJA|MALOGR|PERDID/i.test(c.status)).sort((a,b)=>((b.grupo===grupo)-(a.grupo===grupo))||a.codigo.localeCompare(b.codigo));
- $('lista').innerHTML=!grupo?'<div class="empty">Primero elige el grupo.</div>':L.length?L.map(c=>{const o=F.has(c.imei),s=sel[c.imei];
-  return `<div class="cel ${s?'sel':''} ${o?'out':''}" data-i="${esc(c.imei)}"><div class="top"><span class="chk">${s?'✔':''}</span><div><b>${esc(c.codigo)} · ${esc(c.modelo)}</b><small>${o?'Ya está fuera':'N° '+esc(c.numero)+(c.grupo?' · grupo '+esc(c.grupo):'')}</small></div></div>${s?`<input data-p="${esc(c.imei)}" placeholder="Persona asignada" value="${esc(s.persona)}">`:''}</div>`}).join(''):'<div class="empty">No hay celulares en la pestaña CELULARES.</div>';
- const n=Object.keys(sel).length;$('bSal').disabled=!n||!grupo;$('bSal').textContent=n?`Guardar salida (${n})`:'Guardar salida';
+ const ok=c=>!/BAJA|MALOGR|PERDID/i.test(c.status);
+ const mios=D.celulares.filter(c=>c.grupo===grupo&&ok(c)).sort((a,b)=>a.codigo.localeCompare(b.codigo));
+ const otros=D.celulares.filter(c=>c.grupo!==grupo&&ok(c)).sort((a,b)=>a.codigo.localeCompare(b.codigo));
+ const n=Object.keys(sel).length,nm=mios.filter(c=>sel[c.imei]).length,nf=Object.values(sel).filter(s=>s.falla.length).length;
+ $('lista').innerHTML=!grupo?'<div class="empty">Primero elige el grupo.</div>':
+  `<div class="res"><b>${nm} de ${mios.length}</b> equipos del grupo ${esc(grupo)} salen${nf?` · <span style="color:#D2412C">⚠️ ${nf} con desperfecto</span>`:''}</div>
+  <div class="small" style="margin:0 0 8px">Desmarca el que no sale. Toca la falla si tiene algún desperfecto.</div>`+
+  (mios.length?mios.map(c=>tarjeta(c,F)).join(''):'<div class="empty">Este grupo no tiene equipos asignados en la pestaña CELULARES (columna GRUPO).</div>')+
+  (otros.length?`<button type="button" class="otros" id="bOtros">${verOtros?'▲ Ocultar':'＋ Prestar equipo de otro grupo'} (${otros.length})</button>${verOtros?otros.map(c=>tarjeta(c,F)).join(''):''}`:'');
+ $('bSal').disabled=!n||!grupo;$('bSal').textContent=n?`Guardar salida (${n})`:'Guardar salida';
  const FU=fuera();$('kF').textContent=FU.length;$('kD').textContent=D.salidas.filter(s=>s.devuelto==='SÍ'&&s.fecha===D.hoy).length;
  const por={};FU.forEach(s=>(por[s.grupo]=por[s.grupo]||[]).push(s));
  $('fuera').innerHTML=FU.length?Object.keys(por).sort().map(g=>`<div class="card"><h2>Grupo ${esc(g)} · ${por[g].length}</h2>${por[g].map(s=>{const c=cel(s.imei);return`<div class="row"><div class="i"><b>${esc(c.codigo||s.imei)} · ${esc(c.modelo||'')}</b><small>${esc(s.persona||'Sin persona')}${s.fecha!==D.hoy?' · <span style="color:#D2412C;font-weight:800">salió '+esc(s.fecha)+'</span>':''}</small></div><button class="dev" data-f="${s.fila}">✅ Devuelto</button></div>`}).join('')}</div>`).join(''):'<div class="card empty">✅ Todos los celulares están en el acopio.</div>'}
 document.querySelector('.tabs').onclick=e=>{const b=e.target.closest('[data-t]');if(!b)return;document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-pressed',x===b));
  $('sal').classList.toggle('hidden',b.dataset.t!=='sal');$('ent').classList.toggle('hidden',b.dataset.t!=='ent');$('barSal').classList.toggle('hidden',b.dataset.t!=='sal');if(b.dataset.t==='ent')cargar()};
-$('grp').onclick=e=>{const b=e.target.closest('[data-g]');if(!b)return;grupo=b.dataset.g;ls('grupo',grupo);pintar()};
-$('lista').onclick=e=>{if(e.target.tagName==='INPUT')return;const c=e.target.closest('.cel');if(!c||c.classList.contains('out'))return;const i=c.dataset.i;if(sel[i])delete sel[i];else sel[i]={persona:''};pintar();const inp=document.querySelector(`[data-p="${CSS.escape(i)}"]`);inp&&inp.focus()};
+$('grp').onclick=e=>{const b=e.target.closest('[data-g]');if(!b)return;grupo=b.dataset.g;ls('grupo',grupo);verOtros=false;iniGrupo();pintar()};
+$('lista').onclick=e=>{if(e.target.tagName==='INPUT')return;
+ if(e.target.id==='bOtros'){verOtros=!verOtros;pintar();return}
+ const fb=e.target.closest('[data-fa]');if(fb){const s=sel[fb.dataset.fi],f=fb.dataset.fa;s.falla=s.falla.includes(f)?s.falla.filter(x=>x!==f):[...s.falla,f];pintar();return}
+ const c=e.target.closest('.cel');if(!c||c.classList.contains('out'))return;const i=c.dataset.i;
+ if(sel[i])delete sel[i];else{const x=cel(i);sel[i]={persona:x.grupo===grupo?(x.responsable||''):'',falla:[]}}pintar()};
 $('lista').oninput=e=>{const i=e.target.dataset.p;if(i&&sel[i])sel[i].persona=e.target.value};
-$('bSal').onclick=async()=>{const items=Object.entries(sel).map(([imei,v])=>({imei,persona:v.persona}));
+$('bSal').onclick=async()=>{const items=Object.entries(sel).map(([imei,v])=>({imei,persona:v.persona,obs:v.falla.length?'DESPERFECTO: '+v.falla.join(', ').toUpperCase():''}));
  if(items.some(x=>!x.persona.trim())&&!confirm('Hay celulares sin persona asignada. ¿Guardar igual?'))return;
  const b=$('bSal');b.disabled=true;b.textContent='Guardando…';
  try{await enviar({accion:'salida',grupo,items});sel={};pintar();toast(`✔ Salida guardada: ${items.length} celular${items.length>1?'es':''} · grupo ${grupo}`)}catch(e){toast('No guardó: '+e.message);pintar()}};
