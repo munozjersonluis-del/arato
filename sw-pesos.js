@@ -1,5 +1,5 @@
 // App "Pesos": abre aunque no haya señal. Los registros se envían a la hoja cuando vuelve el internet.
-const CACHE = 'pesos-v1';
+const CACHE = 'pesos-v2';
 const PAGE = 'registro-pesos-bandejas.html';
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll([PAGE, 'pesos.webmanifest', 'pesos-icon-192.png', 'pesos-icon-512.png'])).then(() => self.skipWaiting()));
