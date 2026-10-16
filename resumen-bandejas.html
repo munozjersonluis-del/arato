@@ -99,12 +99,10 @@ main{max-width:720px;margin:0 auto;padding:12px 14px 40px}
     <button type="button" id="nextD" aria-label="Día siguiente">›</button><button type="button" id="hoyB">Hoy</button></div>
   <div class="off" id="off" hidden>Sin conexión. Mostrando la última información recibida.</div>
   <div class="kpis" id="kpis"></div>
-  <section class="card"><h2>Bandejas por grupo</h2><p class="sub">Lo dejado contra lo pedido por el auxiliar.</p>
-    <div class="leg"><span><i style="background:rgba(20,36,107,.25)"></i>Pedido</span><span><i style="background:var(--leaf)"></i>Dejado</span></div>
+  <section class="card"><h2>Bandejas por grupo</h2><p class="sub">Bandejas dejadas por cada grupo.</p>
     <div id="gGrupos"></div></section>
   <section class="card"><h2>Cada grupo por fundo</h2><p class="sub">Cuántas bandejas dejó cada grupo en cada fundo.</p><div id="gGxF"></div></section>
-  <section class="card"><h2>Bandejas por fundo</h2><p class="sub">Lo dejado contra lo pedido en cada fundo.</p>
-    <div class="leg"><span><i style="background:rgba(20,36,107,.25)"></i>Pedido</span><span><i style="background:var(--navy)"></i>Dejado</span></div>
+  <section class="card"><h2>Bandejas por fundo</h2><p class="sub">Bandejas dejadas en cada fundo.</p>
     <div id="gFundos"></div></section>
   <section class="card"><h2>Bandejas por punto</h2><p class="sub">Cada columna es un punto; la parte clara son los rellenos.</p><div id="gPuntos"></div></section>
   <section class="card"><h2>Tiempos por punto</h2><p class="sub">A qué hora se dejó cada punto, cuándo fueron los rellenos y cuánto tiempo pasó entre uno y otro. ● entrega · ○ relleno</p><div id="gTiempos"></div></section>
@@ -175,16 +173,16 @@ function pintar0(){
   Object.values(porPP).forEach(l=>l.forEach((e,i)=>e.rel=i>0));
   const pedidas=P.reduce((a,p)=>a+(Number(p.total)||0),0),dej=E.reduce((a,e)=>a+e.n,0);
   const puntos=Object.keys(porPP).length,rel=E.filter(e=>e.rel).length;
-  $('kpis').innerHTML=[[n0(pedidas),'pedidas'],[n0(dej),'dejadas'],[pedidas?Math.round(dej/pedidas*100)+'%':'—','avance'],[puntos,'puntos con entrega'],[rel,'rellenos'],[E.length,'vueltas']].map(([v,t])=>`<div class="kpi"><b>${v}</b><span>${t}</span></div>`).join('');
+  $('kpis').innerHTML=[[n0(dej),'bandejas dejadas'],[puntos,'puntos con entrega'],[rel,'rellenos'],[E.length,'vueltas']].map(([v,t])=>`<div class="kpi"><b>${v}</b><span>${t}</span></div>`).join('');
 
   // ---- por grupo ----
   const G={};P.forEach(p=>{const g=up(p.grupo);(G[g]=G[g]||{ped:0,dej:0,pts:new Set(),rel:0,np:0}).ped+=Number(p.total)||0;G[g].np+=Number(p.npuntos)||0});
   E.forEach(e=>{const g=G[e.grupo]||(G[e.grupo]={ped:0,dej:0,pts:new Set(),rel:0,np:0});g.dej+=e.n;g.pts.add(e.pedido+'|'+e.punto);if(e.rel)g.rel++});
-  const gk=Object.keys(G).sort();const mx=Math.max(1,...gk.map(k=>Math.max(G[k].ped,G[k].dej)));
+  const gk=Object.keys(G).sort();const mx=Math.max(1,...gk.map(k=>G[k].dej));
   $('gGrupos').innerHTML=gk.length?gk.map(k=>{const g=G[k];return `<div class="hb"><span class="lab"><i style="background:${col(k)}">${esc(k)}</i>Grupo</span>
-      <span class="tr"><span class="ped" style="width:${g.ped/mx*100}%"></span><span class="dej" style="width:${g.dej/mx*100}%;background:${col(k)}"></span></span>
-      <span class="val">${n0(g.dej)}<small>de ${n0(g.ped)}</small></span></div>
-      <div class="det">${g.pts.size} de ${g.np} puntos con entrega · ${g.rel} relleno${g.rel===1?'':'s'}${g.dej>g.ped?` · ${n0(g.dej-g.ped)} de más`:g.ped>g.dej?` · faltan ${n0(g.ped-g.dej)}`:''}</div>`}).join('')
+      <span class="tr"><span class="dej" style="width:${g.dej/mx*100}%;background:${col(k)}"></span></span>
+      <span class="val">${n0(g.dej)}</span></div>
+      <div class="det">${g.pts.size} puntos con entrega · ${g.rel} relleno${g.rel===1?'':'s'}</div>`}).join('')
     :`<div class="empty">No hay pedidos ${dia}.</div>`;
 
   // ---- cada grupo por fundo ----
@@ -192,19 +190,19 @@ function pintar0(){
   const fdeP={};P.forEach(p=>fdeP[p.id]=up(p.fundo)||'SIN FUNDO');
   E.forEach(e=>{const f=fdeP[e.pedido];if(!f)return;((GX[e.grupo]=GX[e.grupo]||{})[f]=GX[e.grupo][f]||{ped:0,dej:0}).dej+=e.n});
   const gxk=Object.keys(GX).sort();
-  $('gGxF').innerHTML=gxk.length?gxk.map(g=>{const fs=Object.keys(GX[g]).sort();const tot=fs.reduce((a,f)=>a+GX[g][f].dej,0);const mxg=Math.max(1,...fs.map(f=>Math.max(GX[g][f].dej,GX[g][f].ped)));
+  $('gGxF').innerHTML=gxk.length?gxk.map(g=>{const fs=Object.keys(GX[g]).sort();const tot=fs.reduce((a,f)=>a+GX[g][f].dej,0);const mxg=Math.max(1,...fs.map(f=>GX[g][f].dej));
       return `<div class="gx"><h3><i style="background:${col(g)}">${esc(g)}</i>Grupo ${esc(g)}<span>${n0(tot)} bandejas</span></h3>${fs.map(f=>{const x=GX[g][f];
-        return `<div class="fr"><span class="fn">${esc(f)}</span><span class="tr"><i style="width:${x.dej/mxg*100}%;background:${col(g)}"></i></span><span class="fv">${n0(x.dej)} <small>de ${n0(x.ped)}</small></span></div>`}).join('')}</div>`}).join('')
+        return `<div class="fr"><span class="fn">${esc(f)}</span><span class="tr"><i style="width:${x.dej/mxg*100}%;background:${col(g)}"></i></span><span class="fv">${n0(x.dej)}</span></div>`}).join('')}</div>`}).join('')
     :`<div class="empty">No hay pedidos ${dia}.</div>`;
 
   // ---- por fundo ----
   const pedFundo={};P.forEach(p=>pedFundo[p.id]=up(p.fundo)||'SIN FUNDO');
   const FU={};P.forEach(p=>{const f=pedFundo[p.id];(FU[f]=FU[f]||{ped:0,dej:0,pts:new Set(),rel:0,gr:new Set()}).ped+=Number(p.total)||0;FU[f].gr.add(up(p.grupo))});
   E.forEach(e=>{const f=pedFundo[e.pedido];if(!f)return;const x=FU[f];x.dej+=e.n;x.pts.add(e.pedido+'|'+e.punto);if(e.rel)x.rel++});
-  const fk=Object.keys(FU).sort();const mxf=Math.max(1,...fk.map(k=>Math.max(FU[k].ped,FU[k].dej)));
+  const fk=Object.keys(FU).sort();const mxf=Math.max(1,...fk.map(k=>FU[k].dej));
   $('gFundos').innerHTML=fk.length?fk.map(k=>{const x=FU[k];return `<div class="hb f"><span class="lab">${esc(k)}</span>
-      <span class="tr"><span class="ped" style="width:${x.ped/mxf*100}%"></span><span class="dej" style="width:${x.dej/mxf*100}%;background:var(--navy)"></span></span>
-      <span class="val">${n0(x.dej)}<small>de ${n0(x.ped)}</small></span></div>
+      <span class="tr"><span class="dej" style="width:${x.dej/mxf*100}%;background:var(--navy)"></span></span>
+      <span class="val">${n0(x.dej)}</span></div>
       <div class="det" style="margin-left:120px">Grupos ${[...x.gr].sort().join(', ')} · ${x.pts.size} puntos · ${x.rel} relleno${x.rel===1?'':'s'}</div>`}).join('')
     :`<div class="empty">No hay pedidos ${dia}.</div>`;
 
