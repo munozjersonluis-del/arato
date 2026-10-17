@@ -83,9 +83,9 @@ async function verDia(d,keepMsg){
   const a=await (await fetch(`${SB}/rest/v1/guias_archivos?fecha=eq.${d}&select=*&order=subido.asc`,{headers:H})).json();
   $('arch').innerHTML=Array.isArray(a)&&a.length?'<b>Excel subidos este día (evidencia):</b><br>'+a.map(x=>{const hr=new Date(x.subido).toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit',timeZone:'America/Lima'});return `• ${hr} · ${esc(x.nombre)} · ${x.filas} guías (${x.nuevas} nuevas) ${x.ruta?`<a href="${SB}/storage/v1/object/public/guias-excel/${x.ruta}" target="_blank">⬇️ descargar</a>`:''}`}).join('<br>'):'Todavía no se subió ningún Excel este día.';
   if(!RAW.length){$('out').classList.add('hidden');if(!keepMsg){$('info').classList.remove('hidden');$('info').textContent='No hay guías guardadas para ese día.'}return}
-  await cargarPesos();calc();
+  calc();if(!PESOS)cargarPesos().then(()=>{if(RAW.length)calc()});
  }catch(e){$('info').classList.remove('hidden');$('info').textContent='Sin conexión: '+e.message}}
-async function cargarPesos(){if(PESOS)return;try{const r=await fetch(API_PESOS);const j=await r.json();PESOS=(j.registros||[]).filter(x=>!x.tipoReg||x.tipoReg!=='descarte')}catch(e){PESOS=[]}}
+async function cargarPesos(){if(PESOS)return;try{const ac=new AbortController();setTimeout(()=>ac.abort(),8000);const r=await fetch(API_PESOS,{signal:ac.signal});const j=await r.json();PESOS=(j.registros||[]).filter(x=>!x.tipoReg||x.tipoReg!=='descarte')}catch(e){PESOS=[]}}
 function pesoJarra(f,g){const def=Number($('pjDef').value)||1.25;const L=(PESOS||[]).filter(x=>String(x.fecha).slice(0,10)===f&&Number(x.cantidad)>0&&Number(x.kg)>0);
  const pj=x=>(Number(x.kg)/Number(x.cantidad)-TARA)/(JPB[norm(x.tipo)]||2.5);
  const lg=L.filter(x=>norm(x.grupo)===g).map(pj).filter(v=>v>0.5&&v<2.5);if(lg.length)return{v:lg.reduce((a,b)=>a+b,0)/lg.length,src:'pesaje del grupo'};
