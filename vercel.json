@@ -49,6 +49,10 @@
       "destination": "/despacho-camion.html"
     },
     {
+      "source": "/resumen-kia",
+      "destination": "/resumen-kia.html"
+    },
+    {
       "source": "/guias-kia",
       "destination": "/guias-kia.html"
     },
@@ -65,7 +69,7 @@
       "destination": "/mapa-bloques.html"
     },
     {
-      "source": "/((?!api/|fichas|menu|guia|reporte|acopio|cosecha|stock|despacho|maquinaria|tallas|camion|camion-resumen|mapa|satelite|celulares|guias-kia).*)",
+      "source": "/((?!api/|fichas|menu|guia|reporte|acopio|cosecha|stock|despacho|maquinaria|tallas|camion|camion-resumen|mapa|satelite|celulares|guias-kia|resumen-kia).*)",
       "destination": "/index.html"
     }
   ]
