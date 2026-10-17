@@ -56,7 +56,7 @@ let RAW=[],CAL='EXPORTABLE',PESOS=null,LAST=null;
 function mins(v){if(v==null||v==='')return null;if(v instanceof Date)return v.getHours()*60+v.getMinutes();if(typeof v==='number')return Math.round((v%1)*1440);const m=String(v).match(/(\d{1,2}):(\d{2})/);return m?+m[1]*60+ +m[2]:null}
 function fecha(v){if(v instanceof Date)return v.toISOString().slice(0,10);if(typeof v==='number')return new Date(Date.UTC(1899,11,30)+v*864e5).toISOString().slice(0,10);const m=String(v).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);if(m)return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');return String(v).slice(0,10)}
 function col(h,...names){const H=h.map(norm);for(const n of names){const i=H.indexOf(norm(n));if(i>=0)return i}for(const n of names){const i=H.findIndex(x=>x.includes(norm(n)));if(i>=0)return i}return -1}
-const SHEETS_API='';
+const SHEETS_API='https://script.google.com/macros/s/AKfycbwT_Hv-AdEhbJDiQKoMiIx1FUF1xSgABPCPqOxnBxMDE0LacZ3aeYzg-t6fxL5xOdI/exec';
 const SB='https://rqvcvffyynpnighzwxju.supabase.co',SBK='sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn',H={apikey:SBK,Authorization:'Bearer '+SBK};
 const hoy=()=>new Date(Date.now()-5*3600e3).toISOString().slice(0,10);
 $('dia').value=hoy();$('dia').onchange=()=>verDia($('dia').value);
