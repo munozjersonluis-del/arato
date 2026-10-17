@@ -16,7 +16,7 @@
 .empty{padding:40px;text-align:center;color:var(--mu)}.nt{color:var(--mu);font-size:12px;padding:0 4px}
 @media(max-width:900px){.kp{grid-template-columns:repeat(3,1fr)}.g2,.g3{grid-template-columns:1fr}}
 </style></head><body>
-<div class="top"><h1>🚚 Resumen Kia · Exportable</h1><div class="r"><input type="date" id="dia"><button id="act">↻ Actualizar</button></div></div>
+<div class="top"><h1>🚚 Resumen Kia · Exportable</h1><div class="r"><select id="fu" style="padding:7px 10px;border-radius:9px;border:0;font-size:15px;font-weight:700"><option value="">Todos los fundos</option></select><input type="date" id="dia"><button id="act">↻ Actualizar</button></div></div>
 <div class="tabs" id="tabs"></div>
 <div class="w"><div class="panel" id="pan"><div class="empty">Cargando…</div></div></div>
 <script>
@@ -32,22 +32,23 @@ const sc=(v,a,b,inv)=>v==null?'#999':inv?(v<=a?'#1E9E5A':v<=b?'#E8A23A':'#D2412C
 let PESOS=null,IND=[],TAB='GENERAL';
 const hoy=()=>new Date(Date.now()-5*3600e3).toISOString().slice(0,10);
 $('dia').value=new URLSearchParams(location.search).get('fecha')||hoy();
-$('dia').onchange=cargar;$('act').onclick=cargar;
+$('dia').onchange=cargar;$('act').onclick=cargar;let ALL=[];$('fu').onchange=()=>{calc(ALL,$('dia').value);pintar()};
 async function pesos(){if(PESOS)return;try{const ac=new AbortController();setTimeout(()=>ac.abort(),8000);const j=await (await fetch(API_PESOS,{signal:ac.signal})).json();PESOS=(j.registros||[]).filter(x=>x.tipoReg!=='descarte')}catch(e){PESOS=[]}}
 function pj(d,g){const L=(PESOS||[]).filter(x=>String(x.fecha).slice(0,10)===d&&+x.cantidad>0&&+x.kg>0),v=x=>(x.kg/x.cantidad-TARA)/(JPB[norm(x.tipo)]||2.5),ok=a=>a.filter(z=>z>0.5&&z<2.5);
  let a=ok(L.filter(x=>norm(x.grupo)===g).map(v));if(!a.length)a=ok(L.map(v));return a.length?a.reduce((s,z)=>s+z,0)/a.length:PJ_DEF}
 async function cargar(){const d=$('dia').value;$('pan').innerHTML='<div class="empty">Cargando…</div>';
  try{const L=await (await fetch(`${SB}/rest/v1/guias_campo?fecha=eq.${d}&calidad=eq.EXPORTABLE&select=*&limit=5000`,{headers:H})).json();
-  calc(Array.isArray(L)?L:[],d);pintar();await pesos();calc(L,d);pintar()}catch(e){$('pan').innerHTML='<div class="empty">Sin conexión.</div>'}}
-function calc(L,d){const P={};L.forEach(r=>{const g=String(r.grupo||'');const k=pj(d,g);(P[r.placa]=P[r.placa]||[]).push({g,j:+r.jarras||0,kg:(+r.jarras||0)*k,ini:mins(r.inicio),fin:mins(r.fin),rec:mins(r.recojo)})});
+  ALL=Array.isArray(L)?L:[];const fs=[...new Set(ALL.map(r=>r.fundo).filter(Boolean))].sort(),cur=$('fu').value;$('fu').innerHTML='<option value="">Todos los fundos</option>'+fs.map(x=>`<option${x===cur?' selected':''}>${x}</option>`).join('');
+  calc(ALL,d);pintar();await pesos();calc(ALL,d);pintar()}catch(e){$('pan').innerHTML='<div class="empty">Sin conexión.</div>'}}
+function calc(L,d){const P={},F=$('fu').value;L.filter(r=>!F||r.fundo===F).forEach(r=>{const g=String(r.grupo||'');const k=pj(d,g);(P[r.placa]=P[r.placa]||[]).push({g,j:+r.jarras||0,kg:(+r.jarras||0)*k,ini:mins(r.inicio),fin:mins(r.fin),rec:mins(r.recojo)})});
  IND=Object.entries(P).map(([p,G])=>{G.sort((a,b)=>(a.rec??0)-(b.rec??0));const T=[];G.forEach(r=>{const t=T[T.length-1];if(t&&r.rec!=null&&r.rec-t.u<=10){t.kg+=r.kg;t.u=r.rec}else T.push({rec:r.rec,u:r.rec,kg:r.kg})});
   const cy=T.slice(1).map((t,i)=>t.rec-T[i].rec),kg=G.reduce((a,r)=>a+r.kg,0),ini=Math.min(...G.map(r=>r.ini??1e9)),ult=Math.max(...T.map(t=>t.rec??0)),hrs=ini<1e9&&ult>ini?(ult-ini)/60:0;
   const cos=G.filter(r=>r.ini!=null&&r.fin!=null).map(r=>r.fin-r.ini);
   return{p,g:G[0].g,v:T.length,kg,T,cy,cyp:cy.length?cy.reduce((a,b)=>a+b,0)/cy.length:null,kgh:hrs?kg/hrs:null,cos:cos.length?cos.reduce((a,b)=>a+b,0)/cos.length:null,tar:TARIFA[p]||0,ult}})
   .sort((a,b)=>a.g.localeCompare(b.g));IND.forEach(x=>x.cxt=x.tar&&x.kg?x.tar/(x.kg/1000):null)}
-function bars(rows,W,H,o={}){if(!rows.length)return'<div class="empty">Sin datos</div>';const mx=Math.max(...rows.map(r=>r.v),o.meta||0)*1.2||1,gw=(W-30)/rows.length,bw=Math.min(66,gw*.6),Y=v=>H-36-(H-60)*v/mx;let s=`<svg width="100%" viewBox="0 0 ${W} ${H}">`;
- if(o.meta)s+=`<line x1="10" x2="${W-6}" y1="${Y(o.meta)}" y2="${Y(o.meta)}" stroke="#1E9E5A" stroke-width="2" stroke-dasharray="7 5"/><text x="${W-8}" y="${Y(o.meta)-6}" text-anchor="end" font-size="12" font-weight="800" fill="#1E9E5A">Meta ${o.mt}</text>`;
- rows.forEach((r,i)=>{const x=20+gw*i+gw/2-bw/2,y=Y(r.v);s+=`<rect x="${x}" y="${y}" width="${bw}" height="${H-36-y}" rx="6" fill="${r.c}"><title>${r.l}: ${r.t??f(r.v)}</title></rect><text x="${x+bw/2}" y="${y-7}" text-anchor="middle" font-size="14" font-weight="800" fill="${r.c}" stroke="#fff" stroke-width="4" paint-order="stroke">${r.t??f(r.v)+(o.u||'')}</text><text x="${x+bw/2}" y="${H-14}" text-anchor="middle" font-size="13" fill="#555" font-weight="700">${r.l}</text>`});return s+'</svg>'}
+function bars(rows,W,H,o={}){if(!rows.length)return'<div class="empty">Sin datos</div>';const mx=Math.max(...rows.map(r=>r.v),o.meta||0)*1.2||1,gw=(W-30)/rows.length,bw=Math.min(66,gw*.6),Y=v=>H-42-(H-70)*v/mx;let s=`<svg width="100%" viewBox="0 0 ${W} ${H}">`;
+ if(o.meta)s+=`<line x1="10" x2="${W-6}" y1="${Y(o.meta)}" y2="${Y(o.meta)}" stroke="#1E9E5A" stroke-width="2" stroke-dasharray="7 5"/><text x="12" y="${Y(o.meta)-6}" font-size="12" font-weight="800" fill="#1E9E5A" stroke="#fff" stroke-width="4" paint-order="stroke">Meta ${o.mt}</text>`;
+ const fs=rows.length>12?11:rows.length>8?12:14;rows.forEach((r,i)=>{const x=20+gw*i+gw/2-bw/2,y=Y(r.v),lb=String(r.l).split(' · ');s+=`<rect x="${x}" y="${y}" width="${bw}" height="${H-42-y}" rx="6" fill="${r.c}"><title>${r.l}: ${r.t??f(r.v)}</title></rect><text x="${x+bw/2}" y="${y-7}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="${r.c}" stroke="#fff" stroke-width="4" paint-order="stroke">${r.t??f(r.v)+(o.u||'')}</text><text x="${x+bw/2}" y="${H-(lb[1]?22:14)}" text-anchor="middle" font-size="${fs}" fill="#555" font-weight="800">${lb[0]}</text>${lb[1]?`<text x="${x+bw/2}" y="${H-6}" text-anchor="middle" font-size="${fs-1}" fill="#888">${lb[1]}</text>`:''}`});return s+'</svg>'}
 const card=(t,svg,c)=>`<div class="c"><h3${c?` style="background:${c}"`:''}>${t}</h3>${svg}</div>`;
 const kpis=a=>`<div class="kp">${a.map(k=>`<div><b style="color:${k[2]||'#123A5C'}">${k[0]}</b><small>${k[1]}</small></div>`).join('')}</div>`;
 function pintar(){const d=$('dia').value;
@@ -68,8 +69,8 @@ function pintar(){const d=$('dia').value;
    +card('KG POR HORA DEL DÍA',bars(Object.keys(porH).sort((a,b)=>a-b).map(k=>({v:porH[k],l:k+':00',c:'#1B5E8C'})),460,260,{u:' kg'}))+'</div>';
  }else{const x=IND.find(i=>i.p===TAB),c=COL[x.g]||'#1B5E8C';
   h+=kpis([[x.v,'viajes'],[f(x.kg)+' kg','kg exportable'],[x.cyp==null?'—':Math.round(x.cyp)+"'",'ciclo promedio',sc(x.cyp,META_CICLO,40,1)],[x.kgh?f(x.kgh)+' kg':'—','kg por hora',sc(x.kgh,META_KGH,150)],[x.cos==null?'—':Math.round(x.cos)+"'",'cosecha prom.'],[x.cxt?'S/ '+f(x.cxt):'—','costo por TN',sc(x.cxt,300,500,1)]]);
-  h+='<div class="g2">'+card('KG POR VIAJE (hora de recojo)',bars(x.T.map((t,i)=>({v:t.kg,l:'V'+(i+1)+' · '+hm(t.rec),c})),700,320,{u:' kg'}),c)
-   +card('CICLO ENTRE VIAJES (MIN)',x.cy.length?bars(x.cy.map((v,i)=>({v,l:'V'+(i+2),c:sc(v,META_CICLO,40,1),t:v+"'"})),700,320,{meta:META_CICLO,mt:META_CICLO+"'"}):'<div class="empty">Solo 1 viaje</div>',c)+'</div>';
+  const BW=Math.max(1100,x.T.length*80);h+='<div style="display:grid;gap:14px">'+card('KG POR VIAJE (hora de recojo)',bars(x.T.map((t,i)=>({v:t.kg,l:'V'+(i+1)+' · '+hm(t.rec),c})),BW,300,{u:' kg'}),c)
+   +card('CICLO ENTRE VIAJES (MIN)',x.cy.length?bars(x.cy.map((v,i)=>({v,l:'V'+(i+2)+' · '+hm(x.T[i+1].rec),c:sc(v,META_CICLO,40,1),t:v+"'"})),BW,300,{meta:META_CICLO,mt:META_CICLO+"'"}):'<div class="empty">Solo 1 viaje</div>',c)+'</div>';
  }
  h+=`<div class="nt">📅 ${d.split('-').reverse().join('/')} · último recojo ${hm(ult)} · solo exportable · kg = jarras × peso real de jarra del grupo (si no hay pesaje, ${PJ_DEF} kg) · 🟢 meta · 🟡 cerca · 🔴 revisar · ciclo meta ${META_CICLO} min</div>`;
  $('pan').innerHTML=h}
