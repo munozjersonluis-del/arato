@@ -27,13 +27,15 @@ tr.t td{font-weight:800;background:#E7EEF5}
 <header><h1>🚚 Guías de campo → Indicadores Kia</h1><small>Sube el Excel que descargas del PowerApps</small></header>
 <main>
  <div class="card">
-  <label class="up"><b>📂</b>Toca para subir el Excel del PowerApps<input type="file" id="f" accept=".xlsx,.xls,.csv"></label>
+  <label class="up"><b>📂</b>Toca para subir el Excel del PowerApps<br><span class="small">Puedes subirlo las veces que quieras: solo se agregan las guías nuevas</span><input type="file" id="f" accept=".xlsx,.xls,.csv"></label>
   <div class="tg" id="cal"><button data-c="EXPORTABLE" aria-pressed="true">Solo exportable</button><button data-c="" aria-pressed="false">Todo</button></div>
   <div class="pj"><span class="small">Peso por jarra si no hay pesaje del grupo:</span><input id="pjDef" type="number" step="0.01" value="1.25"> <span class="small">kg</span></div>
   <div id="info" class="msg hidden"></div>
  </div>
+ <div class="card"><h2>📅 Día</h2><div class="pj"><input type="date" id="dia" style="width:auto"></div>
+  <div id="arch" class="small" style="margin-top:8px"></div></div>
  <div id="out" class="hidden">
-  <div class="card"><h2 id="tFecha">Resumen</h2><div class="kp" id="kp"></div></div>
+  <div class="card"><h2 id="tFecha">Resumen</h2><div class="kp" id="kp"></div><p class="small" id="pesoInfo"></p></div>
   <div class="card"><h2>Indicadores por Kia</h2><div class="tw"><table id="tInd"></table></div>
    <p class="small">Viaje = guías de la misma placa recogidas con 10 min o menos de diferencia. Ciclo = minutos entre un recojo y el siguiente. Horas = del primer inicio de cosecha al último recojo. Kg = jarras × peso real de jarra del grupo (del pesaje).</p></div>
   <div class="card"><h2>Viajes</h2><div class="tw"><table id="tVia"></table></div></div>
@@ -54,15 +56,33 @@ let RAW=[],CAL='EXPORTABLE',PESOS=null,LAST=null;
 function mins(v){if(v==null||v==='')return null;if(v instanceof Date)return v.getHours()*60+v.getMinutes();if(typeof v==='number')return Math.round((v%1)*1440);const m=String(v).match(/(\d{1,2}):(\d{2})/);return m?+m[1]*60+ +m[2]:null}
 function fecha(v){if(v instanceof Date)return v.toISOString().slice(0,10);if(typeof v==='number')return new Date(Date.UTC(1899,11,30)+v*864e5).toISOString().slice(0,10);const m=String(v).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);if(m)return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');return String(v).slice(0,10)}
 function col(h,...names){const H=h.map(norm);for(const n of names){const i=H.indexOf(norm(n));if(i>=0)return i}for(const n of names){const i=H.findIndex(x=>x.includes(norm(n)));if(i>=0)return i}return -1}
+const SB='https://rqvcvffyynpnighzwxju.supabase.co',SBK='sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn',H={apikey:SBK,Authorization:'Bearer '+SBK};
+const hoy=()=>new Date(Date.now()-5*3600e3).toISOString().slice(0,10);
+$('dia').value=hoy();$('dia').onchange=()=>verDia($('dia').value);
 $('f').onchange=async e=>{const file=e.target.files[0];if(!file)return;const info=$('info');info.classList.remove('hidden');info.textContent='Leyendo…';
- try{const wb=XLSX.read(await file.arrayBuffer(),{cellDates:true});const ws=wb.Sheets[wb.SheetNames[0]];const A=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:''});
+ try{const buf=await file.arrayBuffer();const wb=XLSX.read(buf,{cellDates:true});const ws=wb.Sheets[wb.SheetNames[0]];const A=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:''});
   const h=A[0],c={fecha:col(h,'Fecha de cosecha','Fecha'),guia:col(h,'Código de Guía','Guia'),grupo:col(h,'Grupo'),fundo:col(h,'Fundo Campo','Fundo'),modulo:col(h,'Módulo'),variedad:col(h,'Variedad'),placa:col(h,'Placa de Unidad','Placa'),calidad:col(h,'Calidad'),tenv:col(h,'Tipo de envases trasiego'),nenv:col(h,'Nro. de envases trasiego'),jarras:col(h,'Nro. de envases cosechados'),ini:col(h,'Hora de inicio'),fin:col(h,'Hora fin'),rec:col(h,'Hora recojo')};
-  const falta=Object.entries(c).filter(([k,v])=>v<0&&['fecha','placa','calidad','jarras','rec'].includes(k)).map(([k])=>k);
+  const falta=Object.entries(c).filter(([k,v])=>v<0&&['fecha','guia','placa','calidad','jarras','rec'].includes(k)).map(([k])=>k);
   if(falta.length)throw new Error('No encuentro las columnas: '+falta.join(', '));
-  RAW=A.slice(1).filter(r=>r[c.placa]).map(r=>({fecha:fecha(r[c.fecha]),guia:r[c.guia],grupo:String(r[c.grupo]).replace(/0+$/,'').toUpperCase(),fundo:r[c.fundo],modulo:r[c.modulo],variedad:r[c.variedad],placa:String(r[c.placa]).toUpperCase().replace(/\s/g,''),calidad:norm(r[c.calidad]),tenv:r[c.tenv],nenv:Number(r[c.nenv])||0,jarras:Number(String(r[c.jarras]).replace(',',''))||0,ini:mins(r[c.ini]),fin:mins(r[c.fin]),rec:mins(r[c.rec])}));
-  info.textContent=`✔ ${RAW.length} guías leídas. Buscando los pesos…`;
+  const F=A.slice(1).filter(r=>r[c.placa]&&r[c.guia]).map(r=>({codigo:String(r[c.guia]).trim(),fecha:fecha(r[c.fecha]),grupo:String(r[c.grupo]).replace(/0+$/,'').toUpperCase(),fundo:String(r[c.fundo]),modulo:String(r[c.modulo]),variedad:String(r[c.variedad]),placa:String(r[c.placa]).toUpperCase().replace(/\s/g,''),calidad:norm(r[c.calidad]),envase:String(r[c.tenv]),n_envases:Number(r[c.nenv])||0,jarras:Number(String(r[c.jarras]).replace(',',''))||0,inicio:hm(mins(r[c.ini])),fin:hm(mins(r[c.fin])),recojo:hm(mins(r[c.rec]))}));
+  if(!F.length)throw new Error('El archivo no tiene guías.');
+  const dias=[...new Set(F.map(x=>x.fecha))].sort(),d0=dias[dias.length-1];
+  info.textContent=`✔ ${F.length} guías en el archivo. Guardando…`;
+  const t=new Date(Date.now()-5*3600e3).toISOString().slice(11,19).replace(/:/g,''),ruta=`${d0}/${t}_${file.name.replace(/[^\w.\-]+/g,'_')}`;
+  let rutaOk=ruta;try{const up=await fetch(`${SB}/storage/v1/object/guias-excel/${ruta}`,{method:'POST',headers:{...H,'Content-Type':file.type||'application/octet-stream','x-upsert':'false'},body:buf});if(!up.ok)rutaOk=''}catch(x){rutaOk=''}
+  const r=await fetch(`${SB}/rest/v1/rpc/guias_subir`,{method:'POST',headers:{...H,'Content-Type':'application/json'},body:JSON.stringify({p_filas:F,p_archivo:file.name,p_ruta:rutaOk,p_fecha:d0})});
+  const j=await r.json();if(!r.ok||!j.ok)throw new Error((j&&j.message)||'no se pudo guardar');
+  info.innerHTML=`✔ Guardado. <b>${j.nuevas} guías nuevas</b> · ${j.total-j.nuevas} ya estaban (no se duplicaron)${rutaOk?' · Excel guardado como evidencia':' · ⚠️ el Excel no se pudo guardar como evidencia'}`;
+  $('dia').value=d0;e.target.value='';await verDia(d0,true);
+ }catch(err){info.textContent='No pude subir el archivo: '+err.message}};
+async function verDia(d,keepMsg){
+ try{const r=await fetch(`${SB}/rest/v1/guias_campo?fecha=eq.${d}&select=*&limit=5000`,{headers:H});const L=await r.json();
+  RAW=(Array.isArray(L)?L:[]).map(x=>({fecha:x.fecha,guia:x.codigo,grupo:x.grupo,fundo:x.fundo,modulo:x.modulo,variedad:x.variedad,placa:x.placa,calidad:x.calidad,tenv:x.envase,nenv:Number(x.n_envases)||0,jarras:Number(x.jarras)||0,ini:mins(x.inicio),fin:mins(x.fin),rec:mins(x.recojo)}));
+  const a=await (await fetch(`${SB}/rest/v1/guias_archivos?fecha=eq.${d}&select=*&order=subido.asc`,{headers:H})).json();
+  $('arch').innerHTML=Array.isArray(a)&&a.length?'<b>Excel subidos este día (evidencia):</b><br>'+a.map(x=>{const hr=new Date(x.subido).toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit',timeZone:'America/Lima'});return `• ${hr} · ${esc(x.nombre)} · ${x.filas} guías (${x.nuevas} nuevas) ${x.ruta?`<a href="${SB}/storage/v1/object/public/guias-excel/${x.ruta}" target="_blank">⬇️ descargar</a>`:''}`}).join('<br>'):'Todavía no se subió ningún Excel este día.';
+  if(!RAW.length){$('out').classList.add('hidden');if(!keepMsg){$('info').classList.remove('hidden');$('info').textContent='No hay guías guardadas para ese día.'}return}
   await cargarPesos();calc();
- }catch(err){info.textContent='No pude leer el archivo: '+err.message}};
+ }catch(e){$('info').classList.remove('hidden');$('info').textContent='Sin conexión: '+e.message}}
 async function cargarPesos(){if(PESOS)return;try{const r=await fetch(API_PESOS);const j=await r.json();PESOS=(j.registros||[]).filter(x=>!x.tipoReg||x.tipoReg!=='descarte')}catch(e){PESOS=[]}}
 function pesoJarra(f,g){const def=Number($('pjDef').value)||1.25;const L=(PESOS||[]).filter(x=>String(x.fecha).slice(0,10)===f&&Number(x.cantidad)>0&&Number(x.kg)>0);
  const pj=x=>(Number(x.kg)/Number(x.cantidad)-TARA)/(JPB[norm(x.tipo)]||2.5);
@@ -83,7 +103,7 @@ function calc(){
 function render(){const{G,VIA,IND}=LAST;$('out').classList.remove('hidden');
  const fs=[...new Set(G.map(r=>r.fecha))];$('tFecha').textContent='Resumen · '+fs.map(f=>f.split('-').reverse().join('/')).join(', ')+(CAL?' · solo exportable':' · todas las calidades');
  const kg=IND.reduce((a,x)=>a+x.kg,0),vi=IND.reduce((a,x)=>a+x.viajes,0),cy=VIA.map(v=>v.ciclo).filter(x=>x!=null),tar=IND.reduce((a,x)=>a+(x.tar||0),0);
- $('info').textContent=`✔ ${RAW.length} guías leídas · ${G.length} ${CAL?'exportables':'en total'} · ${PESOS&&PESOS.length?'pesos tomados de la app de pesos':'sin pesaje: uso '+$('pjDef').value+' kg por jarra'}`;
+ $('pesoInfo').textContent=`${RAW.length} guías guardadas este día · ${G.length} ${CAL?'exportables':'en total'} · ${PESOS&&PESOS.length?'kg con el peso real de jarra de la app de pesos':'sin pesaje: uso '+$('pjDef').value+' kg por jarra'}`;
  $('kp').innerHTML=[[vi,'viajes'],[n0(G.reduce((a,r)=>a+r.jarras,0)),'jarras'],[n0(kg),'kg'],[cy.length?Math.round(cy.reduce((a,b)=>a+b,0)/cy.length)+"'":'—','ciclo prom.'],[tar&&kg?'S/ '+n2(tar/(kg/1000)):'—','costo por TN']].map(([v,t])=>`<div><b>${v}</b><small>${t}</small></div>`).join('');
  $('tInd').innerHTML='<tr><th>Placa</th><th>Grupo</th><th>Viajes</th><th>Jarras</th><th>Kg</th><th>Inicio</th><th>Último recojo</th><th>Horas</th><th>Ciclo prom. (min)</th><th>Kg / hora</th><th>Cosecha prom. (min)</th><th>Costo día</th><th>S/ por TN</th></tr>'+
   IND.map(x=>`<tr><td><b>${esc(x.placa)}</b></td><td>${esc(x.grupo)}</td><td>${x.viajes}</td><td>${n0(x.jarras)}</td><td>${n0(x.kg)}</td><td>${hm(x.ini<1e9?x.ini:null)}</td><td>${hm(x.ult)}</td><td>${x.hrs.toFixed(1)}</td><td>${x.ciclo==null?'—':Math.round(x.ciclo)}</td><td>${x.kgh==null?'—':n0(x.kgh)}</td><td>${Math.round(x.cos)}</td><td>${x.tar?'S/ '+x.tar:'—'}</td><td>${x.cxt==null?'—':'S/ '+n2(x.cxt)}</td></tr>`).join('')+
@@ -97,4 +117,5 @@ $('dl').onclick=()=>{const{G,VIA,IND}=LAST,wb=XLSX.utils.book_new(),d=f=>f.split
  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(VIA.map(v=>({'FECHA':d(v.fecha),'PLACA':v.placa,'GRUPO':v.grupo,'N° VIAJE':v.n,'INICIO':hm(v.ini<1e9?v.ini:null),'FIN':hm(v.fin),'RECOJO':hm(v.rec),'GUÍAS':v.guias,'JARRAS':v.jarras,'KG':Math.round(v.kg),'CICLO (MIN)':v.ciclo,'FUNDO':v.fundo}))),'VIAJES');
  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(IND.map(x=>({'FECHA':d(x.fecha),'PLACA':x.placa,'GRUPO':x.grupo,'VIAJES':x.viajes,'JARRAS':x.jarras,'KG':Math.round(x.kg),'INICIO':hm(x.ini<1e9?x.ini:null),'ÚLTIMO RECOJO':hm(x.ult),'HORAS':+x.hrs.toFixed(2),'CICLO PROM (MIN)':x.ciclo==null?'':Math.round(x.ciclo),'KG/HORA':x.kgh==null?'':Math.round(x.kgh),'COSECHA PROM (MIN)':Math.round(x.cos),'COSTO DÍA (S/)':x.tar||'','S/ POR TN':x.cxt==null?'':+x.cxt.toFixed(2),'PESO JARRA (KG)':+x.pj.toFixed(3),'FUENTE PESO':x.pjsrc}))),'INDICADORES');
  XLSX.writeFile(wb,`Indicadores_Kia_${(G[0]||{}).fecha||'hoy'}${CAL?'_exportable':''}.xlsx`)};
+verDia(hoy());
 </script></body></html>
