@@ -12,7 +12,7 @@
 .w{padding:0 26px 26px}.panel{background:#fff;border-radius:0 12px 12px 12px;padding:16px;display:grid;gap:14px}
 .kp{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}.kp div{background:#F4F7FA;border-radius:12px;padding:12px;text-align:center}.kp b{display:block;font-size:28px}.kp small{color:var(--mu);font-weight:700;font-size:12px;text-transform:uppercase}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-.c{border:1px solid #E3E8EE;border-radius:12px;overflow:hidden}.c h3{margin:0;color:#fff;background:var(--nv);font-size:14px;padding:8px 12px;letter-spacing:.3px}
+.c{border:1px solid #E3E8EE;border-radius:12px;overflow:hidden}.c h3{margin:0;color:#fff;background:var(--nv);font-size:18px;padding:10px 14px;letter-spacing:.3px}
 .empty{padding:40px;text-align:center;color:var(--mu)}.nt{color:var(--mu);font-size:12px;padding:0 4px}
 @media(max-width:900px){.kp{grid-template-columns:repeat(3,1fr)}.g2,.g3{grid-template-columns:1fr}}
 </style></head><body>
@@ -68,9 +68,9 @@ function pintar(){const d=$('dia').value;
    +card('VIAJES POR KIA',bars(IND.map(x=>({v:x.v,l:x.p,c:COL[x.g]||'#1B5E8C'})),460,260))
    +card('KG POR HORA DEL DÍA',bars(Object.keys(porH).sort((a,b)=>a-b).map(k=>({v:porH[k],l:k+':00',c:'#1B5E8C'})),460,260,{u:' kg'}))+'</div>';
  }else{const x=IND.find(i=>i.p===TAB),c=COL[x.g]||'#1B5E8C';
-  h+=kpis([[x.v,'viajes'],[f(x.kg)+' kg','kg exportable'],[x.cyp==null?'—':Math.round(x.cyp)+"'",'ciclo promedio',sc(x.cyp,META_CICLO,40,1)],[x.kgh?f(x.kgh)+' kg':'—','kg por hora',sc(x.kgh,META_KGH,150)],[x.cos==null?'—':Math.round(x.cos)+"'",'cosecha prom.'],[x.cxt?'S/ '+f(x.cxt):'—','costo por TN',sc(x.cxt,300,500,1)]]);
-  const BW=Math.max(1100,x.T.length*80);h+='<div style="display:grid;gap:14px">'+card('KG POR VIAJE (hora de recojo)',bars(x.T.map((t,i)=>({v:t.kg,l:'V'+(i+1)+' · '+hm(t.rec),c})),BW,300,{u:' kg'}),c)
-   +card('CICLO ENTRE VIAJES (MIN)',x.cy.length?bars(x.cy.map((v,i)=>({v,l:'V'+(i+2)+' · '+hm(x.T[i+1].rec),c:sc(v,META_CICLO,40,1),t:v+"'"})),BW,300,{meta:META_CICLO,mt:META_CICLO+"'"}):'<div class="empty">Solo 1 viaje</div>',c)+'</div>';
+  h+=kpis([[x.v,'viajes'],[f(x.kg)+' kg','kg exportable'],[x.cyp==null?'—':Math.round(x.cyp)+"'",'ciclo promedio',sc(x.cyp,META_CICLO,40,1)],[x.kgh?f(x.kgh)+' kg':'—','kg por hora',sc(x.kgh,META_KGH,150)],[x.cos==null?'—':Math.round(x.cos)+"'",'cosecha prom.'],[hm(x.ult)||'—','último recojo']]);
+  const BW=Math.max(1100,x.T.length*80);h+='<div style="display:grid;gap:14px">'+card(`🚚 ${x.p} · GRUPO ${x.g} — KG POR VIAJE (hora de recojo)`,bars(x.T.map((t,i)=>({v:t.kg,l:'V'+(i+1)+' · '+hm(t.rec),c})),BW,300,{u:' kg'}),c)
+   +card(`🚚 ${x.p} · GRUPO ${x.g} — CICLO ENTRE VIAJES (meta ${META_CICLO} min)`,x.cy.length?bars(x.cy.map((v,i)=>({v,l:'V'+(i+2)+' · '+hm(x.T[i+1].rec),c:sc(v,META_CICLO,40,1),t:v+"'"})),BW,300,{meta:META_CICLO,mt:META_CICLO+"'"}):'<div class="empty">Solo 1 viaje</div>',c)+'</div>';
  }
  h+=`<div class="nt">📅 ${d.split('-').reverse().join('/')} · último recojo ${hm(ult)} · solo exportable · kg = jarras × peso real de jarra del grupo (si no hay pesaje, ${PJ_DEF} kg) · 🟢 meta · 🟡 cerca · 🔴 revisar · ciclo meta ${META_CICLO} min</div>`;
  $('pan').innerHTML=h}
