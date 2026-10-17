@@ -56,6 +56,7 @@ let RAW=[],CAL='EXPORTABLE',PESOS=null,LAST=null;
 function mins(v){if(v==null||v==='')return null;if(v instanceof Date)return v.getHours()*60+v.getMinutes();if(typeof v==='number')return Math.round((v%1)*1440);const m=String(v).match(/(\d{1,2}):(\d{2})/);return m?+m[1]*60+ +m[2]:null}
 function fecha(v){if(v instanceof Date)return v.toISOString().slice(0,10);if(typeof v==='number')return new Date(Date.UTC(1899,11,30)+v*864e5).toISOString().slice(0,10);const m=String(v).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);if(m)return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');return String(v).slice(0,10)}
 function col(h,...names){const H=h.map(norm);for(const n of names){const i=H.indexOf(norm(n));if(i>=0)return i}for(const n of names){const i=H.findIndex(x=>x.includes(norm(n)));if(i>=0)return i}return -1}
+const SHEETS_API='';
 const SB='https://rqvcvffyynpnighzwxju.supabase.co',SBK='sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn',H={apikey:SBK,Authorization:'Bearer '+SBK};
 const hoy=()=>new Date(Date.now()-5*3600e3).toISOString().slice(0,10);
 $('dia').value=hoy();$('dia').onchange=()=>verDia($('dia').value);
@@ -72,7 +73,8 @@ $('f').onchange=async e=>{const file=e.target.files[0];if(!file)return;const inf
   let rutaOk=ruta;try{const up=await fetch(`${SB}/storage/v1/object/guias-excel/${ruta}`,{method:'POST',headers:{...H,'Content-Type':file.type||'application/octet-stream','x-upsert':'false'},body:buf});if(!up.ok)rutaOk=''}catch(x){rutaOk=''}
   const r=await fetch(`${SB}/rest/v1/rpc/guias_subir`,{method:'POST',headers:{...H,'Content-Type':'application/json'},body:JSON.stringify({p_filas:F,p_archivo:file.name,p_ruta:rutaOk,p_fecha:d0})});
   const j=await r.json();if(!r.ok||!j.ok)throw new Error((j&&j.message)||'no se pudo guardar');
-  info.innerHTML=`✔ Guardado. <b>${j.nuevas} guías nuevas</b> · ${j.total-j.nuevas} ya estaban (no se duplicaron)${rutaOk?' · Excel guardado como evidencia':' · ⚠️ el Excel no se pudo guardar como evidencia'}`;
+  let sh='';if(SHEETS_API){try{const rs=await fetch(SHEETS_API,{method:'POST',body:JSON.stringify({filas:F,archivo:file.name})});const js=await rs.json();sh=js.ok?` · Google Sheets: ${js.nuevas} nuevas`:' · ⚠️ no se copió a Google Sheets'}catch(x){sh=' · ⚠️ no se copió a Google Sheets'}}
+  info.innerHTML=`✔ Guardado. <b>${j.nuevas} guías nuevas</b> · ${j.total-j.nuevas} ya estaban (no se duplicaron)${rutaOk?' · Excel guardado como evidencia':' · ⚠️ el Excel no se pudo guardar como evidencia'}${sh}`;
   $('dia').value=d0;e.target.value='';await verDia(d0,true);
  }catch(err){info.textContent='No pude subir el archivo: '+err.message}};
 async function verDia(d,keepMsg){
