@@ -1,0 +1,100 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#123A5C">
+<title>Guías de campo · Kia</title>
+<style>
+:root{--nv:#123A5C;--gr:#1E9E5A;--rd:#D2412C;--am:#E8A23A;--bg:#EEF2F6;--mu:#6B7789;--ln:#DDE3EA}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:system-ui,"Segoe UI",Arial,sans-serif;color:#1E2A3A}
+header{background:var(--nv);color:#fff;padding:14px 16px}header h1{margin:0;font-size:20px}header small{opacity:.8}
+main{padding:12px 14px 40px;max-width:1100px;margin:auto}
+.card{background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 1px 4px #0001}
+h2{margin:0 0 10px;font-size:17px;color:var(--nv)}
+.up{display:block;border:2.5px dashed #9FB3C8;border-radius:14px;padding:22px;text-align:center;cursor:pointer;font-weight:700;color:var(--nv);background:#F6F9FC}
+.up input{display:none}.up b{display:block;font-size:30px}
+.tg{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.tg button{border:2px solid var(--ln);background:#fff;border-radius:10px;padding:9px 14px;font-weight:800;color:var(--nv)}
+.tg button[aria-pressed=true]{background:var(--nv);color:#fff;border-color:var(--nv)}
+.kp{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.kp div{background:#F6F9FC;border-radius:12px;padding:10px;text-align:center}.kp b{display:block;font-size:24px;color:var(--nv)}.kp small{color:var(--mu);font-weight:700}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px;min-width:760px}
+th{background:var(--nv);color:#fff;padding:8px 6px;font-size:12px;text-transform:uppercase;position:sticky;top:0}td{padding:7px 6px;text-align:center;border-bottom:1px solid var(--ln)}
+tr.t td{font-weight:800;background:#E7EEF5}
+.btn{border:0;border-radius:12px;padding:13px 16px;font-size:16px;font-weight:800;background:var(--gr);color:#fff;width:100%}
+.msg{padding:10px 12px;border-radius:10px;background:#FFF6E0;color:#7A5300;font-size:14px;margin-top:8px}
+.ok{color:var(--gr);font-weight:800}.bad{color:var(--rd);font-weight:800}
+.hidden{display:none}.small{color:var(--mu);font-size:13px}
+.pj{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}.pj input{width:90px;padding:8px;border:1.5px solid var(--ln);border-radius:8px;font-size:15px}
+</style></head><body>
+<header><h1>🚚 Guías de campo → Indicadores Kia</h1><small>Sube el Excel que descargas del PowerApps</small></header>
+<main>
+ <div class="card">
+  <label class="up"><b>📂</b>Toca para subir el Excel del PowerApps<input type="file" id="f" accept=".xlsx,.xls,.csv"></label>
+  <div class="tg" id="cal"><button data-c="EXPORTABLE" aria-pressed="true">Solo exportable</button><button data-c="" aria-pressed="false">Todo</button></div>
+  <div class="pj"><span class="small">Peso por jarra si no hay pesaje del grupo:</span><input id="pjDef" type="number" step="0.01" value="1.25"> <span class="small">kg</span></div>
+  <div id="info" class="msg hidden"></div>
+ </div>
+ <div id="out" class="hidden">
+  <div class="card"><h2 id="tFecha">Resumen</h2><div class="kp" id="kp"></div></div>
+  <div class="card"><h2>Indicadores por Kia</h2><div class="tw"><table id="tInd"></table></div>
+   <p class="small">Viaje = guías de la misma placa recogidas con 10 min o menos de diferencia. Ciclo = minutos entre un recojo y el siguiente. Horas = del primer inicio de cosecha al último recojo. Kg = jarras × peso real de jarra del grupo (del pesaje).</p></div>
+  <div class="card"><h2>Viajes</h2><div class="tw"><table id="tVia"></table></div></div>
+  <button class="btn" id="dl">⬇️ Descargar Excel limpio</button>
+ </div>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const API_PESOS='https://script.google.com/macros/s/AKfycbwhK53Cj21HYT7irdMvqonPvhEjAzo2ab-cJ4wytAtoUnIV0dpA8LHrt6GBrOcXWFx8/exec';
+const TARIFA={'TCI-843':230,'TAU-800':215,'TCX-842':220,'TCA-816':215,'TEY-880':215,'THF-949':215,'BTL-775':215,'T9N-825':300,'TEB-876':300,'H2X-887':220};
+const TARA=0.292,JPB={NORMAL:2.5,HUMEDA:1.5};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const n0=n=>Math.round(n).toLocaleString('en'),n2=n=>(Math.round(n*100)/100).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2});
+const hm=m=>m==null?'':String(Math.floor(m/60)).padStart(2,'0')+':'+String(Math.round(m%60)).padStart(2,'0');
+const norm=s=>String(s??'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().trim();
+let RAW=[],CAL='EXPORTABLE',PESOS=null,LAST=null;
+function mins(v){if(v==null||v==='')return null;if(v instanceof Date)return v.getHours()*60+v.getMinutes();if(typeof v==='number')return Math.round((v%1)*1440);const m=String(v).match(/(\d{1,2}):(\d{2})/);return m?+m[1]*60+ +m[2]:null}
+function fecha(v){if(v instanceof Date)return v.toISOString().slice(0,10);if(typeof v==='number')return new Date(Date.UTC(1899,11,30)+v*864e5).toISOString().slice(0,10);const m=String(v).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);if(m)return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');return String(v).slice(0,10)}
+function col(h,...names){const H=h.map(norm);for(const n of names){const i=H.indexOf(norm(n));if(i>=0)return i}for(const n of names){const i=H.findIndex(x=>x.includes(norm(n)));if(i>=0)return i}return -1}
+$('f').onchange=async e=>{const file=e.target.files[0];if(!file)return;const info=$('info');info.classList.remove('hidden');info.textContent='Leyendo…';
+ try{const wb=XLSX.read(await file.arrayBuffer(),{cellDates:true});const ws=wb.Sheets[wb.SheetNames[0]];const A=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:''});
+  const h=A[0],c={fecha:col(h,'Fecha de cosecha','Fecha'),guia:col(h,'Código de Guía','Guia'),grupo:col(h,'Grupo'),fundo:col(h,'Fundo Campo','Fundo'),modulo:col(h,'Módulo'),variedad:col(h,'Variedad'),placa:col(h,'Placa de Unidad','Placa'),calidad:col(h,'Calidad'),tenv:col(h,'Tipo de envases trasiego'),nenv:col(h,'Nro. de envases trasiego'),jarras:col(h,'Nro. de envases cosechados'),ini:col(h,'Hora de inicio'),fin:col(h,'Hora fin'),rec:col(h,'Hora recojo')};
+  const falta=Object.entries(c).filter(([k,v])=>v<0&&['fecha','placa','calidad','jarras','rec'].includes(k)).map(([k])=>k);
+  if(falta.length)throw new Error('No encuentro las columnas: '+falta.join(', '));
+  RAW=A.slice(1).filter(r=>r[c.placa]).map(r=>({fecha:fecha(r[c.fecha]),guia:r[c.guia],grupo:String(r[c.grupo]).replace(/0+$/,'').toUpperCase(),fundo:r[c.fundo],modulo:r[c.modulo],variedad:r[c.variedad],placa:String(r[c.placa]).toUpperCase().replace(/\s/g,''),calidad:norm(r[c.calidad]),tenv:r[c.tenv],nenv:Number(r[c.nenv])||0,jarras:Number(String(r[c.jarras]).replace(',',''))||0,ini:mins(r[c.ini]),fin:mins(r[c.fin]),rec:mins(r[c.rec])}));
+  info.textContent=`✔ ${RAW.length} guías leídas. Buscando los pesos…`;
+  await cargarPesos();calc();
+ }catch(err){info.textContent='No pude leer el archivo: '+err.message}};
+async function cargarPesos(){if(PESOS)return;try{const r=await fetch(API_PESOS);const j=await r.json();PESOS=(j.registros||[]).filter(x=>!x.tipoReg||x.tipoReg!=='descarte')}catch(e){PESOS=[]}}
+function pesoJarra(f,g){const def=Number($('pjDef').value)||1.25;const L=(PESOS||[]).filter(x=>String(x.fecha).slice(0,10)===f&&Number(x.cantidad)>0&&Number(x.kg)>0);
+ const pj=x=>(Number(x.kg)/Number(x.cantidad)-TARA)/(JPB[norm(x.tipo)]||2.5);
+ const lg=L.filter(x=>norm(x.grupo)===g).map(pj).filter(v=>v>0.5&&v<2.5);if(lg.length)return{v:lg.reduce((a,b)=>a+b,0)/lg.length,src:'pesaje del grupo'};
+ const la=L.map(pj).filter(v=>v>0.5&&v<2.5);if(la.length)return{v:la.reduce((a,b)=>a+b,0)/la.length,src:'pesaje del día'};return{v:def,src:'estándar'}}
+function calc(){
+ const G=RAW.filter(r=>!CAL||r.calidad===CAL);
+ G.forEach(r=>{const p=pesoJarra(r.fecha,r.grupo);r.pj=p.v;r.pjsrc=p.src;r.kg=r.jarras*p.v;r.cos=(r.ini!=null&&r.fin!=null)?r.fin-r.ini:null});
+ const P={};G.forEach(r=>{(P[r.fecha+'|'+r.placa]=P[r.fecha+'|'+r.placa]||[]).push(r)});
+ const VIA=[],IND=[];
+ Object.entries(P).sort().forEach(([k,L])=>{const[f,pl]=k.split('|');L.sort((a,b)=>(a.rec??0)-(b.rec??0));const T=[];
+  L.forEach(r=>{const t=T[T.length-1];if(t&&r.rec!=null&&r.rec-t.ult<=10){t.g.push(r);t.ult=r.rec}else T.push({rec:r.rec,ult:r.rec,g:[r]})});
+  T.forEach((t,i)=>{const ant=T[i-1];VIA.push({fecha:f,placa:pl,grupo:t.g[0].grupo,n:i+1,ini:Math.min(...t.g.map(x=>x.ini??1e9)),fin:Math.max(...t.g.map(x=>x.fin??0)),rec:t.rec,guias:t.g.length,jarras:t.g.reduce((a,x)=>a+x.jarras,0),kg:t.g.reduce((a,x)=>a+x.kg,0),ciclo:ant&&t.rec!=null&&ant.rec!=null?t.rec-ant.rec:null,fundo:[...new Set(t.g.map(x=>x.fundo))].join(', ')})});
+  const V=VIA.filter(v=>v.fecha===f&&v.placa===pl),cy=V.map(v=>v.ciclo).filter(x=>x!=null),ini=Math.min(...L.map(x=>x.ini??1e9)),ult=Math.max(...L.map(x=>x.rec??0));
+  const hrs=ini<1e9&&ult>ini?(ult-ini)/60:0,kg=V.reduce((a,v)=>a+v.kg,0),tar=TARIFA[pl]||null;
+  IND.push({fecha:f,placa:pl,grupo:L[0].grupo,viajes:V.length,jarras:V.reduce((a,v)=>a+v.jarras,0),kg,ini,ult,hrs,ciclo:cy.length?cy.reduce((a,b)=>a+b,0)/cy.length:null,kgh:hrs?kg/hrs:null,cos:L.map(x=>x.cos).filter(x=>x!=null).reduce((a,b,_,A)=>a+b/A.length,0),tar,cxt:tar&&kg?tar/(kg/1000):null,pj:L[0].pj,pjsrc:L[0].pjsrc})});
+ LAST={G,VIA,IND};render()}
+function render(){const{G,VIA,IND}=LAST;$('out').classList.remove('hidden');
+ const fs=[...new Set(G.map(r=>r.fecha))];$('tFecha').textContent='Resumen · '+fs.map(f=>f.split('-').reverse().join('/')).join(', ')+(CAL?' · solo exportable':' · todas las calidades');
+ const kg=IND.reduce((a,x)=>a+x.kg,0),vi=IND.reduce((a,x)=>a+x.viajes,0),cy=VIA.map(v=>v.ciclo).filter(x=>x!=null),tar=IND.reduce((a,x)=>a+(x.tar||0),0);
+ $('info').textContent=`✔ ${RAW.length} guías leídas · ${G.length} ${CAL?'exportables':'en total'} · ${PESOS&&PESOS.length?'pesos tomados de la app de pesos':'sin pesaje: uso '+$('pjDef').value+' kg por jarra'}`;
+ $('kp').innerHTML=[[vi,'viajes'],[n0(G.reduce((a,r)=>a+r.jarras,0)),'jarras'],[n0(kg),'kg'],[cy.length?Math.round(cy.reduce((a,b)=>a+b,0)/cy.length)+"'":'—','ciclo prom.'],[tar&&kg?'S/ '+n2(tar/(kg/1000)):'—','costo por TN']].map(([v,t])=>`<div><b>${v}</b><small>${t}</small></div>`).join('');
+ $('tInd').innerHTML='<tr><th>Placa</th><th>Grupo</th><th>Viajes</th><th>Jarras</th><th>Kg</th><th>Inicio</th><th>Último recojo</th><th>Horas</th><th>Ciclo prom. (min)</th><th>Kg / hora</th><th>Cosecha prom. (min)</th><th>Costo día</th><th>S/ por TN</th></tr>'+
+  IND.map(x=>`<tr><td><b>${esc(x.placa)}</b></td><td>${esc(x.grupo)}</td><td>${x.viajes}</td><td>${n0(x.jarras)}</td><td>${n0(x.kg)}</td><td>${hm(x.ini<1e9?x.ini:null)}</td><td>${hm(x.ult)}</td><td>${x.hrs.toFixed(1)}</td><td>${x.ciclo==null?'—':Math.round(x.ciclo)}</td><td>${x.kgh==null?'—':n0(x.kgh)}</td><td>${Math.round(x.cos)}</td><td>${x.tar?'S/ '+x.tar:'—'}</td><td>${x.cxt==null?'—':'S/ '+n2(x.cxt)}</td></tr>`).join('')+
+  `<tr class="t"><td>TOTAL</td><td></td><td>${vi}</td><td>${n0(IND.reduce((a,x)=>a+x.jarras,0))}</td><td>${n0(kg)}</td><td colspan="6"></td><td>S/ ${n0(tar)}</td><td>${tar&&kg?'S/ '+n2(tar/(kg/1000)):'—'}</td></tr>`;
+ $('tVia').innerHTML='<tr><th>Placa</th><th>Grupo</th><th>N°</th><th>Inicio</th><th>Fin</th><th>Recojo</th><th>Guías</th><th>Jarras</th><th>Kg</th><th>Ciclo (min)</th><th>Fundo</th></tr>'+
+  VIA.map(v=>`<tr><td>${esc(v.placa)}</td><td>${esc(v.grupo)}</td><td>${v.n}</td><td>${hm(v.ini<1e9?v.ini:null)}</td><td>${hm(v.fin)}</td><td>${hm(v.rec)}</td><td>${v.guias}</td><td>${n0(v.jarras)}</td><td>${n0(v.kg)}</td><td>${v.ciclo==null?'—':v.ciclo}</td><td>${esc(v.fundo)}</td></tr>`).join('')}
+$('cal').onclick=e=>{const b=e.target.closest('[data-c]');if(!b)return;CAL=b.dataset.c;document.querySelectorAll('#cal button').forEach(x=>x.setAttribute('aria-pressed',x===b));if(RAW.length)calc()};
+$('pjDef').onchange=()=>{if(RAW.length)calc()};
+$('dl').onclick=()=>{const{G,VIA,IND}=LAST,wb=XLSX.utils.book_new(),d=f=>f.split('-').reverse().join('/');
+ XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(G.map(r=>({'FECHA':d(r.fecha),'GUÍA':r.guia,'GRUPO':r.grupo,'FUNDO':r.fundo,'MÓDULO':r.modulo,'VARIEDAD':r.variedad,'PLACA':r.placa,'CALIDAD':r.calidad,'ENVASE':r.tenv,'N° ENVASES':r.nenv,'JARRAS':r.jarras,'PESO JARRA (KG)':+r.pj.toFixed(3),'KG':Math.round(r.kg),'INICIO':hm(r.ini),'FIN':hm(r.fin),'RECOJO':hm(r.rec),'COSECHA (MIN)':r.cos}))),'GUIAS');
+ XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(VIA.map(v=>({'FECHA':d(v.fecha),'PLACA':v.placa,'GRUPO':v.grupo,'N° VIAJE':v.n,'INICIO':hm(v.ini<1e9?v.ini:null),'FIN':hm(v.fin),'RECOJO':hm(v.rec),'GUÍAS':v.guias,'JARRAS':v.jarras,'KG':Math.round(v.kg),'CICLO (MIN)':v.ciclo,'FUNDO':v.fundo}))),'VIAJES');
+ XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(IND.map(x=>({'FECHA':d(x.fecha),'PLACA':x.placa,'GRUPO':x.grupo,'VIAJES':x.viajes,'JARRAS':x.jarras,'KG':Math.round(x.kg),'INICIO':hm(x.ini<1e9?x.ini:null),'ÚLTIMO RECOJO':hm(x.ult),'HORAS':+x.hrs.toFixed(2),'CICLO PROM (MIN)':x.ciclo==null?'':Math.round(x.ciclo),'KG/HORA':x.kgh==null?'':Math.round(x.kgh),'COSECHA PROM (MIN)':Math.round(x.cos),'COSTO DÍA (S/)':x.tar||'','S/ POR TN':x.cxt==null?'':+x.cxt.toFixed(2),'PESO JARRA (KG)':+x.pj.toFixed(3),'FUENTE PESO':x.pjsrc}))),'INDICADORES');
+ XLSX.writeFile(wb,`Indicadores_Kia_${(G[0]||{}).fecha||'hoy'}${CAL?'_exportable':''}.xlsx`)};
+</script></body></html>
