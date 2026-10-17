@@ -19,6 +19,7 @@
 <div class="top"><h1>🚚 Resumen Kia · Exportable</h1><div class="r"><select id="fu" style="padding:7px 10px;border-radius:9px;border:0;font-size:15px;font-weight:700"><option value="">Todos los fundos</option></select><input type="date" id="dia"><button id="act">↻ Actualizar</button></div></div>
 <div class="tabs" id="tabs"></div>
 <div class="w"><div class="panel" id="pan"><div class="empty">Cargando…</div></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 const SB='https://rqvcvffyynpnighzwxju.supabase.co',SBK='sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn',H={apikey:SBK,Authorization:'Bearer '+SBK};
 const API_PESOS='https://script.google.com/macros/s/AKfycbwhK53Cj21HYT7irdMvqonPvhEjAzo2ab-cJ4wytAtoUnIV0dpA8LHrt6GBrOcXWFx8/exec';
@@ -37,6 +38,8 @@ $('dia').onchange=cargar;$('act').onclick=cargar;let ALL=[];$('fu').onchange=()=
 async function pesos(){if(PESOS)return;try{const ac=new AbortController();setTimeout(()=>ac.abort(),8000);const j=await (await fetch(API_PESOS,{signal:ac.signal})).json();PESOS=(j.registros||[]).filter(x=>x.tipoReg!=='descarte')}catch(e){PESOS=[]}}
 function pj(d,g){const L=(PESOS||[]).filter(x=>String(x.fecha).slice(0,10)===d&&+x.cantidad>0&&+x.kg>0),v=x=>(x.kg/x.cantidad-TARA)/(JPB[norm(x.tipo)]||2.5),ok=a=>a.filter(z=>z>0.5&&z<2.5);
  let a=ok(L.filter(x=>norm(x.grupo)===g).map(v));if(!a.length)a=ok(L.map(v));return a.length?a.reduce((s,z)=>s+z,0)/a.length:PJ_DEF}
+async function foto(p){const el=$('pan');try{const cv=await html2canvas(el,{scale:2,backgroundColor:'#ffffff'});const b=await new Promise(r=>cv.toBlob(r,'image/png'));const n='Kia_'+p+'_'+$('dia').value+'.png',fl=new File([b],n,{type:'image/png'});
+ if(navigator.canShare&&navigator.canShare({files:[fl]})){await navigator.share({files:[fl],title:'Kia '+p})}else{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;a.click();alert('Foto descargada. Adjúntala en WhatsApp.')}}catch(e){if(e.name!=='AbortError')alert('No se pudo crear la foto')}}
 async function cargar(){const d=$('dia').value;$('pan').innerHTML='<div class="empty">Cargando…</div>';
  try{const L=await (await fetch(`${SB}/rest/v1/guias_campo?fecha=eq.${d}&calidad=eq.EXPORTABLE&select=*&limit=5000`,{headers:H})).json();
   ALL=Array.isArray(L)?L:[];const fs=[...new Set(ALL.map(r=>r.fundo).filter(Boolean))].sort(),cur=$('fu').value;$('fu').innerHTML='<option value="">Todos los fundos</option>'+fs.map(x=>`<option${x===cur?' selected':''}>${x}</option>`).join('');
@@ -69,6 +72,7 @@ function pintar(){const d=$('dia').value;
    +card('VIAJES POR KIA',bars(IND.map(x=>({v:x.v,l:x.p,c:COL[x.g]||'#1B5E8C'})),460,260))
    +card('KG POR HORA DEL DÍA',bars(Object.keys(porH).sort((a,b)=>a-b).map(k=>({v:porH[k],l:k+':00',c:'#1B5E8C'})),460,260,{u:' kg'}))+'</div>';
  }else{const x=IND.find(i=>i.p===TAB),c=COL[x.g]||'#1B5E8C';
+  h+=`<div data-html2canvas-ignore style="text-align:right;margin-bottom:10px"><button onclick="foto('${x.p}')" style="background:#25D366;color:#fff;border:0;border-radius:10px;padding:10px 16px;font-size:16px;font-weight:800;cursor:pointer">📲 Enviar foto por WhatsApp</button></div><h2 style="margin:0 0 10px">🚚 ${x.p} · GRUPO ${x.g} · ${d.split('-').reverse().join('/')}</h2>`;
   h+=kpis([[x.v,'viajes'],[f(x.kg)+' kg','kg exportable'],[du(x.cyp),'ciclo promedio',sc(x.cyp,META_CICLO,40,1)],[x.kgh?f(x.kgh)+' kg':'—','kg por hora',sc(x.kgh,META_KGH,150)],[du(x.cos),'cosecha prom.'],[hm(x.ult)||'—','último recojo']]);
   const BW=Math.max(1100,x.T.length*80);h+='<div style="display:grid;gap:14px">'+card(`🚚 ${x.p} · GRUPO ${x.g} — KG POR VIAJE (hora de recojo)`,bars(x.T.map((t,i)=>({v:t.kg,l:'V'+(i+1)+' · '+hm(t.rec),c})),BW,300,{u:' kg'}),c)
    +card(`🚚 ${x.p} · GRUPO ${x.g} — CICLO ENTRE VIAJES (meta ${META_CICLO} min)`,x.cy.length?bars(x.cy.map((v,i)=>({v,l:'V'+(i+2)+' · '+hm(x.T[i+1].rec),c:sc(v,META_CICLO,40,1),t:du(v)})),BW,300,{meta:META_CICLO,mt:du(META_CICLO)}):'<div class="empty">Solo 1 viaje</div>',c)+'</div>';
