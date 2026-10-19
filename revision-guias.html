@@ -9,8 +9,8 @@
 .r button{background:#25D366;color:#fff;cursor:pointer}
 .w{max-width:980px;margin:0 auto;padding:14px 12px 40px}
 .sum{border-radius:12px;padding:12px 14px;font-weight:900;font-size:18px;margin-bottom:14px}
-.c{background:#fff;border-radius:14px;margin-bottom:14px;overflow:hidden;box-shadow:0 1px 3px #0002}
-.c h2{margin:0;padding:12px 14px;background:var(--az);color:#fff;font-size:18px}
+.c{scroll-margin-top:130px;background:#fff;border-radius:14px;margin-bottom:14px;overflow:hidden;box-shadow:0 1px 3px #0002}
+.c summary{list-style:none;cursor:pointer}.c summary::-webkit-details-marker{display:none}.ab{float:right;transition:.2s}.c[open] .ab{transform:rotate(180deg)}.c h2{margin:0;padding:12px 14px;background:var(--az);color:#fff;font-size:18px}
 .v{padding:8px 12px;border-top:1px solid #e5e9ef}.v.bad{background:#FFF4F2;border-left:6px solid #D2412C}
 .fila{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-weight:800;font-size:16px}.fila .n{min-width:52px;font-weight:900}.fila .h{padding:4px 8px;border-radius:7px;background:#F1F4F8}.fila .a,.fila .rl{color:#333;font-size:14px}.fila .fu{margin-left:auto;font-size:13px;color:#123A5C}
 .res{padding:10px 14px;background:#FFF8E1;font-weight:700;font-size:15px;border-bottom:2px solid #eee}
@@ -25,7 +25,7 @@
 </style></head><body>
 <div class="top"><h1>🔎 Revisión de horas de guías</h1><div class="r">
 <select id="fu"><option value="">Todos los fundos</option></select><input type="date" id="dia"><button id="act">↻ Actualizar</button></div></div>
-<div class="w"><div class="ley">🟥 error seguro · 🟨 dudoso · Refrigerio 12:00–13:00 · Se muestran todos los viajes en orden; los que tienen error salen en rojo con la explicación. Inicio → Fin = llenado de la guía.</div><div id="out"><div class="e">Cargando…</div></div></div>
+<div class="w"><div class="ley">🟥 error seguro · 🟨 dudoso · Refrigerio 12:00–13:00 o 12:30–13:30 · Toca el grupo para ver todas sus guías en orden; las que tienen error salen en rojo con la explicación. Inicio → Fin = llenado de la guía.</div><div id="out"><div class="e">Cargando…</div></div></div>
 <script>
 const SB='https://rqvcvffyynpnighzwxju.supabase.co',SBK='sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn',H={apikey:SBK,Authorization:'Bearer '+SBK};
 const $=i=>document.getElementById(i),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -38,7 +38,7 @@ function revisar(V){V.forEach((v,i)=>{const pv=i?V[i-1]:null,ini=v.ini,e={},o=[]
  if(ini!=null&&pv&&pv.fin!=null&&ini<pv.fin-5){e.ini=R1;o.push(`Dice que empezó a las <b>${hm(ini)}</b>, pero el viaje ${pv.n} recién terminó a las <b>${hm(pv.fin)}</b>. El inicio debería ser ${hm(pv.fin)} o después.`);e.x=1}
  else if(ini!=null&&pv&&pv.fin!=null&&ini-pv.fin>60){e.ini=Y1;o.push(`Del viaje ${pv.n} (terminó <b>${hm(pv.fin)}</b>) a este viaje (empezó <b>${hm(ini)}</b>) pasaron <b>${du(ini-pv.fin)}</b> sin guía. ¿Faltó registrar una guía?`)}
  if(!e.x&&ini!=null&&v.fin!=null&&v.fin-ini>50){e.fin=e.fin||Y1;o.push(`Se demoró <b>${du(v.fin-ini)}</b> en llenar (lo normal es 20 a 40 min).`)}
- if(!e.x&&ini!=null&&v.fin!=null&&((ini>720&&ini<780)||(v.fin>735&&v.fin<780)||(ini<720&&v.fin>780))){e.ini=e.ini||Y1;o.push('La guía está abierta en el refrigerio (12:00–13:00). Se cierra antes de salir y la siguiente empieza a las 13:00.')}
+ if(!e.x&&ini!=null&&v.fin!=null&&(ini<775&&v.fin>755)){e.ini=e.ini||Y1;o.push('La guía está abierta en hora de refrigerio (de 12:00 a 13:00 o de 12:30 a 13:30). Se cierra antes de salir y la siguiente empieza al regresar.')}
  if(v.ciclo!=null&&v.ciclo>90&&!o.length){e.rec=R1;o.push(`Entre el recojo del viaje ${pv.n} (<b>${hm(pv.rec)}</b>) y este (<b>${hm(v.rec)}</b>) pasaron <b>${du(v.ciclo)}</b>.`)}
  if((ini!=null&&ini<390)||(v.rec!=null&&v.rec>1110)){e.ini=e.ini||Y1;o.push('Hora fuera de la jornada (antes de 6:30 o después de 18:30).')}
  v.e=e;v.o=o})}
@@ -50,15 +50,15 @@ function pintar(){const F=$('fu').value,P={};
   const V=T.map((t,i)=>({n:i+1,gs:t.gs,ini:Math.min(...t.gs.map(x=>x.ini??1e9)),fin:Math.max(...t.gs.map(x=>x.fin??-1)),rec:t.rec,fu:[...new Set(t.gs.map(x=>x.fu))].join(', '),ciclo:i&&t.rec!=null&&T[i-1].rec!=null?t.rec-T[i-1].rec:null}));
   V.forEach(v=>{if(v.ini>=1e9)v.ini=null;if(v.fin<0)v.fin=null});revisar(V);
   const M=V.filter(v=>v.o.length);nv+=V.length;tot+=M.length;
-  h+=`<div class="c"><h2>🚚 ${esc(p)} · GRUPO ${esc(L[0].g)} · ${V.length} viajes${M.length?` · <span style="background:#D2412C;padding:2px 8px;border-radius:6px">${M.length} por corregir</span>`:' · ✅ todo bien'}</h2>`
+  h+=`<details class="c"><summary><h2>🚚 ${esc(p)} · GRUPO ${esc(L[0].g)} · ${V.length} viajes${M.length?` · <span style="background:#D2412C;padding:2px 8px;border-radius:6px">${M.length} por corregir</span>`:' · ✅ todo bien'} <span class="ab">▼</span></h2></summary>`
    +(M.length?`<div class="res"><b>Resumen:</b> ${M.map(v=>`viaje ${v.n}`).join(', ')} ${M.length>1?'tienen':'tiene'} horas para revisar. Los viajes sin color están bien.</div>`:'')
    +V.map(v=>{const s=k=>v.e[k]&&k!=='x'?` style="background:${v.e[k]}"`:'',bad=v.o.length,cg=v.gs.map(x=>`<span class="g">📄 ${esc(x.cod)}${String(x.cal||'').toUpperCase().startsWith('EXPORT')?'':' · '+esc(x.cal)}</span>`).join('');
-    return`<div class="v${bad?' bad':''}"><div class="fila"><span class="n">${bad?'⚠':'✅'} V${v.n}</span><span${s('ini')} class="h">${hm(v.ini)}</span><span class="a">→</span><span${s('fin')} class="h">${hm(v.fin)}</span><span class="rl">recojo</span><span${s('rec')} class="h">${hm(v.rec)}</span><span class="fu">${esc(v.fu)}</span></div><div>${cg}</div>${bad?`<div class="o">${v.o.map(x=>'• '+x).join('<br>')}</div>`:''}</div>`}).join('')+'</div>'});
+    return`<div class="v${bad?' bad':''}"><div class="fila"><span class="n">${bad?'⚠':'✅'} V${v.n}</span><span${s('ini')} class="h">${hm(v.ini)}</span><span class="a">→</span><span${s('fin')} class="h">${hm(v.fin)}</span><span class="rl">recojo</span><span${s('rec')} class="h">${hm(v.rec)}</span><span class="fu">${esc(v.fu)}</span></div><div>${cg}</div>${bad?`<div class="o">${v.o.map(x=>'• '+x).join('<br>')}</div>`:''}</div>`}).join('')+'</details>'});
  $('out').innerHTML=(nv?`<div class="sum" style="${tot?'background:#FDECEA;color:#B3261E;border:2px solid #D2412C':'background:#E8F6EE;color:#1E7A46;border:2px solid #1E9E5A'}">${tot?`⚠ ${tot} de ${nv} viajes con horas para corregir`:'✅ Todas las horas están bien'}</div>`:'')+(h||'<div class="e">No hay guías subidas para este día.</div>')}
 async function cargar(){const d=$('dia').value;$('out').innerHTML='<div class="e">Cargando…</div>';
  try{const L=await (await fetch(`${SB}/rest/v1/guias_campo?fecha=eq.${d}&select=codigo,grupo,fundo,placa,calidad,inicio,fin,recojo&limit=5000`,{headers:H})).json();
   ALL=Array.isArray(L)?L:[];const fs=[...new Set(ALL.map(r=>r.fundo).filter(Boolean))].sort(),cur=$('fu').value;
   $('fu').innerHTML='<option value="">Todos los fundos</option>'+fs.map(x=>`<option${x===cur?' selected':''}>${esc(x)}</option>`).join('');pintar()}
  catch(e){$('out').innerHTML='<div class="e">Sin conexión.</div>'}}
-$('dia').value=hoy();$('dia').onchange=cargar;$('act').onclick=cargar;$('fu').onchange=pintar;cargar();
+$('dia').value=hoy();$('dia').onchange=cargar;$('act').onclick=cargar;$('fu').onchange=pintar;document.addEventListener('toggle',e=>{if(e.target.open)document.querySelectorAll('details.c').forEach(d=>{if(d!==e.target)d.open=false});if(e.target.open)e.target.scrollIntoView({behavior:'smooth',block:'start'})},true);cargar();
 </script></body></html>

@@ -120,7 +120,7 @@ function revisar(VIA){VIA.forEach((v,i)=>{const a=VIA[i-1],pv=a&&a.placa===v.pla
  if(ini!=null&&pv&&pv.fin&&ini<pv.fin-5){e.ini=R1;o.push(`Inicio ${hm(ini)} es antes que termine el viaje anterior (${hm(pv.fin)})`)}
  else if(ini!=null&&pv&&pv.fin&&ini-pv.fin>60){e.ini=Y1;o.push(`Hueco de ${ini-pv.fin} min sin guía desde el viaje anterior`)}
  if(ini!=null&&v.fin&&v.fin-ini>50){e.fin=e.fin||Y1;o.push(`Cosecha de ${v.fin-ini} min (muy larga)`)}
- if(ini!=null&&v.fin&&((ini>720&&ini<780)||(v.fin>735&&v.fin<780)||(ini<720&&v.fin>780))){e.ini=e.ini||Y1;o.push('Cruza el refrigerio 12:00–13:00')}
+ if(ini!=null&&v.fin&&(ini<775&&v.fin>755)){e.ini=e.ini||Y1;o.push('Abierta en hora de refrigerio')}
  if(v.ciclo!=null&&v.ciclo>90){e.ciclo=R1;o.push(`Ciclo de ${v.ciclo} min`)}
  if((ini!=null&&ini<390)||(v.rec&&v.rec>1110)){e.ini=e.ini||Y1;o.push('Hora fuera de jornada')}
  v.err=e;v.obs=o})}
