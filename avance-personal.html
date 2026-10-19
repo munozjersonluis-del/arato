@@ -1,5 +1,6 @@
 <!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Avance de personal</title>
+<link rel="manifest" href="avance.webmanifest"><meta name="theme-color" content="#123A5C"><link rel="apple-touch-icon" href="avance-icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes">
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:system-ui,Arial,sans-serif;background:#EEF2F6;color:#000}
 .top{background:#123A5C;color:#fff;padding:14px 16px}.top h1{margin:0;font-size:21px}.top small{opacity:.8;font-weight:700}
@@ -26,7 +27,7 @@ input,select,textarea{font:inherit;font-weight:700;font-size:16px;padding:10px;b
 .msg{text-align:center;font-weight:800;padding:20px;color:#333}
 .hidden{display:none}
 </style></head><body>
-<div class="top"><h1>🌱 Avance de personal</h1><small>Mission · Blueberries</small></div>
+<div class="top"><h1>🌱 Avance de personal</h1><small>Mission · Blueberries</small><button id="inst" class="hidden" style="float:right;margin-top:-22px;background:#1E9E5A;color:#fff;border:0;border-radius:10px;padding:8px 12px;font-weight:900">📲 Instalar</button></div>
 <div class="w">
  <div class="c hidden" id="cfg"><p class="l">⚙️ Pega el link del Apps Script (/exec)</p><input id="api" placeholder="https://script.google.com/macros/s/.../exec"><button class="btn" style="margin-top:8px" id="gApi">Guardar</button></div>
  <div class="c"><p class="l">1. Escoge tu fundo</p><div class="fu" id="fu"></div></div>
@@ -74,4 +75,7 @@ $('guardar').onclick=async()=>{const rows=[];document.querySelectorAll('.p').for
  try{const r=await (await fetch(API,{method:'POST',body:JSON.stringify({filas:rows})})).json();if(!r.ok)throw r.error;
   alert(`✅ Guardado en la hoja ${FU}: ${r.guardadas} trabajador(es)`+((r.faltan||[]).length?`\n⚠ No se encontró en la hoja: ${r.faltan.join(', ')}`:''));cargar()}catch(e){alert('No se pudo guardar: '+e)}finally{B.disabled=false;B.textContent='💾 Guardar avance'}};
 if(FU&&API)cargar();
+let IE=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();IE=e;$('inst').classList.remove('hidden')});
+$('inst').onclick=async()=>{if(!IE)return;IE.prompt();await IE.userChoice;IE=null;$('inst').classList.add('hidden')};
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw-avance.js',{scope:'./avance-personal.html'}).catch(()=>{});
 </script></body></html>
