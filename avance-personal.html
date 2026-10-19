@@ -31,6 +31,7 @@ input,select,textarea{font:inherit;font-weight:700;font-size:16px;padding:10px;b
 .ac{margin:10px 0}.ac .t{display:flex;justify-content:space-between;gap:8px;font-weight:800;font-size:13px}.br{height:16px;background:#E3E8EF;border-radius:8px;overflow:hidden;margin-top:4px}.br i{display:block;height:100%}
 .ln{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid #eee;font-size:13px;font-weight:700}.rj{color:#B3261E;font-weight:900;white-space:nowrap}
 .mt{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}.mt div{border-radius:12px;padding:10px 4px;text-align:center;font-weight:900;font-size:12px}.mt b{display:block;font-size:30px}.dl{margin-top:8px}.dl summary{font-weight:900;padding:8px 0;cursor:pointer}
+.tb{width:100%;border-collapse:collapse;font-size:13px;font-weight:800}.tb th{padding:6px 4px;border-bottom:2px solid #dde5ee;font-size:12px}.tb td{padding:7px 4px;border-bottom:1px solid #eee;text-align:center}.tb td:first-child{text-align:left}.tb .y{color:#1E7A46;font-size:15px;font-weight:900}.tb .n{color:#B3261E;font-size:15px;font-weight:900}.tb .s{color:#777}
 </style></head><body>
 <div class="top"><h1>🌱 Avance de personal</h1><small>Mission · Blueberries</small><button id="inst" class="hidden" style="float:right;margin-top:-22px;background:#1E9E5A;color:#fff;border:0;border-radius:10px;padding:8px 12px;font-weight:900">📲 Instalar</button></div>
 <div class="w">
@@ -71,17 +72,11 @@ function resumen(){const L=FIL.map(x=>{const g=x.guardado||{},a=pf(g.avance),m=p
  const NL=ev.filter(x=>x.a<x.m),SL=L.filter(x=>x.a==null||!x.m);
  let h=`<div class="c"><p class="l">🎯 META · ${esc(FU)} · ${fmt($('dia').value)}</p><div class="mt"><div style="background:#E8F6EE;color:#1E7A46"><b>${cu.length}</b>✅ LLEGARON</div><div style="background:#FDECEA;color:#B3261E"><b>${NL.length}</b>❌ NO LLEGARON</div><div style="background:#F1F4F8;color:#555"><b>${SL.length}</b>⏳ SIN DATO</div></div>
   <details class="dl"><summary>✅ Ver quiénes llegaron (${cu.length})</summary>${cu.map(x=>`<div class="ln"><span>${esc(x.personal)} · ${esc(x.actividad)}</span><span style="color:#1E7A46;font-weight:900">${n2(x.a)} / ${n2(x.m)}</span></div>`).join('')||'<div class="ln">—</div>'}</details>
-  <details class="dl" open><summary>❌ Ver quiénes no llegaron (${NL.length})</summary>${NL.map(x=>`<div class="ln"><span>${esc(x.personal)} · ${esc(x.actividad)}</span><span class="rj">${n2(x.a)} / ${n2(x.m)}</span></div>`).join('')||'<div class="ln">—</div>'}</details></div>`;
- h+=`<div class="c"><p class="l">📊 ${esc(FU)} · ${fmt($('dia').value)}</p><div class="kp"><div><b>${new Set(L.map(x=>x.dni)).size}</b><small>PERSONAS</small></div><div><b>${Object.keys(G).length}</b><small>ACTIVIDADES</small></div>
-  <div><b style="color:${ev.length?col(cu.length/ev.length*100):'#123A5C'}">${ev.length?Math.round(cu.length/ev.length*100)+'%':'—'}</b><small>CUMPLIMIENTO</small></div><div><b>${lle.length} / ${L.length}</b><small>LLENADOS</small></div></div></div>`;
- h+=`<div class="c"><p class="l">AVANCE vs META POR ACTIVIDAD (Ha)</p>`+Object.keys(G).sort((a,b)=>G[b].length-G[a].length).map(k=>{const P=G[k],A=P.reduce((s,x)=>s+(x.a||0),0),M=P.reduce((s,x)=>s+(x.m||0),0),f=P.filter(x=>x.a!=null).length,pc=M?A/M*100:null;
-  return`<div class="ac"><div class="t"><span>${esc(k)} (${P.length})</span><span>${f?`${n2(A)} / ${M?n2(M):'—'} ha${pc!=null?' · '+Math.round(pc)+'%':''}`:'sin llenar'}</span></div><div class="br"><i style="width:${pc==null?0:Math.min(100,pc)}%;background:${pc==null?'#ccc':col(pc)}"></i></div></div>`}).join('')+`</div>`;
- const D=L.filter(x=>esD(x.actividad)&&x.dr!=null),DM={};D.forEach(x=>{(DM[x.modulo]=DM[x.modulo]||[]).push(x.dr)});
- if(D.length)h+=`<div class="c"><p class="l">🌿 DESMALEZADO · DR por módulo</p>`+Object.keys(DM).sort().map(m=>`<div class="ln"><span>${esc(m)}</span><span>${Math.round(DM[m].reduce((a,b)=>a+b,0)/DM[m].length)} DR prom.</span></div>`).join('')+`</div>`;
- const AX={};L.forEach(x=>{const o=AX[x.auxiliar]=AX[x.auxiliar]||{t:0,f:0,e:0,c:0};o.t++;if(x.a!=null)o.f++;if(x.a!=null&&x.m){o.e++;if(x.a>=x.m)o.c++}});
- h+=`<div class="c"><p class="l">👷 POR AUXILIAR</p>`+Object.keys(AX).sort().map(a=>{const o=AX[a];return`<div class="ln"><span>${esc(a)}</span><span>${o.f}/${o.t} llenados · ${o.e?Math.round(o.c/o.e*100)+'%':'—'}</span></div>`}).join('')+`</div>`;
-
- const FL=L.filter(x=>x.a==null);if(FL.length){const fa={};FL.forEach(x=>fa[x.actividad]=(fa[x.actividad]||0)+1);h+=`<div class="c" style="font-weight:900;color:#B3261E">⏳ Faltan llenar ${FL.length}: ${Object.entries(fa).map(([k,v])=>esc(k)+' ('+v+')').join(', ')}</div>`}
+  <details class="dl"><summary>❌ Ver quiénes no llegaron (${NL.length})</summary>${NL.map(x=>`<div class="ln"><span>${esc(x.personal)} · ${esc(x.actividad)}</span><span class="rj">${n2(x.a)} / ${n2(x.m)}</span></div>`).join('')||'<div class="ln">—</div>'}</details></div>`;
+ h+=`<div class="c"><p class="l">📋 POR ACTIVIDAD</p><table class="tb"><tr><th style="text-align:left">Actividad</th><th>✅</th><th>❌</th><th>⏳</th></tr>`+Object.keys(G).sort((a,b)=>G[b].length-G[a].length).map(k=>{const P=G[k],y=P.filter(x=>x.a!=null&&x.m&&x.a>=x.m).length,n=P.filter(x=>x.a!=null&&x.m&&x.a<x.m).length;
+  return`<tr><td>${esc(k)}</td><td class="y">${y||''}</td><td class="n">${n||''}</td><td class="s">${(P.length-y-n)||''}</td></tr>`}).join('')+`</table></div>`;
+ const AX={};L.forEach(x=>{const o=AX[x.auxiliar]=AX[x.auxiliar]||{y:0,n:0,s:0};if(x.a!=null&&x.m)x.a>=x.m?o.y++:o.n++;else o.s++});
+ if(Object.keys(AX).length>1)h+=`<div class="c"><p class="l">👷 POR AUXILIAR</p><table class="tb"><tr><th style="text-align:left">Auxiliar</th><th>✅</th><th>❌</th><th>⏳</th></tr>`+Object.keys(AX).sort().map(a=>`<tr><td>${esc(a)}</td><td class="y">${AX[a].y||''}</td><td class="n">${AX[a].n||''}</td><td class="s">${AX[a].s||''}</td></tr>`).join('')+`</table></div>`;
  $('res').innerHTML=h}$('aux').onchange=()=>{ls('av_aux',$('aux').value);lista()};
 function lista(){const A=$('aux').value,L=FIL.map((x,i)=>({...x,i})).filter(x=>!A||x.auxiliar===A),G={};
  L.forEach(x=>{const k=x.modulo+'|'+x.actividad;(G[k]=G[k]||[]).push(x)});
