@@ -24,14 +24,15 @@
 .ley{font-size:14px;font-weight:700;margin:6px 0 14px}
 </style></head><body>
 <div class="top"><h1>🔎 Revisión de horas de guías</h1><div class="r">
-<select id="fu"><option value="">Todos los fundos</option></select><input type="date" id="dia"><button id="act">↻ Actualizar</button></div></div>
+<select id="fu"><option value="">Todos los fundos</option></select><input type="date" id="dia"><button id="act">↻ Actualizar</button><button id="xl" style="background:#1D6F42">📥 Excel</button></div></div>
 <div class="w"><div class="ley">🟥 error seguro · 🟨 dudoso · Refrigerio 12:00–13:00 o 12:30–13:30 · Toca el grupo para ver todas sus guías en orden; las que tienen error salen en rojo con la explicación. Inicio → Fin = llenado de la guía.</div><div id="out"><div class="e">Cargando…</div></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <script>
 const SB='https://rqvcvffyynpnighzwxju.supabase.co',SBK='sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn',H={apikey:SBK,Authorization:'Bearer '+SBK};
 const $=i=>document.getElementById(i),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const mins=v=>{const m=String(v||'').match(/(\d{1,2}):(\d{2})/);return m?+m[1]*60+ +m[2]:null},hm=m=>m==null?'—':Math.floor(m/60)+':'+String(m%60).padStart(2,'0');
 const hoy=()=>{const d=new Date(Date.now()-5*3600e3);return d.toISOString().slice(0,10)};
-const R1='#F8B4AC',Y1='#FFE08A';let ALL=[];
+const R1='#F8B4AC',Y1='#FFE08A';let ALL=[],DATA=[];
 const du=m=>m<60?m+' min':Math.floor(m/60)+' h'+(m%60?' '+String(m%60).padStart(2,'0')+' min':'');
 function revisar(V){V.forEach((v,i)=>{const pv=i?V[i-1]:null,ini=v.ini,e={},o=[];
  if(ini!=null&&v.fin!=null&&ini>v.fin){e.ini=e.fin=R1;o.push(`El inicio (${hm(ini)}) está después del fin (${hm(v.fin)}). Una de las dos horas está mal.`)}
@@ -44,12 +45,12 @@ function revisar(V){V.forEach((v,i)=>{const pv=i?V[i-1]:null,ini=v.ini,e={},o=[]
  v.e=e;v.o=o})}
 function pintar(){const F=$('fu').value,P={};
  ALL.filter(r=>!F||r.fundo===F).forEach(r=>{(P[r.placa]=P[r.placa]||[]).push({cod:r.codigo,g:String(r.grupo||''),fu:r.fundo,cal:r.calidad,ini:mins(r.inicio),fin:mins(r.fin),rec:mins(r.recojo)})});
- let h='',tot=0,nv=0;
+ let h='',tot=0,nv=0;DATA=[];
  Object.keys(P).sort((a,b)=>P[a][0].g.localeCompare(P[b][0].g)).forEach(p=>{const L=P[p].sort((a,b)=>(a.rec??0)-(b.rec??0)),T=[];
   L.forEach(r=>{const t=T[T.length-1];if(t&&r.rec!=null&&r.rec-t.u<=10){t.gs.push(r);t.u=r.rec}else T.push({rec:r.rec,u:r.rec,gs:[r]})});
   const V=T.map((t,i)=>({n:i+1,gs:t.gs,ini:Math.min(...t.gs.map(x=>x.ini??1e9)),fin:Math.max(...t.gs.map(x=>x.fin??-1)),rec:t.rec,fu:[...new Set(t.gs.map(x=>x.fu))].join(', '),ciclo:i&&t.rec!=null&&T[i-1].rec!=null?t.rec-T[i-1].rec:null}));
   V.forEach(v=>{if(v.ini>=1e9)v.ini=null;if(v.fin<0)v.fin=null});revisar(V);
-  const M=V.filter(v=>v.o.length);nv+=V.length;tot+=M.length;
+  const M=V.filter(v=>v.o.length);DATA.push({p,g:L[0].g,V,M});nv+=V.length;tot+=M.length;
   h+=`<details class="c"><summary><h2>🚚 ${esc(p)} · GRUPO ${esc(L[0].g)} · ${V.length} viajes${M.length?` · <span style="background:#D2412C;padding:2px 8px;border-radius:6px">${M.length} por corregir</span>`:' · ✅ todo bien'} <span class="ab">▼</span></h2></summary>`
    +(M.length?`<div class="res"><b>Resumen:</b> ${M.map(v=>`viaje ${v.n}`).join(', ')} ${M.length>1?'tienen':'tiene'} horas para revisar. Los viajes sin color están bien.</div>`:'')
    +V.map(v=>{const s=k=>v.e[k]&&k!=='x'?` style="background:${v.e[k]}"`:'',bad=v.o.length,cg=v.gs.map(x=>`<span class="g">📄 ${esc(x.cod)}${String(x.cal||'').toUpperCase().startsWith('EXPORT')?'':' · '+esc(x.cal)}</span>`).join('');
@@ -61,4 +62,28 @@ async function cargar(){const d=$('dia').value;$('out').innerHTML='<div class="e
   $('fu').innerHTML='<option value="">Todos los fundos</option>'+fs.map(x=>`<option${x===cur?' selected':''}>${esc(x)}</option>`).join('');pintar()}
  catch(e){$('out').innerHTML='<div class="e">Sin conexión.</div>'}}
 $('dia').value=hoy();$('dia').onchange=cargar;$('act').onclick=cargar;$('fu').onchange=pintar;document.addEventListener('toggle',e=>{if(e.target.open)document.querySelectorAll('details.c').forEach(d=>{if(d!==e.target)d.open=false});if(e.target.open)e.target.scrollIntoView({behavior:'smooth',block:'start'})},true);cargar();
+const txt=x=>String(x).replace(/<[^>]+>/g,'');
+$('xl').onclick=async()=>{if(!DATA.length)return alert('No hay guías para este día');const d=$('dia').value.split('-').reverse().join('/'),F=$('fu').value;
+ const wb=new ExcelJS.Workbook(),AZ='FF123A5C',RO='FFF8B4AC',AM='FFFFE08A',RS='FFFFF4F2',VE='FFE8F6EE',bd={top:{style:'thin',color:{argb:'FFBFC7D1'}},left:{style:'thin',color:{argb:'FFBFC7D1'}},bottom:{style:'thin',color:{argb:'FFBFC7D1'}},right:{style:'thin',color:{argb:'FFBFC7D1'}}};
+ const fill=c=>({type:'pattern',pattern:'solid',fgColor:{argb:c}});
+ const tit=(ws,t,sub,n)=>{ws.mergeCells(1,1,1,n);const a=ws.getCell(1,1);a.value=t;a.font={bold:true,size:16,color:{argb:'FFFFFFFF'}};a.fill=fill(AZ);a.alignment={vertical:'middle',horizontal:'center'};ws.getRow(1).height=30;
+  ws.mergeCells(2,1,2,n);const b=ws.getCell(2,1);b.value=sub;b.font={bold:true,size:11};b.alignment={horizontal:'center',wrapText:true};ws.getRow(2).height=32};
+ const head=(ws,r,H)=>{const row=ws.getRow(r);H.forEach((h,i)=>{const c=row.getCell(i+1);c.value=h;c.font={bold:true,color:{argb:'FFFFFFFF'}};c.fill=fill('FF1B5E8C');c.alignment={horizontal:'center',vertical:'middle',wrapText:true};c.border=bd});row.height=28};
+ // RESUMEN
+ const R=wb.addWorksheet('RESUMEN',{views:[{state:'frozen',ySplit:3}]});tit(R,'REVISIÓN DE HORAS DE GUÍAS · '+d,(F||'Todos los fundos')+' · 🟥 error seguro · 🟨 dudoso · refrigerio 12:00–13:00 o 12:30–13:30',5);
+ head(R,3,['PLACA','GRUPO','VIAJES','POR CORREGIR','VIAJES CON ERROR']);
+ DATA.forEach((x,i)=>{const row=R.getRow(4+i);[x.p,x.g,x.V.length,x.M.length,x.M.length?x.M.map(v=>'V'+v.n).join(', '):'✅ Todo bien'].forEach((v,j)=>{const c=row.getCell(j+1);c.value=v;c.border=bd;c.font={bold:true,color:{argb:j===4&&x.M.length?'FFB3261E':'FF000000'}};c.alignment={horizontal:j===4?'left':'center',vertical:'middle'};if(x.M.length&&j===3)c.fill=fill(RO)})});
+ const tv=DATA.reduce((a,x)=>a+x.V.length,0),te=DATA.reduce((a,x)=>a+x.M.length,0),rt=R.getRow(4+DATA.length);['TOTAL','',tv,te,Math.round(te/tv*100)+'% con error'].forEach((v,j)=>{const c=rt.getCell(j+1);c.value=v;c.font={bold:true};c.fill=fill('FFE3E8EF');c.border=bd;c.alignment={horizontal:'center'}});
+ R.columns=[{width:14},{width:10},{width:10},{width:15},{width:40}];
+ // GRUPOS
+ DATA.forEach(x=>{const W=wb.addWorksheet(('GRUPO '+x.g+' '+x.p).slice(0,31),{views:[{state:'frozen',ySplit:3}]});
+  tit(W,`🚚 ${x.p} · GRUPO ${x.g} · ${d}`,`${x.V.length} viajes · ${x.M.length?x.M.length+' por corregir ('+x.M.map(v=>'V'+v.n).join(', ')+')':'✅ todas las horas bien'}`,9);
+  head(W,3,['VIAJE','N° GUÍA','FUNDO','INICIO','FIN','RECOJO','CICLO (MIN)','ESTADO','OBSERVACIÓN']);
+  let r=4;x.V.forEach(v=>{const bad=v.o.length,cods=v.gs.map(g=>g.cod+(String(g.cal||'').toUpperCase().startsWith('EXPORT')?'':' ('+g.cal+')')).join('\n');
+   const row=W.getRow(r++),vals=['V'+v.n,cods,v.fu,hm(v.ini),hm(v.fin),hm(v.rec),v.ciclo??'—',bad?'⚠ REVISAR':'✅ OK',bad?v.o.map(o=>'• '+txt(o)).join('\n'):''];
+   vals.forEach((val,j)=>{const c=row.getCell(j+1);c.value=val;c.border=bd;c.alignment={horizontal:j===8||j===1?'left':'center',vertical:'middle',wrapText:true};c.font={bold:j!==8||bad,color:{argb:j===8||(j===7&&bad)?'FFB3261E':j===7?'FF1E7A46':'FF000000'}};if(bad)c.fill=fill(RS);if(!bad&&j===7)c.fill=fill(VE)});
+   const k={ini:4,fin:5,rec:6};Object.entries(v.e).forEach(([n,col])=>{if(k[n])row.getCell(k[n]).fill=fill(col===R1?RO:AM)});
+   row.height=Math.max(22,(bad?v.o.length*30:0),v.gs.length*16)});
+  W.columns=[{width:8},{width:40},{width:16},{width:9},{width:9},{width:9},{width:9},{width:12},{width:62}]});
+ const b=await wb.xlsx.writeBuffer(),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([b],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));a.download=`Revision_guias_${$('dia').value}.xlsx`;a.click()};
 </script></body></html>
