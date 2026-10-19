@@ -1,5 +1,5 @@
 // App "Avance": la página abre aunque no haya señal; los datos siempre van en línea.
-const CACHE = 'avance-v1';
+const CACHE = 'avance-v2';
 const PAGE = 'avance-personal.html';
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll([PAGE, 'avance.webmanifest', 'avance-icon-192.png', 'avance-icon-512.png'])).then(() => self.skipWaiting()));
