@@ -11,33 +11,36 @@
 .sum{border-radius:12px;padding:12px 14px;font-weight:900;font-size:18px;margin-bottom:14px}
 .c{background:#fff;border-radius:14px;margin-bottom:14px;overflow:hidden;box-shadow:0 1px 3px #0002}
 .c h2{margin:0;padding:12px 14px;background:var(--az);color:#fff;font-size:18px}
-.v{padding:12px 14px;border-top:2px solid #eee}
+.v{padding:8px 12px;border-top:1px solid #e5e9ef}.v.bad{background:#FFF4F2;border-left:6px solid #D2412C}
+.fila{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-weight:800;font-size:16px}.fila .n{min-width:52px;font-weight:900}.fila .h{padding:4px 8px;border-radius:7px;background:#F1F4F8}.fila .a,.fila .rl{color:#333;font-size:14px}.fila .fu{margin-left:auto;font-size:13px;color:#123A5C}
+.res{padding:10px 14px;background:#FFF8E1;font-weight:700;font-size:15px;border-bottom:2px solid #eee}
 .v .t{font-weight:900;font-size:17px;margin-bottom:6px}
 .hs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
 .hs span{padding:6px 10px;border-radius:8px;background:#F1F4F8;font-weight:800;font-size:16px}
-.o{color:#B3261E;font-weight:800;font-size:15px;line-height:1.5}
-.g{display:inline-block;font-size:17px;font-weight:900;background:#123A5C;color:#fff;padding:6px 10px;border-radius:8px;margin:2px 4px 8px 0;word-break:break-all}
+.o{color:#B3261E;font-weight:700;font-size:15px;line-height:1.5;margin-top:2px}
+.g{display:inline-block;font-size:14px;font-weight:800;background:#123A5C;color:#fff;padding:6px 10px;border-radius:8px;margin:2px 4px 8px 0;word-break:break-all}
 .ok{padding:12px 14px;color:#1E7A46;font-weight:800}
 .e{text-align:center;padding:30px;font-weight:800;color:#555}
 .ley{font-size:14px;font-weight:700;margin:6px 0 14px}
 </style></head><body>
 <div class="top"><h1>🔎 Revisión de horas de guías</h1><div class="r">
 <select id="fu"><option value="">Todos los fundos</option></select><input type="date" id="dia"><button id="act">↻ Actualizar</button></div></div>
-<div class="w"><div class="ley">🟥 error seguro · 🟨 dudoso · Refrigerio 12:00–13:00 · Solo se muestran los viajes con horas para corregir.</div><div id="out"><div class="e">Cargando…</div></div></div>
+<div class="w"><div class="ley">🟥 error seguro · 🟨 dudoso · Refrigerio 12:00–13:00 · Se muestran todos los viajes en orden; los que tienen error salen en rojo con la explicación. Inicio → Fin = llenado de la guía.</div><div id="out"><div class="e">Cargando…</div></div></div>
 <script>
 const SB='https://rqvcvffyynpnighzwxju.supabase.co',SBK='sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn',H={apikey:SBK,Authorization:'Bearer '+SBK};
 const $=i=>document.getElementById(i),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const mins=v=>{const m=String(v||'').match(/(\d{1,2}):(\d{2})/);return m?+m[1]*60+ +m[2]:null},hm=m=>m==null?'—':Math.floor(m/60)+':'+String(m%60).padStart(2,'0');
 const hoy=()=>{const d=new Date(Date.now()-5*3600e3);return d.toISOString().slice(0,10)};
 const R1='#F8B4AC',Y1='#FFE08A';let ALL=[];
+const du=m=>m<60?m+' min':Math.floor(m/60)+' h'+(m%60?' '+String(m%60).padStart(2,'0')+' min':'');
 function revisar(V){V.forEach((v,i)=>{const pv=i?V[i-1]:null,ini=v.ini,e={},o=[];
- if(ini!=null&&v.fin!=null&&ini>v.fin){e.ini=e.fin=R1;o.push('Inicio después del fin')}
- if(ini!=null&&pv&&pv.fin!=null&&ini<pv.fin-5){e.ini=R1;o.push(`Inicio ${hm(ini)} es antes que termine el viaje anterior (${hm(pv.fin)})`)}
- else if(ini!=null&&pv&&pv.fin!=null&&ini-pv.fin>60){e.ini=Y1;o.push(`Hueco de ${ini-pv.fin} min sin guía desde el viaje anterior`)}
- if(ini!=null&&v.fin!=null&&v.fin-ini>50){e.fin=e.fin||Y1;o.push(`Cosecha de ${v.fin-ini} min (muy larga)`)}
- if(ini!=null&&v.fin!=null&&((ini>720&&ini<780)||(v.fin>735&&v.fin<780)||(ini<720&&v.fin>780))){e.ini=e.ini||Y1;o.push('Cruza el refrigerio 12:00–13:00')}
- if(v.ciclo!=null&&v.ciclo>90){e.rec=R1;o.push(`Ciclo de ${v.ciclo} min entre recojos`)}
- if((ini!=null&&ini<390)||(v.rec!=null&&v.rec>1110)){e.ini=e.ini||Y1;o.push('Hora fuera de jornada')}
+ if(ini!=null&&v.fin!=null&&ini>v.fin){e.ini=e.fin=R1;o.push(`El inicio (${hm(ini)}) está después del fin (${hm(v.fin)}). Una de las dos horas está mal.`)}
+ if(ini!=null&&pv&&pv.fin!=null&&ini<pv.fin-5){e.ini=R1;o.push(`Dice que empezó a las <b>${hm(ini)}</b>, pero el viaje ${pv.n} recién terminó a las <b>${hm(pv.fin)}</b>. El inicio debería ser ${hm(pv.fin)} o después.`);e.x=1}
+ else if(ini!=null&&pv&&pv.fin!=null&&ini-pv.fin>60){e.ini=Y1;o.push(`Del viaje ${pv.n} (terminó <b>${hm(pv.fin)}</b>) a este viaje (empezó <b>${hm(ini)}</b>) pasaron <b>${du(ini-pv.fin)}</b> sin guía. ¿Faltó registrar una guía?`)}
+ if(!e.x&&ini!=null&&v.fin!=null&&v.fin-ini>50){e.fin=e.fin||Y1;o.push(`Se demoró <b>${du(v.fin-ini)}</b> en llenar (lo normal es 20 a 40 min).`)}
+ if(!e.x&&ini!=null&&v.fin!=null&&((ini>720&&ini<780)||(v.fin>735&&v.fin<780)||(ini<720&&v.fin>780))){e.ini=e.ini||Y1;o.push('La guía está abierta en el refrigerio (12:00–13:00). Se cierra antes de salir y la siguiente empieza a las 13:00.')}
+ if(v.ciclo!=null&&v.ciclo>90&&!o.length){e.rec=R1;o.push(`Entre el recojo del viaje ${pv.n} (<b>${hm(pv.rec)}</b>) y este (<b>${hm(v.rec)}</b>) pasaron <b>${du(v.ciclo)}</b>.`)}
+ if((ini!=null&&ini<390)||(v.rec!=null&&v.rec>1110)){e.ini=e.ini||Y1;o.push('Hora fuera de la jornada (antes de 6:30 o después de 18:30).')}
  v.e=e;v.o=o})}
 function pintar(){const F=$('fu').value,P={};
  ALL.filter(r=>!F||r.fundo===F).forEach(r=>{(P[r.placa]=P[r.placa]||[]).push({cod:r.codigo,g:String(r.grupo||''),fu:r.fundo,cal:r.calidad,ini:mins(r.inicio),fin:mins(r.fin),rec:mins(r.recojo)})});
@@ -47,8 +50,10 @@ function pintar(){const F=$('fu').value,P={};
   const V=T.map((t,i)=>({n:i+1,gs:t.gs,ini:Math.min(...t.gs.map(x=>x.ini??1e9)),fin:Math.max(...t.gs.map(x=>x.fin??-1)),rec:t.rec,fu:[...new Set(t.gs.map(x=>x.fu))].join(', '),ciclo:i&&t.rec!=null&&T[i-1].rec!=null?t.rec-T[i-1].rec:null}));
   V.forEach(v=>{if(v.ini>=1e9)v.ini=null;if(v.fin<0)v.fin=null});revisar(V);
   const M=V.filter(v=>v.o.length);nv+=V.length;tot+=M.length;
-  h+=`<div class="c"><h2>🚚 ${esc(p)} · GRUPO ${esc(L[0].g)} · ${V.length} viajes${M.length?` · <span style="background:#D2412C;padding:2px 8px;border-radius:6px">${M.length} por corregir</span>`:''}</h2>`+
-   (M.length?M.map(v=>{const s=k=>v.e[k]?` style="background:${v.e[k]}"`:'';return`<div class="v"><div class="t">Viaje ${v.n} · ${esc(v.fu)}</div><div>${v.gs.map(x=>`<span class="g">📄 GUÍA ${esc(x.cod)}${String(x.cal||'').toUpperCase().startsWith('EXPORT')?'':' · '+esc(x.cal)}</span>`).join('')}</div><div class="hs"><span${s('ini')}>Inicio ${hm(v.ini)}</span><span${s('fin')}>Fin ${hm(v.fin)}</span><span${s('rec')}>Recojo ${hm(v.rec)}</span></div><div class="o">${v.o.map(x=>'⚠ '+esc(x)).join('<br>')}</div></div>`}).join(''):'<div class="ok">✅ Horas bien</div>')+'</div>'});
+  h+=`<div class="c"><h2>🚚 ${esc(p)} · GRUPO ${esc(L[0].g)} · ${V.length} viajes${M.length?` · <span style="background:#D2412C;padding:2px 8px;border-radius:6px">${M.length} por corregir</span>`:' · ✅ todo bien'}</h2>`
+   +(M.length?`<div class="res"><b>Resumen:</b> ${M.map(v=>`viaje ${v.n}`).join(', ')} ${M.length>1?'tienen':'tiene'} horas para revisar. Los viajes sin color están bien.</div>`:'')
+   +V.map(v=>{const s=k=>v.e[k]&&k!=='x'?` style="background:${v.e[k]}"`:'',bad=v.o.length,cg=v.gs.map(x=>`<span class="g">📄 ${esc(x.cod)}${String(x.cal||'').toUpperCase().startsWith('EXPORT')?'':' · '+esc(x.cal)}</span>`).join('');
+    return`<div class="v${bad?' bad':''}"><div class="fila"><span class="n">${bad?'⚠':'✅'} V${v.n}</span><span${s('ini')} class="h">${hm(v.ini)}</span><span class="a">→</span><span${s('fin')} class="h">${hm(v.fin)}</span><span class="rl">recojo</span><span${s('rec')} class="h">${hm(v.rec)}</span><span class="fu">${esc(v.fu)}</span></div><div>${cg}</div>${bad?`<div class="o">${v.o.map(x=>'• '+x).join('<br>')}</div>`:''}</div>`}).join('')+'</div>'});
  $('out').innerHTML=(nv?`<div class="sum" style="${tot?'background:#FDECEA;color:#B3261E;border:2px solid #D2412C':'background:#E8F6EE;color:#1E7A46;border:2px solid #1E9E5A'}">${tot?`⚠ ${tot} de ${nv} viajes con horas para corregir`:'✅ Todas las horas están bien'}</div>`:'')+(h||'<div class="e">No hay guías subidas para este día.</div>')}
 async function cargar(){const d=$('dia').value;$('out').innerHTML='<div class="e">Cargando…</div>';
  try{const L=await (await fetch(`${SB}/rest/v1/guias_campo?fecha=eq.${d}&select=codigo,grupo,fundo,placa,calidad,inicio,fin,recojo&limit=5000`,{headers:H})).json();
