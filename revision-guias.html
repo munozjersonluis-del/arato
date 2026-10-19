@@ -47,7 +47,7 @@ function pintar(){const F=$('fu').value,P={};
  ALL.filter(r=>!F||r.fundo===F).forEach(r=>{(P[r.placa]=P[r.placa]||[]).push({cod:r.codigo,g:String(r.grupo||''),fu:r.fundo,cal:r.calidad,ini:mins(r.inicio),fin:mins(r.fin),rec:mins(r.recojo)})});
  let h='',tot=0,nv=0;DATA=[];
  Object.keys(P).sort((a,b)=>P[a][0].g.localeCompare(P[b][0].g)).forEach(p=>{const L=P[p].sort((a,b)=>(a.rec??0)-(b.rec??0)),T=[];
-  L.forEach(r=>{const t=T[T.length-1];if(t&&r.rec!=null&&r.rec-t.u<=10){t.gs.push(r);t.u=r.rec}else T.push({rec:r.rec,u:r.rec,gs:[r]})});
+  L.forEach(r=>{const t=T[T.length-1];if(t&&r.rec!=null&&r.rec-t.rec<=2){t.gs.push(r);t.u=r.rec}else T.push({rec:r.rec,u:r.rec,gs:[r]})});
   const V=T.map((t,i)=>({n:i+1,gs:t.gs,ini:Math.min(...t.gs.map(x=>x.ini??1e9)),fin:Math.max(...t.gs.map(x=>x.fin??-1)),rec:t.rec,fu:[...new Set(t.gs.map(x=>x.fu))].join(', '),ciclo:i&&t.rec!=null&&T[i-1].rec!=null?t.rec-T[i-1].rec:null}));
   V.forEach(v=>{if(v.ini>=1e9)v.ini=null;if(v.fin<0)v.fin=null});revisar(V);
   const M=V.filter(v=>v.o.length);DATA.push({p,g:L[0].g,V,M});nv+=V.length;tot+=M.length;
