@@ -16,7 +16,7 @@
 .hs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
 .hs span{padding:6px 10px;border-radius:8px;background:#F1F4F8;font-weight:800;font-size:16px}
 .o{color:#B3261E;font-weight:800;font-size:15px;line-height:1.5}
-.g{font-size:13px;color:#333;font-weight:700;margin-top:4px;word-break:break-all}
+.g{display:inline-block;font-size:17px;font-weight:900;background:#123A5C;color:#fff;padding:6px 10px;border-radius:8px;margin:2px 4px 8px 0;word-break:break-all}
 .ok{padding:12px 14px;color:#1E7A46;font-weight:800}
 .e{text-align:center;padding:30px;font-weight:800;color:#555}
 .ley{font-size:14px;font-weight:700;margin:6px 0 14px}
@@ -48,7 +48,7 @@ function pintar(){const F=$('fu').value,P={};
   V.forEach(v=>{if(v.ini>=1e9)v.ini=null;if(v.fin<0)v.fin=null});revisar(V);
   const M=V.filter(v=>v.o.length);nv+=V.length;tot+=M.length;
   h+=`<div class="c"><h2>🚚 ${esc(p)} · GRUPO ${esc(L[0].g)} · ${V.length} viajes${M.length?` · <span style="background:#D2412C;padding:2px 8px;border-radius:6px">${M.length} por corregir</span>`:''}</h2>`+
-   (M.length?M.map(v=>{const s=k=>v.e[k]?` style="background:${v.e[k]}"`:'';return`<div class="v"><div class="t">Viaje ${v.n} · ${esc(v.fu)}</div><div class="hs"><span${s('ini')}>Inicio ${hm(v.ini)}</span><span${s('fin')}>Fin ${hm(v.fin)}</span><span${s('rec')}>Recojo ${hm(v.rec)}</span></div><div class="o">${v.o.map(x=>'⚠ '+esc(x)).join('<br>')}</div><div class="g">Guía: ${v.gs.map(x=>esc(String(x.cod||'').split('-').slice(-2).join('-'))+(String(x.cal||'').toUpperCase().startsWith('EXPORT')?'':' ('+esc(x.cal)+')')).join(' · ')}</div></div>`}).join(''):'<div class="ok">✅ Horas bien</div>')+'</div>'});
+   (M.length?M.map(v=>{const s=k=>v.e[k]?` style="background:${v.e[k]}"`:'';return`<div class="v"><div class="t">Viaje ${v.n} · ${esc(v.fu)}</div><div>${v.gs.map(x=>`<span class="g">📄 GUÍA ${esc(x.cod)}${String(x.cal||'').toUpperCase().startsWith('EXPORT')?'':' · '+esc(x.cal)}</span>`).join('')}</div><div class="hs"><span${s('ini')}>Inicio ${hm(v.ini)}</span><span${s('fin')}>Fin ${hm(v.fin)}</span><span${s('rec')}>Recojo ${hm(v.rec)}</span></div><div class="o">${v.o.map(x=>'⚠ '+esc(x)).join('<br>')}</div></div>`}).join(''):'<div class="ok">✅ Horas bien</div>')+'</div>'});
  $('out').innerHTML=(nv?`<div class="sum" style="${tot?'background:#FDECEA;color:#B3261E;border:2px solid #D2412C':'background:#E8F6EE;color:#1E7A46;border:2px solid #1E9E5A'}">${tot?`⚠ ${tot} de ${nv} viajes con horas para corregir`:'✅ Todas las horas están bien'}</div>`:'')+(h||'<div class="e">No hay guías subidas para este día.</div>')}
 async function cargar(){const d=$('dia').value;$('out').innerHTML='<div class="e">Cargando…</div>';
  try{const L=await (await fetch(`${SB}/rest/v1/guias_campo?fecha=eq.${d}&select=codigo,grupo,fundo,placa,calidad,inicio,fin,recojo&limit=5000`,{headers:H})).json();
