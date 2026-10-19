@@ -50,7 +50,7 @@ const esD=a=>/DESMALEZ/i.test(a);
 async function cargar(){if(!API){$('cfg').classList.remove('hidden');return}if(!FU)return alert('Escoge tu fundo');
  $('out').innerHTML='<div class="msg">Cargando personal…</div>';$('bar').classList.add('hidden');$('auxC').classList.add('hidden');
  try{const r=await (await fetch(API+'?fundo='+encodeURIComponent(FU)+'&fecha='+encodeURIComponent(fmt($('dia').value)))).json();if(!r.ok)throw r.error;
-  FIL=r.filas||[];if(!FIL.length){$('out').innerHTML='<div class="msg">No hay personal cargado en la BD para '+esc(FU)+' el '+fmt($('dia').value)+'.</div>';return}
+  FIL=r.filas||[];if(!FIL.length){$('out').innerHTML='<div class="msg">No hay personal en la hoja de '+esc(FU)+' el '+fmt($('dia').value)+'.</div>';return}
   const ax=[...new Set(FIL.map(x=>x.auxiliar))].sort(),cur=ls('av_aux');$('aux').innerHTML=(ax.length>1?'<option value="">Todos los auxiliares</option>':'')+ax.map(a=>`<option${a===cur?' selected':''}>${esc(a)}</option>`).join('');
   $('auxC').classList.remove('hidden');lista()}catch(e){$('out').innerHTML='<div class="msg">No se pudo cargar: '+esc(e)+'</div>'}}
 $('cargar').onclick=cargar;$('aux').onchange=()=>{ls('av_aux',$('aux').value);lista()};
@@ -72,6 +72,6 @@ $('guardar').onclick=async()=>{const rows=[];document.querySelectorAll('.p').for
   const o={avance:v('avance'),meta:v('meta'),dr:v('dr'),obs:v('obs')};if(o.avance===''&&o.meta===''&&o.dr===''&&o.obs==='')return;rows.push({...x,...o,guardado:undefined})});
  if(!rows.length)return alert('No llenaste ningún avance');const B=$('guardar');B.disabled=true;B.textContent='Guardando…';
  try{const r=await (await fetch(API,{method:'POST',body:JSON.stringify({filas:rows})})).json();if(!r.ok)throw r.error;
-  alert(`✅ Guardado: ${r.nuevas} nuevos, ${r.actualizadas} actualizados`);cargar()}catch(e){alert('No se pudo guardar: '+e)}finally{B.disabled=false;B.textContent='💾 Guardar avance'}};
+  alert(`✅ Guardado en la hoja ${FU}: ${r.guardadas} trabajador(es)`+((r.faltan||[]).length?`\n⚠ No se encontró en la hoja: ${r.faltan.join(', ')}`:''));cargar()}catch(e){alert('No se pudo guardar: '+e)}finally{B.disabled=false;B.textContent='💾 Guardar avance'}};
 if(FU&&API)cargar();
 </script></body></html>
