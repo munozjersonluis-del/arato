@@ -28,7 +28,7 @@ tr.t td{font-weight:800;background:#E7EEF5}
 <main>
  <div class="card">
   <label class="up"><b>📂</b>Toca para subir el Excel del PowerApps<br><span class="small">Puedes subirlo las veces que quieras: solo se agregan las guías nuevas</span><input type="file" id="f" accept=".xlsx,.xls,.csv"></label>
-  <div class="tg" id="cal"><button data-c="EXPORTABLE" aria-pressed="true">Solo exportable</button><button data-c="" aria-pressed="false">Todo</button></div>
+  <div class="tg" id="cal"><button data-c="EXPORTABLE" aria-pressed="true">Kg solo exportable</button><button data-c="" aria-pressed="false">Kg de todo</button></div>
   <div class="pj"><span class="small">Peso por jarra si no hay pesaje del grupo:</span><input id="pjDef" type="number" step="0.01" value="1.25"> <span class="small">kg</span></div>
   <div id="info" class="msg hidden"></div>
  </div>
@@ -92,21 +92,21 @@ function pesoJarra(f,g){const def=Number($('pjDef').value)||1.25;const L=(PESOS|
  const lg=L.filter(x=>norm(x.grupo)===g).map(pj).filter(v=>v>0.5&&v<2.5);if(lg.length)return{v:lg.reduce((a,b)=>a+b,0)/lg.length,src:'pesaje del grupo'};
  const la=L.map(pj).filter(v=>v>0.5&&v<2.5);if(la.length)return{v:la.reduce((a,b)=>a+b,0)/la.length,src:'pesaje del día'};return{v:def,src:'estándar'}}
 function calc(){
- const G=RAW.filter(r=>!CAL||r.calidad===CAL);
- G.forEach(r=>{const p=pesoJarra(r.fecha,r.grupo);r.pj=p.v;r.pjsrc=p.src;r.kg=r.jarras*p.v;r.cos=(r.ini!=null&&r.fin!=null)?r.fin-r.ini:null});
+ const G=RAW;
+ G.forEach(r=>{const p=pesoJarra(r.fecha,r.grupo);r.pj=p.v;r.pjsrc=p.src;r.kg=(!CAL||r.calidad===CAL)?r.jarras*p.v:0;r.cos=(r.ini!=null&&r.fin!=null)?r.fin-r.ini:null});
  const P={};G.forEach(r=>{(P[r.fecha+'|'+r.placa]=P[r.fecha+'|'+r.placa]||[]).push(r)});
  const VIA=[],IND=[];
  Object.entries(P).sort().forEach(([k,L])=>{const[f,pl]=k.split('|');L.sort((a,b)=>(a.rec??0)-(b.rec??0));const T=[];
   L.forEach(r=>{const t=T[T.length-1];if(t&&r.rec!=null&&r.rec-t.rec<=2){t.g.push(r);t.ult=r.rec}else T.push({rec:r.rec,ult:r.rec,g:[r]})});
-  T.forEach((t,i)=>{const ant=T[i-1];VIA.push({fecha:f,placa:pl,grupo:t.g[0].grupo,n:i+1,ini:Math.min(...t.g.map(x=>x.ini??1e9)),fin:Math.max(...t.g.map(x=>x.fin??0)),rec:t.rec,guias:t.g.length,jarras:t.g.reduce((a,x)=>a+x.jarras,0),kg:t.g.reduce((a,x)=>a+x.kg,0),ciclo:ant&&t.rec!=null&&ant.rec!=null?t.rec-ant.rec:null,fundo:[...new Set(t.g.map(x=>x.fundo))].join(', ')})});
+  T.forEach((t,i)=>{const ant=T[i-1];VIA.push({fecha:f,placa:pl,grupo:t.g[0].grupo,n:i+1,sx:t.g.every(x=>!/^EXPORT/i.test(x.calidad||'')),ini:Math.min(...t.g.map(x=>x.ini??1e9)),fin:Math.max(...t.g.map(x=>x.fin??0)),rec:t.rec,guias:t.g.length,jarras:t.g.reduce((a,x)=>a+x.jarras,0),kg:t.g.reduce((a,x)=>a+x.kg,0),ciclo:ant&&t.rec!=null&&ant.rec!=null?t.rec-ant.rec:null,fundo:[...new Set(t.g.map(x=>x.fundo))].join(', ')})});
   const V=VIA.filter(v=>v.fecha===f&&v.placa===pl),cy=V.map(v=>v.ciclo).filter(x=>x!=null),ini=Math.min(...L.map(x=>x.ini??1e9)),ult=Math.max(...L.map(x=>x.rec??0));
   const hrs=ini<1e9&&ult>ini?(ult-ini)/60:0,kg=V.reduce((a,v)=>a+v.kg,0),tar=TARIFA[pl]||null;
   IND.push({fecha:f,placa:pl,grupo:L[0].grupo,viajes:V.length,jarras:V.reduce((a,v)=>a+v.jarras,0),kg,ini,ult,hrs,ciclo:cy.length?cy.reduce((a,b)=>a+b,0)/cy.length:null,kgh:hrs?kg/hrs:null,cos:L.map(x=>x.cos).filter(x=>x!=null).reduce((a,b,_,A)=>a+b/A.length,0),tar,cxt:tar&&kg?tar/(kg/1000):null,pj:L[0].pj,pjsrc:L[0].pjsrc})});
  revisar(VIA);LAST={G,VIA,IND};render()}
 function render(){const{G,VIA,IND}=LAST;$('out').classList.remove('hidden');
- const fs=[...new Set(G.map(r=>r.fecha))];$('tFecha').textContent='Resumen · '+fs.map(f=>f.split('-').reverse().join('/')).join(', ')+(CAL?' · solo exportable':' · todas las calidades');
+ const fs=[...new Set(G.map(r=>r.fecha))];$('tFecha').textContent='Resumen · '+fs.map(f=>f.split('-').reverse().join('/')).join(', ')+' · viajes con todas las guías'+(CAL?' · kg solo exportable':' · kg de todas las calidades');
  const kg=IND.reduce((a,x)=>a+x.kg,0),vi=IND.reduce((a,x)=>a+x.viajes,0),cy=VIA.map(v=>v.ciclo).filter(x=>x!=null),tar=IND.reduce((a,x)=>a+(x.tar||0),0);
- $('pesoInfo').textContent=`${RAW.length} guías guardadas este día · ${G.length} ${CAL?'exportables':'en total'} · ${PESOS&&PESOS.length?'kg con el peso real de jarra de la app de pesos':'sin pesaje: uso '+$('pjDef').value+' kg por jarra'}`;
+ $('pesoInfo').textContent=`${RAW.length} guías guardadas este día · ${G.filter(r=>r.calidad==='EXPORTABLE').length} exportables · ${PESOS&&PESOS.length?'kg con el peso real de jarra de la app de pesos':'sin pesaje: uso '+$('pjDef').value+' kg por jarra'}`;
  $('kp').innerHTML=[[vi,'viajes'],[n0(G.reduce((a,r)=>a+r.jarras,0)),'jarras'],[n0(kg),'kg'],[cy.length?Math.round(cy.reduce((a,b)=>a+b,0)/cy.length)+"'":'—','ciclo prom.'],[tar&&kg?'S/ '+n2(tar/(kg/1000)):'—','costo por TN']].map(([v,t])=>`<div><b>${v}</b><small>${t}</small></div>`).join('');
  $('tInd').innerHTML='<tr><th>Placa</th><th>Grupo</th><th>Viajes</th><th>Jarras</th><th>Kg</th><th>Inicio</th><th>Último recojo</th><th>Horas</th><th>Ciclo prom. (min)</th><th>Kg / hora</th><th>Cosecha prom. (min)</th><th>Costo día</th><th>S/ por TN</th></tr>'+
   IND.map(x=>`<tr><td><b>${esc(x.placa)}</b></td><td>${esc(x.grupo)}</td><td>${x.viajes}</td><td>${n0(x.jarras)}</td><td>${n0(x.kg)}</td><td>${hm(x.ini<1e9?x.ini:null)}</td><td>${hm(x.ult)}</td><td>${x.hrs.toFixed(1)}</td><td>${x.ciclo==null?'—':Math.round(x.ciclo)}</td><td>${x.kgh==null?'—':n0(x.kgh)}</td><td>${Math.round(x.cos)}</td><td>${x.tar?'S/ '+x.tar:'—'}</td><td>${x.cxt==null?'—':'S/ '+n2(x.cxt)}</td></tr>`).join('')+
@@ -115,7 +115,7 @@ function render(){const{G,VIA,IND}=LAST;$('out').classList.remove('hidden');
   VIA.map(v=>{const e=v.err||{},c=k=>e[k]?` style="background:${e[k]}"`:'';return`<tr${v.obs.length?' style="background:#FFF4F2"':''}><td>${esc(v.placa)}</td><td>${esc(v.grupo)}</td><td>${v.n}</td><td${c('ini')}><b>${hm(v.ini<1e9?v.ini:null)}</b></td><td${c('fin')}><b>${hm(v.fin)}</b></td><td>${hm(v.rec)}</td><td>${v.guias}</td><td>${n0(v.jarras)}</td><td>${n0(v.kg)}</td><td${c('ciclo')}>${v.ciclo==null?'—':v.ciclo}</td><td>${esc(v.fundo)}</td><td style="text-align:left;font-weight:800;color:#B3261E;white-space:normal;min-width:220px">${v.obs.map(o=>'⚠ '+o).join('<br>')}</td></tr>`}).join('');
  const ne=VIA.filter(v=>v.obs.length).length;$('errH').innerHTML=ne?`<div style="background:#FDECEA;border:2px solid #D2412C;border-radius:12px;padding:10px 14px;margin:10px 0;font-weight:800;color:#B3261E">⚠ ${ne} viaje(s) con horas para revisar · 🟥 error · 🟨 dudoso</div>`:'<div style="background:#E8F6EE;border:2px solid #1E9E5A;border-radius:12px;padding:10px 14px;margin:10px 0;font-weight:800;color:#1E7A46">✅ Horas sin errores</div>'}
 const R1='#F8B4AC',Y1='#FFE08A';
-function revisar(VIA){VIA.forEach((v,i)=>{const a=VIA[i-1],pv=a&&a.placa===v.placa&&a.fecha===v.fecha?a:null,ini=v.ini<1e9?v.ini:null,e={},o=[];
+function revisar(VIA){VIA.forEach((v,i)=>{let j=i-1;while(j>=0&&VIA[j].sx&&VIA[j].placa===v.placa)j--;const a=v.sx?null:VIA[j],pv=a&&a.placa===v.placa&&a.fecha===v.fecha?a:null,ini=v.ini<1e9?v.ini:null,e={},o=[];
  if(ini!=null&&v.fin&&ini>v.fin){e.ini=e.fin=R1;o.push('Inicio después del fin')}
  if(ini!=null&&pv&&pv.fin&&ini<pv.fin-5){e.ini=R1;o.push(`Inicio ${hm(ini)} es antes que termine el viaje anterior (${hm(pv.fin)})`)}
  else if(ini!=null&&pv&&pv.fin&&ini-pv.fin>60){e.ini=Y1;o.push(`Hueco de ${ini-pv.fin} min sin guía desde el viaje anterior`)}
