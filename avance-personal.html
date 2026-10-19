@@ -1,0 +1,77 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Avance de personal</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,Arial,sans-serif;background:#EEF2F6;color:#000}
+.top{background:#123A5C;color:#fff;padding:14px 16px}.top h1{margin:0;font-size:21px}.top small{opacity:.8;font-weight:700}
+.w{max-width:760px;margin:0 auto;padding:12px 12px 120px}
+.c{background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 1px 3px #0002}
+.l{font-weight:900;font-size:15px;margin:0 0 8px}
+.fu{display:grid;grid-template-columns:1fr 1fr;gap:8px}.fu button{padding:14px 8px;border-radius:12px;border:3px solid #1B5E8C;background:#fff;color:#1B5E8C;font-weight:900;font-size:17px}
+.fu button[aria-pressed=true]{background:#1B5E8C;color:#fff}
+input,select,textarea{font:inherit;font-weight:700;font-size:16px;padding:10px;border:2px solid #C9D3DE;border-radius:10px;width:100%;background:#fff;color:#000}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn{width:100%;padding:14px;border:0;border-radius:12px;font-weight:900;font-size:17px;background:#1B5E8C;color:#fff}
+.g{border-radius:14px;background:#fff;margin-bottom:12px;overflow:hidden;box-shadow:0 1px 3px #0002}
+.gh{background:#1B5E8C;color:#fff;padding:10px 14px;font-weight:900;font-size:16px}.gh small{display:block;font-weight:700;opacity:.85}
+.todos{display:grid;grid-template-columns:1fr 1fr auto;gap:6px;padding:10px 12px;background:#F1F6FB;border-bottom:2px solid #dde5ee;align-items:end}
+.todos label{font-size:12px;font-weight:800}.todos button{padding:10px 12px;border:0;border-radius:10px;background:#123A5C;color:#fff;font-weight:900}
+.p{padding:10px 12px;border-bottom:1px solid #e6ebf1}.p .n{font-weight:900;font-size:15px}.p .d{font-size:12px;font-weight:700;color:#333}
+.f{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:6px}.f label{font-size:11px;font-weight:800;display:block}
+.f input{padding:8px;font-size:16px}
+.ob{margin-top:6px}.ob input{font-size:14px;padding:8px}
+.cu{display:inline-block;margin-left:6px;padding:2px 8px;border-radius:7px;font-size:12px;font-weight:900}
+.si{background:#D8F0E1;color:#1E7A46}.no{background:#FDE0DC;color:#B3261E}.ok{background:#E3ECF7;color:#123A5C}
+.bar{position:fixed;left:0;right:0;bottom:0;background:#fff;padding:10px 12px;box-shadow:0 -2px 8px #0002}
+.bar .btn{background:#1E9E5A;max-width:736px;margin:0 auto;display:block}
+.msg{text-align:center;font-weight:800;padding:20px;color:#333}
+.hidden{display:none}
+</style></head><body>
+<div class="top"><h1>🌱 Avance de personal</h1><small>Mission · Blueberries</small></div>
+<div class="w">
+ <div class="c hidden" id="cfg"><p class="l">⚙️ Pega el link del Apps Script (/exec)</p><input id="api" placeholder="https://script.google.com/macros/s/.../exec"><button class="btn" style="margin-top:8px" id="gApi">Guardar</button></div>
+ <div class="c"><p class="l">1. Escoge tu fundo</p><div class="fu" id="fu"></div></div>
+ <div class="c"><p class="l">2. Fecha</p><div class="row2"><input type="date" id="dia"><button class="btn" id="cargar">Cargar personal</button></div></div>
+ <div class="c hidden" id="auxC"><p class="l">3. Auxiliar</p><select id="aux"></select></div>
+ <div id="out"></div>
+</div>
+<div class="bar hidden" id="bar"><button class="btn" id="guardar">💾 Guardar avance</button></div>
+<script>
+const FUNDOS=['DUNA AZUL','VALLE 1','VALLE 2/4','VALLE 3'];
+const $=i=>document.getElementById(i),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}};
+let API=new URLSearchParams(location.search).get('api')||ls('av_api')||'',FU=ls('av_fu')||'',FIL=[];
+if(API)ls('av_api',API);else $('cfg').classList.remove('hidden');
+$('gApi').onclick=()=>{API=$('api').value.trim();if(!/^https:\/\/script\.google/.test(API))return alert('Link no válido');ls('av_api',API);$('cfg').classList.add('hidden')};
+const pint=()=>{$('fu').innerHTML=FUNDOS.map(f=>`<button aria-pressed="${f===FU}" data-f="${f}">${f}</button>`).join('')};pint();
+$('fu').onclick=e=>{const b=e.target.closest('[data-f]');if(!b)return;FU=b.dataset.f;ls('av_fu',FU);pint();cargar()};
+const d0=new Date(Date.now()-5*3600e3);$('dia').value=d0.toISOString().slice(0,10);
+const fmt=d=>d.split('-').reverse().join('/');
+const esD=a=>/DESMALEZ/i.test(a);
+async function cargar(){if(!API){$('cfg').classList.remove('hidden');return}if(!FU)return alert('Escoge tu fundo');
+ $('out').innerHTML='<div class="msg">Cargando personal…</div>';$('bar').classList.add('hidden');$('auxC').classList.add('hidden');
+ try{const r=await (await fetch(API+'?fundo='+encodeURIComponent(FU)+'&fecha='+encodeURIComponent(fmt($('dia').value)))).json();if(!r.ok)throw r.error;
+  FIL=r.filas||[];if(!FIL.length){$('out').innerHTML='<div class="msg">No hay personal cargado en la BD para '+esc(FU)+' el '+fmt($('dia').value)+'.</div>';return}
+  const ax=[...new Set(FIL.map(x=>x.auxiliar))].sort(),cur=ls('av_aux');$('aux').innerHTML=(ax.length>1?'<option value="">Todos los auxiliares</option>':'')+ax.map(a=>`<option${a===cur?' selected':''}>${esc(a)}</option>`).join('');
+  $('auxC').classList.remove('hidden');lista()}catch(e){$('out').innerHTML='<div class="msg">No se pudo cargar: '+esc(e)+'</div>'}}
+$('cargar').onclick=cargar;$('aux').onchange=()=>{ls('av_aux',$('aux').value);lista()};
+function lista(){const A=$('aux').value,L=FIL.map((x,i)=>({...x,i})).filter(x=>!A||x.auxiliar===A),G={};
+ L.forEach(x=>{const k=x.modulo+'|'+x.actividad;(G[k]=G[k]||[]).push(x)});
+ $('out').innerHTML=Object.keys(G).sort().map(k=>{const P=G[k],[m,a]=k.split('|'),d=esD(a);
+  return`<div class="g"><div class="gh">${esc(m)} · ${esc(a)}<small>${P.length} persona(s)</small></div>
+  <div class="todos"><div><label>Avance Ha (todos)</label><input type="number" step="0.01" inputmode="decimal" data-ta="${esc(k)}"></div><div><label>Meta Ha (todos)</label><input type="number" step="0.01" inputmode="decimal" data-tm="${esc(k)}"></div><button data-tk="${esc(k)}">Copiar</button></div>
+  ${P.map(x=>{const g=x.guardado||{};return`<div class="p" data-i="${x.i}"><div class="n">${esc(x.personal)} <span class="cu" id="cu${x.i}"></span></div><div class="d">DNI ${esc(x.dni)} · ${esc(x.horas)} h${g.avance!==undefined?' · ✅ ya guardado':''}</div>
+   <div class="f"><div><label>Avance Ha</label><input type="number" step="0.01" inputmode="decimal" data-k="avance" value="${esc(g.avance||'')}"></div><div><label>Meta Ha</label><input type="number" step="0.01" inputmode="decimal" data-k="meta" value="${esc(g.meta||'')}"></div><div><label>DR ${d?'':'(solo desmal.)'}</label><input type="number" step="1" inputmode="decimal" data-k="dr" value="${esc(g.dr||'')}" ${d?'':'disabled'}></div></div>
+   <div class="ob"><input placeholder="Observación" data-k="obs" value="${esc(g.obs||'')}"></div></div>`}).join('')}</div>`}).join('');
+ $('bar').classList.remove('hidden');document.querySelectorAll('.p').forEach(cu)}
+function cu(p){const i=p.dataset.i,a=parseFloat(p.querySelector('[data-k=avance]').value),m=parseFloat(p.querySelector('[data-k=meta]').value),e=$('cu'+i);
+ if(isNaN(a)||isNaN(m)||!m){e.className='cu';e.textContent='';return}const s=a>=m;e.className='cu '+(s?'si':'no');e.textContent=s?'CUMPLE':'NO CUMPLE'}
+$('out').oninput=e=>{const p=e.target.closest('.p');if(p)cu(p)};
+$('out').onclick=e=>{const b=e.target.closest('[data-tk]');if(!b)return;const k=b.dataset.tk,g=b.closest('.g'),a=g.querySelector('[data-ta]').value,m=g.querySelector('[data-tm]').value;
+ g.querySelectorAll('.p').forEach(p=>{if(a!=='')p.querySelector('[data-k=avance]').value=a;if(m!=='')p.querySelector('[data-k=meta]').value=m;cu(p)})};
+$('guardar').onclick=async()=>{const rows=[];document.querySelectorAll('.p').forEach(p=>{const x=FIL[p.dataset.i],v=k=>p.querySelector(`[data-k=${k}]`).value.trim();
+  const o={avance:v('avance'),meta:v('meta'),dr:v('dr'),obs:v('obs')};if(o.avance===''&&o.meta===''&&o.dr===''&&o.obs==='')return;rows.push({...x,...o,guardado:undefined})});
+ if(!rows.length)return alert('No llenaste ningún avance');const B=$('guardar');B.disabled=true;B.textContent='Guardando…';
+ try{const r=await (await fetch(API,{method:'POST',body:JSON.stringify({filas:rows})})).json();if(!r.ok)throw r.error;
+  alert(`✅ Guardado: ${r.nuevas} nuevos, ${r.actualizadas} actualizados`);cargar()}catch(e){alert('No se pudo guardar: '+e)}finally{B.disabled=false;B.textContent='💾 Guardar avance'}};
+if(FU&&API)cargar();
+</script></body></html>
