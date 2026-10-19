@@ -74,8 +74,8 @@ $('f').onchange=async e=>{const file=e.target.files[0];if(!file)return;const inf
   let rutaOk=ruta;try{const up=await fetch(`${SB}/storage/v1/object/guias-excel/${ruta}`,{method:'POST',headers:{...H,'Content-Type':file.type||'application/octet-stream','x-upsert':'false'},body:buf});if(!up.ok)rutaOk=''}catch(x){rutaOk=''}
   const r=await fetch(`${SB}/rest/v1/rpc/guias_subir`,{method:'POST',headers:{...H,'Content-Type':'application/json'},body:JSON.stringify({p_filas:F,p_archivo:file.name,p_ruta:rutaOk,p_fecha:d0})});
   const j=await r.json();if(!r.ok||!j.ok)throw new Error((j&&j.message)||'no se pudo guardar');
-  let sh='';if(SHEETS_API){try{const rs=await fetch(SHEETS_API,{method:'POST',body:JSON.stringify({filas:F,archivo:file.name})});const js=await rs.json();sh=js.ok?` · Google Sheets: ${js.nuevas} nuevas`:' · ⚠️ no se copió a Google Sheets'}catch(x){sh=' · ⚠️ no se copió a Google Sheets'}}
-  info.innerHTML=`✔ Guardado. <b>${j.nuevas} guías nuevas</b> · ${j.total-j.nuevas} ya estaban (no se duplicaron)${rutaOk?' · Excel guardado como evidencia':' · ⚠️ el Excel no se pudo guardar como evidencia'}${sh}`;
+  let sh='';if(SHEETS_API){try{const rs=await fetch(SHEETS_API,{method:'POST',body:JSON.stringify({filas:F,archivo:file.name})});const js=await rs.json();sh=js.ok?` · Google Sheets: ${js.nuevas} nuevas${js.actualizadas?' y '+js.actualizadas+' actualizadas':''}`:' · ⚠️ no se copió a Google Sheets'}catch(x){sh=' · ⚠️ no se copió a Google Sheets'}}
+  info.innerHTML=`✔ Guardado. <b>${j.nuevas} guías nuevas</b>${j.modificadas?` · <b>✏️ ${j.modificadas} modificadas (actualizadas)</b>`:''} · ${j.total-j.nuevas-(j.modificadas||0)} ya estaban igual (no se duplicaron)${rutaOk?' · Excel guardado como evidencia':' · ⚠️ el Excel no se pudo guardar como evidencia'}${sh}`;
   $('dia').value=d0;e.target.value='';await verDia(d0,true);
  }catch(err){info.textContent='No pude subir el archivo: '+err.message}};
 async function verDia(d,keepMsg){
