@@ -26,6 +26,10 @@ input,select,textarea{font:inherit;font-weight:700;font-size:16px;padding:10px;b
 .bar .btn{background:#1E9E5A;max-width:736px;margin:0 auto;display:block}
 .msg{text-align:center;font-weight:800;padding:20px;color:#333}
 .hidden{display:none}
+.tabs{display:flex;gap:8px;margin-bottom:12px}.tabs button{flex:1;padding:12px;border-radius:12px;border:0;font-weight:900;font-size:16px;background:#fff;color:#123A5C;box-shadow:0 1px 3px #0002}.tabs button[aria-pressed=true]{background:#123A5C;color:#fff}
+.kp{display:grid;grid-template-columns:1fr 1fr;gap:8px}.kp div{background:#F1F4F8;border-radius:12px;padding:10px;text-align:center}.kp b{display:block;font-size:24px;color:#123A5C}.kp small{font-weight:800;font-size:12px}
+.ac{margin:10px 0}.ac .t{display:flex;justify-content:space-between;gap:8px;font-weight:800;font-size:13px}.br{height:16px;background:#E3E8EF;border-radius:8px;overflow:hidden;margin-top:4px}.br i{display:block;height:100%}
+.ln{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid #eee;font-size:13px;font-weight:700}.rj{color:#B3261E;font-weight:900;white-space:nowrap}
 </style></head><body>
 <div class="top"><h1>🌱 Avance de personal</h1><small>Mission · Blueberries</small><button id="inst" class="hidden" style="float:right;margin-top:-22px;background:#1E9E5A;color:#fff;border:0;border-radius:10px;padding:8px 12px;font-weight:900">📲 Instalar</button></div>
 <div class="w">
@@ -33,11 +37,12 @@ input,select,textarea{font:inherit;font-weight:700;font-size:16px;padding:10px;b
  <div class="c"><p class="l">1. Escoge tu fundo</p><div class="fu" id="fu"></div></div>
  <div class="c"><p class="l">2. Fecha</p><div class="row2"><input type="date" id="dia"><button class="btn" id="cargar">Cargar personal</button></div></div>
  <div class="c hidden" id="auxC"><p class="l">3. Auxiliar</p><select id="aux"></select></div>
- <div id="out"></div>
+ <div class="tabs hidden" id="tabs"><button data-v="l" aria-pressed="true">✏️ Llenar</button><button data-v="r" aria-pressed="false">📊 Resumen</button></div>
+ <div id="out"></div><div id="res" class="hidden"></div>
 </div>
 <div class="bar hidden" id="bar"><button class="btn" id="guardar">💾 Guardar avance</button></div>
 <script>
-const FUNDOS=['DUNA AZUL','VALLE 1','VALLE 2/4','VALLE 3'];
+let VISTA='l';const FUNDOS=['DUNA AZUL','VALLE 1','VALLE 2/4','VALLE 3'];
 const $=i=>document.getElementById(i),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}};
 const API_DEF='https://script.google.com/macros/s/AKfycbx8SI2B4SLZ8g8R9R6OW5484Xufze4dtsaz8oCR-C47s4TmTqpFK8g0K2SCZJlVDuf-/exec';
@@ -50,12 +55,29 @@ const d0=new Date(Date.now()-5*3600e3);$('dia').value=d0.toISOString().slice(0,1
 const fmt=d=>d.split('-').reverse().join('/');
 const esD=a=>/DESMALEZ/i.test(a);
 async function cargar(){if(!API){$('cfg').classList.remove('hidden');return}if(!FU)return alert('Escoge tu fundo');
- $('out').innerHTML='<div class="msg">Cargando personal…</div>';$('bar').classList.add('hidden');$('auxC').classList.add('hidden');
+ $('out').innerHTML='<div class="msg">Cargando personal…</div>';$('tabs').classList.add('hidden');$('res').innerHTML='';$('bar').classList.add('hidden');$('auxC').classList.add('hidden');
  try{const r=await (await fetch(API+'?fundo='+encodeURIComponent(FU)+'&fecha='+encodeURIComponent(fmt($('dia').value)))).json();if(!r.ok)throw r.error;
   FIL=r.filas||[];if(!FIL.length){$('out').innerHTML='<div class="msg">No hay personal en la hoja de '+esc(FU)+' el '+fmt($('dia').value)+'.</div>';return}
   const ax=[...new Set(FIL.map(x=>x.auxiliar))].sort(),cur=ls('av_aux');$('aux').innerHTML=(ax.length>1?'<option value="">Todos los auxiliares</option>':'')+ax.map(a=>`<option${a===cur?' selected':''}>${esc(a)}</option>`).join('');
-  $('auxC').classList.remove('hidden');lista()}catch(e){$('out').innerHTML='<div class="msg">No se pudo cargar: '+esc(e)+'</div>'}}
-$('cargar').onclick=cargar;$('aux').onchange=()=>{ls('av_aux',$('aux').value);lista()};
+  if(VISTA==='l')$('auxC').classList.remove('hidden');$('tabs').classList.remove('hidden');lista();resumen()}catch(e){$('out').innerHTML='<div class="msg">No se pudo cargar: '+esc(e)+'</div>'}}
+$('cargar').onclick=cargar;
+$('tabs').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;VISTA=b.dataset.v;document.querySelectorAll('#tabs button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+ $('out').classList.toggle('hidden',VISTA!=='l');$('res').classList.toggle('hidden',VISTA!=='r');$('auxC').classList.toggle('hidden',VISTA!=='l');$('bar').classList.toggle('hidden',VISTA!=='l')};
+const n2=v=>(Math.round(v*100)/100).toFixed(2),pf=v=>parseFloat(String(v).replace(',','.'));
+function resumen(){const L=FIL.map(x=>{const g=x.guardado||{},a=pf(g.avance),m=pf(g.meta),dr=pf(g.dr);return{...x,a:isNaN(a)?null:a,m:isNaN(m)?null:m,dr:isNaN(dr)?null:dr}});
+ const lle=L.filter(x=>x.a!=null),ev=lle.filter(x=>x.m),cu=ev.filter(x=>x.a>=x.m),G={};L.forEach(x=>{const k=x.actividad;(G[k]=G[k]||[]).push(x)});
+ const col=p=>p>=100?'#1E9E5A':p>=80?'#E8A23A':'#D2412C';
+ let h=`<div class="c"><p class="l">📊 ${esc(FU)} · ${fmt($('dia').value)}</p><div class="kp"><div><b>${new Set(L.map(x=>x.dni)).size}</b><small>PERSONAS</small></div><div><b>${Object.keys(G).length}</b><small>ACTIVIDADES</small></div>
+  <div><b style="color:${ev.length?col(cu.length/ev.length*100):'#123A5C'}">${ev.length?Math.round(cu.length/ev.length*100)+'%':'—'}</b><small>CUMPLIMIENTO</small></div><div><b>${lle.length} / ${L.length}</b><small>LLENADOS</small></div></div></div>`;
+ h+=`<div class="c"><p class="l">AVANCE vs META POR ACTIVIDAD (Ha)</p>`+Object.keys(G).sort((a,b)=>G[b].length-G[a].length).map(k=>{const P=G[k],A=P.reduce((s,x)=>s+(x.a||0),0),M=P.reduce((s,x)=>s+(x.m||0),0),f=P.filter(x=>x.a!=null).length,pc=M?A/M*100:null;
+  return`<div class="ac"><div class="t"><span>${esc(k)} (${P.length})</span><span>${f?`${n2(A)} / ${M?n2(M):'—'} ha${pc!=null?' · '+Math.round(pc)+'%':''}`:'sin llenar'}</span></div><div class="br"><i style="width:${pc==null?0:Math.min(100,pc)}%;background:${pc==null?'#ccc':col(pc)}"></i></div></div>`}).join('')+`</div>`;
+ const D=L.filter(x=>esD(x.actividad)&&x.dr!=null),DM={};D.forEach(x=>{(DM[x.modulo]=DM[x.modulo]||[]).push(x.dr)});
+ if(D.length)h+=`<div class="c"><p class="l">🌿 DESMALEZADO · DR por módulo</p>`+Object.keys(DM).sort().map(m=>`<div class="ln"><span>${esc(m)}</span><span>${Math.round(DM[m].reduce((a,b)=>a+b,0)/DM[m].length)} DR prom.</span></div>`).join('')+`</div>`;
+ const AX={};L.forEach(x=>{const o=AX[x.auxiliar]=AX[x.auxiliar]||{t:0,f:0,e:0,c:0};o.t++;if(x.a!=null)o.f++;if(x.a!=null&&x.m){o.e++;if(x.a>=x.m)o.c++}});
+ h+=`<div class="c"><p class="l">👷 POR AUXILIAR</p>`+Object.keys(AX).sort().map(a=>{const o=AX[a];return`<div class="ln"><span>${esc(a)}</span><span>${o.f}/${o.t} llenados · ${o.e?Math.round(o.c/o.e*100)+'%':'—'}</span></div>`}).join('')+`</div>`;
+ const NC=ev.filter(x=>x.a<x.m);if(NC.length)h+=`<div class="c"><p class="l" style="color:#B3261E">⚠ NO CUMPLEN (${NC.length})</p>`+NC.map(x=>`<div class="ln"><span>${esc(x.personal)} · ${esc(x.actividad)}</span><span class="rj">${n2(x.a)} / ${n2(x.m)}</span></div>`).join('')+`</div>`;
+ const FL=L.filter(x=>x.a==null);if(FL.length){const fa={};FL.forEach(x=>fa[x.actividad]=(fa[x.actividad]||0)+1);h+=`<div class="c" style="font-weight:900;color:#B3261E">⏳ Faltan llenar ${FL.length}: ${Object.entries(fa).map(([k,v])=>esc(k)+' ('+v+')').join(', ')}</div>`}
+ $('res').innerHTML=h}$('aux').onchange=()=>{ls('av_aux',$('aux').value);lista()};
 function lista(){const A=$('aux').value,L=FIL.map((x,i)=>({...x,i})).filter(x=>!A||x.auxiliar===A),G={};
  L.forEach(x=>{const k=x.modulo+'|'+x.actividad;(G[k]=G[k]||[]).push(x)});
  $('out').innerHTML=Object.keys(G).sort().map(k=>{const P=G[k],[m,a]=k.split('|'),d=esD(a);
@@ -64,7 +86,7 @@ function lista(){const A=$('aux').value,L=FIL.map((x,i)=>({...x,i})).filter(x=>!
   ${P.map(x=>{const g=x.guardado||{};return`<div class="p" data-i="${x.i}"><div class="n">${esc(x.personal)} <span class="cu" id="cu${x.i}"></span></div><div class="d">DNI ${esc(x.dni)} · ${esc(x.horas)} h${g.avance!==undefined?' · ✅ ya guardado':''}</div>
    <div class="f"><div><label>Avance Ha</label><input type="number" step="0.01" inputmode="decimal" data-k="avance" value="${esc(g.avance||'')}"></div><div><label>Meta Ha</label><input type="number" step="0.01" inputmode="decimal" data-k="meta" value="${esc(g.meta||'')}"></div><div><label>DR ${d?'':'(solo desmal.)'}</label><input type="number" step="1" inputmode="decimal" data-k="dr" value="${esc(g.dr||'')}" ${d?'':'disabled'}></div></div>
    <div class="ob"><input placeholder="Observación" data-k="obs" value="${esc(g.obs||'')}"></div></div>`}).join('')}</div>`}).join('');
- $('bar').classList.remove('hidden');document.querySelectorAll('.p').forEach(cu)}
+ if(VISTA==='l')$('bar').classList.remove('hidden');document.querySelectorAll('.p').forEach(cu)}
 function cu(p){const i=p.dataset.i,a=parseFloat(p.querySelector('[data-k=avance]').value),m=parseFloat(p.querySelector('[data-k=meta]').value),e=$('cu'+i);
  if(isNaN(a)||isNaN(m)||!m){e.className='cu';e.textContent='';return}const s=a>=m;e.className='cu '+(s?'si':'no');e.textContent=s?'CUMPLE':'NO CUMPLE'}
 $('out').oninput=e=>{const p=e.target.closest('.p');if(p)cu(p)};
