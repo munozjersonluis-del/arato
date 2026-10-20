@@ -53,6 +53,10 @@
       "destination": "/resumen-kia.html"
     },
     {
+      "source": "/bandejas-match",
+      "destination": "/bandejas-match.html"
+    },
+    {
       "source": "/avance-personal",
       "destination": "/avance-personal.html"
     },
@@ -77,7 +81,7 @@
       "destination": "/mapa-bloques.html"
     },
     {
-      "source": "/((?!api/|fichas|menu|guia|reporte|acopio|cosecha|stock|despacho|maquinaria|tallas|camion|camion-resumen|mapa|satelite|celulares|guias-kia|resumen-kia|revision-guias|avance-personal).*)",
+      "source": "/((?!api/|fichas|menu|guia|reporte|acopio|cosecha|stock|despacho|maquinaria|tallas|camion|camion-resumen|mapa|satelite|celulares|guias-kia|resumen-kia|revision-guias|avance-personal|bandejas-match).*)",
       "destination": "/index.html"
     }
   ]
