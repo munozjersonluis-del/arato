@@ -7,7 +7,7 @@
 .fl{display:flex;gap:10px}.fl label{font-size:11px;font-weight:700;display:block;opacity:.85}.fl select,.fl input{font:inherit;font-size:14px;font-weight:700;padding:6px 8px;border-radius:6px;border:0;min-width:150px}
 .wrap{padding:12px 20px 20px;max-width:2000px;margin:0 auto}
 @media(min-width:701px){.hd{padding-left:max(18px,calc((100vw - 2000px)/2 + 20px));padding-right:max(18px,calc((100vw - 2000px)/2 + 20px))}}.g2>.p{display:flex;flex-direction:column}.g2>.p>.b{flex:1;display:flex;flex-direction:column;justify-content:center}.hd{position:sticky;top:0;z-index:5}
-.kp{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px}
+.kp{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:12px}
 .kp div{background:#fff;border-radius:8px;padding:12px;text-align:center;border-left:8px solid #123A5C;box-shadow:0 1px 3px #0002}
 .kp b{display:block;font-size:34px;font-weight:800}.kp small{font-size:12px;font-weight:800;color:#333}
 .p{background:#fff;border-radius:8px;box-shadow:0 1px 3px #0002;overflow:hidden}
@@ -42,11 +42,11 @@ async function cargar(){const d=$('dia').value;$('out').innerHTML='<div class="e
   const o=(g,fu)=>{const k=g+'|'+fu;return M[k]=M[k]||{g,fu,ent:0,uti:0,pts:new Set()}};
   (m.entregas||[]).filter(e=>ids.has(e.pedido)&&up(e.estado)!=='ANULADO').forEach(e=>{const g=gr(e.grupo);if(!g)return;const x=o(g,up(e.fundo));x.ent+=Number(e.bandejas)||0;x.pts.add(e.punto)});
   (Array.isArray(g)?g:[]).filter(r=>up(r.envase)==='BANDEJA').forEach(r=>{const k=gr(r.grupo);if(!k)return;o(k,up(r.fundo)).uti+=Number(r.n_envases)||0});
-  ROWS=Object.values(M).map(x=>({...x,pts:x.pts.size,nu:Math.max(0,x.ent-x.uti)}));
+  ROWS=Object.values(M).map(x=>({...x,pts:x.pts.size,nu:Math.max(0,x.ent-x.uti),se:Math.max(0,x.uti-x.ent)}));
   const fs=[...new Set(ROWS.map(r=>r.fu))].sort(),cur=$('fu').value;$('fu').innerHTML='<option value="">Todos</option>'+fs.map(x=>`<option${x===cur?' selected':''}>${x}</option>`).join('');
   pintar()}catch(e){$('out').innerHTML='<div class="e">No se pudo cargar: '+e+'</div>'}}
 const pct=x=>x.ent?Math.round((x.ent-x.nu)/x.ent*100):null,col=p=>p==null?'#999':p>=90?VE:RO;
-const sum=L=>L.reduce((a,x)=>(a.ent+=x.ent,a.uti+=x.uti,a.nu+=x.nu,a.pts+=x.pts,a),{ent:0,uti:0,nu:0,pts:0});
+const sum=L=>L.reduce((a,x)=>(a.ent+=x.ent,a.uti+=x.uti,a.nu+=x.nu,a.se+=x.se,a.pts+=x.pts,a),{ent:0,uti:0,nu:0,se:0,pts:0});
 function combo(L){const W=1500,H=330,n=L.length||1,gw=(W-40)/n,bw=Math.min(40,gw*.28),mx=Math.max(1,...L.map(x=>Math.max(x.ent,x.uti)))*1.15,Y=v=>H-70-(H-150)*v/mx,PY=p=>58-38*Math.min(p,150)/150+0;
  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="--mw:${Math.max(360,n*85)}px">`,pts=[],grpX={};
  L.forEach((x,i)=>{const cx=20+gw*i+gw/2,p=pct(x),y1=Y(x.ent),y2=Y(x.uti);(grpX[x.g]=grpX[x.g]||[]).push(cx);
@@ -66,12 +66,12 @@ function pintar(){const F=$('fu').value,L=ROWS.filter(r=>!F||r.fu===F).sort((a,b
  const T=sum(L),pt=pct(T);
  const G=[...new Set(L.map(r=>r.g))].map(g=>({g,...sum(L.filter(r=>r.g===g))})).sort((a,b)=>(pct(b)??-1)-(pct(a)??-1));
  const FU=[...new Set(L.map(r=>r.fu))].map(fu=>({fu,...sum(L.filter(r=>r.fu===fu))})).sort((a,b)=>(pct(b)??-1)-(pct(a)??-1));
- let h=`<div class="kp"><div><b>${f(T.ent)}</b><small>Bandejas entregadas</small></div><div style="border-color:#8A96A3"><b>${f(T.uti)}</b><small>Bandejas utilizadas</small></div><div style="border-color:${RO}"><b style="color:${RO}">${f(T.nu)}</b><small>Bandejas no utilizadas</small></div><div style="border-color:${col(pt)}"><b style="color:${col(pt)}">${pt==null?'—':pt+' %'}</b><small>% Utilización</small></div></div>`;
+ let h=`<div class="kp"><div><b>${f(T.ent)}</b><small>Bandejas entregadas</small></div><div style="border-color:#8A96A3"><b>${f(T.uti)}</b><small>Bandejas utilizadas</small></div><div style="border-color:${RO}"><b style="color:${RO}">${f(T.nu)}</b><small>Bandejas no utilizadas</small></div><div style="border-color:#E8A23A"><b style="color:#B26A00">${f(T.se)}</b><small>Utilizadas sin entrega registrada</small></div><div style="border-color:${col(pt)}"><b style="color:${col(pt)}">${pt==null?'—':pt+' %'}</b><small>% Utilización</small></div></div>`;
  h+=`<div class="p"><h2>UTILIZACIÓN DE BANDEJAS POR GRUPO Y FUNDO · ${dmy($('dia').value)}</h2><div class="b"><div class="ley"><span class="dot" style="background:${AZ}"></span>Entregadas &nbsp; <span class="dot" style="background:${GR}"></span>Utilizadas &nbsp; <span class="dot" style="background:${OR}"></span>% Utilización</div><div class="sx">${combo(L)}</div></div></div>`;
  h+=`<div class="g2"><div class="p"><h2>UTILIZACIÓN POR GRUPO</h2><div class="b">${hbar(G,'g')}</div></div><div class="p"><h2>UTILIZACIÓN POR FUNDO</h2><div class="b">${hbar(FU,'fu')}</div></div>
- <div class="p"><h2>DETALLE POR GRUPO</h2><div class="b dt"><table><tr><th class="t">Grupo</th><th class="t">Fundo</th><th>Puntos</th><th>Entregadas</th><th>Utilizadas</th><th>No utilizadas</th><th>% Utiliz.</th></tr>`+
-  [...new Set(L.map(r=>r.g))].map(g=>{const R=L.filter(r=>r.g===g),t=sum(R);return R.map((r,i)=>{const p=pct(r);return`<tr><td class="t">${i?'':g}</td><td class="t">${r.fu}</td><td>${r.pts||''}</td><td>${f(r.ent)}</td><td>${f(r.uti)}</td><td>${f(r.nu)}</td><td><span class="dot" style="background:${col(p)}"></span>${p==null?'—':p+' %'}</td></tr>`}).join('')+`<tr class="tot"><td class="t"></td><td class="t">Total ${g}</td><td>${t.pts}</td><td>${f(t.ent)}</td><td>${f(t.uti)}</td><td>${f(t.nu)}</td><td>${pct(t)==null?'—':pct(t)+' %'}</td></tr>`}).join('')+
-  `<tr class="tot"><td class="t">TOTAL</td><td></td><td>${T.pts}</td><td>${f(T.ent)}</td><td>${f(T.uti)}</td><td>${f(T.nu)}</td><td>${pt==null?'—':pt+' %'}</td></tr></table></div></div></div>`;
+ <div class="p"><h2>DETALLE POR GRUPO</h2><div class="b dt"><table><tr><th class="t">Grupo</th><th class="t">Fundo</th><th>Puntos</th><th>Entregadas</th><th>Utilizadas</th><th>No utilizadas</th><th>Sin entrega reg.</th><th>% Utiliz.</th></tr>`+
+  [...new Set(L.map(r=>r.g))].map(g=>{const R=L.filter(r=>r.g===g),t=sum(R);return R.map((r,i)=>{const p=pct(r);return`<tr><td class="t">${i?'':g}</td><td class="t">${r.fu}</td><td>${r.pts||''}</td><td>${f(r.ent)}</td><td>${f(r.uti)}</td><td>${f(r.nu)}</td><td style="color:#B26A00">${r.se?f(r.se):'0'}</td><td><span class="dot" style="background:${col(p)}"></span>${p==null?'—':p+' %'}</td></tr>`}).join('')+`<tr class="tot"><td class="t"></td><td class="t">Total ${g}</td><td>${t.pts}</td><td>${f(t.ent)}</td><td>${f(t.uti)}</td><td>${f(t.nu)}</td><td style="color:#B26A00">${t.se?f(t.se):'0'}</td><td>${pct(t)==null?'—':pct(t)+' %'}</td></tr>`}).join('')+
+  `<tr class="tot"><td class="t">TOTAL</td><td></td><td>${T.pts}</td><td>${f(T.ent)}</td><td>${f(T.uti)}</td><td>${f(T.nu)}</td><td style="color:#B26A00">${T.se?f(T.se):'0'}</td><td>${pt==null?'—':pt+' %'}</td></tr></table></div></div></div>`;
  $('out').innerHTML=h;$('hr').textContent='Actualizado '+new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'})}
 $('dia').value=hoy();$('dia').onchange=cargar;$('act').onclick=()=>cargar();setInterval(()=>{if(!document.hidden)cargar()},300000);$('fu').onchange=pintar;cargar();
 </script></body></html>
