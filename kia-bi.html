@@ -88,7 +88,7 @@ function sbHTML(o){const ws=[...new Set(FECHAS.map(lunes))].sort(),ms=[...new Se
  if(FX.vista==='d')h+=`<div><label>Fecha</label><input type="date" data-s="dia" value="${FX.dia}"></div>`;
  if(FX.vista==='s')h+=`<div><label>Semana</label><div class="ch">${ws.map(l=>chip('sem',l,nsem(l),FX.sem.has(l))).join('')}</div></div>`;
  if(FX.vista==='m')h+=`<div><label>Mes</label><div class="ch">${ms.map(m=>chip('mes',m,MESN[+m.slice(5,7)-1].slice(0,3),FX.mes===m)).join('')}</div></div>`;
- h+=sel('fu','Fundo',o.fu,FX.fu)+sel('mod','Módulo',o.mod,FX.mod)+sel('vr','Variedad',o.vr,FX.vr);
+ h+=sel('fu','Fundo',o.fu,FX.fu)+(o.mod?sel('mod','Módulo',o.mod,FX.mod)+sel('vr','Variedad',o.vr,FX.vr):'');
  h+=`<div><label>Grupo</label><div class="ch">${['A','B','C','D','E'].map(g=>chip('grp',g,g,FX.grp.has(g))).join('')}</div></div>`;
  if(o.pl)h+=sel('pl','Kia / Placa',o.pl,FX.pl);
  if(o.cal)h+=`<div><label>Calidad</label><div class="ch">${[['EXPORTABLE','Exportable'],['DESCARTE','Descarte'],['NACIONAL','Nacional']].map(([v,l])=>chip('cal',v,l,FX.cal.has(v))).join('')}</div></div>`;
@@ -112,7 +112,7 @@ function calcS(){const DS=[...new Set(FIL.map(r=>r.fecha))].sort();DAYS=[];const
   IND.forEach(x=>{const y=P[x.p]=P[x.p]||{p:x.p,g:x.g,v:0,kg:0,cy:[],kh:[],ult:null};y.v+=x.v;y.kg+=x.kg;y.cy.push(...x.cy);if(x.kgh)y.kh.push(x.kgh)})});
  IND=Object.values(P).map(y=>({...y,cyp:y.cy.length?y.cy.reduce((a,b)=>a+b,0)/y.cy.length:null,kgh:y.kh.length?y.kh.reduce((a,b)=>a+b,0)/y.kh.length:null})).sort((a,b)=>a.g.localeCompare(b.g))}
 function recalc(){FIL=ALL.filter(r=>okG(r)&&(!FX.pl||r.placa===FX.pl)&&FX.cal.has(up2(r.calidad).startsWith('EXPORT')?'EXPORTABLE':up2(r.calidad)));if(ESS())calcS();else calc(FIL,DIAS()[0])}
-function build(){recalc();sbHTML({fu:uniq(ALL.map(r=>up2(r.fundo))),mod:uniq(ALL.filter(r=>!FX.fu||up2(r.fundo)===FX.fu).map(r=>up2(r.modulo))),vr:uniq(ALL.map(r=>up2(r.variedad))),pl:uniq(ALL.map(r=>r.placa)),cal:1});pintar()}
+function build(){recalc();sbHTML({fu:uniq(ALL.map(r=>up2(r.fundo))),pl:uniq(ALL.map(r=>r.placa)),cal:1});pintar()}
 async function cargar(){const DS=DIAS();$('out').innerHTML='<div class="e">Cargando…</div>';
  try{const L=await (await fetch(`${SB}/rest/v1/guias_campo?fecha=gte.${DS[0]}&fecha=lte.${DS[DS.length-1]}&select=*&limit=50000`,{headers:H})).json();const S=new Set(DS);ALL=(Array.isArray(L)?L:[]).filter(r=>S.has(r.fecha));
   build();await pesos();build()}catch(e){$('out').innerHTML='<div class="e">Sin conexión.</div>'}}
