@@ -71,7 +71,7 @@ function sbHTML(o){const ws=[...new Set(FECHAS.map(lunes))].sort(),ms=[...new Se
  if(FX.vista==='d')h+=`<div><label>Fecha</label><input type="date" data-s="dia" value="${FX.dia}"></div>`;
  if(FX.vista==='s')h+=`<div><label>Semana</label><div class="ch">${ws.map(l=>chip('sem',l,nsem(l),FX.sem.has(l))).join('')}</div></div>`;
  if(FX.vista==='m')h+=`<div><label>Mes</label><div class="ch">${ms.map(m=>chip('mes',m,MESN[+m.slice(5,7)-1].slice(0,3),FX.mes===m)).join('')}</div></div>`;
- h+=sel('fu','Fundo',o.fu,FX.fu)+sel('mod','Módulo',o.mod,FX.mod)+sel('vr','Variedad',o.vr,FX.vr);
+ h+=sel('fu','Fundo',o.fu,FX.fu);
  h+=`<div><label>Grupo</label><div class="ch">${['A','B','C','D','E'].map(g=>chip('grp',g,g,FX.grp.has(g))).join('')}</div></div>`;
  if(o.pl)h+=sel('pl','Kia / Placa',o.pl,FX.pl);
  if(o.cal)h+=`<div><label>Calidad</label><div class="ch">${[['EXPORTABLE','Exportable'],['DESCARTE','Descarte'],['NACIONAL','Nacional']].map(([v,l])=>chip('cal',v,l,FX.cal.has(v))).join('')}</div></div>`;
@@ -100,7 +100,7 @@ function build(){const M={};const o=(d,g,fu)=>{const k=d+'|'+g+'|'+fu;return M[k
  RG.filter(okG).forEach(r=>{o(r.fecha,gr(r.grupo),up(r.fundo)).uti+=Number(r.n_envases)||0});
  DAYS=Object.values(M).map(x=>({...x,pts:x.pts.size,nu:Math.max(0,x.ent-x.uti),se:Math.max(0,x.uti-x.ent)}));
  const R={};DAYS.forEach(x=>{const k=x.g+'|'+x.fu,r=R[k]=R[k]||{g:x.g,fu:x.fu,ent:0,uti:0,nu:0,se:0,pts:0};r.ent+=x.ent;r.uti+=x.uti;r.nu+=x.nu;r.se+=x.se;r.pts+=x.pts});ROWS=Object.values(R);
- sbHTML({fu:uniq([...RE.map(e=>up(e.fundo)),...RG.map(r=>up(r.fundo))]),mod:uniq(RG.filter(r=>!FX.fu||up(r.fundo)===FX.fu).map(r=>up(r.modulo))),vr:uniq(RG.map(r=>up(r.variedad)))});pintar()}
+ sbHTML({fu:uniq([...RE.map(e=>up(e.fundo)),...RG.map(r=>up(r.fundo))])});pintar()}
 const pct=x=>x.ent?Math.round((x.ent-x.nu)/x.ent*100):null,col=p=>p==null?'#999':p>=90?VE:RO;
 const sum=L=>L.reduce((a,x)=>(a.ent+=x.ent,a.uti+=x.uti,a.nu+=x.nu,a.se+=x.se,a.pts+=x.pts,a),{ent:0,uti:0,nu:0,se:0,pts:0});
 function combo(L){const W=1500,H=330,n=L.length||1,gw=(W-40)/n,bw=Math.min(40,gw*.28),mx=Math.max(1,...L.map(x=>Math.max(x.ent,x.uti)))*1.15,Y=v=>H-70-(H-150)*v/mx,PY=p=>58-38*Math.min(p,150)/150+0;
