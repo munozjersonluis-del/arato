@@ -53,6 +53,10 @@
       "destination": "/resumen-kia.html"
     },
     {
+      "source": "/camion-bi",
+      "destination": "/camion-bi.html"
+    },
+    {
       "source": "/kia-bi",
       "destination": "/kia-bi.html"
     },
@@ -89,7 +93,7 @@
       "destination": "/mapa-bloques.html"
     },
     {
-      "source": "/((?!api/|fichas|menu|guia|reporte|acopio|cosecha|stock|despacho|maquinaria|tallas|camion|camion-resumen|mapa|satelite|celulares|guias-kia|resumen-kia|revision-guias|avance-personal|bandejas-match|bandejas-bi|kia-bi).*)",
+      "source": "/((?!api/|fichas|menu|guia|reporte|acopio|cosecha|stock|despacho|maquinaria|tallas|camion|camion-resumen|mapa|satelite|celulares|guias-kia|resumen-kia|revision-guias|avance-personal|bandejas-match|bandejas-bi|kia-bi|camion-bi).*)",
       "destination": "/index.html"
     }
   ]
