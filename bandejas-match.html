@@ -17,7 +17,7 @@ table{width:100%;border-collapse:collapse;font-size:14px;font-weight:800}th{padd
 </style></head><body>
 <div class="top"><h1>🧺 Bandejas: dejadas vs usadas</h1><div class="r"><input type="date" id="dia"><button id="act">↻ Actualizar</button></div></div>
 <div class="w"><div id="out"><div class="e">Cargando…</div></div>
-<div class="nt">Dejadas = bandejas que el estiba entregó por grupo ese día (app material). Usadas = N° de envases tipo BANDEJA en las guías de campo de ese grupo ese día (todas las calidades). Sobrantes = dejadas − usadas. "sin registro" = usaron más bandejas de las que figuran entregadas (entrega no registrada en la app).</div></div>
+<div class="nt">Dejadas = bandejas que el estiba entregó (app material). Usadas = bandejas llenadas con fruta según las guías de campo (todas las calidades). No usadas = dejadas − usadas (bandejas que quedaron vacías). Si usaron más de lo dejado, no usadas = 0.</div></div>
 <script>
 const API='https://script.google.com/macros/s/AKfycby_Xt-GUVXDEuE9JrqO3H_jy40Hp4VC4Cao6azNIyFMc-aDVFUMSKAIpJbulcTakQI6/exec';
 const SB='https://rqvcvffyynpnighzwxju.supabase.co',SBK='sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn',H={apikey:SBK,Authorization:'Bearer '+SBK};
@@ -33,13 +33,16 @@ async function cargar(){const d=$('dia').value;$('out').innerHTML='<div class="e
   (Array.isArray(g)?g:[]).filter(r=>up(r.envase)==='BANDEJA').forEach(r=>{const k=gr(r.grupo);if(!k)return;const x=o(k),n=Number(r.n_envases)||0;x.uso+=n;of(x,up(r.fundo)).uso+=n});
   pintar(R,d)}catch(e){$('out').innerHTML='<div class="e">No se pudo cargar: '+e+'</div>'}}
 function pintar(R,d){const K=Object.keys(R).sort();if(!K.length){$('out').innerHTML='<div class="e">No hay entregas ni guías para el '+dmy(d)+'.</div>';return}
- const T=K.reduce((a,k)=>(a.dej+=R[k].dej,a.uso+=R[k].uso,a),{dej:0,uso:0}),S=Math.max(0,T.dej-T.uso);
- let h=`<div class="c"><p class="l">📅 ${dmy(d)} · TODOS LOS GRUPOS</p><div class="kp"><div><b>${f(T.dej)}</b><small>DEJADAS</small></div><div><b>${f(T.uso)}</b><small>USADAS CON FRUTA</small></div><div><b class="${T.dej-T.uso>0?'s':'ok'}">${f(T.dej-T.uso)}</b><small>SOBRANTES</small></div><div><b>${T.dej?Math.round(T.uso/T.dej*100)+'%':'—'}</b><small>USO</small></div></div></div>`;
- const O=K.slice().sort((a,b)=>(R[b].dej-R[b].uso)-(R[a].dej-R[a].uso));
- h+=`<div class="c"><p class="l">👥 POR GRUPO (más sobrantes arriba)</p><table><tr><th style="text-align:left">Grupo</th><th>Dejadas</th><th>Usadas</th><th>Sobrantes</th><th>Uso</th></tr>`+O.map(k=>{const x=R[k],s=x.dej-x.uso,u=x.dej?Math.round(x.uso/x.dej*100):null;
-  return`<tr><td><span class="g" style="background:${COL[k]||'#555'}">${k}</span></td><td>${f(x.dej)}</td><td>${f(x.uso)}</td><td class="${s>0?'s':s<0?'fx':'ok'}">${s>0?f(s):s<0?'+'+f(-s)+' sin registro':'0'}</td><td>${u==null?'—':u+'%'}</td></tr>`}).join('')+`</table></div>`;
- h+=`<div class="c"><p class="l">📊 USO DE BANDEJAS POR GRUPO</p>`+O.map(k=>{const x=R[k],u=x.dej?Math.min(100,x.uso/x.dej*100):0;return`<div style="margin:8px 0"><b>Grupo ${k}</b> · ${f(x.uso)} de ${f(x.dej)}<div class="bar"><i style="width:${u}%;background:${u>=90?'#1E9E5A':u>=70?'#E8A23A':'#D2412C'}"></i><span>${x.dej?Math.round(x.uso/x.dej*100)+'%':'sin entrega'}</span></div></div>`}).join('')+`</div>`;
- h+=`<div class="c"><p class="l">📍 DETALLE POR GRUPO Y FUNDO</p><table><tr><th style="text-align:left">Grupo · Fundo</th><th>Dejadas</th><th>Usadas</th><th>Sobrantes</th></tr>`+O.map(k=>Object.keys(R[k].F).sort().map(fu=>{const y=R[k].F[fu],s=y.dej-y.uso;return`<tr><td>${k} · ${fu}</td><td>${f(y.dej)}</td><td>${f(y.uso)}</td><td class="${s>0?'s':s<0?'fx':'ok'}">${s>0?f(s):s<0?'+'+f(-s)+' sin registro':'0'}</td></tr>`}).join('')).join('')+`</table></div>`;
+ const nu=x=>x.nu!=null?x.nu:Math.max(0,x.dej-x.uso),pc=x=>x.dej?Math.round((x.dej-nu(x))/x.dej*100):null,cl=p=>p==null?'#999':p>=90?'#1E9E5A':p>=70?'#E8A23A':'#D2412C';
+ const T={dej:0,uso:0,nu:0};K.forEach(k=>{T.dej+=R[k].dej;T.uso+=R[k].uso;Object.values(R[k].F).forEach(y=>T.nu+=nu(y))});
+ let h=`<div class="c"><p class="l">📅 ${dmy(d)} · TOTAL DEL DÍA</p><div class="kp"><div><b>${f(T.dej)}</b><small>DEJADAS</small></div><div><b>${f(T.uso)}</b><small>USADAS CON FRUTA</small></div><div><b class="s">${f(T.nu)}</b><small>NO USADAS</small></div><div><b>${T.dej?Math.round((T.dej-T.nu)/T.dej*100)+'%':'—'}</b><small>USO DE LO DEJADO</small></div></div></div>`;
+ const fila=(lab,x)=>{const p=pc(x);return`<tr><td>${lab}</td><td>${x.dej?f(x.dej):'<span style="color:#B26A00;font-size:12px">sin entrega</span>'}</td><td>${f(x.uso)}</td><td class="${nu(x)?'s':'ok'}">${f(nu(x))}</td><td style="color:${cl(p)};font-weight:900">${p==null?'—':p+'%'}</td></tr>`};
+ const hd=t=>`<table><tr><th style="text-align:left">${t}</th><th>Dejadas</th><th>Usadas</th><th>No usadas</th><th>Uso</th></tr>`;
+ const G=K.map(k=>{const x={dej:0,uso:0,nu:0};Object.values(R[k].F).forEach(y=>{x.dej+=y.dej;x.uso+=y.uso;x.nu+=nu(y)});return[k,x]}).sort((a,b)=>b[1].nu-a[1].nu);
+ h+=`<div class="c"><p class="l">👥 POR GRUPO (más no usadas arriba)</p>`+hd('Grupo')+G.map(([k,x])=>{const p=pc(x);return`<tr><td><span class="g" style="background:${COL[k]||'#555'}">${k}</span></td><td>${f(x.dej)}</td><td>${f(x.uso)}</td><td class="${x.nu?'s':'ok'}">${f(x.nu)}</td><td style="color:${cl(p)};font-weight:900">${p==null?'—':p+'%'}</td></tr>`}).join('')+`</table></div>`;
+ const FU={};K.forEach(k=>Object.entries(R[k].F).forEach(([fu,y])=>{(FU[fu]=FU[fu]||{})[k]=y}));
+ Object.keys(FU).sort().forEach(fu=>{const gs=FU[fu],t={dej:0,uso:0,nu:0};Object.values(gs).forEach(y=>{t.dej+=y.dej;t.uso+=y.uso;t.nu+=nu(y)});
+  h+=`<div class="c"><p class="l">📍 ${fu} · dejadas ${f(t.dej)} · usadas ${f(t.uso)} · <span class="s">no usadas ${f(t.nu)}</span></p>`+hd('Grupo')+Object.keys(gs).sort().map(k=>fila(`<span class="g" style="background:${COL[k]||'#555'}">${k}</span>`,gs[k])).join('')+`</table></div>`});
  $('out').innerHTML=h}
 $('dia').value=hoy();$('dia').onchange=cargar;$('act').onclick=cargar;cargar();
 </script></body></html>
