@@ -1,5 +1,5 @@
 <!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Bandejas dejadas vs usadas</title>
+<title>Bandejas entregadas vs utilizadas</title>
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:system-ui,Arial,sans-serif;background:#EEF2F6;color:#000}
 .top{background:#123A5C;color:#fff;padding:14px 16px}.top h1{margin:0 0 10px;font-size:21px}
@@ -15,9 +15,9 @@ table{width:100%;border-collapse:collapse;font-size:14px;font-weight:800}th{padd
 .bar{height:22px;background:#E3E8EF;border-radius:6px;position:relative;overflow:hidden;margin-top:4px}.bar i{position:absolute;left:0;top:0;bottom:0;background:#1E9E5A}.bar span{position:absolute;right:6px;top:2px;font-size:12px;font-weight:900}
 .e{text-align:center;padding:26px;font-weight:800;color:#555}.nt{font-size:12px;font-weight:700;color:#333}
 </style></head><body>
-<div class="top"><h1>🧺 Bandejas: dejadas vs usadas</h1><div class="r"><input type="date" id="dia"><button id="act">↻ Actualizar</button></div></div>
+<div class="top"><h1>🧺 Bandejas: entregadas vs utilizadas</h1><div class="r"><input type="date" id="dia"><button id="act">↻ Actualizar</button></div></div>
 <div class="w"><div id="out"><div class="e">Cargando…</div></div>
-<div class="nt">Dejadas = bandejas que el estiba entregó (app material). Usadas = bandejas llenadas con fruta según las guías de campo (todas las calidades). No usadas = dejadas − usadas (bandejas que quedaron vacías). Si usaron más de lo dejado, no usadas = 0.</div></div>
+<div class="nt">Entregadas = bandejas abastecidas por el estiba (app material). Utilizadas = bandejas con fruta según las guías de campo (todas las calidades). No utilizadas = entregadas − utilizadas. % Utilización = utilizadas ÷ entregadas.</div></div>
 <script>
 const API='https://script.google.com/macros/s/AKfycby_Xt-GUVXDEuE9JrqO3H_jy40Hp4VC4Cao6azNIyFMc-aDVFUMSKAIpJbulcTakQI6/exec';
 const SB='https://rqvcvffyynpnighzwxju.supabase.co',SBK='sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn',H={apikey:SBK,Authorization:'Bearer '+SBK};
@@ -35,21 +35,21 @@ async function cargar(){const d=$('dia').value;$('out').innerHTML='<div class="e
 function pintar(R,d){const K=Object.keys(R).sort();if(!K.length){$('out').innerHTML='<div class="e">No hay entregas ni guías para el '+dmy(d)+'.</div>';return}
  const nu=x=>x.nu!=null?x.nu:Math.max(0,x.dej-x.uso),pc=x=>x.dej?Math.round((x.dej-nu(x))/x.dej*100):null,cl=p=>p==null?'#999':p>=90?'#1E9E5A':p>=70?'#E8A23A':'#D2412C';
  const T={dej:0,uso:0,nu:0};K.forEach(k=>{T.dej+=R[k].dej;T.uso+=R[k].uso;Object.values(R[k].F).forEach(y=>T.nu+=nu(y))});
- let h=`<div class="c"><p class="l">📅 ${dmy(d)} · TOTAL DEL DÍA</p><div class="kp"><div><b>${f(T.dej)}</b><small>DEJADAS</small></div><div><b>${f(T.uso)}</b><small>USADAS CON FRUTA</small></div><div><b class="s">${f(T.nu)}</b><small>NO USADAS</small></div><div><b>${T.dej?Math.round((T.dej-T.nu)/T.dej*100)+'%':'—'}</b><small>USO DE LO DEJADO</small></div></div></div>`;
+ let h=`<div class="c"><p class="l">📅 ${dmy(d)} · TOTAL DEL DÍA</p><div class="kp"><div><b>${f(T.dej)}</b><small>ENTREGADAS</small></div><div><b>${f(T.uso)}</b><small>UTILIZADAS</small></div><div><b class="s">${f(T.nu)}</b><small>NO UTILIZADAS</small></div><div><b>${T.dej?Math.round((T.dej-T.nu)/T.dej*100)+'%':'—'}</b><small>% UTILIZACIÓN</small></div></div></div>`;
  const ch=(rows)=>{const W=640,H=300,mx=Math.max(1,...rows.map(r=>Math.max(r.x.dej,r.x.uso)))*1.18,gw=(W-20)/rows.length,bw=Math.min(54,gw*.32),Y=v=>H-58-(H-90)*v/mx;
   let g=`<svg viewBox="0 0 ${W} ${H}" width="100%">`;rows.forEach((r,i)=>{const cx=10+gw*i+gw/2,x1=cx-bw-2,x2=cx+2,y1=Y(r.x.dej),y2=Y(r.x.uso),n=nu(r.x),p=pc(r.x);
    g+=`<rect x="${x1}" y="${y1}" width="${bw}" height="${H-58-y1}" rx="5" fill="#1B5E8C"/><rect x="${x2}" y="${y2}" width="${bw}" height="${H-58-y2}" rx="5" fill="#1E9E5A"/>
    <text x="${x1+bw/2}" y="${y1-5}" text-anchor="middle" font-size="13" font-weight="900">${f(r.x.dej)}</text><text x="${x2+bw/2}" y="${y2-5}" text-anchor="middle" font-size="13" font-weight="900">${f(r.x.uso)}</text>
    <text x="${cx}" y="${H-36}" text-anchor="middle" font-size="17" font-weight="900" fill="${COL[r.k]||'#000'}">${r.k}</text>
-   <text x="${cx}" y="${H-18}" text-anchor="middle" font-size="13" font-weight="900" fill="${n?'#B3261E':'#1E7A46'}">${n?'❌ '+f(n)+' vacías':'✅ 0 vacías'}</text>
-   <text x="${cx}" y="${H-3}" text-anchor="middle" font-size="12" font-weight="800" fill="${cl(p)}">${p==null?'sin entrega':p+'% uso'}</text>`});return g+'</svg>'};
- const ley='<div style="font-size:13px;font-weight:800;margin-bottom:4px"><span style="color:#1B5E8C">■</span> Dejadas &nbsp; <span style="color:#1E9E5A">■</span> Usadas con fruta</div>';
+   <text x="${cx}" y="${H-18}" text-anchor="middle" font-size="13" font-weight="900" fill="${n?'#B3261E':'#1E7A46'}">${n?'❌ '+f(n)+' no utilizadas':'✅ 0 no utilizadas'}</text>
+   <text x="${cx}" y="${H-3}" text-anchor="middle" font-size="12" font-weight="800" fill="${cl(p)}">${p==null?'sin entrega':p+'% utilización'}</text>`});return g+'</svg>'};
+ const ley='<div style="font-size:13px;font-weight:800;margin-bottom:4px"><span style="color:#1B5E8C">■</span> Entregadas &nbsp; <span style="color:#1E9E5A">■</span> Utilizadas</div>';
  const G=K.map(k=>{const x={dej:0,uso:0,nu:0};Object.values(R[k].F).forEach(y=>{x.dej+=y.dej;x.uso+=y.uso;x.nu+=nu(y)});return{k,x}}).sort((a,b)=>b.x.nu-a.x.nu);
  h+=`<div class="c"><p class="l">👥 POR GRUPO</p>${ley}${ch(G)}</div>`;
- h+=`<div class="c"><p class="l">❌ BANDEJAS VACÍAS POR GRUPO</p>`+(()=>{const W=640,mx=Math.max(1,...G.map(r=>r.x.nu));return`<svg viewBox="0 0 ${W} ${G.length*44+10}" width="100%">`+G.map((r,i)=>{const w=(W-150)*r.x.nu/mx;return`<text x="0" y="${i*44+30}" font-size="18" font-weight="900" fill="${COL[r.k]||'#000'}">Grupo ${r.k}</text><rect x="95" y="${i*44+10}" width="${Math.max(2,w)}" height="28" rx="6" fill="#D2412C"/><text x="${100+w}" y="${i*44+30}" font-size="16" font-weight="900">${f(r.x.nu)}</text>`}).join('')+'</svg>'})()+`</div>`;
+ h+=`<div class="c"><p class="l">❌ BANDEJAS NO UTILIZADAS POR GRUPO</p>`+(()=>{const W=640,mx=Math.max(1,...G.map(r=>r.x.nu));return`<svg viewBox="0 0 ${W} ${G.length*44+10}" width="100%">`+G.map((r,i)=>{const w=(W-150)*r.x.nu/mx;return`<text x="0" y="${i*44+30}" font-size="18" font-weight="900" fill="${COL[r.k]||'#000'}">Grupo ${r.k}</text><rect x="95" y="${i*44+10}" width="${Math.max(2,w)}" height="28" rx="6" fill="#D2412C"/><text x="${100+w}" y="${i*44+30}" font-size="16" font-weight="900">${f(r.x.nu)}</text>`}).join('')+'</svg>'})()+`</div>`;
  const FU={};K.forEach(k=>Object.entries(R[k].F).forEach(([fu,y])=>{(FU[fu]=FU[fu]||{})[k]=y}));
  Object.keys(FU).sort().forEach(fu=>{const gs=FU[fu],t={dej:0,uso:0,nu:0};Object.values(gs).forEach(y=>{t.dej+=y.dej;t.uso+=y.uso;t.nu+=nu(y)});
-  h+=`<div class="c"><p class="l">📍 ${fu} · <span class="s">${f(t.nu)} vacías</span></p>${ley}${ch(Object.keys(gs).sort().map(k=>({k,x:gs[k]})))}</div>`});
+  h+=`<div class="c"><p class="l">📍 ${fu} · <span class="s">${f(t.nu)} no utilizadas</span></p>${ley}${ch(Object.keys(gs).sort().map(k=>({k,x:gs[k]})))}</div>`});
  $('out').innerHTML=h}
 $('dia').value=hoy();$('dia').onchange=cargar;$('act').onclick=cargar;cargar();
 </script></body></html>
