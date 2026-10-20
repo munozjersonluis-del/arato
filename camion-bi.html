@@ -25,6 +25,7 @@ td.t,th.t{text-align:left}tr.tot td{background:#F1F4F8;font-weight:900}
 <div class="wrap" id="out"><div class="e">Cargando…</div></div>
 <script>
 const API='https://script.google.com/macros/s/AKfycbxYVQVI-1FcQPWhiYqJLh_Pz7jADamot9S2SU-cP4EHi_kGdxa2SKZ1wRMitqR7bTMixQ/exec';
+const ab=a=>String(a||'').replace('VALLE AZUL ','VALLE ').replace('DUNA AZUL','DUNA'),ACC=a=>/3/.test(a)?'#7E4CC2':/1/.test(a)?'#E07B39':'#1B4F7A';
 const META=60,AZ='#1B4F7A',GR='#8A96A3',VE='#2EAA4A',RO='#E04A2F',AM='#E8A23A';
 const $=i=>document.getElementById(i),f=n=>Math.round(n).toLocaleString('en-US'),n0=v=>v===''||v==null||isNaN(+v)?null:+v;
 const du=m=>{if(m==null)return'—';m=Math.round(m);return m<60?m+' min':Math.floor(m/60)+' h'+(m%60?' '+String(m%60).padStart(2,'0')+' min':'')};
@@ -35,12 +36,12 @@ async function cargar(){$('out').innerHTML='<div class="e">Cargando…</div>';
  try{const j=await (await fetch(API+'?fecha='+$('dia').value,{cache:'no-store'})).json();if(!j.ok)throw j.error;ALL=(j.registros||[]).filter(r=>r.salida);
   const ac=[...new Set(ALL.map(r=>r.acopio).filter(Boolean))].sort(),cur=$('fu').value;$('fu').innerHTML='<option value="">Todos</option>'+ac.map(x=>`<option${x===cur?' selected':''}>${x}</option>`).join('');pintar()}
  catch(e){$('out').innerHTML='<div class="e">No se pudo cargar: '+e+'</div>'}}
-function vbar(L){const W=1500,H=320,n=L.length||1,gw=(W-40)/n,bw=Math.min(70,gw*.55),mx=Math.max(META*1.5,...L.map(x=>x.me||0))*1.15,Y=v=>H-75-(H-120)*v/mx;
+function vbar(L){const W=1500,H=345,n=L.length||1,gw=(W-40)/n,bw=Math.min(70,gw*.55),mx=Math.max(META*1.5,...L.map(x=>x.me||0))*1.15,Y=v=>H-95-(H-140)*v/mx;
  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%"><line x1="20" x2="${W-10}" y1="${Y(META)}" y2="${Y(META)}" stroke="${RO}" stroke-dasharray="7 5" stroke-width="2.5"/><text x="${W-12}" y="${Y(META)-6}" text-anchor="end" font-size="14" font-weight="900" fill="${RO}">Meta ${META} min</text>`;
- L.forEach((x,i)=>{const cx=20+gw*i+gw/2,v=x.me??0,y=Y(v);s+=`<rect x="${cx-bw/2}" y="${y}" width="${bw}" height="${H-75-y}" fill="${cm(x.me)}"/><text x="${cx}" y="${y-7}" text-anchor="middle" font-size="${n>14?12:15}" font-weight="900">${du(x.me)}</text>
- <text x="${cx}" y="${H-54}" text-anchor="middle" font-size="${n>14?11:14}" font-weight="900">V${i+1} · ${x.salida}</text><text x="${cx}" y="${H-36}" text-anchor="middle" font-size="${n>14?10:12}" font-weight="800" fill="#1B4F7A">${x.placa}</text><text x="${cx}" y="${H-18}" text-anchor="middle" font-size="${n>14?10:12}" font-weight="700" fill="#444">${x.kilos?f(x.kilos)+' kg':''}</text>`});return s+'</svg>'}
-function hbar(L,val,lab,mx,meta,fmt,colr){const W=520,rh=50,H=L.length*rh+34,X=v=>140+(W-220)*Math.min(v,mx)/mx;let s=`<svg viewBox="0 0 ${W} ${H}" width="100%">`;
- L.forEach((r,i)=>{const v=val(r),y=i*rh+8;s+=`<text x="130" y="${y+24}" text-anchor="end" font-size="14" font-weight="900">${lab(r)}</text><rect x="140" y="${y+4}" width="${Math.max(2,X(v??0)-140)}" height="28" fill="${colr(v)}"/><text x="${X(v??0)+6}" y="${y+24}" font-size="14" font-weight="800">${v==null?'—':fmt(v)}</text>`});
+ L.forEach((x,i)=>{const cx=20+gw*i+gw/2,v=x.me??0,y=Y(v);s+=`<rect x="${cx-bw/2}" y="${y}" width="${bw}" height="${H-95-y}" fill="${cm(x.me)}"/><text x="${cx}" y="${y-7}" text-anchor="middle" font-size="${n>14?12:15}" font-weight="900">${du(x.me)}</text>
+ <text x="${cx}" y="${H-74}" text-anchor="middle" font-size="${n>14?11:14}" font-weight="900">V${i+1} · ${x.salida}</text><text x="${cx}" y="${H-56}" text-anchor="middle" font-size="${n>14?10:12}" font-weight="800" fill="#1B4F7A">${x.placa}</text><text x="${cx}" y="${H-38}" text-anchor="middle" font-size="${n>14?10:12}" font-weight="900" fill="${ACC(x.acopio)}">📍 ${ab(x.acopio)}</text><text x="${cx}" y="${H-18}" text-anchor="middle" font-size="${n>14?10:12}" font-weight="700" fill="#444">${x.kilos?f(x.kilos)+' kg':''}</text>`});return s+'</svg>'}
+function hbar(L,val,lab,mx,meta,fmt,colr){const W=560,rh=50,H=L.length*rh+34,X=v=>190+(W-270)*Math.min(v,mx)/mx;let s=`<svg viewBox="0 0 ${W} ${H}" width="100%">`;
+ L.forEach((r,i)=>{const v=val(r),y=i*rh+8;s+=`<text x="180" y="${y+24}" text-anchor="end" font-size="14" font-weight="900">${lab(r)}</text><rect x="190" y="${y+4}" width="${Math.max(2,X(v??0)-190)}" height="28" fill="${colr(v)}"/><text x="${X(v??0)+6}" y="${y+24}" font-size="14" font-weight="800">${v==null?'—':fmt(v)}</text>`});
  if(meta!=null){const xm=X(meta);s+=`<line x1="${xm}" x2="${xm}" y1="0" y2="${H-26}" stroke="${RO}" stroke-dasharray="5 4" stroke-width="2"/><text x="${xm}" y="${H-8}" text-anchor="middle" font-size="12" font-weight="800" fill="${RO}">meta ${fmt(meta)}</text>`}return s+'</svg>'}
 function pintar(){const F=$('fu').value,L=ALL.filter(r=>!F||r.acopio===F).map(r=>({...r,me:n0(r.minEntre),es:n0(r.espera),dur:n0(r.duracion),kilos:+r.kilos||0})).sort((a,b)=>a.salida.localeCompare(b.salida));
  if(!L.length){$('out').innerHTML='<div class="e">No hay despachos registrados el '+dmy($('dia').value)+'.</div>';return}
@@ -49,9 +50,9 @@ function pintar(){const F=$('fu').value,L=ALL.filter(r=>!F||r.acopio===F).map(r=
  let h=`<div class="kp">${card(L.length,'Despachos')}${card(f(kg)+' kg','Kg despachados',GR)}${card(du(pm),'Tiempo prom. entre despachos',cm(pm))}${card(pc==null?'—':pc+' %','Despachos en meta (≤'+META+' min)',pc==null?'#999':pc>=80?VE:pc>=60?AM:RO)}${card(du(esp),'Espera prom. (fin → salida)',AZ)}</div>`;
  h+=`<div class="p"><h2>TIEMPO ENTRE DESPACHOS POR VIAJE · ${dmy($('dia').value)}${F?' · '+F:''}</h2><div class="b">${vbar(L)}</div></div>`;
  const AC=[...new Set(L.map(x=>x.acopio))].map(a=>{const R=L.filter(x=>x.acopio===a),m=R.filter(x=>x.me!=null).map(x=>x.me);return{a,n:R.length,pm:avg(m),kg:R.reduce((s,x)=>s+x.kilos,0)}}).sort((x,y)=>(x.pm??1e9)-(y.pm??1e9));
- const PL=[...new Set(L.map(x=>x.placa))].map(p=>{const R=L.filter(x=>x.placa===p);return{p,n:R.length,kg:R.reduce((s,x)=>s+x.kilos,0),pm:avg(R.filter(x=>x.me!=null).map(x=>x.me))}}).sort((x,y)=>y.n-x.n);
+ const PL=[...new Set(L.map(x=>x.placa))].map(p=>{const R=L.filter(x=>x.placa===p);return{p,ac:[...new Set(R.map(x=>ab(x.acopio)))].join(' / '),n:R.length,kg:R.reduce((s,x)=>s+x.kilos,0),pm:avg(R.filter(x=>x.me!=null).map(x=>x.me))}}).sort((x,y)=>y.n-x.n);
  h+=`<div class="g2"><div class="p"><h2>TIEMPO PROMEDIO POR ACOPIO</h2><div class="b">${hbar(AC,r=>r.pm,r=>r.a,Math.max(META*1.5,...AC.map(r=>r.pm||0))*1.1,META,v=>du(v),cm)}</div></div>
- <div class="p"><h2>VUELTAS POR CAMIÓN</h2><div class="b">${hbar(PL,r=>r.n,r=>r.p,Math.max(1,...PL.map(r=>r.n))*1.15,null,v=>v+(v===1?' vuelta':' vueltas'),()=>AZ)}</div></div>
+ <div class="p"><h2>VUELTAS POR CAMIÓN</h2><div class="b">${hbar(PL,r=>r.n,r=>r.p+' · '+r.ac,Math.max(1,...PL.map(r=>r.n))*1.15,null,v=>v+(v===1?' vuelta':' vueltas'),()=>AZ)}</div></div>
  <div class="p"><h2>DETALLE DE DESPACHOS</h2><div class="b"><table><tr><th>V</th><th class="t">Placa</th><th class="t">Acopio</th><th>Inicio</th><th>Fin</th><th>Salida</th><th>Kg</th><th>Entre desp.</th><th>Espera</th></tr>`+
  L.map((x,i)=>`<tr><td>${i+1}</td><td class="t"><b>${x.placa}</b></td><td class="t" style="font-size:11px">${x.acopio}</td><td>${x.inicio||'—'}</td><td>${x.fin||'—'}</td><td>${x.salida}</td><td>${x.kilos?f(x.kilos):'—'}</td><td><span class="dot" style="background:${cm(x.me)}"></span>${du(x.me)}</td><td>${du(x.es)}</td></tr>`).join('')+
  `<tr class="tot"><td></td><td class="t">TOTAL</td><td></td><td></td><td></td><td></td><td>${f(kg)}</td><td>${du(pm)}</td><td>${du(esp)}</td></tr></table></div></div></div>`;
