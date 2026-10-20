@@ -1,0 +1,45 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bandejas dejadas vs usadas</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,Arial,sans-serif;background:#EEF2F6;color:#000}
+.top{background:#123A5C;color:#fff;padding:14px 16px}.top h1{margin:0 0 10px;font-size:21px}
+.r{display:flex;gap:8px;flex-wrap:wrap}.r input,.r button{padding:9px 10px;border-radius:9px;border:0;font-size:16px;font-weight:800}.r button{background:#25D366;color:#fff}
+.w{max-width:900px;margin:0 auto;padding:12px 12px 40px}
+.c{background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 1px 3px #0002}
+.l{font-weight:900;font-size:15px;margin:0 0 10px}
+.kp{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.kp div{background:#F1F4F8;border-radius:12px;padding:10px 4px;text-align:center}.kp b{display:block;font-size:24px;color:#123A5C}.kp small{font-weight:800;font-size:11px}
+@media(max-width:520px){.kp{grid-template-columns:1fr 1fr}}
+table{width:100%;border-collapse:collapse;font-size:14px;font-weight:800}th{padding:7px 4px;border-bottom:2px solid #dde5ee;font-size:12px}td{padding:8px 4px;border-bottom:1px solid #eee;text-align:center}td:first-child{text-align:left}
+.g{display:inline-block;width:28px;height:28px;line-height:28px;border-radius:8px;color:#fff;text-align:center;font-weight:900}
+.s{color:#B3261E;font-weight:900}.fx{color:#B26A00;font-weight:900;font-size:12px}.ok{color:#1E7A46;font-weight:900}
+.bar{height:22px;background:#E3E8EF;border-radius:6px;position:relative;overflow:hidden;margin-top:4px}.bar i{position:absolute;left:0;top:0;bottom:0;background:#1E9E5A}.bar span{position:absolute;right:6px;top:2px;font-size:12px;font-weight:900}
+.e{text-align:center;padding:26px;font-weight:800;color:#555}.nt{font-size:12px;font-weight:700;color:#333}
+</style></head><body>
+<div class="top"><h1>🧺 Bandejas: dejadas vs usadas</h1><div class="r"><input type="date" id="dia"><button id="act">↻ Actualizar</button></div></div>
+<div class="w"><div id="out"><div class="e">Cargando…</div></div>
+<div class="nt">Dejadas = bandejas que el estiba entregó por grupo ese día (app material). Usadas = N° de envases tipo BANDEJA en las guías de campo de ese grupo ese día (todas las calidades). Sobrantes = dejadas − usadas. "sin registro" = usaron más bandejas de las que figuran entregadas (entrega no registrada en la app).</div></div>
+<script>
+const API='https://script.google.com/macros/s/AKfycby_Xt-GUVXDEuE9JrqO3H_jy40Hp4VC4Cao6azNIyFMc-aDVFUMSKAIpJbulcTakQI6/exec';
+const SB='https://rqvcvffyynpnighzwxju.supabase.co',SBK='sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn',H={apikey:SBK,Authorization:'Bearer '+SBK};
+const COL={A:'#1B5E8C',B:'#7E4CC2',C:'#E8A23A',D:'#1E9E5A',E:'#D2412C'};
+const $=i=>document.getElementById(i),f=n=>Math.round(n).toLocaleString('en-US'),up=s=>String(s??'').trim().toUpperCase(),gr=s=>up(s).charAt(0);
+const hoy=()=>new Date(Date.now()-5*3600e3).toISOString().slice(0,10),dmy=d=>d.split('-').reverse().join('/');
+async function cargar(){const d=$('dia').value;$('out').innerHTML='<div class="e">Cargando…</div>';
+ try{const [m,g]=await Promise.all([fetch(API+'?fecha='+encodeURIComponent(dmy(d)),{cache:'no-store'}).then(r=>r.json()),fetch(`${SB}/rest/v1/guias_campo?fecha=eq.${d}&select=grupo,fundo,envase,n_envases&limit=5000`,{headers:H}).then(r=>r.json())]);
+  if(!m.ok)throw m.error;const ids=new Set((m.pedidos||[]).map(p=>p.id));
+  const E=(m.entregas||[]).filter(e=>ids.has(e.pedido)&&up(e.estado)!=='ANULADO');
+  const R={};const o=k=>R[k]=R[k]||{dej:0,uso:0,F:{}};const of=(x,fu)=>x.F[fu]=x.F[fu]||{dej:0,uso:0};
+  E.forEach(e=>{const k=gr(e.grupo);if(!k)return;const x=o(k),n=Number(e.bandejas)||0;x.dej+=n;of(x,up(e.fundo)).dej+=n});
+  (Array.isArray(g)?g:[]).filter(r=>up(r.envase)==='BANDEJA').forEach(r=>{const k=gr(r.grupo);if(!k)return;const x=o(k),n=Number(r.n_envases)||0;x.uso+=n;of(x,up(r.fundo)).uso+=n});
+  pintar(R,d)}catch(e){$('out').innerHTML='<div class="e">No se pudo cargar: '+e+'</div>'}}
+function pintar(R,d){const K=Object.keys(R).sort();if(!K.length){$('out').innerHTML='<div class="e">No hay entregas ni guías para el '+dmy(d)+'.</div>';return}
+ const T=K.reduce((a,k)=>(a.dej+=R[k].dej,a.uso+=R[k].uso,a),{dej:0,uso:0}),S=Math.max(0,T.dej-T.uso);
+ let h=`<div class="c"><p class="l">📅 ${dmy(d)} · TODOS LOS GRUPOS</p><div class="kp"><div><b>${f(T.dej)}</b><small>DEJADAS</small></div><div><b>${f(T.uso)}</b><small>USADAS CON FRUTA</small></div><div><b class="${T.dej-T.uso>0?'s':'ok'}">${f(T.dej-T.uso)}</b><small>SOBRANTES</small></div><div><b>${T.dej?Math.round(T.uso/T.dej*100)+'%':'—'}</b><small>USO</small></div></div></div>`;
+ const O=K.slice().sort((a,b)=>(R[b].dej-R[b].uso)-(R[a].dej-R[a].uso));
+ h+=`<div class="c"><p class="l">👥 POR GRUPO (más sobrantes arriba)</p><table><tr><th style="text-align:left">Grupo</th><th>Dejadas</th><th>Usadas</th><th>Sobrantes</th><th>Uso</th></tr>`+O.map(k=>{const x=R[k],s=x.dej-x.uso,u=x.dej?Math.round(x.uso/x.dej*100):null;
+  return`<tr><td><span class="g" style="background:${COL[k]||'#555'}">${k}</span></td><td>${f(x.dej)}</td><td>${f(x.uso)}</td><td class="${s>0?'s':s<0?'fx':'ok'}">${s>0?f(s):s<0?'+'+f(-s)+' sin registro':'0'}</td><td>${u==null?'—':u+'%'}</td></tr>`}).join('')+`</table></div>`;
+ h+=`<div class="c"><p class="l">📊 USO DE BANDEJAS POR GRUPO</p>`+O.map(k=>{const x=R[k],u=x.dej?Math.min(100,x.uso/x.dej*100):0;return`<div style="margin:8px 0"><b>Grupo ${k}</b> · ${f(x.uso)} de ${f(x.dej)}<div class="bar"><i style="width:${u}%;background:${u>=90?'#1E9E5A':u>=70?'#E8A23A':'#D2412C'}"></i><span>${x.dej?Math.round(x.uso/x.dej*100)+'%':'sin entrega'}</span></div></div>`}).join('')+`</div>`;
+ h+=`<div class="c"><p class="l">📍 DETALLE POR GRUPO Y FUNDO</p><table><tr><th style="text-align:left">Grupo · Fundo</th><th>Dejadas</th><th>Usadas</th><th>Sobrantes</th></tr>`+O.map(k=>Object.keys(R[k].F).sort().map(fu=>{const y=R[k].F[fu],s=y.dej-y.uso;return`<tr><td>${k} · ${fu}</td><td>${f(y.dej)}</td><td>${f(y.uso)}</td><td class="${s>0?'s':s<0?'fx':'ok'}">${s>0?f(s):s<0?'+'+f(-s)+' sin registro':'0'}</td></tr>`}).join('')).join('')+`</table></div>`;
+ $('out').innerHTML=h}
+$('dia').value=hoy();$('dia').onchange=cargar;$('act').onclick=cargar;cargar();
+</script></body></html>
