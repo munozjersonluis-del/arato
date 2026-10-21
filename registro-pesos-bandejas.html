@@ -83,6 +83,7 @@ select.in{appearance:none;background-image:linear-gradient(45deg,transparent 50%
 .link{background:none;border:0;color:var(--ink2);text-decoration:underline;font-size:13.5px;cursor:pointer;padding:8px 0}
 .inst{width:100%;border:1.5px dashed var(--accent);background:var(--soft);color:var(--accent);border-radius:14px;min-height:52px;font-weight:600;cursor:pointer;margin-bottom:12px}
 .hidden{display:none!important}
+.cmp{width:100%;border-collapse:collapse;font-weight:700;font-size:15px;grid-column:1/-1}.cmp th{font-size:12px;padding:4px;border-bottom:2px solid var(--line)}.cmp td{text-align:center;padding:6px 2px;border-bottom:1px solid var(--line)}.cmp .f{color:#B3261E;font-weight:900}.cmp .x{color:#B26A00;font-weight:900}.cmp .o{color:#1E7A46}
 .tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:5px;margin-bottom:12px}
 .tab{border:0;background:none;border-radius:10px;min-height:46px;font:600 18px "Barlow Semi Condensed",sans-serif;color:var(--ink2);cursor:pointer}
 .tab[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
@@ -187,7 +188,7 @@ if(/AKfycbxDGEiboTzCglD0jaEOoQdNX5KZVs8EwW0Tjn9BHCDODP2Kvm2ClcZravP5RRYKds9U/.te
 
 let API=new URLSearchParams(location.search).get('api')||ls('api')||API_DEF;
 let S={acopio:ls('acopio')||'',variedad:ls('variedad')||'',grupo:ls('grupo')||'',tipo:ls('tipo')||'Normal'};
-let TABA=ls('tab')==='descarte'?'descarte':'pesos',SD={grupo:ls('grupoD')||'',variedad:ls('variedadD')||''};
+let TABA=(new URLSearchParams(location.search).get('tab')||ls('tab'))==='descarte'?'descarte':'pesos',SD={grupo:ls('grupoD')||'',variedad:ls('variedadD')||''};
 const esD=r=>r&&r.tipoReg==='descarte';
 let modulos=lsj('modulos',MOD_BASE),variedades=lsj('variedades',[]),registros=lsj('registros',[]),cola=lsj('cola',[]),enviando=false,online=true;
 
@@ -329,6 +330,7 @@ function status(){
 }
 
 /* ---------- resumen del día ---------- */
+const GUIAS={};async function cargaGuias(f){GUIAS[f]=null;try{const k='sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn';const r=await (await fetch(`https://rqvcvffyynpnighzwxju.supabase.co/rest/v1/guias_campo?fecha=eq.${f}&calidad=eq.DESCARTE&select=grupo,envase,n_envases,jarras&limit=5000`,{headers:{apikey:k,Authorization:'Bearer '+k}})).json();GUIAS[f]=Array.isArray(r)?r:[]}catch(e){GUIAS[f]=[]}if(TABA==='descarte')renderList()}
 function renderList(){
   const enHoja=new Set(registros.filter(x=>x.id).map(x=>x.id));
   if(TABA==='descarte'){
@@ -336,7 +338,9 @@ function renderList(){
     const all=sinRepetidos([...registros.filter(r=>esD(r)&&r.fecha===f).map(r=>({...r,p:false})),...cola.filter(r=>esD(r)&&r.fecha===f&&!enHoja.has(r.id)).map(r=>({...r,p:true}))]);
     $('cnt').textContent=fmt(f)+' · '+all.length+' descarte'+(all.length===1?'':'s');
     const g={};all.forEach(r=>{(g[r.grupo]=g[r.grupo]||{j:0,kg:0});g[r.grupo].j+=+r.jabas||0;g[r.grupo].kg+=+r.kg||0});
-    $('sum').innerHTML=Object.keys(g).sort().map(k=>`<div><small>Grupo ${esc(k)} · ${g[k].j} jabas</small><b>${g[k].kg.toFixed(1)} kg</b></div>`).join('');
+    const gu=GUIAS[f];if(gu===undefined)cargaGuias(f);const gj={};(gu||[]).forEach(x=>{const k=String(x.grupo||'').trim().toUpperCase().charAt(0);if(!k)return;gj[k]=(gj[k]||0)+(String(x.envase||'').toUpperCase()==='JABA'?(+x.n_envases||0):(+x.jarras||0)/20)});
+    const ks=[...new Set([...Object.keys(g),...Object.keys(gj)])].sort();
+    $('sum').innerHTML=ks.length?`<table class="cmp"><tr><th>Grupo</th><th>Guías</th><th>Recibido</th><th>Kg</th><th></th></tr>${ks.map(k=>{const a=Math.round(gj[k]||0),r=(g[k]||{}).j||0,d=r-a;return`<tr><td><b>${esc(k)}</b></td><td>${a}</td><td>${r}</td><td>${((g[k]||{}).kg||0).toFixed(1)}</td><td class="${d<0?'f':d>0?'x':'o'}">${d<0?'faltan '+(-d):d>0?'+'+d+' sin guía':'✔'}</td></tr>`}).join('')}</table>`:(gu===undefined?'<small>Cargando guías…</small>':'');
     $('list').innerHTML=all.length?all.slice().reverse().slice(0,40).map(r=>`<div class="reg"><div class="g">${esc(r.grupo)}</div><div>${esc(r.jabas)} jabas${r.modulo?' · '+esc(r.modulo):''}${r.variedad?' · '+esc(r.variedad):''}<small>Descarte${r.p?' · <span class="pend">enviando…</span>':''}</small></div><div class="kg">${Number(r.kg).toFixed(2)}<small> kg</small>${r.id&&r.t&&Date.now()-r.t<5.5*3600e3?`<br><button type="button" class="del" data-del="${esc(r.id)}">Deshacer</button>`:''}</div></div>`).join(''):'<div class="empty">Aún no hay descarte este día.</div>';
     return;
   }
