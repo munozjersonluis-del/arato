@@ -44,7 +44,7 @@ button,input,select{font:inherit;color:inherit}
 .in.bad,.grp.bad{border-color:var(--red)!important;box-shadow:0 0 0 2px var(--red-soft)}
 select.in{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ink2) 50%),linear-gradient(135deg,var(--ink2) 50%,transparent 50%);background-position:calc(100% - 20px) 22px,calc(100% - 15px) 22px;background-size:5px 5px;background-repeat:no-repeat;padding-right:36px}
 .grp{display:grid;gap:6px;border-radius:12px}
-.c2{grid-template-columns:1fr 1fr}.c3{grid-template-columns:repeat(3,1fr)}.c5{grid-template-columns:repeat(5,1fr)}
+.c2{grid-template-columns:1fr 1fr}.c3{grid-template-columns:repeat(3,1fr)}.c5{grid-template-columns:repeat(6,1fr)}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .opt{border:1.5px solid var(--line);background:var(--bg);border-radius:12px;min-height:50px;padding:8px 12px;font-weight:600;cursor:pointer;color:var(--ink)}
 .opt[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
@@ -213,7 +213,7 @@ function renderVariedades(){
   $('variedad').innerHTML=list.map(v=>`<button type="button" class="opt" data-v="${esc(v)}">${esc(v.charAt(0)+v.slice(1).toLowerCase())}</button>`).join('');
   press($('variedad'),S.variedad);
 }
-$('grupo').innerHTML=['A','B','C','D','E'].map(g=>`<button type="button" class="opt" data-v="${g}">${g}</button>`).join('');
+$('grupo').innerHTML=['A','B','C','D','E','F'].map(g=>`<button type="button" class="opt" data-v="${g}">${g}</button>`).join('');
 $('grupoD').innerHTML=$('grupo').innerHTML;
 $('variedadD').innerHTML=VAR_BASE.map(v=>`<button type="button" class="opt" data-v="${esc(v)}">${esc(v.charAt(0)+v.slice(1).toLowerCase())}</button>`).join('');
 $('grupoD').onclick=e=>{const b=e.target.closest('.opt');if(!b)return;SD.grupo=b.dataset.v;ls('grupoD',SD.grupo);press($('grupoD'),SD.grupo);clearErr()};
