@@ -111,6 +111,9 @@ body.kb .tabs,body.kb .bar,body.kb .undo{display:none!important}body.kb .wrap{pa
 .hm{display:grid;gap:14px;margin-top:6px}.ht{width:100%;display:grid;grid-template-columns:76px 1fr;grid-template-rows:auto auto;align-items:center;text-align:left;border:0;border-radius:18px;background:var(--c);color:#fff;padding:18px 16px;min-height:118px;box-shadow:0 4px 12px #0002;cursor:pointer}
 .ht span{grid-row:1/3;font-size:50px;line-height:1;text-align:center}.ht b{font:700 25px "Barlow Semi Condensed",sans-serif}.ht small{font-size:15px;opacity:.9}.ht:active{transform:scale(.98)}
 .tab[data-t="home"][aria-pressed="true"]{background:#555!important}
+#kbv{position:fixed;left:0;right:0;top:0;z-index:50;background:#2B2F7E;color:#fff;padding:calc(10px + env(safe-area-inset-top,0px)) 16px 12px;display:none;box-shadow:0 4px 14px #0004}
+#kbv small{display:block;font-size:14px;opacity:.85;font-weight:700}#kbv b{display:block;font-size:40px;line-height:1.1;font-weight:900;min-height:44px}
+body.kb #kbv{display:block}body.kb .wrap{padding-bottom:65vh!important}
 </style>
 </head>
 <body>
@@ -447,7 +450,7 @@ $('fecha').value=today();press($('acopio'),S.acopio);press($('grupo'),S.grupo);p
 {const c=S.acopio&&ls('cant:'+S.acopio);if(c)$('cant').value=c}
 
 /* ---- mejoras: teclado, stepper, confirmación ---- */
-(function(){const vv=window.visualViewport;const kb=()=>{const a=document.activeElement;const t=a&&/INPUT|SELECT|TEXTAREA/.test(a.tagName)&&a.type!=='date';document.body.classList.toggle('kb',!!(t&&(!vv||vv.height<innerHeight*.8)))};
+(function(){const vv=window.visualViewport;const kb=()=>{const a=document.activeElement;const t=a&&/INPUT|SELECT|TEXTAREA/.test(a.tagName)&&a.type!=='date';void t};
  if(vv)vv.addEventListener('resize',()=>{kb();const el=document.activeElement;if(el&&el.tagName==='INPUT'){const r=el.getBoundingClientRect();if(r.bottom>vv.height-10||r.top<0)el.scrollIntoView({block:'center'})}});document.addEventListener('focusin',e=>{kb();const el=e.target;if(el.tagName==='INPUT'&&el.type!=='date')setTimeout(()=>{const r=el.getBoundingClientRect(),h=vv?vv.height:innerHeight;if(r.bottom>h-10||r.top<0)el.scrollIntoView({block:'center'})},350)});document.addEventListener('focusout',()=>setTimeout(kb,120));})();
 function chkD(){const el=$('chkD');if(!el)return;el.classList.toggle('hide',TABA!=='descarte');const j=parseInt($('jabas').value,10)||0,kg=parseFloat($('pesoD').value)||j*KG_JABA;
  if(!SD.grupo||!j){el.className='chk no'+(TABA!=='descarte'?' hide':'');el.textContent='Elige grupo y jabas';return}
@@ -463,6 +466,14 @@ renderModulos();renderVariedades();renderList();status();load();
 (()=>{const isIn=e=>e&&e.matches&&e.matches('input:not([type=date]),textarea');
 ['jabas','pesoD','cant','kg'].forEach(i=>{const el=$(i);if(el)el.setAttribute('enterkeyhint',i==='jabas'||i==='cant'?'next':'send')});
 $('jabas').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('pesoD').focus()}});})();
+
+/* visor de lo que se digita (el teclado puede tapar el campo) */
+(()=>{const lab=el=>{const l=document.querySelector('label[for="'+el.id+'"]');return l?l.textContent.replace(/\(opcional\)/,'').trim():''};
+const pinta=()=>{const el=document.activeElement;if(!el||el.tagName!=='INPUT'||el.type==='date')return;$('kbvL').textContent=lab(el);$('kbvV').textContent=el.value||(el.placeholder&&el.placeholder!=='0'?el.placeholder:'—')};
+document.addEventListener('focusin',e=>{const el=e.target;if(el.tagName!=='INPUT'||el.type==='date')return;document.body.classList.add('kb');pinta();setTimeout(()=>{const y=el.getBoundingClientRect().top+scrollY-130;scrollTo(0,y)},300)});
+document.addEventListener('input',pinta);
+document.addEventListener('focusout',()=>setTimeout(()=>{const a=document.activeElement;if(!a||a.tagName!=='INPUT'||a.type==='date')document.body.classList.remove('kb')},150));})();
 </script>
+<div id="kbv"><small id="kbvL"></small><b id="kbvV"></b></div>
 </body>
 </html>
