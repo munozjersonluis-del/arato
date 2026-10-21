@@ -72,7 +72,7 @@ function trend(D,bars,line,bfmt,lfmt,bcol,lcol,meta,bl,ll){const W=MW(.39),H=MH(
  P.forEach(q=>s+=`<circle cx="${q[0]}" cy="${q[1]}" r="5" fill="${lcol}"/><text x="${q[0]}" y="${q[1]-9}" text-anchor="middle" font-size="${fs}" font-weight="900" fill="${lcol}" stroke="#fff" stroke-width="4" paint-order="stroke">${lfmt(q[2])}</text>`);
  s+=`<g font-size="12" font-weight="800"><rect x="${W/2-150}" y="${H-14}" width="11" height="11" fill="${bcol}"/><text x="${W/2-135}" y="${H-4}">${bl}</text><circle cx="${W/2+30}" cy="${H-9}" r="5" fill="${lcol}"/><text x="${W/2+40}" y="${H-4}">${ll}</text></g>`;return s+'</svg>'}
 
-const SBK2=SBK,FX={vista:'s',dia:hoyX(),sem:new Set(),mes:'',fu:'',mod:'',vr:'',pl:'',grp:new Set(['A','B','C','D','E']),cal:new Set(['EXPORTABLE','DESCARTE','NACIONAL'])};let FECHAS=[];
+const SBK2=SBK,FX={dim:'g',vista:'s',dia:hoyX(),sem:new Set(),mes:'',fu:'',mod:'',vr:'',pl:'',grp:new Set(['A','B','C','D','E']),cal:new Set(['EXPORTABLE','DESCARTE','NACIONAL'])};let FECHAS=[];
 const lunes=d=>semana(d)[0],MESN=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 async function fechas(){try{const r=await (await fetch(`${SB}/rest/v1/guias_fechas?select=fecha&order=fecha`,{headers:H})).json();FECHAS=(Array.isArray(r)?r:[]).map(x=>x.fecha)}catch(e){FECHAS=[]}
  if(!FECHAS.includes(hoyX()))FECHAS.push(hoyX());const ws=[...new Set(FECHAS.map(lunes))].sort();if(!FX.sem.size&&ws.length)FX.sem.add(lunes(hoyX()));if(!FX.mes)FX.mes=hoyX().slice(0,7)}
@@ -86,7 +86,7 @@ function sbHTML(o){const ws=[...new Set(FECHAS.map(lunes))].sort(),ms=[...new Se
  if(FX.vista==='d')h+=`<div><label>Fecha</label><input type="date" data-s="dia" value="${FX.dia}"></div>`;
  if(FX.vista==='s')h+=`<div><label>Semana</label><div class="ch">${ws.map(l=>chip('sem',l,nsem(l),FX.sem.has(l))).join('')}</div></div>`;
  if(FX.vista==='m')h+=`<div><label>Mes</label><div class="ch">${ms.map(m=>chip('mes',m,MESN[+m.slice(5,7)-1].slice(0,3),FX.mes===m)).join('')}</div></div>`;
- if(o.fu)h+=sel('fu','Fundo',o.fu,FX.fu);
+ if(o.fu)if(o.dim)h+=`<div><label>Ver por</label><div class="ch">${[['g','Grupo'],['m','Módulo'],['v','Variedad']].map(([v,l])=>chip('dim',v,l,FX.dim===v)).join('')}</div></div>`;if(o.fu)h+=sel('fu','Fundo',o.fu,FX.fu);if(o.mod)h+=sel('mod','Módulo',o.mod,FX.mod);if(o.vr)h+=sel('vr','Variedad',o.vr,FX.vr);
  h+=`<div><label>Grupo</label><div class="ch">${['A','B','C','D','E'].map(g=>chip('grp',g,g,FX.grp.has(g))).join('')}</div></div>`;
  if(o.pl)h+=sel('pl','Kia / Placa',o.pl,FX.pl);
  if(o.cal)h+=`<div><label>Calidad</label><div class="ch">${[['EXPORTABLE','Exportable'],['DESCARTE','Descarte'],['NACIONAL','Nacional']].map(([v,l])=>chip('cal',v,l,FX.cal.has(v))).join('')}</div></div>`;
@@ -96,7 +96,7 @@ function sbInit(onLoad,onFilter){const sb=$('sb');
   if(b.dataset.x){sb.classList.remove('op');return}if(b.dataset.w){compartir(b);return}if(b.dataset.a){onLoad();return}
   if(b.dataset.r){FX.fu=FX.mod=FX.vr=FX.pl='';FX.grp=new Set(['A','B','C','D','E']);FX.cal=new Set(['EXPORTABLE','DESCARTE','NACIONAL']);onFilter();return}
   const k=b.dataset.k,v=b.dataset.v;if(!k)return;
-  if(k==='vista'){FX.vista=v;onLoad();return}if(k==='mes'){FX.mes=v;onLoad();return}
+  if(k==='vista'){FX.vista=v;onLoad();return}if(k==='dim'){FX.dim=v;onFilter();return}if(k==='mes'){FX.mes=v;onLoad();return}
   const S=FX[k];if(S.has(v)){if(S.size>1)S.delete(v)}else S.add(v);if(k==='sem')onLoad();else onFilter()};
  sb.onchange=e=>{const k=e.target.dataset.s;if(!k)return;FX[k]=e.target.value;if(k==='dia')onLoad();else onFilter()};
  $('sbt').onclick=()=>sb.classList.add('op')}
@@ -106,15 +106,19 @@ const up2=s=>String(s??'').trim().toUpperCase(),gr2=s=>up2(s).charAt(0),uniq=a=>
 const API_P='https://script.google.com/macros/s/AKfycbwhK53Cj21HYT7irdMvqonPvhEjAzo2ab-cJ4wytAtoUnIV0dpA8LHrt6GBrOcXWFx8/exec';
 let AC=null,RG=[];const JPJ=20;
 async function cargar(){const DS=DIAS();$('out').innerHTML='<div class="e">Cargando…</div>';
- try{const [p,g]=await Promise.all([fetch(API_P,{cache:'no-store'}).then(r=>r.json()),fetch(`${SB}/rest/v1/guias_campo?fecha=gte.${DS[0]}&fecha=lte.${DS[DS.length-1]}&select=fecha,grupo,calidad,envase,n_envases,jarras&limit=50000`,{headers:H}).then(r=>r.json())]);
-  AC=(p.descartes||[]).map(x=>({d:String(x.fecha).slice(0,10),g:gr(x.grupo),j:Number(x.jabas)||0,kg:Number(x.kg)||0}));
+ try{const [p,g]=await Promise.all([fetch(API_P,{cache:'no-store'}).then(r=>r.json()),fetch(`${SB}/rest/v1/guias_campo?fecha=gte.${DS[0]}&fecha=lte.${DS[DS.length-1]}&select=fecha,grupo,modulo,variedad,calidad,envase,n_envases,jarras&limit=50000`,{headers:H}).then(r=>r.json())]);
+  AC=(p.descartes||[]).map(x=>({d:String(x.fecha).slice(0,10),g:gr(x.grupo),m:up(x.modulo),v:up(x.variedad),j:Number(x.jabas)||0,kg:Number(x.kg)||0}));
   const S=new Set(DS);RG=(Array.isArray(g)?g:[]).filter(r=>S.has(r.fecha));build()}catch(e){$('out').innerHTML='<div class="e">No se pudo cargar: '+e+'</div>'}}
-function build(){const GD=new Set(RG.map(r=>r.fecha)),M={};const o=(d,g)=>{const k=d+'|'+g;return M[k]=M[k]||{d,g,jc:0,ja:0,kg:0,jd:0,jt:0}};
- RG.filter(r=>FX.grp.has(gr(r.grupo))).forEach(r=>{const x=o(r.fecha,gr(r.grupo)),jr=Number(r.jarras)||0;x.jt+=jr;if(up(r.calidad)==='DESCARTE'){x.jd+=jr;x.jc+=up(r.envase)==='JABA'?(Number(r.n_envases)||0):jr/JPJ}});
- (AC||[]).filter(a=>GD.has(a.d)&&FX.grp.has(a.g)).forEach(a=>{const x=o(a.d,a.g);x.ja+=a.j;x.kg+=a.kg});
+const KEY=(g,m,v)=>FX.dim==='m'?(m||'SIN MÓD.'):FX.dim==='v'?(v||'SIN VAR.'):g;
+const okF=(g,m,v)=>FX.grp.has(g)&&(!FX.mod||m===FX.mod)&&(!FX.vr||v===FX.vr);
+function build(){const GD=new Set(RG.map(r=>r.fecha)),M={};const o=(d,k)=>{const kk=d+'|'+k;return M[kk]=M[kk]||{d,g:k,jc:0,ja:0,kg:0,jd:0,jt:0}};
+ RG.forEach(r=>{const g=gr(r.grupo),m=up(r.modulo),v=up(r.variedad);if(!okF(g,m,v))return;const x=o(r.fecha,KEY(g,m,v)),jr=Number(r.jarras)||0;x.jt+=jr;if(up(r.calidad)==='DESCARTE'){x.jd+=jr;x.jc+=up(r.envase)==='JABA'?(Number(r.n_envases)||0):jr/JPJ}});
+ (AC||[]).filter(a=>GD.has(a.d)&&okF(a.g,a.m,a.v)).forEach(a=>{const x=o(a.d,KEY(a.g,a.m,a.v));x.ja+=a.j;x.kg+=a.kg});
  DAYS=Object.values(M).map(x=>({...x,fa:Math.max(0,x.jc-x.ja),sg:Math.max(0,x.ja-x.jc)}));
- const R={};DAYS.forEach(x=>{const r=R[x.g]=R[x.g]||{g:x.g,jc:0,ja:0,kg:0,jd:0,jt:0,fa:0,sg:0};['jc','ja','kg','jd','jt','fa','sg'].forEach(k=>r[k]+=x[k])});ROWS=Object.values(R).sort((a,b)=>a.g.localeCompare(b.g));
- sbHTML({fu:null});pintar()}
+ const R={};DAYS.forEach(x=>{const r=R[x.g]=R[x.g]||{g:x.g,jc:0,ja:0,kg:0,jd:0,jt:0,fa:0,sg:0};['jc','ja','kg','jd','jt','fa','sg'].forEach(k=>r[k]+=x[k])});
+ ROWS=Object.values(R).filter(r=>r.jc||r.ja).sort((a,b)=>FX.dim==='g'?a.g.localeCompare(b.g):(b.jc+b.ja)-(a.jc+a.ja));
+ const MS=uniq([...RG.map(r=>up(r.modulo)),...(AC||[]).filter(a=>GD.has(a.d)).map(a=>a.m)]),VS=uniq([...RG.map(r=>up(r.variedad)),...(AC||[]).filter(a=>GD.has(a.d)).map(a=>a.v)]);
+ sbHTML({dim:1,mod:MS,vr:VS});pintar()}
 const sum=L=>L.reduce((a,x)=>{['jc','ja','kg','jd','jt','fa','sg'].forEach(k=>a[k]+=x[k]);return a},{jc:0,ja:0,kg:0,jd:0,jt:0,fa:0,sg:0});
 const pd=x=>x.jt?Math.round(x.jd/x.jt*100):null,kj=x=>x.ja?x.kg/x.ja:null,f1=v=>(Math.round(v*10)/10).toFixed(1);
 function combo(L){const W=MW(ESS()?.6:1),H=MH(330),n=L.length||1,gw=(W-40)/n,bw=Math.min(54,gw*.3),mx=Math.max(1,...L.map(x=>Math.max(x.jc,x.ja)))*1.45,Y=v=>H-70-(H-150)*v/mx;
@@ -123,7 +127,7 @@ function combo(L){const W=MW(ESS()?.6:1),H=MH(330),n=L.length||1,gw=(W-40)/n,bw=
   s+=`<rect x="${cx-bw-2}" y="${y1}" width="${bw}" height="${H-70-y1}" fill="${AZ}"/><rect x="${cx+2}" y="${y2}" width="${bw}" height="${H-70-y2}" fill="${GR}"/>
   <text x="${cx-bw/2-2}" y="${y1-5}" text-anchor="middle" font-size="13" font-weight="900">${f(x.jc)}</text><text x="${cx+bw/2+2}" y="${y2-5}" text-anchor="middle" font-size="13" font-weight="900">${f(x.ja)}</text>`;
   const d=x.jc-x.ja;if(Math.round(d)){const c=d>0?RO:'#F3B23E',t=d>0?'faltan '+f(d):'+'+f(-d)+' sin guía';const w=t.length*7+16;s+=`<rect x="${cx-w/2}" y="${top-46}" width="${w}" height="20" rx="10" fill="${c}"/><text x="${cx}" y="${top-32}" text-anchor="middle" font-size="12" font-weight="900" fill="${d>0?'#fff':'#4A2C00'}">${t}</text>`}
-  s+=`<text x="${cx}" y="${H-44}" text-anchor="middle" font-size="16" font-weight="900">GRUPO ${x.g}</text><text x="${cx}" y="${H-26}" text-anchor="middle" font-size="12" font-weight="800" fill="#444">${f(x.kg)} kg</text><text x="${cx}" y="${H-11}" text-anchor="middle" font-size="11" font-weight="800" fill="#666">${kj(x)?f1(kj(x))+' kg/jaba':''}</text>`});
+  s+=`<text x="${cx}" y="${H-44}" text-anchor="middle" font-size="${Math.min(16,gw/7).toFixed(1)}" font-weight="900">${FX.dim==='g'?'GRUPO ':''}${x.g}</text><text x="${cx}" y="${H-26}" text-anchor="middle" font-size="12" font-weight="800" fill="#444">${f(x.kg)} kg</text><text x="${cx}" y="${H-11}" text-anchor="middle" font-size="11" font-weight="800" fill="#666">${kj(x)?f1(kj(x))+' kg/jaba':''}</text>`});
  return s+'</svg>'}
 function hb(L,val,fmt,colr,mx){const W=600,rh=50,H=L.length*rh+20,X=v=>60+(W-170)*Math.min(v,mx)/mx;let s=`<svg viewBox="0 0 ${W} ${H}" width="100%">`;
  L.forEach((r,i)=>{const v=val(r),y=i*rh+6;s+=`<text x="40" y="${y+24}" text-anchor="end" font-size="17" font-weight="900">${r.g}</text><rect x="60" y="${y+4}" width="${Math.max(2,X(v??0)-60)}" height="28" fill="${colr(v)}"/><text x="${X(v??0)+8}" y="${y+24}" font-size="15" font-weight="900">${v==null?'—':fmt(v)}</text>`});return s+'</svg>'}
@@ -135,21 +139,22 @@ function diverg(G){const W=600,rh=50,H=G.length*rh+40,c=W/2+20,mx=Math.max(1,...
   if(r.fa<.5&&r.sg<.5)s+=`<text x="${c+6}" y="${y+23}" font-size="15" font-weight="900" fill="${VE}">✔</text>`});
  s+=`<line x1="${c}" x2="${c}" y1="20" y2="${H-6}" stroke="#333" stroke-width="2"/>`;return s+'</svg>'}
 function fit(){const o=$('out');o.classList.toggle('tr',o.children.length>=4)}
-function pintar(){const L=ROWS.slice();
+const DIMN=()=>({g:'GRUPO',m:'MÓDULO',v:'VARIEDAD'})[FX.dim];
+function pintar(){const L=ROWS.slice(0,FX.dim==='g'?9:10);
  if(!L.length){$('out').innerHTML='<div class="e">No hay guías ni pesos de descarte para '+PER()+'.</div>';return}
  const T=sum(L),P=pd(T),d=T.jc-T.ja;
  let h=`<div class="kp"><div><b>${f(T.jc)}</b><small>Jabas de descarte en guías</small></div><div style="border-color:${GR}"><b>${f(T.ja)}</b><small>Jabas recibidas en acopio</small></div><div style="border-color:${d>0?RO:'#F3B23E'}"><b style="color:${d>0?RO:'#B26A00'}">${d>0?f(d):'+'+f(-d)}</b><small>${d>0?'Jabas que faltan en acopio':'Jabas recibidas sin guía'}</small></div><div style="border-color:${GR}"><b>${f(T.kg)} kg</b><small>Kg de descarte (acopio)</small></div><div style="border-color:${OR}"><b style="color:${OR}">${P==null?'—':P+' %'}</b><small>% de descarte (jarras)</small></div></div>`;
- h+=`<div class="p"><h2>DESCARTE: CAMPO vs ACOPIO POR GRUPO · ${PER()}</h2><div class="b"><div class="ley"><span class="dot" style="background:${AZ}"></span>Jabas en guías (campo) &nbsp; <span class="dot" style="background:${GR}"></span>Jabas recibidas (acopio)</div><div class="sx">${combo(L)}</div></div></div>`;
+ h+=`<div class="p"><h2>DESCARTE: CAMPO vs ACOPIO POR ${DIMN()} · ${PER()}</h2><div class="b"><div class="ley"><span class="dot" style="background:${AZ}"></span>Jabas en guías (campo) &nbsp; <span class="dot" style="background:${GR}"></span>Jabas recibidas (acopio)</div><div class="sx">${combo(L)}</div></div></div>`;
  if(ESS()){const DD=[...new Set(DAYS.map(x=>x.d))].sort().map(d=>({d,...sum(DAYS.filter(x=>x.d===d))}));
   h+=`<div class="p" style="margin-top:12px"><h2>TENDENCIA POR DÍA</h2><div class="b sx">${trend(DD,x=>x.ja,x=>pd(x),v=>f(v),v=>v+' %',GR,OR,null,'Jabas recibidas','% de descarte')}</div></div>`}
- h+=`<div class="g2"><div class="p"><h2>% DE DESCARTE POR GRUPO</h2><div class="b">${hb(L.slice().sort((a,b)=>(pd(b)??-1)-(pd(a)??-1)),pd,v=>v+' %',()=>OR,Math.max(10,...L.map(x=>pd(x)||0))*1.15)}</div></div>
- <div class="p"><h2>DIFERENCIA DE JABAS POR GRUPO</h2><div class="b">${diverg(L)}</div></div>
+ h+=`<div class="g2"><div class="p"><h2>% DE DESCARTE POR ${DIMN()}</h2><div class="b">${hb(L.slice().sort((a,b)=>(pd(b)??-1)-(pd(a)??-1)),pd,v=>v+' %',()=>OR,Math.max(10,...L.map(x=>pd(x)||0))*1.15)}</div></div>
+ <div class="p"><h2>DIFERENCIA DE JABAS POR ${DIMN()}</h2><div class="b">${diverg(L)}</div></div>
  <div class="p"><h2>KG POR JABA (ACOPIO)</h2><div class="b">${hb(L,kj,v=>f1(v)+' kg',()=>AZ,Math.max(1,...L.map(x=>kj(x)||0))*1.15)}</div></div></div>`;
- $('out').innerHTML=h;fit();$('hr').textContent='Actualizado '+new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'});if(document.body.classList.contains('snap'))$('hr').textContent=PER()+' · Grupos '+[...FX.grp].sort().join(' ')}
+ $('out').innerHTML=h;fit();$('hr').textContent='Actualizado '+new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'});if(document.body.classList.contains('snap'))$('hr').textContent=PER()+' · Grupos '+[...FX.grp].sort().join(' ')+(FX.mod?' · '+FX.mod:'')+(FX.vr?' · '+FX.vr:'')}
 async function compartir(b){const t0=b.textContent;
  if(b._fl){try{if(navigator.canShare&&navigator.canShare({files:[b._fl]}))await navigator.share({files:[b._fl],title:document.title});else{const a=document.createElement('a');a.href=URL.createObjectURL(b._fl);a.download=b._fl.name;a.click()}}catch(e){}b._fl=null;b.textContent='📲 Compartir WhatsApp';return}
  b.textContent='Creando imagen…';b.disabled=true;
- const st={vista:FX.vista,dia:FX.dia,sem:[...FX.sem],mes:FX.mes,fu:FX.fu,grp:[...FX.grp],pl:FX.pl};
+ const st={dim:FX.dim,mod:FX.mod,vr:FX.vr,vista:FX.vista,dia:FX.dia,sem:[...FX.sem],mes:FX.mes,fu:FX.fu,grp:[...FX.grp],pl:FX.pl};
  const fr=document.createElement('iframe');fr.style.cssText='position:fixed;left:-10000px;top:0;width:1280px;height:720px;border:0';fr.src=location.pathname+'?st='+encodeURIComponent(JSON.stringify(st));document.body.appendChild(fr);
  try{await new Promise((ok,ko)=>{let n=0;const iv=setInterval(()=>{n++;try{if(fr.contentWindow.SNAP_READY&&fr.contentWindow.html2canvas){clearInterval(iv);ok()}}catch(e){}if(n>120){clearInterval(iv);ko('tiempo')}},250)});
   await new Promise(r=>setTimeout(r,400));const w=fr.contentWindow,cv=await w.html2canvas(w.document.body,{scale:2.5,width:1280,height:720,windowWidth:1280,windowHeight:720,backgroundColor:'#E9EDF2'});
@@ -157,6 +162,6 @@ async function compartir(b){const t0=b.textContent;
   const fl=new File([bl],nm,{type:'image/jpeg'});
   if(navigator.canShare&&navigator.canShare({files:[fl]})){b._fl=fl;b.textContent='📲 Enviar foto';}else{const a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download=nm;a.click();b.textContent='✅ Foto descargada';setTimeout(()=>b.textContent='📲 Compartir WhatsApp',2500)}}
  catch(e){alert('No se pudo crear la imagen: '+e);b.textContent=t0}finally{b.disabled=false;fr.remove()}}
-const SNAP=new URLSearchParams(location.search).get('st');if(SNAP){try{const o=JSON.parse(SNAP);Object.assign(FX,{vista:o.vista,dia:o.dia,mes:o.mes,fu:o.fu||'',pl:o.pl||'',sem:new Set(o.sem),grp:new Set(o.grp)});document.body.classList.add('snap')}catch(e){}}
+const SNAP=new URLSearchParams(location.search).get('st');if(SNAP){try{const o=JSON.parse(SNAP);Object.assign(FX,{dim:o.dim||'g',mod:o.mod||'',vr:o.vr||'',vista:o.vista,dia:o.dia,mes:o.mes,fu:o.fu||'',pl:o.pl||'',sem:new Set(o.sem),grp:new Set(o.grp)});document.body.classList.add('snap')}catch(e){}}
 sbInit(cargar,build);fechas().then(()=>cargar()).then(()=>{window.SNAP_READY=1});setInterval(()=>{if(!document.hidden)cargar()},300000);
 </script></body></html>
