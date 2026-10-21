@@ -113,7 +113,7 @@ body.kb .tabs,body.kb .bar,body.kb .undo{display:none!important}body.kb .wrap{pa
 .tab[data-t="home"][aria-pressed="true"]{background:#555!important}
 #kbv{position:fixed;left:0;right:0;top:0;z-index:50;background:#2B2F7E;color:#fff;padding:calc(10px + env(safe-area-inset-top,0px)) 16px 12px;display:none;box-shadow:0 4px 14px #0004}
 #kbv small{display:block;font-size:14px;opacity:.85;font-weight:700}#kbv b{display:block;font-size:40px;line-height:1.1;font-weight:900;min-height:44px}
-body.kb #kbv{display:block}body.kb .wrap{padding-bottom:65vh!important}
+body.kb #kbv{display:block}
 </style>
 </head>
 <body>
@@ -451,7 +451,7 @@ $('fecha').value=today();press($('acopio'),S.acopio);press($('grupo'),S.grupo);p
 
 /* ---- mejoras: teclado, stepper, confirmación ---- */
 (function(){const vv=window.visualViewport;const kb=()=>{const a=document.activeElement;const t=a&&/INPUT|SELECT|TEXTAREA/.test(a.tagName)&&a.type!=='date';void t};
- if(vv)vv.addEventListener('resize',()=>{kb();const el=document.activeElement;if(el&&el.tagName==='INPUT'){const r=el.getBoundingClientRect();if(r.bottom>vv.height-10||r.top<0)el.scrollIntoView({block:'center'})}});document.addEventListener('focusin',e=>{kb();const el=e.target;if(el.tagName==='INPUT'&&el.type!=='date')setTimeout(()=>{const r=el.getBoundingClientRect(),h=vv?vv.height:innerHeight;if(r.bottom>h-10||r.top<0)el.scrollIntoView({block:'center'})},350)});document.addEventListener('focusout',()=>setTimeout(kb,120));})();
+ document.addEventListener('focusin',e=>{kb();const el=e.target;});document.addEventListener('focusout',()=>setTimeout(kb,120));})();
 function chkD(){const el=$('chkD');if(!el)return;el.classList.toggle('hide',TABA!=='descarte');const j=parseInt($('jabas').value,10)||0,kg=parseFloat($('pesoD').value)||j*KG_JABA;
  if(!SD.grupo||!j){el.className='chk no'+(TABA!=='descarte'?' hide':'');el.textContent='Elige grupo y jabas';return}
  el.className='chk';el.textContent=`Grupo ${SD.grupo}${$('moduloD').value?' · '+$('moduloD').value:''} · ${j} jabas · ${Math.round(kg).toLocaleString('en-US')} kg${$('pesoD').value?'':' (calc.)'}`}
@@ -470,8 +470,8 @@ $('jabas').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault()
 /* visor de lo que se digita (el teclado puede tapar el campo) */
 (()=>{const lab=el=>{const l=document.querySelector('label[for="'+el.id+'"]');return l?l.textContent.replace(/\(opcional\)/,'').trim():''};
 const pinta=()=>{const el=document.activeElement;if(!el||el.tagName!=='INPUT'||el.type==='date')return;$('kbvL').textContent=lab(el);$('kbvV').textContent=el.value||(el.placeholder&&el.placeholder!=='0'?el.placeholder:'—')};
-document.addEventListener('focusin',e=>{const el=e.target;if(el.tagName!=='INPUT'||el.type==='date')return;document.body.classList.add('kb');pinta();setTimeout(()=>{const y=el.getBoundingClientRect().top+scrollY-130;scrollTo(0,y)},300)});
-document.addEventListener('input',pinta);
+document.addEventListener('focusin',e=>{const el=e.target;if(el.tagName!=='INPUT'||el.type==='date')return;document.body.classList.add('kb');pinta();});
+document.addEventListener('input',pinta);const vv2=window.visualViewport;if(vv2){const pos=()=>{$('kbv').style.transform='translateY('+Math.max(0,vv2.offsetTop)+'px)'};vv2.addEventListener('resize',pos);vv2.addEventListener('scroll',pos)}
 document.addEventListener('focusout',()=>setTimeout(()=>{const a=document.activeElement;if(!a||a.tagName!=='INPUT'||a.type==='date')document.body.classList.remove('kb')},150));})();
 </script>
 <div id="kbv"><small id="kbvL"></small><b id="kbvV"></b></div>
