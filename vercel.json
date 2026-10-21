@@ -57,6 +57,10 @@
       "destination": "/camion-bi.html"
     },
     {
+      "source": "/recepcion-descarte",
+      "destination": "/recepcion-descarte.html"
+    },
+    {
       "source": "/descarte-bi",
       "destination": "/descarte-bi.html"
     },
@@ -97,7 +101,7 @@
       "destination": "/mapa-bloques.html"
     },
     {
-      "source": "/((?!api/|fichas|menu|guia|reporte|acopio|cosecha|stock|despacho|maquinaria|tallas|camion|camion-resumen|mapa|satelite|celulares|guias-kia|resumen-kia|revision-guias|avance-personal|bandejas-match|bandejas-bi|kia-bi|descarte-bi|camion-bi).*)",
+      "source": "/((?!api/|fichas|menu|guia|reporte|acopio|cosecha|stock|despacho|maquinaria|tallas|camion|camion-resumen|mapa|satelite|celulares|guias-kia|resumen-kia|revision-guias|avance-personal|bandejas-match|bandejas-bi|kia-bi|descarte-bi|camion-bi|recepcion-descarte).*)",
       "destination": "/index.html"
     }
   ]

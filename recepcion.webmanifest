@@ -1,0 +1,26 @@
+{
+ "name": "Recepci\u00f3n de descarte \u00b7 Blueberries",
+ "short_name": "Descarte",
+ "id": "recepcion-descarte",
+ "start_url": "recepcion-descarte.html",
+ "scope": "recepcion-descarte.html",
+ "display": "standalone",
+ "orientation": "portrait",
+ "background_color": "#EEF2F6",
+ "theme_color": "#123A5C",
+ "lang": "es-PE",
+ "icons": [
+  {
+   "src": "recepcion-icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "recepcion-icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any maskable"
+  }
+ ]
+}
