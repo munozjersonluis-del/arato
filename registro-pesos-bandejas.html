@@ -150,7 +150,7 @@ body.kb #kbv{display:block}
       <div class="sec"><i>2</i>¿Cuánto?</div>
       <div class="row2" style="grid-template-columns:1.3fr 1fr">
         <div><label class="lbl" for="jabas">N° de jabas</label><div class="step"><button type="button" id="jMenos">−</button><input class="in big" id="jabas" type="number" inputmode="numeric" min="1" step="1" placeholder="0"><button type="button" id="jMas">+</button></div></div>
-        <div><label class="lbl" for="pesoD">Peso (kg) <small style="font-weight:500">(opcional)</small></label><input class="in big" id="pesoD" type="number" inputmode="decimal" min="0" step="0.01" placeholder="auto"></div>
+        <div><label class="lbl" for="pesoD">Peso (kg) <small style="font-weight:500">(opcional)</small></label><input class="in big" id="pesoD" type="text" inputmode="decimal" autocomplete="off" placeholder="auto"></div>
       </div>
       <p class="err" id="errD"></p>
     </div>
@@ -176,7 +176,7 @@ body.kb #kbv{display:block}
       <div class="sec"><i>3</i>¿Cuánto pesa?</div>
       <div class="row2">
         <div><label class="lbl" for="cant">N° de bandejas</label><input class="in big" id="cant" type="number" inputmode="numeric" min="1" step="1"></div>
-        <div><label class="lbl" for="kg">Kg (bandeja + fruta)</label><input class="in big" id="kg" type="number" inputmode="decimal" min="0" step="0.001" placeholder="0.000"></div>
+        <div><label class="lbl" for="kg">Kg (bandeja + fruta)</label><input class="in big" id="kg" type="text" inputmode="decimal" autocomplete="off" placeholder="0.000"></div>
       </div>
       <div class="check" id="check"></div>
       <p class="err" id="err"></p>
@@ -217,6 +217,7 @@ let TABA=(t=>['pesos','descarte','resumen'].includes(t)?t:'home')(new URLSearchP
 const esD=r=>r&&r.tipoReg==='descarte';
 let modulos=lsj('modulos',MOD_BASE),variedades=lsj('variedades',[]),registros=lsj('registros',[]),cola=lsj('cola',[]),enviando=false,online=true;
 
+function num(v){v=String(v||'').trim().replace(/\s/g,'');if(v.includes(',')&&v.includes('.'))v=v.replace(/,/g,'');else v=v.replace(',','.');const x=parseFloat(v);return isFinite(x)?x:NaN}
 function today(){const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 function fmt(d){const[y,m,x]=String(d).split('-');return`${x}/${m}/${y}`}
 function esperado(c,t){return c*(JARRAS[t]*JARRA+TARA)}
@@ -269,7 +270,7 @@ $('kg').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();sa
 
 /* ---------- vista previa ---------- */
 function preview(){
-  const c=parseFloat($('cant').value),kg=parseFloat($('kg').value),box=$('check');
+  const c=parseFloat($('cant').value),kg=num($('kg').value),box=$('check');
   if(!(c>0)||!(kg>0)){box.className='check';return}
   const esp=esperado(c,S.tipo),pct=kg/esp*100,n=nivel(pct);
   const txt={ok:'Peso correcto',hi:'Sobrepeso',lo:'Bajo peso'}[n];
@@ -280,7 +281,7 @@ function preview(){
 /* ---------- guardar (instantáneo, envío en segundo plano) ---------- */
 function clearErr(){$('err').style.display='none';$('errD').style.display='none';document.querySelectorAll('.bad').forEach(e=>e.classList.remove('bad'))}
 function fail(m,id){const E=$(TABA==='descarte'?'errD':'err');E.textContent=m;E.style.display='block';const el=id&&$(id);if(el){el.classList.add('bad');el.scrollIntoView({behavior:'smooth',block:'center'});if(el.focus&&el.tagName!=='DIV')el.focus()}}
-function collect(){return{t:Date.now(),id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),fecha:$('fecha').value,acopio:S.acopio,modulo:$('modulo').value,variedad:S.variedad,grupo:S.grupo,tipo:S.tipo,cantidad:parseInt($('cant').value,10),kg:parseFloat($('kg').value)}}
+function collect(){return{t:Date.now(),id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),fecha:$('fecha').value,acopio:S.acopio,modulo:$('modulo').value,variedad:S.variedad,grupo:S.grupo,tipo:S.tipo,cantidad:parseInt($('cant').value,10),kg:num($('kg').value)}}
 function validate(r){
   if(!r.fecha)return['Elige la fecha.','fecha'];
   if(!r.acopio)return['Elige el acopio.','acopio'];
@@ -293,7 +294,7 @@ function validate(r){
   if(p<0.6||p>1.4)return[`${r.kg} kg está muy lejos de lo normal para ${r.cantidad} bandejas (≈${esp.toFixed(1)} kg). Revisa el peso o la cantidad.`,'kg'];
   return null;
 }
-function collectD(){return{t:Date.now(),id:'d'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),tipoReg:'descarte',fecha:$('fechaD').value,grupo:SD.grupo,modulo:$('moduloD').value,variedad:SD.variedad,jabas:parseInt($('jabas').value,10),kg:parseFloat($('pesoD').value)}}
+function collectD(){return{t:Date.now(),id:'d'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),tipoReg:'descarte',fecha:$('fechaD').value,grupo:SD.grupo,modulo:$('moduloD').value,variedad:SD.variedad,jabas:parseInt($('jabas').value,10),kg:num($('pesoD').value)}}
 const KG_JABA=20*JARRA;function estimaD(r){if(!(r.kg>0)&&r.jabas>0){r.kg=+(r.jabas*KG_JABA).toFixed(2);r.estimado=true}return r}
 function validateD(r){
   if(!r.fecha)return['Elige la fecha.','fechaD'];
@@ -452,7 +453,7 @@ $('fecha').value=today();press($('acopio'),S.acopio);press($('grupo'),S.grupo);p
 /* ---- mejoras: teclado, stepper, confirmación ---- */
 (function(){const vv=window.visualViewport;const kb=()=>{const a=document.activeElement;const t=a&&/INPUT|SELECT|TEXTAREA/.test(a.tagName)&&a.type!=='date';void t};
  document.addEventListener('focusin',e=>{kb();const el=e.target;});document.addEventListener('focusout',()=>setTimeout(kb,120));})();
-function chkD(){const el=$('chkD');if(!el)return;el.classList.toggle('hide',TABA!=='descarte');const j=parseInt($('jabas').value,10)||0,kg=parseFloat($('pesoD').value)||j*KG_JABA;
+function chkD(){const el=$('chkD');if(!el)return;el.classList.toggle('hide',TABA!=='descarte');const j=parseInt($('jabas').value,10)||0,kg=num($('pesoD').value)||j*KG_JABA;
  if(!SD.grupo||!j){el.className='chk no'+(TABA!=='descarte'?' hide':'');el.textContent='Elige grupo y jabas';return}
  el.className='chk';el.textContent=`Grupo ${SD.grupo}${$('moduloD').value?' · '+$('moduloD').value:''} · ${j} jabas · ${Math.round(kg).toLocaleString('en-US')} kg${$('pesoD').value?'':' (calc.)'}`}
 const stepJ=d=>{const v=Math.max(0,(parseInt($('jabas').value,10)||0)+d);$('jabas').value=v||'';$('jabas').dispatchEvent(new Event('input'))};
