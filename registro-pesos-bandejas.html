@@ -127,7 +127,7 @@ select.in{appearance:none;background-image:linear-gradient(45deg,transparent 50%
       <div class="sec"><i>2</i>¿Cuánto?</div>
       <div class="row2">
         <div><label class="lbl" for="jabas">N° de jabas</label><input class="in big" id="jabas" type="number" inputmode="numeric" min="1" step="1"></div>
-        <div><label class="lbl" for="pesoD">Peso (kg)</label><input class="in big" id="pesoD" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00"></div>
+        <div><label class="lbl" for="pesoD">Peso (kg) <small style="font-weight:500">(opcional)</small></label><input class="in big" id="pesoD" type="number" inputmode="decimal" min="0" step="0.01" placeholder="auto"></div>
       </div>
       <p class="err" id="errD"></p>
     </div>
@@ -221,7 +221,7 @@ $('grupoD').innerHTML=$('grupo').innerHTML;
 $('variedadD').innerHTML='<option value="">— sin variedad —</option>'+VAR_BASE.map(v=>`<option value="${esc(v)}">${esc(v.charAt(0)+v.slice(1).toLowerCase())}</option>`).join('');
 $('grupoD').onclick=e=>{const b=e.target.closest('.opt');if(!b)return;SD.grupo=b.dataset.v;ls('grupoD',SD.grupo);press($('grupoD'),SD.grupo);clearErr()};
 $('variedadD').onchange=e=>{SD.variedad=e.target.value;ls('variedadD',SD.variedad)};
-['jabas','pesoD'].forEach(i=>$(i).oninput=clearErr);
+['jabas','pesoD'].forEach(i=>$(i).oninput=()=>{clearErr();const j=parseInt($('jabas').value,10);$('pesoD').placeholder=j>0?(j*KG_JABA).toLocaleString('en-US')+' kg':'auto'});
 $('pesoD').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();save()}});
 $('fechaD').onchange=()=>renderList();
 function setTab(t){TABA=t;ls('tab',t);$('tabs').querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.t===t)));
@@ -271,18 +271,18 @@ function validate(r){
   return null;
 }
 function collectD(){return{t:Date.now(),id:'d'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),tipoReg:'descarte',fecha:$('fechaD').value,grupo:SD.grupo,modulo:$('moduloD').value,variedad:SD.variedad,jabas:parseInt($('jabas').value,10),kg:parseFloat($('pesoD').value)}}
+const KG_JABA=20*JARRA;function estimaD(r){if(!(r.kg>0)&&r.jabas>0){r.kg=+(r.jabas*KG_JABA).toFixed(2);r.estimado=true}return r}
 function validateD(r){
   if(!r.fecha)return['Elige la fecha.','fechaD'];
   if(!r.grupo)return['Elige el grupo.','grupoD'];
   if(!r.modulo)return['Elige el módulo.','moduloD'];
   if(!(r.jabas>0))return['Escribe cuántas jabas.','jabas'];
-  if(!(r.kg>0))return['Escribe el peso en kg.','pesoD'];
   const x=r.kg/r.jabas;if(x>45||x<2)return[`${r.kg} kg para ${r.jabas} jabas (${x.toFixed(1)} kg por jaba) no parece normal. Revisa.`,'pesoD'];
   return null;
 }
 function save(){
   if(TABA==='descarte'){
-    const r=collectD();const bad=validateD(r);if(bad){fail(...bad);return}
+    const r=estimaD(collectD());const bad=validateD(r);if(bad){fail(...bad);return}
     if(window._ultSave&&Date.now()-window._ultSave<600)return;window._ultSave=Date.now();
     // mismo grupo y mismo peso hace menos de 1 minuto: probablemente es repetido
     const rep=[...registros,...lsj('cola',[])].find(x=>esD(x)&&x.fecha===r.fecha&&x.grupo===r.grupo&&Math.abs(+x.kg-r.kg)<0.001&&+x.jabas===r.jabas&&x.t&&Date.now()-x.t<60000);
