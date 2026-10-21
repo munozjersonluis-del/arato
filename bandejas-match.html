@@ -21,7 +21,7 @@ table{width:100%;border-collapse:collapse;font-size:14px;font-weight:800}th{padd
 <script>
 const API='https://script.google.com/macros/s/AKfycby_Xt-GUVXDEuE9JrqO3H_jy40Hp4VC4Cao6azNIyFMc-aDVFUMSKAIpJbulcTakQI6/exec';
 const SB='https://rqvcvffyynpnighzwxju.supabase.co',SBK='sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn',H={apikey:SBK,Authorization:'Bearer '+SBK};
-const COL={A:'#1B5E8C',B:'#7E4CC2',C:'#E8A23A',D:'#1E9E5A',E:'#D2412C'};
+const COL={A:'#1B5E8C',B:'#7E4CC2',C:'#E8A23A',D:'#1E9E5A',E:'#D2412C',F:'#0E8A8A'};
 const $=i=>document.getElementById(i),f=n=>Math.round(n).toLocaleString('en-US'),up=s=>String(s??'').trim().toUpperCase(),gr=s=>up(s).charAt(0);
 const hoy=()=>new Date(Date.now()-5*3600e3).toISOString().slice(0,10),dmy=d=>d.split('-').reverse().join('/');
 async function cargar(){const d=$('dia').value;$('out').innerHTML='<div class="e">Cargando…</div>';

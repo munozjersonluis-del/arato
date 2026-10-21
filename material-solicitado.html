@@ -150,7 +150,7 @@ h3{font:600 19px "Barlow Semi Condensed",sans-serif;margin:18px 2px 8px}
 /* ================= CONFIGURACIÓN ================= */
 const API='https://script.google.com/macros/s/AKfycby_Xt-GUVXDEuE9JrqO3H_jy40Hp4VC4Cao6azNIyFMc-aDVFUMSKAIpJbulcTakQI6/exec';
 const K='bpp2:';
-const COL={A:'#7A3E9D',B:'#0B8FB0',C:'#B38B00',D:'#6B6B6B',E:'#C0331F'};
+const COL={A:'#7A3E9D',B:'#0B8FB0',C:'#B38B00',D:'#6B6B6B',E:'#C0331F',F:'#0E8A8A'};
 
 /* ================= utilidades ================= */
 const $=id=>document.getElementById(id);
@@ -171,7 +171,7 @@ const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 let D=S.get('datos',{fecha:hoy(),pedidos:[],entregas:[]});
 if(D.fecha!==hoy())D={fecha:hoy(),pedidos:[],entregas:[]};
 let COLA=S.get('cola',[]);
-let LIST=S.get('listas',{unidades:[],fundos:['VALLE AZUL 1','VALLE AZUL 2','VALLE AZUL 3','VALLE AZUL 4','DUNA AZUL'],grupos:['A','B','C','D','E']});
+let LIST=S.get('listas',{unidades:[],fundos:['VALLE AZUL 1','VALLE AZUL 2','VALLE AZUL 3','VALLE AZUL 4','DUNA AZUL'],grupos:['A','B','C','D','E','F']});
 let U=S.get('unidad',null);
 let ERR='',online=true;
 const guardar=()=>{S.set('datos',D);S.set('cola',COLA)};

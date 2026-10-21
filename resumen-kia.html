@@ -27,7 +27,7 @@ const TARIFA={'TCI-843':230,'TAU-800':215,'TCX-842':220,'TCA-816':215,'TEY-880':
 const META_CICLO=30,META_KGH=200,PJ_DEF=1.25,TARA=0.292,JPB={NORMAL:2.5,HUMEDA:1.5};
 const sepK=x=>x.T.map((t,i)=>t.cf?{i,t:'➜ '+t.fu}:null).filter(Boolean),sepC=x=>x.T.ci.map((j,k)=>x.T[j].cf?{i:k,t:'➜ '+x.T[j].fu}:null).filter(Boolean);
 const EST=2;
-const COL={A:'#1B5E8C',B:'#7E4CC2',C:'#E8A23A',D:'#1E9E5A',E:'#D2412C'};
+const COL={A:'#1B5E8C',B:'#7E4CC2',C:'#E8A23A',D:'#1E9E5A',E:'#D2412C',F:'#0E8A8A'};
 const $=id=>document.getElementById(id),f=n=>Math.round(n).toLocaleString('en'),hm=m=>m==null?'':Math.floor(m/60)+':'+String(m%60).padStart(2,'0');
 const norm=s=>String(s??'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().trim();
 const du=m=>{if(m==null)return'—';m=Math.round(m);return m<60?m+' min':Math.floor(m/60)+' h'+(m%60?' '+String(m%60).padStart(2,'0')+' min':'')};

@@ -230,7 +230,7 @@
           <div>
             <label for="r-grupo">Grupo</label>
             <select id="r-grupo">
-              <option>A</option><option>B</option><option>C</option><option>D</option><option>E</option>
+              <option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option>
             </select>
           </div>
           <div>
@@ -483,7 +483,7 @@ document.getElementById('btn-guardar').addEventListener('click', async () => {
 });
 
 function renderHistorial(){
-  const grupos = ['Todos','A','B','C','D','E'];
+  const grupos = ['Todos','A','B','C','D','E','F'];
   const filterEl = document.getElementById('filter-grupo');
   filterEl.innerHTML = grupos.map(g =>
     `<button data-g="${g}" class="${g===filtroGrupo?'active':''}">${g}</button>`

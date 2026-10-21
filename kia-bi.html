@@ -57,7 +57,7 @@ const API_PESOS='https://script.google.com/macros/s/AKfycbwhK53Cj21HYT7irdMvqonP
 const TARIFA={'TCI-843':230,'TAU-800':215,'TCX-842':220,'TCA-816':215,'TEY-880':215,'THF-949':215,'BTL-775':215,'T9N-825':300,'TEB-876':300,'H2X-887':220};
 const META_CICLO=30,META_KGH=200,PJ_DEF=1.25,TARA=0.292,JPB={NORMAL:2.5,HUMEDA:1.5};
 const EST=2;
-const COL={A:'#1B5E8C',B:'#7E4CC2',C:'#E8A23A',D:'#1E9E5A',E:'#D2412C'};
+const COL={A:'#1B5E8C',B:'#7E4CC2',C:'#E8A23A',D:'#1E9E5A',E:'#D2412C',F:'#0E8A8A'};
 const $=id=>document.getElementById(id),f=n=>Math.round(n).toLocaleString('en'),hm=m=>m==null?'':Math.floor(m/60)+':'+String(m%60).padStart(2,'0');
 const norm=s=>String(s??'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().trim();
 const du=m=>{if(m==null)return'—';m=Math.round(m);return m<60?m+' min':Math.floor(m/60)+' h'+(m%60?' '+String(m%60).padStart(2,'0')+' min':'')};
@@ -89,7 +89,7 @@ function trend(D,bars,line,bfmt,lfmt,bcol,lcol,meta,bl,ll){const W=MW(.39),H=MH(
  P.forEach(q=>s+=`<circle cx="${q[0]}" cy="${q[1]}" r="5" fill="${lcol}"/><text x="${q[0]}" y="${q[1]-9}" text-anchor="middle" font-size="${fs}" font-weight="900" fill="${lcol}" stroke="#fff" stroke-width="4" paint-order="stroke">${lfmt(q[2])}</text>`);
  s+=`<g font-size="12" font-weight="800"><rect x="${W/2-150}" y="${H-14}" width="11" height="11" fill="${bcol}"/><text x="${W/2-135}" y="${H-4}">${bl}</text><circle cx="${W/2+30}" cy="${H-9}" r="5" fill="${lcol}"/><text x="${W/2+40}" y="${H-4}">${ll}</text></g>`;return s+'</svg>'}
 
-const SBK2=SBK,FX={vista:'s',dia:hoyX(),sem:new Set(),mes:'',fu:'',mod:'',vr:'',pl:'',grp:new Set(['A','B','C','D','E']),cal:new Set(['EXPORTABLE','DESCARTE','NACIONAL'])};let FECHAS=[];
+const SBK2=SBK,FX={vista:'s',dia:hoyX(),sem:new Set(),mes:'',fu:'',mod:'',vr:'',pl:'',grp:new Set(['A','B','C','D','E','F']),cal:new Set(['EXPORTABLE','DESCARTE','NACIONAL'])};let FECHAS=[];
 const lunes=d=>semana(d)[0],MESN=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 async function fechas(){try{const r=await (await fetch(`${SB}/rest/v1/guias_fechas?select=fecha&order=fecha`,{headers:H})).json();FECHAS=(Array.isArray(r)?r:[]).map(x=>x.fecha)}catch(e){FECHAS=[]}
  if(!FECHAS.includes(hoyX()))FECHAS.push(hoyX());const ws=[...new Set(FECHAS.map(lunes))].sort();if(!FX.sem.size&&ws.length)FX.sem.add(lunes(hoyX()));if(!FX.mes)FX.mes=hoyX().slice(0,7)}
@@ -104,14 +104,14 @@ function sbHTML(o){const ws=[...new Set(FECHAS.map(lunes))].sort(),ms=[...new Se
  if(FX.vista==='s')h+=`<div><label>Semana</label><div class="ch">${ws.map(l=>chip('sem',l,nsem(l),FX.sem.has(l))).join('')}</div></div>`;
  if(FX.vista==='m')h+=`<div><label>Mes</label><div class="ch">${ms.map(m=>chip('mes',m,MESN[+m.slice(5,7)-1].slice(0,3),FX.mes===m)).join('')}</div></div>`;
  h+=sel('fu','Fundo',o.fu,FX.fu)+(o.mod?sel('mod','Módulo',o.mod,FX.mod)+sel('vr','Variedad',o.vr,FX.vr):'');
- h+=`<div><label>Grupo</label><div class="ch">${['A','B','C','D','E'].map(g=>chip('grp',g,g,FX.grp.has(g))).join('')}</div></div>`;
+ h+=`<div><label>Grupo</label><div class="ch">${['A','B','C','D','E','F'].map(g=>chip('grp',g,g,FX.grp.has(g))).join('')}</div></div>`;
  if(o.pl)h+=sel('pl','Kia / Placa',o.pl,FX.pl);
  if(o.cal)h+=`<div><label>Calidad</label><div class="ch">${[['EXPORTABLE','Exportable'],['DESCARTE','Descarte'],['NACIONAL','Nacional']].map(([v,l])=>chip('cal',v,l,FX.cal.has(v))).join('')}</div></div>`;
  h+=`<button class="lp" data-r="1">Limpiar filtros</button><button class="ws" data-w="1">📲 Compartir WhatsApp</button><button class="ac" data-a="1">↻ Actualizar</button>`;$('sb').innerHTML=h}
 function sbInit(onLoad,onFilter){const sb=$('sb');
  sb.onclick=e=>{const b=e.target.closest('button');if(!b)return;
   if(b.dataset.x){sb.classList.remove('op');return}if(b.dataset.w){compartir(b);return}if(b.dataset.a){onLoad();return}
-  if(b.dataset.r){FX.fu=FX.mod=FX.vr=FX.pl='';FX.grp=new Set(['A','B','C','D','E']);FX.cal=new Set(['EXPORTABLE','DESCARTE','NACIONAL']);onFilter();return}
+  if(b.dataset.r){FX.fu=FX.mod=FX.vr=FX.pl='';FX.grp=new Set(['A','B','C','D','E','F']);FX.cal=new Set(['EXPORTABLE','DESCARTE','NACIONAL']);onFilter();return}
   const k=b.dataset.k,v=b.dataset.v;if(!k)return;
   if(k==='vista'){FX.vista=v;onLoad();return}if(k==='mes'){FX.mes=v;onLoad();return}
   const S=FX[k];if(S.has(v)){if(S.size>1)S.delete(v)}else S.add(v);if(k==='sem')onLoad();else onFilter()};

@@ -9,7 +9,7 @@
 .w{max-width:560px;margin:0 auto;padding:10px 12px 30px}
 .c{background:#fff;border-radius:14px;padding:12px;margin-bottom:10px;box-shadow:0 1px 3px #0002}
 .l{font-weight:900;font-size:13px;margin:0 0 8px;color:#123A5C}
-.gr{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.gr button{font:inherit;font-size:26px;font-weight:900;padding:14px 0;border-radius:12px;border:3px solid #1B5E8C;background:#fff;color:#1B5E8C}
+.gr{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}.gr button{font:inherit;font-size:26px;font-weight:900;padding:14px 0;border-radius:12px;border:3px solid #1B5E8C;background:#fff;color:#1B5E8C}
 .gr button.on{background:#1B5E8C;color:#fff}
 .ch{display:flex;flex-wrap:wrap;gap:6px}.ch button{font:inherit;font-size:15px;font-weight:800;padding:9px 12px;border-radius:10px;border:2px solid #C9D3DE;background:#fff}.ch button.on{background:#2EAA4A;border-color:#2EAA4A;color:#fff}
 .ch input{font:inherit;font-size:15px;font-weight:800;padding:8px;border-radius:10px;border:2px solid #C9D3DE;width:110px}
@@ -48,7 +48,7 @@ $('fe').value=hoy();
 function toast(t){const e=$('to');e.textContent=t;e.style.display='block';clearTimeout(e._t);e._t=setTimeout(()=>e.style.display='none',1800)}
 function guiasG(){return GU.filter(r=>up(r.grupo).charAt(0)===S.g)}
 function pinta(){
- $('gr').innerHTML=['A','B','C','D','E'].map(g=>`<button data-g="${g}" class="${S.g===g?'on':''}">${g}</button>`).join('');
+ $('gr').innerHTML=['A','B','C','D','E','F'].map(g=>`<button data-g="${g}" class="${S.g===g?'on':''}">${g}</button>`).join('');
  const G=guiasG(),gm=[...new Set(G.map(r=>up(r.modulo)).filter(Boolean))].sort();
  $('mh').textContent=S.g&&gm.length?'· según guías de hoy':'';
  const ms=[...new Set([...gm,...(S.m&&!gm.includes(S.m)?[S.m]:[])])];
@@ -58,7 +58,7 @@ function pinta(){
  $('va').innerHTML=vs.map(v=>`<button data-v="${v}" class="${S.v===v?'on':''}">${v}</button>`).join('')+`<select id="vx" style="font:inherit;font-weight:800;padding:8px;border-radius:10px;border:2px solid #C9D3DE"><option value="">Otra…</option>${VARS.filter(v=>!vs.includes(v)).map(v=>`<option>${v}</option>`).join('')}</select>`;
  $('jb').textContent=S.j;
  // comparativo
- const d=$('fe').value,T={};['A','B','C','D','E'].forEach(g=>T[g]={c:0,r:0,kg:0});
+ const d=$('fe').value,T={};['A','B','C','D','E','F'].forEach(g=>T[g]={c:0,r:0,kg:0});
  GU.filter(r=>up(r.calidad)==='DESCARTE').forEach(r=>{const g=up(r.grupo).charAt(0);if(!T[g])return;T[g].c+=up(r.envase)==='JABA'?(+r.n_envases||0):(+r.jarras||0)/20});
  [...REC,...cola].filter(x=>x.fecha===d).forEach(x=>{const g=up(x.grupo);if(!T[g])return;T[g].r+=+x.jabas||0;T[g].kg+=+x.kg||0});
  $('cmp').innerHTML=`<table><tr><th>Grupo</th><th>Guías</th><th>Recibido</th><th>Kg</th><th>Estado</th></tr>${Object.entries(T).map(([g,t])=>{const df=Math.round(t.c-t.r);return`<tr><td>${g}</td><td>${Math.round(t.c)}</td><td>${t.r}</td><td>${Math.round(t.kg)}</td><td class="${df>0?'f':df<0?'s':'v'}">${df>0?'faltan '+df:df<0?'+'+(-df)+' sin guía':'✔'}</td></tr>`}).join('')}</table>`;
