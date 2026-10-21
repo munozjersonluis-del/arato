@@ -86,6 +86,14 @@ select.in{appearance:none;background-image:linear-gradient(45deg,transparent 50%
 .cmp{width:100%;border-collapse:collapse;font-weight:700;font-size:15px;grid-column:1/-1}.cmp th{font-size:12px;padding:4px;border-bottom:2px solid var(--line)}.cmp td{text-align:center;padding:6px 2px;border-bottom:1px solid var(--line)}.cmp .f{color:#B3261E;font-weight:900}.cmp .x{color:#B26A00;font-weight:900}.cmp .o{color:#1E7A46}
 body.kb .tabs,body.kb .bar{display:none!important}body.kb .wrap{padding-bottom:20px}
 .hide{display:none!important}.mini{display:flex;justify-content:space-between;align-items:center;font-weight:700;padding:12px 14px}.mini button{border:0;background:none;color:var(--accent);font:inherit;font-weight:800}
+
+body.kb .tabs{display:none!important}body.kb .bar{bottom:0!important}body.kb .wrap{padding-bottom:90px}
+.step{display:grid;grid-template-columns:44px minmax(48px,1fr) 44px;gap:4px}.step input{padding:0!important;font-size:28px!important}.step button{border:0;border-radius:12px;background:var(--accent);color:var(--accent-ink);font:800 28px system-ui;min-height:56px}.step input{text-align:center}
+.c5 .opt[data-v]{border-width:2.5px}
+.c5 .opt[data-v="A"]{border-color:#1B5E8C;color:#1B5E8C}.c5 .opt[data-v="B"]{border-color:#7E4CC2;color:#7E4CC2}.c5 .opt[data-v="C"]{border-color:#C98412;color:#C98412}.c5 .opt[data-v="D"]{border-color:#1E9E5A;color:#1E9E5A}.c5 .opt[data-v="E"]{border-color:#D2412C;color:#D2412C}.c5 .opt[data-v="F"]{border-color:#0E8A8A;color:#0E8A8A}
+.c5 .opt[data-v][aria-pressed="true"]{color:#fff!important}.c5 .opt[data-v="A"][aria-pressed="true"]{background:#1B5E8C}.c5 .opt[data-v="B"][aria-pressed="true"]{background:#7E4CC2}.c5 .opt[data-v="C"][aria-pressed="true"]{background:#C98412}.c5 .opt[data-v="D"][aria-pressed="true"]{background:#1E9E5A}.c5 .opt[data-v="E"][aria-pressed="true"]{background:#D2412C}.c5 .opt[data-v="F"][aria-pressed="true"]{background:#0E8A8A}
+.chk{font-weight:800;font-size:15px;text-align:center;margin-bottom:6px;color:var(--ink)}.chk.no{color:var(--ink2);font-weight:600}
+.tab[data-t="descarte"][aria-pressed="true"]{background:#B4541F!important}.tab[data-t="resumen"][aria-pressed="true"]{background:#1E7A46!important}
 .tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;grid-template-columns:repeat(3,1fr)!important;border-radius:0!important;margin:0!important;padding:4px 8px calc(4px + env(safe-area-inset-bottom,0px))!important;box-shadow:0 -2px 10px #0001;display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:5px;margin-bottom:12px}
 .tab b{display:block;font-size:22px;line-height:1.1}.tab{min-height:58px!important;font-size:15px!important;border:0;background:none;border-radius:10px;min-height:46px;font:600 18px "Barlow Semi Condensed",sans-serif;color:var(--ink2);cursor:pointer}
 .tab[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
@@ -126,8 +134,8 @@ body.kb .tabs,body.kb .bar{display:none!important}body.kb .wrap{padding-bottom:2
     </div>
     <div class="card">
       <div class="sec"><i>2</i>¿Cuánto?</div>
-      <div class="row2">
-        <div><label class="lbl" for="jabas">N° de jabas</label><input class="in big" id="jabas" type="number" inputmode="numeric" min="1" step="1"></div>
+      <div class="row2" style="grid-template-columns:1.3fr 1fr">
+        <div><label class="lbl" for="jabas">N° de jabas</label><div class="step"><button type="button" id="jMenos">−</button><input class="in big" id="jabas" type="number" inputmode="numeric" min="1" step="1" placeholder="0"><button type="button" id="jMas">+</button></div></div>
         <div><label class="lbl" for="pesoD">Peso (kg) <small style="font-weight:500">(opcional)</small></label><input class="in big" id="pesoD" type="number" inputmode="decimal" min="0" step="0.01" placeholder="auto"></div>
       </div>
       <p class="err" id="errD"></p>
@@ -170,7 +178,7 @@ body.kb .tabs,body.kb .bar{display:none!important}body.kb .wrap{padding-bottom:2
   <div class="links"><button class="link" id="btnRef" type="button">Actualizar</button></div>
 </div>
 
-<div class="bar" id="bar"><div class="in2"><button class="save" id="btnSave" type="button">Guardar</button></div></div>
+<div class="bar" id="bar"><div class="in2"><div class="chk hide" id="chkD"></div><button class="save" id="btnSave" type="button">Guardar</button></div></div>
 <div class="undo hidden" id="undo" role="status"><span id="undoTxt"></span><button type="button" id="undoBtn">Deshacer</button><i></i></div>
 <div class="toast" id="toast" role="status"></div>
 
@@ -290,7 +298,7 @@ function save(){
     if(rep&&!confirm('Ya guardaste '+r.jabas+' jabas · '+r.kg+' kg del grupo '+r.grupo+' hace un momento.\n¿Es OTRO descarte distinto?'))return;
     cola=sinRepetidos([...lsj('cola',[]),r]);ls('cola',JSON.stringify(cola));
     if(navigator.vibrate)navigator.vibrate(30);showUndo(r);
-    $('jabas').value='';$('pesoD').value='';renderList();$('jabas').focus();flush();return;
+    $('jabas').value='';$('pesoD').value='';$('pesoD').placeholder='auto';renderList();chkD();document.activeElement&&document.activeElement.blur();flush();return;
   }
   const r=collect();const bad=validate(r);if(bad){fail(...bad);return}
   if(window._ultSave&&Date.now()-window._ultSave<600)return;window._ultSave=Date.now(); // un toque = un registro (evita el doble toque)
@@ -425,6 +433,17 @@ $('inst').onclick=async()=>{if(!installEvt){toast('En Chrome: ⋮ → Instalar a
 /* ---------- inicio ---------- */
 $('fecha').value=today();press($('acopio'),S.acopio);press($('grupo'),S.grupo);press($('tipo'),S.tipo);
 {const c=S.acopio&&ls('cant:'+S.acopio);if(c)$('cant').value=c}
+
+/* ---- mejoras: teclado, stepper, confirmación ---- */
+(function(){const vv=window.visualViewport;const kb=()=>{const a=document.activeElement;const t=a&&/INPUT|SELECT|TEXTAREA/.test(a.tagName)&&a.type!=='date';document.body.classList.toggle('kb',!!(t&&(!vv||vv.height<innerHeight*.8)))};
+ if(vv)vv.addEventListener('resize',kb);document.addEventListener('focusin',e=>{kb();const el=e.target;if(/INPUT/.test(el.tagName))setTimeout(()=>el.scrollIntoView({block:'center',behavior:'smooth'}),300)});document.addEventListener('focusout',()=>setTimeout(kb,120));})();
+function chkD(){const el=$('chkD');if(!el)return;el.classList.toggle('hide',TABA!=='descarte');const j=parseInt($('jabas').value,10)||0,kg=parseFloat($('pesoD').value)||j*KG_JABA;
+ if(!SD.grupo||!j){el.className='chk no'+(TABA!=='descarte'?' hide':'');el.textContent='Elige grupo y jabas';return}
+ el.className='chk';el.textContent=`Grupo ${SD.grupo}${$('moduloD').value?' · '+$('moduloD').value:''} · ${j} jabas · ${Math.round(kg).toLocaleString('en-US')} kg${$('pesoD').value?'':' (calc.)'}`}
+const stepJ=d=>{const v=Math.max(0,(parseInt($('jabas').value,10)||0)+d);$('jabas').value=v||'';$('jabas').dispatchEvent(new Event('input'))};
+$('jMenos').onclick=()=>stepJ(-1);$('jMas').onclick=()=>stepJ(1);
+['jabas','pesoD','moduloD'].forEach(i=>$(i).addEventListener(i==='moduloD'?'change':'input',chkD));$('grupoD').addEventListener('click',()=>setTimeout(chkD));
+const _st=setTab;setTab=function(t){_st(t);chkD()};
 $('fechaD').value=today();press($('grupoD'),SD.grupo);$('variedadD').value=SD.variedad;setTab(TABA);
 renderModulos();renderVariedades();renderList();status();load();
 
