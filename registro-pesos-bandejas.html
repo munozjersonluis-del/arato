@@ -84,6 +84,7 @@ select.in{appearance:none;background-image:linear-gradient(45deg,transparent 50%
 .inst{width:100%;border:1.5px dashed var(--accent);background:var(--soft);color:var(--accent);border-radius:14px;min-height:52px;font-weight:600;cursor:pointer;margin-bottom:12px}
 .hidden{display:none!important}
 .cmp{width:100%;border-collapse:collapse;font-weight:700;font-size:15px;grid-column:1/-1}.cmp th{font-size:12px;padding:4px;border-bottom:2px solid var(--line)}.cmp td{text-align:center;padding:6px 2px;border-bottom:1px solid var(--line)}.cmp .f{color:#B3261E;font-weight:900}.cmp .x{color:#B26A00;font-weight:900}.cmp .o{color:#1E7A46}
+body.kb .tabs,body.kb .bar{display:none!important}body.kb .wrap{padding-bottom:20px}
 .hide{display:none!important}.mini{display:flex;justify-content:space-between;align-items:center;font-weight:700;padding:12px 14px}.mini button{border:0;background:none;color:var(--accent);font:inherit;font-weight:800}
 .tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;grid-template-columns:repeat(3,1fr)!important;border-radius:0!important;margin:0!important;padding:4px 8px calc(4px + env(safe-area-inset-bottom,0px))!important;box-shadow:0 -2px 10px #0001;display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:5px;margin-bottom:12px}
 .tab b{display:block;font-size:22px;line-height:1.1}.tab{min-height:58px!important;font-size:15px!important;border:0;background:none;border-radius:10px;min-height:46px;font:600 18px "Barlow Semi Condensed",sans-serif;color:var(--ink2);cursor:pointer}
@@ -426,6 +427,14 @@ $('fecha').value=today();press($('acopio'),S.acopio);press($('grupo'),S.grupo);p
 {const c=S.acopio&&ls('cant:'+S.acopio);if(c)$('cant').value=c}
 $('fechaD').value=today();press($('grupoD'),SD.grupo);$('variedadD').value=SD.variedad;setTab(TABA);
 renderModulos();renderVariedades();renderList();status();load();
+
+/* teclado: oculta menú y botón fijos mientras se escribe, y centra el campo */
+(()=>{const isIn=e=>e&&e.matches&&e.matches('input:not([type=date]),textarea');
+document.addEventListener('focusin',e=>{if(!isIn(e.target))return;document.body.classList.add('kb');setTimeout(()=>e.target.scrollIntoView({block:'center',behavior:'smooth'}),250)});
+document.addEventListener('focusout',()=>setTimeout(()=>{if(!isIn(document.activeElement))document.body.classList.remove('kb')},120));
+if(window.visualViewport)visualViewport.addEventListener('resize',()=>{if(visualViewport.height>innerHeight*0.85&&!isIn(document.activeElement))document.body.classList.remove('kb')});
+['jabas','pesoD','cant','kg'].forEach(i=>{const el=$(i);if(el)el.setAttribute('enterkeyhint',i==='jabas'||i==='cant'?'next':'send')});
+$('jabas').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('pesoD').focus()}});})();
 </script>
 </body>
 </html>
