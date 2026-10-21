@@ -86,7 +86,7 @@ function sbHTML(o){const ws=[...new Set(FECHAS.map(lunes))].sort(),ms=[...new Se
  if(FX.vista==='d')h+=`<div><label>Fecha</label><input type="date" data-s="dia" value="${FX.dia}"></div>`;
  if(FX.vista==='s')h+=`<div><label>Semana</label><div class="ch">${ws.map(l=>chip('sem',l,nsem(l),FX.sem.has(l))).join('')}</div></div>`;
  if(FX.vista==='m')h+=`<div><label>Mes</label><div class="ch">${ms.map(m=>chip('mes',m,MESN[+m.slice(5,7)-1].slice(0,3),FX.mes===m)).join('')}</div></div>`;
- if(o.fu)if(o.dim)h+=`<div><label>Ver por</label><div class="ch">${[['g','Grupo'],['m','Módulo'],['v','Variedad']].map(([v,l])=>chip('dim',v,l,FX.dim===v)).join('')}</div></div>`;if(o.fu)h+=sel('fu','Fundo',o.fu,FX.fu);if(o.mod)h+=sel('mod','Módulo',o.mod,FX.mod);if(o.vr)h+=sel('vr','Variedad',o.vr,FX.vr);
+ if(o.fu)if(o.dim)h+=`<div><label>Ver por</label><div class="ch">${[['g','Grupo'],['mv','Módulo y variedad']].map(([v,l])=>chip('dim',v,l,FX.dim===v)).join('')}</div></div>`;if(o.fu)h+=sel('fu','Fundo',o.fu,FX.fu);if(o.mod)h+=sel('mod','Módulo',o.mod,FX.mod);if(o.vr)h+=sel('vr','Variedad',o.vr,FX.vr);
  h+=`<div><label>Grupo</label><div class="ch">${['A','B','C','D','E'].map(g=>chip('grp',g,g,FX.grp.has(g))).join('')}</div></div>`;
  if(o.pl)h+=sel('pl','Kia / Placa',o.pl,FX.pl);
  if(o.cal)h+=`<div><label>Calidad</label><div class="ch">${[['EXPORTABLE','Exportable'],['DESCARTE','Descarte'],['NACIONAL','Nacional']].map(([v,l])=>chip('cal',v,l,FX.cal.has(v))).join('')}</div></div>`;
@@ -109,7 +109,7 @@ async function cargar(){const DS=DIAS();$('out').innerHTML='<div class="e">Carga
  try{const [p,g]=await Promise.all([fetch(API_P,{cache:'no-store'}).then(r=>r.json()),fetch(`${SB}/rest/v1/guias_campo?fecha=gte.${DS[0]}&fecha=lte.${DS[DS.length-1]}&select=fecha,grupo,modulo,variedad,calidad,envase,n_envases,jarras&limit=50000`,{headers:H}).then(r=>r.json())]);
   AC=(p.descartes||[]).map(x=>({d:String(x.fecha).slice(0,10),g:gr(x.grupo),m:up(x.modulo),v:up(x.variedad),j:Number(x.jabas)||0,kg:Number(x.kg)||0}));
   const S=new Set(DS);RG=(Array.isArray(g)?g:[]).filter(r=>S.has(r.fecha));build()}catch(e){$('out').innerHTML='<div class="e">No se pudo cargar: '+e+'</div>'}}
-const KEY=(g,m,v)=>FX.dim==='m'?(m||'SIN MÓD.'):FX.dim==='v'?(v||'SIN VAR.'):g;
+const KEY=(g,m,v)=>FX.dim==='mv'?(m||'SIN MÓD.')+' · '+(v||'SIN VAR.'):g;
 const okF=(g,m,v)=>FX.grp.has(g)&&(!FX.mod||m===FX.mod)&&(!FX.vr||v===FX.vr);
 function build(){const GD=new Set(RG.map(r=>r.fecha)),M={};const o=(d,k)=>{const kk=d+'|'+k;return M[kk]=M[kk]||{d,g:k,jc:0,ja:0,kg:0,jd:0,jt:0}};
  RG.forEach(r=>{const g=gr(r.grupo),m=up(r.modulo),v=up(r.variedad);if(!okF(g,m,v))return;const x=o(r.fecha,KEY(g,m,v)),jr=Number(r.jarras)||0;x.jt+=jr;if(up(r.calidad)==='DESCARTE'){x.jd+=jr;x.jc+=up(r.envase)==='JABA'?(Number(r.n_envases)||0):jr/JPJ}});
@@ -129,26 +129,34 @@ function combo(L){const W=MW(ESS()?.6:1),H=MH(330),n=L.length||1,gw=(W-40)/n,bw=
   const d=x.jc-x.ja;if(Math.round(d)){const c=d>0?RO:'#F3B23E',t=d>0?'faltan '+f(d):'+'+f(-d)+' sin guía';const w=t.length*7+16;s+=`<rect x="${cx-w/2}" y="${top-46}" width="${w}" height="20" rx="10" fill="${c}"/><text x="${cx}" y="${top-32}" text-anchor="middle" font-size="12" font-weight="900" fill="${d>0?'#fff':'#4A2C00'}">${t}</text>`}
   s+=`<text x="${cx}" y="${H-44}" text-anchor="middle" font-size="${Math.min(16,gw/7).toFixed(1)}" font-weight="900">${FX.dim==='g'?'GRUPO ':''}${x.g}</text><text x="${cx}" y="${H-26}" text-anchor="middle" font-size="12" font-weight="800" fill="#444">${f(x.kg)} kg</text><text x="${cx}" y="${H-11}" text-anchor="middle" font-size="11" font-weight="800" fill="#666">${kj(x)?f1(kj(x))+' kg/jaba':''}</text>`});
  return s+'</svg>'}
-function hb(L,val,fmt,colr,mx){const W=600,rh=50,H=L.length*rh+20,X=v=>60+(W-170)*Math.min(v,mx)/mx;let s=`<svg viewBox="0 0 ${W} ${H}" width="100%">`;
- L.forEach((r,i)=>{const v=val(r),y=i*rh+6;s+=`<text x="40" y="${y+24}" text-anchor="end" font-size="17" font-weight="900">${r.g}</text><rect x="60" y="${y+4}" width="${Math.max(2,X(v??0)-60)}" height="28" fill="${colr(v)}"/><text x="${X(v??0)+8}" y="${y+24}" font-size="15" font-weight="900">${v==null?'—':fmt(v)}</text>`});return s+'</svg>'}
-function diverg(G){const W=600,rh=50,H=G.length*rh+40,c=W/2+20,mx=Math.max(1,...G.map(r=>Math.max(r.fa,r.sg))),X=v=>(W/2-90)*v/mx;let s=`<svg viewBox="0 0 ${W} ${H}" width="100%">`;
+function comboH(L){const W=MW(ESS()?.6:1),H=MH(330),n=L.length||1,rh=(H-30)/n,L0=150,R=130,mx=Math.max(1,...L.map(x=>Math.max(x.jc,x.ja)))*1.12,X=v=>L0+(W-L0-R-40)*v/mx,bh=Math.max(5,Math.min(14,rh*.32)),fs=Math.max(9,Math.min(14,rh*.42));
+ let s=`<svg viewBox="0 0 ${W} ${H}" width="100%">`;
+ L.forEach((x,i)=>{const y=10+rh*i+rh/2,d=x.jc-x.ja;
+  s+=`<text x="${L0-10}" y="${y+fs*.35}" text-anchor="end" font-size="${fs}" font-weight="900">${x.g}</text><rect x="${L0}" y="${y-bh-1}" width="${Math.max(1,X(x.jc)-L0)}" height="${bh}" fill="${AZ}"/><rect x="${L0}" y="${y+1}" width="${Math.max(1,X(x.ja)-L0)}" height="${bh}" fill="${GR}"/>
+  <text x="${X(x.jc)+5}" y="${y-2}" font-size="${fs-2}" font-weight="900">${f(x.jc)}</text><text x="${X(x.ja)+5}" y="${y+bh}" font-size="${fs-2}" font-weight="900" fill="#555">${f(x.ja)}</text>`;
+  if(Math.round(d))s+=`<rect x="${W-R}" y="${y-fs*.75}" width="${R-6}" height="${fs*1.5}" rx="${fs*.75}" fill="${d>0?RO:'#F3B23E'}"/><text x="${W-R/2-3}" y="${y+fs*.35}" text-anchor="middle" font-size="${fs-1}" font-weight="900" fill="${d>0?'#fff':'#4A2C00'}">${d>0?'faltan '+f(d):'+'+f(-d)+' sin guía'}</text>`;
+  else s+=`<text x="${W-R/2-3}" y="${y+fs*.35}" text-anchor="middle" font-size="${fs}" font-weight="900" fill="${VE}">✔ cuadra</text>`});
+ return s+'</svg>'}
+function hb(L,val,fmt,colr,mx){const B=FX.dim==='g'?60:170,W=600,rh=FX.dim==='g'?50:Math.max(30,Math.min(50,300/L.length)),H=L.length*rh+20,X=v=>B+(W-B-110)*Math.min(v,mx)/mx;let s=`<svg viewBox="0 0 ${W} ${H}" width="100%">`;
+ L.forEach((r,i)=>{const v=val(r),y=i*rh+6;s+=`<text x="${B-12}" y="${y+24}" text-anchor="end" font-size="${FX.dim==='g'?17:13}" font-weight="900">${r.g}</text><rect x="${B}" y="${y+4}" width="${Math.max(2,X(v??0)-B)}" height="${Math.min(28,rh-8)}" fill="${colr(v)}"/><text x="${X(v??0)+8}" y="${y+24}" font-size="15" font-weight="900">${v==null?'—':fmt(v)}</text>`});return s+'</svg>'}
+function diverg(G){const W=600,rh=FX.dim==='g'?50:Math.max(30,Math.min(50,300/G.length)),H=G.length*rh+40,c=W/2+20,mx=Math.max(1,...G.map(r=>Math.max(r.fa,r.sg))),X=v=>(W/2-90)*v/mx;let s=`<svg viewBox="0 0 ${W} ${H}" width="100%">`;
  s+=`<text x="${c-8}" y="14" text-anchor="end" font-size="12" font-weight="900" fill="${RO}">◀ FALTAN EN ACOPIO</text><text x="${c+8}" y="14" font-size="12" font-weight="900" fill="#B26A00">SIN GUÍA ▶</text>`;
- G.forEach((r,i)=>{const y=i*rh+26;s+=`<text x="16" y="${y+22}" font-size="17" font-weight="900">${r.g}</text>`;
-  if(r.fa>=.5)s+=`<rect x="${c-X(r.fa)}" y="${y+4}" width="${X(r.fa)}" height="28" fill="${RO}"/><text x="${c-X(r.fa)-6}" y="${y+23}" text-anchor="end" font-size="14" font-weight="900" fill="${RO}">${f(r.fa)}</text>`;
-  if(r.sg>=.5)s+=`<rect x="${c}" y="${y+4}" width="${X(r.sg)}" height="28" fill="#F3B23E"/><text x="${c+X(r.sg)+6}" y="${y+23}" font-size="14" font-weight="900" fill="#B26A00">${f(r.sg)}</text>`;
-  if(r.fa<.5&&r.sg<.5)s+=`<text x="${c+6}" y="${y+23}" font-size="15" font-weight="900" fill="${VE}">✔</text>`});
+ G.forEach((r,i)=>{const y=i*rh+26;s+=`<text x="8" y="${y+22}" font-size="${FX.dim==='g'?17:12}" font-weight="900">${r.g}</text>`;
+  if(r.fa>=.5)s+=`<rect x="${c-X(r.fa)}" y="${y+4}" width="${X(r.fa)}" height="${Math.min(28,rh-8)}" fill="${RO}"/><text x="${c-X(r.fa)-6}" y="${y+4+Math.min(28,rh-8)*.72}" text-anchor="end" font-size="${FX.dim==='g'?14:12}" font-weight="900" fill="${RO}">${f(r.fa)}</text>`;
+  if(r.sg>=.5)s+=`<rect x="${c}" y="${y+4}" width="${X(r.sg)}" height="${Math.min(28,rh-8)}" fill="#F3B23E"/><text x="${c+X(r.sg)+6}" y="${y+4+Math.min(28,rh-8)*.72}" font-size="${FX.dim==='g'?14:12}" font-weight="900" fill="#B26A00">${f(r.sg)}</text>`;
+  if(r.fa<.5&&r.sg<.5)s+=`<text x="${c+6}" y="${y+4+Math.min(28,rh-8)*.72}" font-size="15" font-weight="900" fill="${VE}">✔</text>`});
  s+=`<line x1="${c}" x2="${c}" y1="20" y2="${H-6}" stroke="#333" stroke-width="2"/>`;return s+'</svg>'}
 function fit(){const o=$('out');o.classList.toggle('tr',o.children.length>=4)}
-const DIMN=()=>({g:'GRUPO',m:'MÓDULO',v:'VARIEDAD'})[FX.dim];
+const DIMN=()=>FX.dim==='mv'?'MÓDULO Y VARIEDAD':'GRUPO';
 function pintar(){const L=ROWS.slice(0,FX.dim==='g'?9:10);
  if(!L.length){$('out').innerHTML='<div class="e">No hay guías ni pesos de descarte para '+PER()+'.</div>';return}
  const T=sum(L),P=pd(T),d=T.jc-T.ja;
  let h=`<div class="kp"><div><b>${f(T.jc)}</b><small>Jabas de descarte en guías</small></div><div style="border-color:${GR}"><b>${f(T.ja)}</b><small>Jabas recibidas en acopio</small></div><div style="border-color:${d>0?RO:'#F3B23E'}"><b style="color:${d>0?RO:'#B26A00'}">${d>0?f(d):'+'+f(-d)}</b><small>${d>0?'Jabas que faltan en acopio':'Jabas recibidas sin guía'}</small></div><div style="border-color:${GR}"><b>${f(T.kg)} kg</b><small>Kg de descarte (acopio)</small></div><div style="border-color:${OR}"><b style="color:${OR}">${P==null?'—':P+' %'}</b><small>% de descarte (jarras)</small></div></div>`;
- h+=`<div class="p"><h2>DESCARTE: CAMPO vs ACOPIO POR ${DIMN()} · ${PER()}</h2><div class="b"><div class="ley"><span class="dot" style="background:${AZ}"></span>Jabas en guías (campo) &nbsp; <span class="dot" style="background:${GR}"></span>Jabas recibidas (acopio)</div><div class="sx">${combo(L)}</div></div></div>`;
+ h+=`<div class="p"><h2>DESCARTE: CAMPO vs ACOPIO POR ${DIMN()} · ${PER()}</h2><div class="b"><div class="ley"><span class="dot" style="background:${AZ}"></span>Jabas en guías (campo) &nbsp; <span class="dot" style="background:${GR}"></span>Jabas recibidas (acopio)</div><div class="sx">${FX.dim==='g'?combo(L):comboH(L)}</div></div></div>`;
  if(ESS()){const DD=[...new Set(DAYS.map(x=>x.d))].sort().map(d=>({d,...sum(DAYS.filter(x=>x.d===d))}));
   h+=`<div class="p" style="margin-top:12px"><h2>TENDENCIA POR DÍA</h2><div class="b sx">${trend(DD,x=>x.ja,x=>pd(x),v=>f(v),v=>v+' %',GR,OR,null,'Jabas recibidas','% de descarte')}</div></div>`}
- h+=`<div class="g2"><div class="p"><h2>% DE DESCARTE POR ${DIMN()}</h2><div class="b">${hb(L.slice().sort((a,b)=>(pd(b)??-1)-(pd(a)??-1)),pd,v=>v+' %',()=>OR,Math.max(10,...L.map(x=>pd(x)||0))*1.15)}</div></div>
- <div class="p"><h2>DIFERENCIA DE JABAS POR ${DIMN()}</h2><div class="b">${diverg(L)}</div></div>
+ h+=`<div class="g2"><div class="p"><h2>% DE DESCARTE</h2><div class="b">${hb(L.slice().sort((a,b)=>(pd(b)??-1)-(pd(a)??-1)),pd,v=>v+' %',()=>OR,Math.max(10,...L.map(x=>pd(x)||0))*1.15)}</div></div>
+ <div class="p"><h2>DIFERENCIA DE JABAS</h2><div class="b">${diverg(L)}</div></div>
  <div class="p"><h2>KG POR JABA (ACOPIO)</h2><div class="b">${hb(L,kj,v=>f1(v)+' kg',()=>AZ,Math.max(1,...L.map(x=>kj(x)||0))*1.15)}</div></div></div>`;
  $('out').innerHTML=h;fit();$('hr').textContent='Actualizado '+new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'});if(document.body.classList.contains('snap'))$('hr').textContent=PER()+' · Grupos '+[...FX.grp].sort().join(' ')+(FX.mod?' · '+FX.mod:'')+(FX.vr?' · '+FX.vr:'')}
 async function compartir(b){const t0=b.textContent;
