@@ -94,7 +94,7 @@ body.kb .tabs{display:none!important}body.kb .bar{bottom:0!important}body.kb .wr
 .c5 .opt[data-v][aria-pressed="true"]{color:#fff!important}.c5 .opt[data-v="A"][aria-pressed="true"]{background:#1B5E8C}.c5 .opt[data-v="B"][aria-pressed="true"]{background:#7E4CC2}.c5 .opt[data-v="C"][aria-pressed="true"]{background:#C98412}.c5 .opt[data-v="D"][aria-pressed="true"]{background:#1E9E5A}.c5 .opt[data-v="E"][aria-pressed="true"]{background:#D2412C}.c5 .opt[data-v="F"][aria-pressed="true"]{background:#0E8A8A}
 .chk{font-weight:800;font-size:15px;text-align:center;margin-bottom:6px;color:var(--ink)}.chk.no{color:var(--ink2);font-weight:600}
 .tab[data-t="descarte"][aria-pressed="true"]{background:#B4541F!important}.tab[data-t="resumen"][aria-pressed="true"]{background:#1E7A46!important}
-.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;grid-template-columns:repeat(3,1fr)!important;border-radius:0!important;margin:0!important;padding:4px 8px calc(4px + env(safe-area-inset-bottom,0px))!important;box-shadow:0 -2px 10px #0001;display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:5px;margin-bottom:12px}
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;grid-template-columns:repeat(4,1fr)!important;border-radius:0!important;margin:0!important;padding:4px 8px calc(4px + env(safe-area-inset-bottom,0px))!important;box-shadow:0 -2px 10px #0001;display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:5px;margin-bottom:12px}
 .tab b{display:block;font-size:22px;line-height:1.1}.tab{min-height:58px!important;font-size:15px!important;border:0;background:none;border-radius:10px;min-height:46px;font:600 18px "Barlow Semi Condensed",sans-serif;color:var(--ink2);cursor:pointer}
 .tab[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .save.d{background:#B4561F}
@@ -105,6 +105,9 @@ body.kb .tabs{display:none!important}body.kb .bar{bottom:0!important}body.kb .wr
 @keyframes u{from{width:100%}to{width:0}}
 .del{background:none;border:1px solid var(--line);color:var(--ink2);border-radius:8px;font-size:12.5px;font-weight:600;padding:3px 8px;margin-top:4px;cursor:pointer}
 .del.sure{border-color:var(--red);color:var(--red)}
+.hm{display:grid;gap:14px;margin-top:6px}.ht{width:100%;display:grid;grid-template-columns:76px 1fr;grid-template-rows:auto auto;align-items:center;text-align:left;border:0;border-radius:18px;background:var(--c);color:#fff;padding:18px 16px;min-height:118px;box-shadow:0 4px 12px #0002;cursor:pointer}
+.ht span{grid-row:1/3;font-size:50px;line-height:1;text-align:center}.ht b{font:700 25px "Barlow Semi Condensed",sans-serif}.ht small{font-size:15px;opacity:.9}.ht:active{transform:scale(.98)}
+.tab[data-t="home"][aria-pressed="true"]{background:#555!important}
 </style>
 </head>
 <body>
@@ -122,7 +125,11 @@ body.kb .tabs{display:none!important}body.kb .bar{bottom:0!important}body.kb .wr
     <button class="link" id="apiNo" type="button" style="width:100%">Cancelar</button>
   </section>
 
-  <nav class="tabs" id="tabs"><button type="button" class="tab" data-t="pesos"><b>⚖️</b>Pesos</button><button type="button" class="tab" data-t="descarte"><b>🗑️</b>Descarte</button><button type="button" class="tab" data-t="resumen"><b>📊</b>Resumen</button></nav>
+  <section id="home" class="hide"><div class="hm">
+<button type="button" class="ht" data-go="pesos" style="--c:#2B2F7E"><span>⚖️</span><b>Pesos de bandejas</b><small>Peso de bandeja + fruta</small></button>
+<button type="button" class="ht" data-go="descarte" style="--c:#B4541F"><span>🗑️</span><b>Pesos de descarte</b><small>Jabas de descarte por grupo</small></button>
+<button type="button" class="ht" data-go="resumen" style="--c:#1E7A46"><span>📊</span><b>Resumen</b><small>Guías vs recibido</small></button></div></section>
+<nav class="tabs" id="tabs"><button type="button" class="tab" data-t="home"><b>🏠</b>Inicio</button><button type="button" class="tab" data-t="pesos"><b>⚖️</b>Bandejas</button><button type="button" class="tab" data-t="descarte"><b>🗑️</b>Descarte</button><button type="button" class="tab" data-t="resumen"><b>📊</b>Resumen</button></nav>
 
   <form id="formD" class="hidden" autocomplete="off" onsubmit="return false">
     <div class="card">
@@ -199,7 +206,7 @@ if(/AKfycbxDGEiboTzCglD0jaEOoQdNX5KZVs8EwW0Tjn9BHCDODP2Kvm2ClcZravP5RRYKds9U/.te
 
 let API=new URLSearchParams(location.search).get('api')||ls('api')||API_DEF;
 let S={acopio:ls('acopio')||'',variedad:ls('variedad')||'',grupo:ls('grupo')||'',tipo:ls('tipo')||'Normal'};
-let TABA=(t=>['descarte','resumen'].includes(t)?t:'pesos')(new URLSearchParams(location.search).get('tab')||ls('tab')),SD={grupo:ls('grupoD')||'',variedad:ls('variedadD')||''};
+let TABA=(t=>['pesos','descarte','resumen'].includes(t)?t:'home')(new URLSearchParams(location.search).get('tab')),SD={grupo:ls('grupoD')||'',variedad:ls('variedadD')||''};
 const esD=r=>r&&r.tipoReg==='descarte';
 let modulos=lsj('modulos',MOD_BASE),variedades=lsj('variedades',[]),registros=lsj('registros',[]),cola=lsj('cola',[]),enviando=false,online=true;
 
@@ -235,9 +242,9 @@ $('pesoD').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault()
 $('fechaD').onchange=()=>renderList();
 function setTab(t){TABA=t;ls('tab',t);$('tabs').querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.t===t)));
   $('form').classList.toggle('hide',t!=='pesos');$('formD').classList.toggle('hidden',t!=='descarte');$('formD').classList.toggle('hide',t!=='descarte');
-  $('bar').classList.toggle('hide',t==='resumen');$('listCard').classList.toggle('hide',t==='descarte');$('miniD').classList.toggle('hide',t!=='descarte');
+  $('bar').classList.toggle('hide',t==='resumen'||t==='home');$('home').classList.toggle('hide',t!=='home');$('listCard').classList.toggle('hide',t==='descarte'||t==='home');$('miniD').classList.toggle('hide',t!=='descarte');
   $('btnSave').textContent=t==='descarte'?'Guardar descarte':'Guardar';$('btnSave').classList.toggle('d',t==='descarte');clearErr();renderList();scrollTo(0,0)}
-$('verRes').onclick=()=>setTab('resumen');
+$('home').onclick=e=>{const b=e.target.closest('.ht');if(b)setTab(b.dataset.go)};$('verRes').onclick=()=>setTab('resumen');
 $('tabs').onclick=e=>{const b=e.target.closest('.tab');if(b)setTab(b.dataset.t)};
 $('acopio').onclick=e=>{const b=e.target.closest('.opt');if(!b)return;S.acopio=b.dataset.v;ls('acopio',S.acopio);press($('acopio'),S.acopio);
   const c=ls('cant:'+S.acopio);if(c)$('cant').value=c;renderModulos();clearErr();preview()};
