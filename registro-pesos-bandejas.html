@@ -22,7 +22,7 @@
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 "Barlow",system-ui,-apple-system,"Segoe UI",sans-serif}
 button,input,select{font:inherit;color:inherit}
-.wrap{max-width:560px;margin:0 auto;padding:10px 12px 160px}
+.wrap{max-width:560px;margin:0 auto;padding:10px 12px 110px}
 .hdr{display:flex;align-items:center;gap:10px;background:#fff;border-radius:14px;padding:8px 12px;margin-bottom:12px;border:1px solid var(--line)}
 .hdr img.m{height:30px;flex:none}.hdr img.b{height:22px;flex:none;min-width:0}
 .hdr .st{flex:0 1 auto;overflow:hidden;text-overflow:ellipsis;font-size:12px;padding:5px 8px}
@@ -59,7 +59,7 @@ select.in{appearance:none;background-image:linear-gradient(45deg,transparent 50%
 .check.hi{display:flex;background:var(--warn-soft);color:var(--warn)}
 .check.lo{display:flex;background:var(--red-soft);color:var(--red)}
 .err{color:var(--red);font-weight:600;font-size:14.5px;margin:10px 0 0;display:none}
-.bar{position:fixed;left:0;right:0;bottom:calc(66px + env(safe-area-inset-bottom,0px));background:var(--panel);border-top:1px solid var(--line);padding:8px 12px;z-index:5}
+.bar{position:fixed;left:0;right:0;bottom:0;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))!important;background:var(--panel);border-top:1px solid var(--line);padding:8px 12px;z-index:5}
 .bar .in2{max-width:560px;margin:0 auto}
 .save{width:100%;min-height:58px;border:0;border-radius:14px;background:var(--leaf);color:#fff;font:600 21px "Barlow Semi Condensed",sans-serif;cursor:pointer}
 .save:active{transform:scale(.99)}
@@ -95,6 +95,7 @@ body.kb .tabs,body.kb .bar,body.kb .undo{display:none!important}body.kb .wrap{pa
 .chk{font-weight:800;font-size:15px;text-align:center;margin-bottom:6px;color:var(--ink)}.chk.no{color:var(--ink2);font-weight:600}
 .tab[data-t="descarte"][aria-pressed="true"]{background:#B4541F!important}.tab[data-t="resumen"][aria-pressed="true"]{background:#1E7A46!important}
 .rs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}.rs button{border:1.5px solid var(--line);background:var(--bg);border-radius:10px;min-height:44px;font-weight:800;font-size:16px;color:var(--ink)}.rs button[aria-pressed="true"]{background:#1E7A46;color:#fff;border-color:#1E7A46}
+.back{display:flex;align-items:center;gap:8px;width:100%;border:0;border-radius:14px;background:var(--panel);box-shadow:0 1px 3px #0002;padding:10px 14px;margin-bottom:12px;font:700 17px "Barlow Semi Condensed",sans-serif;color:var(--ink2);cursor:pointer}.back span{font-size:30px;line-height:.8;color:var(--accent)}.back b{margin-left:auto;font-size:19px;color:var(--ink)}
 .tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;grid-template-columns:repeat(4,1fr)!important;border-radius:0!important;margin:0!important;padding:4px 8px calc(4px + env(safe-area-inset-bottom,0px))!important;box-shadow:0 -2px 10px #0001;display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:5px;margin-bottom:12px}
 .tab b{display:block;font-size:22px;line-height:1.1}.tab{min-height:58px!important;font-size:15px!important;border:0;background:none;border-radius:10px;min-height:46px;font:600 18px "Barlow Semi Condensed",sans-serif;color:var(--ink2);cursor:pointer}
 .tab[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
@@ -130,7 +131,8 @@ body.kb .tabs,body.kb .bar,body.kb .undo{display:none!important}body.kb .wrap{pa
 <button type="button" class="ht" data-go="pesos" style="--c:#2B2F7E"><span>⚖️</span><b>Pesos de bandejas</b><small>Peso de bandeja + fruta</small></button>
 <button type="button" class="ht" data-go="descarte" style="--c:#B4541F"><span>🗑️</span><b>Recepción de descarte</b><small>Jabas y peso por grupo</small></button>
 <button type="button" class="ht" data-go="resumen" style="--c:#1E7A46"><span>📊</span><b>Resumen</b><small>Guías vs recibido</small></button></div></section>
-<nav class="tabs" id="tabs"><button type="button" class="tab" data-t="home"><b>🏠</b>Inicio</button><button type="button" class="tab" data-t="pesos"><b>⚖️</b>Bandejas</button><button type="button" class="tab" data-t="descarte"><b>🗑️</b>Descarte</button><button type="button" class="tab" data-t="resumen"><b>📊</b>Resumen</button></nav>
+<button type="button" class="back hide" id="back"><span>‹</span> Inicio <b id="backT"></b></button>
+<nav class="tabs" id="tabs" style="display:none!important"><button type="button" class="tab" data-t="home"><b>🏠</b>Inicio</button><button type="button" class="tab" data-t="pesos"><b>⚖️</b>Bandejas</button><button type="button" class="tab" data-t="descarte"><b>🗑️</b>Descarte</button><button type="button" class="tab" data-t="resumen"><b>📊</b>Resumen</button></nav>
 
   <form id="formD" class="hidden" autocomplete="off" onsubmit="return false">
     <div class="card">
@@ -243,9 +245,9 @@ $('pesoD').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault()
 $('fechaD').onchange=()=>renderList();
 function setTab(t){TABA=t;ls('tab',t);$('tabs').querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.t===t)));
   $('form').classList.toggle('hide',t!=='pesos');$('formD').classList.toggle('hidden',t!=='descarte');$('formD').classList.toggle('hide',t!=='descarte');
-  $('bar').classList.toggle('hide',t==='resumen'||t==='home');$('home').classList.toggle('hide',t!=='home');$('listCard').classList.toggle('hide',t!=='resumen');$('rsBox').classList.toggle('hide',t!=='resumen');$('miniD').classList.add('hide');$('btnRef').parentElement.classList.toggle('hide',t!=='resumen');
+  $('bar').classList.toggle('hide',t==='resumen'||t==='home');$('home').classList.toggle('hide',t!=='home');$('back').classList.toggle('hide',t==='home');$('backT').textContent={pesos:'⚖️ Pesos de bandejas',descarte:'🗑️ Recepción de descarte',resumen:'📊 Resumen'}[t]||'';$('listCard').classList.toggle('hide',t!=='resumen');$('rsBox').classList.toggle('hide',t!=='resumen');$('miniD').classList.add('hide');$('btnRef').parentElement.classList.toggle('hide',t!=='resumen');
   $('btnSave').textContent=t==='descarte'?'Guardar descarte':'Guardar';$('btnSave').classList.toggle('d',t==='descarte');clearErr();renderList();scrollTo(0,0)}
-$('home').onclick=e=>{const b=e.target.closest('.ht');if(b)setTab(b.dataset.go)};let RS=ls('rs')==='descarte'?'descarte':'pesos';$('rsBox').onclick=e=>{const b=e.target.closest('button');if(b){RS=b.dataset.r;ls('rs',RS);renderList()}};$('verRes').onclick=()=>setTab('resumen');
+$('back').onclick=()=>setTab('home');$('home').onclick=e=>{const b=e.target.closest('.ht');if(b)setTab(b.dataset.go)};let RS=ls('rs')==='descarte'?'descarte':'pesos';$('rsBox').onclick=e=>{const b=e.target.closest('button');if(b){RS=b.dataset.r;ls('rs',RS);renderList()}};$('verRes').onclick=()=>setTab('resumen');
 $('tabs').onclick=e=>{const b=e.target.closest('.tab');if(b)setTab(b.dataset.t)};
 $('acopio').onclick=e=>{const b=e.target.closest('.opt');if(!b)return;S.acopio=b.dataset.v;ls('acopio',S.acopio);press($('acopio'),S.acopio);
   const c=ls('cant:'+S.acopio);if(c)$('cant').value=c;renderModulos();clearErr();preview()};
