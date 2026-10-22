@@ -7,6 +7,7 @@
 .fl{display:flex;gap:10px}.fl label{font-size:11px;font-weight:700;display:block;opacity:.85}.fl select,.fl input{font:inherit;font-size:14px;font-weight:700;padding:6px 8px;border-radius:6px;border:0;min-width:150px}
 .wrap{padding:10px 16px 8px;max-width:2000px;margin:0 auto}
 @media(min-width:701px){.hd{padding-left:max(18px,calc((100vw - 2000px)/2 + 20px));padding-right:max(18px,calc((100vw - 2000px)/2 + 20px))}}.g2>.p{display:flex;flex-direction:column}.g2>.p>.b{flex:1;display:flex;flex-direction:column;justify-content:center}.hd{position:sticky;top:0;z-index:5}
+.pf{display:grid;gap:10px;height:100%}.pf>div{display:flex;flex-direction:column;min-height:0;border:1px solid #e3e8ef;border-radius:8px;padding:4px}.pf h3{margin:0;font-size:14px;font-weight:900;text-align:center;color:#123A5C;background:#EEF3F8;border-radius:6px;padding:4px}.pf svg{flex:1;min-height:0}@media(max-width:900px){.pf{grid-template-columns:1fr!important}}
 .kp{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:12px}
 .kp div{background:#fff;border-radius:8px;padding:12px;text-align:center;border-left:8px solid #123A5C;box-shadow:0 1px 3px #0002}
 .kp b{display:block;font-size:34px;font-weight:800}.kp small{font-size:12px;font-weight:800;color:#333}
@@ -67,8 +68,8 @@ let PESOS=null,IND=[],ALL=[];
 async function pesos(){if(PESOS)return;try{const ac=new AbortController();setTimeout(()=>ac.abort(),8000);const j=await (await fetch(API_PESOS,{signal:ac.signal})).json();PESOS=(j.registros||[]).filter(x=>x.tipoReg!=='descarte')}catch(e){PESOS=[]}}
 function pj(d,g){const L=(PESOS||[]).filter(x=>String(x.fecha).slice(0,10)===d&&+x.cantidad>0&&+x.kg>0),v=x=>(x.kg/x.cantidad-TARA)/(JPB[norm(x.tipo)]||2.5),ok=a=>a.filter(z=>z>0.5&&z<2.5);
  let a=ok(L.filter(x=>norm(x.grupo)===g).map(v));if(!a.length)a=ok(L.map(v));return a.length?a.reduce((s,z)=>s+z,0)/a.length:PJ_DEF}
-function calc(L,d){const P={};L.forEach(r=>{const g=String(r.grupo||'');const k=pj(d,g);(P[r.placa]=P[r.placa]||[]).push({g,j:+r.jarras||0,kg:String(r.calidad||'').toUpperCase().startsWith('EXPORT')?(+r.jarras||0)*k:0,ini:mins(r.inicio),fin:mins(r.fin),rec:mins(r.recojo),fu:r.fundo,ds:!String(r.calidad||'').toUpperCase().startsWith('EXPORT'),cl:String(r.calidad||'').toUpperCase()})});
- IND=Object.entries(P).map(([p,G])=>{G.sort((a,b)=>(a.rec??0)-(b.rec??0));const T=[];G.forEach(r=>{const t=T[T.length-1];if(t&&r.rec!=null&&r.rec-t.rec<=2){t.kg+=r.kg;t.u=r.rec;t.ds=t.ds&&r.ds;if(r.ds&&!(t.cls||[]).includes(r.cl))(t.cls=t.cls||[]).push(r.cl);if(r.ini!=null)t.ini=Math.min(t.ini??1e9,r.ini)}else T.push({rec:r.rec,u:r.rec,kg:r.kg,ds:r.ds,cls:r.ds?[r.cl]:[],fu:r.fu,ini:r.ini})});
+function calc(L,d){const P={};L.forEach(r=>{const g=String(r.grupo||'');const k=pj(d,g);(P[r.placa]=P[r.placa]||[]).push({g,j:+r.jarras||0,kg:String(r.calidad||'').toUpperCase().startsWith('EXPORT')?(+r.jarras||0)*k:0,ini:mins(r.inicio),fin:mins(r.fin),rec:mins(r.recojo),fu:r.fundo,b:String(r.envase||'').toUpperCase()==='BANDEJA'?(+r.n_envases||0):0,ds:!String(r.calidad||'').toUpperCase().startsWith('EXPORT'),cl:String(r.calidad||'').toUpperCase()})});
+ IND=Object.entries(P).map(([p,G])=>{G.sort((a,b)=>(a.rec??0)-(b.rec??0));const T=[];G.forEach(r=>{const t=T[T.length-1];if(t&&r.rec!=null&&r.rec-t.rec<=2){t.kg+=r.kg;t.b+=r.b;t.u=r.rec;t.ds=t.ds&&r.ds;if(r.ds&&!(t.cls||[]).includes(r.cl))(t.cls=t.cls||[]).push(r.cl);if(r.ini!=null)t.ini=Math.min(t.ini??1e9,r.ini)}else T.push({rec:r.rec,u:r.rec,kg:r.kg,b:r.b,ds:r.ds,cls:r.ds?[r.cl]:[],fu:r.fu,ini:r.ini})});
   T.forEach((t,i)=>{const rf=i&&T[i-1].rec!=null&&T[i-1].rec<=780&&t.rec>780,nv=!i||t.fu!==T[i-1].fu||rf;t.cv=t.rec==null?null:rf&&t.fu===T[i-1].fu?t.rec-780:nv?(t.ini!=null?t.rec-t.ini:null):(T[i-1].rec!=null?t.rec-T[i-1].rec:null);t.nv=nv;t.cf=!!i&&t.fu!==T[i-1].fu});const CI=T.map((t,i)=>i).filter(i=>T[i].cv!=null),cy=CI.map(i=>T[i].cv);T.ci=CI,kg=G.reduce((a,r)=>a+r.kg,0),ini=Math.min(...G.map(r=>r.ini??1e9)),ult=Math.max(...T.map(t=>t.rec??0)),hrs=ini<1e9&&ult>ini?(ult-ini)/60:0;
   const cos=G.filter(r=>r.ini!=null&&r.fin!=null).map(r=>r.fin-r.ini);
   return{p,g:G[0].g,v:T.length,kg,T,cy,cyp:cy.length?cy.reduce((a,b)=>a+b,0)/cy.length:null,kgh:hrs>=1?kg/hrs:null,cos:cos.length?cos.reduce((a,b)=>a+b,0)/cos.length:null,tar:TARIFA[p]||0,ult}})
@@ -89,7 +90,7 @@ function trend(D,bars,line,bfmt,lfmt,bcol,lcol,meta,bl,ll){const W=MW(.39),H=MH(
  P.forEach(q=>s+=`<circle cx="${q[0]}" cy="${q[1]}" r="5" fill="${lcol}"/><text x="${q[0]}" y="${q[1]-9}" text-anchor="middle" font-size="${fs}" font-weight="900" fill="${lcol}" stroke="#fff" stroke-width="4" paint-order="stroke">${lfmt(q[2])}</text>`);
  s+=`<g font-size="12" font-weight="800"><rect x="${W/2-150}" y="${H-14}" width="11" height="11" fill="${bcol}"/><text x="${W/2-135}" y="${H-4}">${bl}</text><circle cx="${W/2+30}" cy="${H-9}" r="5" fill="${lcol}"/><text x="${W/2+40}" y="${H-4}">${ll}</text></g>`;return s+'</svg>'}
 
-const SBK2=SBK,FX={vista:'s',dia:hoyX(),sem:new Set(),mes:'',fu:'',mod:'',vr:'',pl:'',grp:new Set(['A','B','C','D','E','F']),cal:new Set(['EXPORTABLE','DESCARTE','NACIONAL'])};let FECHAS=[];
+const SBK2=SBK,FX={vista:'s',dia:hoyX(),sem:new Set(),mes:'',fu:'',mod:'',vr:'',pl:'',ver:'g',grp:new Set(['A','B','C','D','E','F']),cal:new Set(['EXPORTABLE','DESCARTE','NACIONAL'])};let FECHAS=[];
 const lunes=d=>semana(d)[0],MESN=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 async function fechas(){try{const r=await (await fetch(`${SB}/rest/v1/guias_fechas?select=fecha&order=fecha`,{headers:H})).json();FECHAS=(Array.isArray(r)?r:[]).map(x=>x.fecha)}catch(e){FECHAS=[]}
  if(!FECHAS.includes(hoyX()))FECHAS.push(hoyX());const ws=[...new Set(FECHAS.map(lunes))].sort();if(!FX.sem.size&&ws.length)FX.sem.add(lunes(hoyX()));if(!FX.mes)FX.mes=hoyX().slice(0,7)}
@@ -100,6 +101,7 @@ function PER(){if(FX.vista==='d')return dmy(FX.dia);if(FX.vista==='m')return MES
 function sbHTML(o){const ws=[...new Set(FECHAS.map(lunes))].sort(),ms=[...new Set(FECHAS.map(x=>x.slice(0,7)))].sort();
  const chip=(k,v,lab,on)=>`<button data-k="${k}" data-v="${v}" class="${on?'on':''}">${lab}</button>`,sel=(k,lab,arr,cur)=>`<div><label>${lab}</label><select data-s="${k}"><option value="">Todos</option>${arr.map(x=>`<option${x===cur?' selected':''}>${x}</option>`).join('')}</select></div>`;
  let h=`<button class="lp cx" style="display:none" data-x="1">✕ Cerrar filtros</button><div><label>Vista</label><div class="ch">${[['d','Día'],['s','Semana'],['m','Mes']].map(([v,l])=>chip('vista',v,l,FX.vista===v)).join('')}</div></div>`;
+ h+=`<div><label>Ver</label><div class="ch">${[['g','General'],['f','Por fundo']].map(([v,l])=>chip('ver',v,l,FX.ver===v)).join('')}</div></div>`;
  if(FX.vista==='d')h+=`<div><label>Fecha</label><input type="date" data-s="dia" value="${FX.dia}"></div>`;
  if(FX.vista==='s')h+=`<div><label>Semana</label><div class="ch">${ws.map(l=>chip('sem',l,nsem(l),FX.sem.has(l))).join('')}</div></div>`;
  if(FX.vista==='m')h+=`<div><label>Mes</label><div class="ch">${ms.map(m=>chip('mes',m,MESN[+m.slice(5,7)-1].slice(0,3),FX.mes===m)).join('')}</div></div>`;
@@ -113,7 +115,7 @@ function sbInit(onLoad,onFilter){const sb=$('sb');
   if(b.dataset.x){sb.classList.remove('op');return}if(b.dataset.w){compartir(b);return}if(b.dataset.a){onLoad();return}
   if(b.dataset.r){FX.fu=FX.mod=FX.vr=FX.pl='';FX.grp=new Set(['A','B','C','D','E','F']);FX.cal=new Set(['EXPORTABLE','DESCARTE','NACIONAL']);onFilter();return}
   const k=b.dataset.k,v=b.dataset.v;if(!k)return;
-  if(k==='vista'){FX.vista=v;onLoad();return}if(k==='mes'){FX.mes=v;onLoad();return}
+  if(k==='vista'){FX.vista=v;onLoad();return}if(k==='ver'){FX.ver=v;onFilter();return}if(k==='mes'){FX.mes=v;onLoad();return}
   const S=FX[k];if(S.has(v)){if(S.size>1)S.delete(v)}else S.add(v);if(k==='sem')onLoad();else onFilter()};
  sb.onchange=e=>{const k=e.target.dataset.s;if(!k)return;FX[k]=e.target.value;if(k==='dia')onLoad();else onFilter()};
  $('sbt').onclick=()=>sb.classList.add('op')}
@@ -139,11 +141,24 @@ function vbar(L){const W=MW(ESS()?.6:1),H=MH(320),n=L.length||1,gw=(W-150)/n,bw=
 function hbar(L,val,lab,mx,meta,fmt,good){const W=520,rh=50,H=L.length*rh+34,X=v=>130+(W-210)*Math.min(v,mx)/mx;let s=`<svg viewBox="0 0 ${W} ${H}" width="100%">`;
  L.forEach((r,i)=>{const v=val(r),y=i*rh+8;s+=`<text x="120" y="${y+24}" text-anchor="end" font-size="14" font-weight="900" fill="${COL[r.g]||'#000'}">${lab(r)}</text><rect x="130" y="${y+4}" width="${Math.max(2,X(v??0)-130)}" height="28" fill="${good(v)}"/><text x="${X(v??0)+6}" y="${y+24}" font-size="14" font-weight="800">${v==null?'—':fmt(v)}</text>`});
  if(meta!=null){const xm=X(meta);s+=`<line x1="${xm}" x2="${xm}" y1="0" y2="${H-26}" stroke="${RO}" stroke-dasharray="5 4" stroke-width="2"/><text x="${xm}" y="${H-8}" text-anchor="middle" font-size="12" font-weight="800" fill="${RO}">meta ${fmt(meta)}</text>`}return s+'</svg>'}
+
+const FAB=fu=>String(fu).toUpperCase().replace('VALLE AZUL ','VA').replace('DUNA AZUL','DUNA');
+function porFundo(){const F0=FIL,I0=IND,D0=DAYS,R={};uniq(F0.map(r=>up2(r.fundo))).forEach(fu=>{FIL=F0.filter(r=>up2(r.fundo)===fu);if(ESS())calcS();else calc(FIL,DIAS()[0]);R[fu]=IND.slice()});FIL=F0;IND=I0;DAYS=D0;return R}
+function fbar(L,W,H){const n=Math.max(L.length,1),gw=(W-20)/n,bw=Math.min(70,gw*.55),mx=Math.max(META_CICLO*1.5,...L.map(x=>x.cyp||0))*1.12,Y=v=>H-62-(H-100)*v/mx,ym=Y(META_CICLO);
+ let s=`<svg viewBox="0 0 ${W} ${H}" width="100%"><line x1="6" x2="${W-6}" y1="${ym}" y2="${ym}" stroke="${RO}" stroke-dasharray="6 5" stroke-width="2"/>`;
+ L.forEach((x,i)=>{const cx=10+gw*i+gw/2,y=Y(x.cyp||0),c=sc(x.cyp,META_CICLO,40,1),ty=Math.abs(y-8-ym)<14?ym-8:y-8;s+=`<rect x="${cx-bw/2}" y="${y}" width="${bw}" height="${H-62-y}" rx="4" fill="${c}"/><text x="${cx}" y="${ty}" text-anchor="middle" font-size="17" font-weight="900" stroke="#fff" stroke-width="5" paint-order="stroke">${x.cyp==null?'—':Math.round(x.cyp)}</text>
+ <text x="${cx}" y="${H-40}" text-anchor="middle" font-size="19" font-weight="900" fill="${COL[x.g]||'#000'}">${x.g}</text><text x="${cx}" y="${H-23}" text-anchor="middle" font-size="11" font-weight="800" fill="#444">${x.p}</text><text x="${cx}" y="${H-7}" text-anchor="middle" font-size="11" font-weight="700" fill="#666">${x.v} viajes</text>`});return s+'</svg>'}
+function largos(){if(ESS())return'<div class="e" style="padding:14px">Elige la vista Día para ver el detalle de recojos largos.</div>';const Z=[];
+ IND.forEach(x=>(x.T||[]).forEach(t=>{if(t.cv!=null&&t.cv>=40)Z.push({p:x.p,g:x.g,fu:t.fu,de:t.rec-t.cv,a:t.rec,m:t.cv,b:t.b,nv:t.nv})}));Z.sort((a,b)=>b.m-a.m);
+ if(!Z.length)return'<div class="e" style="padding:14px">✅ Ningún recojo de 40 min o más.</div>';
+ return`<table><tr><th class="t">Grupo</th><th class="t">Kia</th><th class="t">Fundo</th><th>Hora</th><th>Minutos</th><th>Bandejas</th><th class="t">Nota</th></tr>${Z.map(z=>`<tr><td class="t"><b style="color:${COL[z.g]||'#000'}">${z.g}</b></td><td class="t">${z.p}</td><td class="t">${FAB(z.fu)}</td><td>${hm(z.de)} → ${hm(z.a)}</td><td><b style="color:${z.m>45?RO:AM}">${z.m}</b></td><td><b style="color:${z.b<30?RO:'#000'}">${f(z.b)}</b></td><td class="t" style="font-size:11px">${z.nv?'Primer recojo (inicio / cambio / refrigerio)':z.b<30?'Pocas bandejas':''}</td></tr>`).join('')}</table>`}
 function fit(){const o=$('out');o.classList.toggle('tr',o.children.length>=4)}
 function pintar(){const L=IND.slice();if(!L.length){$('out').innerHTML='<div class="e">No hay guías para '+PER()+'. Súbelas en guias-kia.</div>';return}
  const vi=L.reduce((a,x)=>a+x.v,0),kg=L.reduce((a,x)=>a+x.kg,0),cy=L.flatMap(x=>x.cy),cyp=cy.length?cy.reduce((a,b)=>a+b,0)/cy.length:null,em=cy.length?Math.round(cy.filter(v=>v<=META_CICLO).length/cy.length*100):null,kh=L.filter(x=>x.kgh),kgh=kh.length?kh.reduce((a,x)=>a+x.kgh,0)/kh.length:null;
  const card=(v,t,c)=>`<div style="border-color:${c||AZ}"><b style="color:${c&&c!==AZ&&c!==GR?c:'#000'}">${v}</b><small>${t}</small></div>`;
  let h=`<div class="kp">${card(vi,'Viajes')}${card(f(kg)+' kg','Kg exportable',GR)}${card(du(cyp),'Tiempo prom. de recojo',sc(cyp,META_CICLO,40,1))}${card(em==null?'—':em+' %','Viajes en meta (≤'+META_CICLO+' min)',em==null?'#999':em>=80?VE:em>=60?AM:RO)}${card(kgh?f(kgh)+' kg':'—','Kg por hora (prom.)','#123A5C')}</div>`;
+ if(FX.ver==='f'){const PF=porFundo(),K=Object.keys(PF);h+=`<div class="p"><h2>TIEMPO DE RECOJO POR FUNDO (min) · ${PER()}</h2><div class="b"><div class="pf" style="grid-template-columns:repeat(${Math.max(1,K.length)},1fr)">${K.map(fu=>`<div><h3>${fu}</h3>${fbar(PF[fu],Math.max(400,PF[fu].length*80),300)}</div>`).join('')}</div></div></div>`;
+  h+=`<div class="g2" style="grid-template-columns:1fr"><div class="p"><h2>RECOJOS LARGOS (40 MIN O MÁS)</h2><div class="b dt">${largos()}</div></div></div>`;$('out').innerHTML=h;fit();$('out').classList.remove('tr');$('hr').textContent='Actualizado '+new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'});if(document.body.classList.contains('snap'))$('hr').textContent=PER()+' · Por fundo · Grupos '+[...FX.grp].sort().join(' ');return}
  h+=`<div class="p"><h2>TIEMPO PROMEDIO DE RECOJO POR KIA · ${PER()}</h2><div class="b sx">${vbar(L)}</div></div>`;
  if(ESS()){const DD=DAYS.filter(x=>x.v);h+=`<div class="p" style="margin-top:12px"><h2>TENDENCIA POR DÍA</h2><div class="b sx">${trend(DD,x=>x.v,x=>x.cyp==null?null:Math.round(x.cyp),v=>v+' viajes',v=>v+' min',AZ,RO,META_CICLO,'Viajes','Tiempo prom. de recojo')}</div></div>`}
  const byT=L.slice().sort((a,b)=>(a.cyp??1e9)-(b.cyp??1e9)),byM=L.slice().sort((a,b)=>(enm(b)??-1)-(enm(a)??-1)),byK=L.slice().sort((a,b)=>(b.kgh??-1)-(a.kgh??-1));
@@ -152,12 +167,12 @@ function pintar(){const L=IND.slice();if(!L.length){$('out').innerHTML='<div cla
  <div class="p"><h2>DETALLE POR KIA</h2><div class="b dt"><table><tr><th class="t">Kia</th><th>Grupo</th><th class="t">Fundo</th><th>Viajes</th><th>Kg export.</th><th>Tiempo prom.</th><th>En meta</th><th>Kg/hora</th>${ESS()?'':'<th>Últ. recojo</th>'}</tr>`+
  L.map(x=>{const e=enm(x),fu=[...new Set(FIL.filter(r=>r.placa===x.p).map(r=>String(r.fundo).toUpperCase().replace('VALLE AZUL ','VA').replace('DUNA AZUL','DUNA')))].join(' / ');return`<tr><td class="t"><b style="color:${COL[x.g]||'#000'}">${x.p}</b></td><td>${x.g}</td><td class="t" style="font-size:11px">${fu}</td><td>${x.v}</td><td>${f(x.kg)}</td><td><span class="dot" style="background:${sc(x.cyp,META_CICLO,40,1)}"></span>${du(x.cyp)}</td><td>${e==null?'—':e+' %'}</td><td>${x.kgh?f(x.kgh):'—'}</td>${ESS()?'':`<td>${hm(x.ult)||'—'}</td>`}</tr>`}).join('')+
  `<tr class="tot"><td class="t">TOTAL</td><td></td><td></td><td>${vi}</td><td>${f(kg)}</td><td>${du(cyp)}</td><td>${em==null?'—':em+' %'}</td><td>${kgh?f(kgh):'—'}</td>${ESS()?'':'<td></td>'}</tr></table></div></div></div>`;
- $('out').innerHTML=h;fit();$('hr').textContent='Actualizado '+new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'});if(document.body.classList.contains('snap'))$('hr').textContent=PER()+' · '+(FX.fu||'Todos los fundos')+' · Grupos '+[...FX.grp].sort().join(' ')+(FX.pl?' · '+FX.pl:'')}
+ $('out').innerHTML=h;fit();$('hr').textContent='Actualizado '+new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'});if(document.body.classList.contains('snap'))$('hr').textContent=PER()+' · '+(FX.ver==='f'?'Por fundo':FX.fu||'Todos los fundos')+' · Grupos '+[...FX.grp].sort().join(' ')+(FX.pl?' · '+FX.pl:'')}
 {const q=new URLSearchParams(location.search).get('fecha');if(q){FX.vista='d';FX.dia=q}}
 async function compartir(b){const t0=b.textContent;
  if(b._fl){try{if(navigator.canShare&&navigator.canShare({files:[b._fl]}))await navigator.share({files:[b._fl],title:document.title});else{const a=document.createElement('a');a.href=URL.createObjectURL(b._fl);a.download=b._fl.name;a.click()}}catch(e){}b._fl=null;b.textContent='📲 Compartir WhatsApp';return}
  b.textContent='Creando imagen…';b.disabled=true;
- const st={vista:FX.vista,dia:FX.dia,sem:[...FX.sem],mes:FX.mes,fu:FX.fu,grp:[...FX.grp],pl:FX.pl};
+ const st={vista:FX.vista,dia:FX.dia,sem:[...FX.sem],mes:FX.mes,fu:FX.fu,grp:[...FX.grp],pl:FX.pl,ver:FX.ver};
  const fr=document.createElement('iframe');fr.style.cssText='position:fixed;left:-10000px;top:0;width:1280px;height:720px;border:0';fr.src=location.pathname+'?st='+encodeURIComponent(JSON.stringify(st));document.body.appendChild(fr);
  try{await new Promise((ok,ko)=>{let n=0;const iv=setInterval(()=>{n++;try{if(fr.contentWindow.SNAP_READY&&fr.contentWindow.html2canvas){clearInterval(iv);ok()}}catch(e){}if(n>120){clearInterval(iv);ko('tiempo')}},250)});
   await new Promise(r=>setTimeout(r,400));const w=fr.contentWindow,cv=await w.html2canvas(w.document.body,{scale:2.5,width:1280,height:720,windowWidth:1280,windowHeight:720,backgroundColor:'#E9EDF2'});
@@ -165,6 +180,6 @@ async function compartir(b){const t0=b.textContent;
   const fl=new File([bl],nm,{type:'image/jpeg'});
   if(navigator.canShare&&navigator.canShare({files:[fl]})){b._fl=fl;b.textContent='📲 Enviar foto';}else{const a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download=nm;a.click();b.textContent='✅ Foto descargada';setTimeout(()=>b.textContent='📲 Compartir WhatsApp',2500)}}
  catch(e){alert('No se pudo crear la imagen: '+e);b.textContent=t0}finally{b.disabled=false;fr.remove()}}
-const SNAP=new URLSearchParams(location.search).get('st');if(SNAP){try{const o=JSON.parse(SNAP);Object.assign(FX,{vista:o.vista,dia:o.dia,mes:o.mes,fu:o.fu||'',pl:o.pl||'',sem:new Set(o.sem),grp:new Set(o.grp)});document.body.classList.add('snap')}catch(e){}}
+const SNAP=new URLSearchParams(location.search).get('st');if(SNAP){try{const o=JSON.parse(SNAP);Object.assign(FX,{vista:o.vista,dia:o.dia,mes:o.mes,fu:o.fu||'',pl:o.pl||'',ver:o.ver||'g',sem:new Set(o.sem),grp:new Set(o.grp)});document.body.classList.add('snap')}catch(e){}}
 sbInit(cargar,build);fechas().then(()=>cargar()).then(()=>{window.SNAP_READY=1});setInterval(()=>{if(!document.hidden)cargar()},300000);
 </script></body></html>
