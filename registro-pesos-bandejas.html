@@ -106,7 +106,7 @@ body.kb .tabs,body.kb .bar,body.kb .undo{display:none!important}body.kb .wrap{pa
 .undo button{background:var(--panel);color:var(--ink);border:0;border-radius:10px;min-height:44px;padding:0 16px;font-weight:600;cursor:pointer}
 .undo i{position:absolute;left:0;bottom:0;height:3px;background:var(--leaf);border-radius:0 0 0 14px;animation:u 7s linear forwards}
 @keyframes u{from{width:100%}to{width:0}}
-.del{background:none;border:1px solid var(--line);color:var(--ink2);border-radius:8px;font-size:12.5px;font-weight:600;padding:3px 8px;margin-top:4px;cursor:pointer}
+.del.sure{background:#B3261E!important;color:#fff!important;border-color:#B3261E!important}.del{background:none;border:1px solid var(--line);color:var(--ink2);border-radius:8px;font-size:12.5px;font-weight:600;padding:3px 8px;margin-top:4px;cursor:pointer}
 .del.sure{border-color:var(--red);color:var(--red)}
 .hm{display:grid;gap:14px;margin-top:6px}.ht{width:100%;display:grid;grid-template-columns:76px 1fr;grid-template-rows:auto auto;align-items:center;text-align:left;border:0;border-radius:18px;background:var(--c);color:#fff;padding:18px 16px;min-height:118px;box-shadow:0 4px 12px #0002;cursor:pointer}
 .ht span{grid-row:1/3;font-size:50px;line-height:1;text-align:center}.ht b{font:700 25px "Barlow Semi Condensed",sans-serif}.ht small{font-size:15px;opacity:.9}.ht:active{transform:scale(.98)}
@@ -371,7 +371,7 @@ function renderList(){
     {const tj=all.reduce((a,r)=>a+(+r.jabas||0),0),tk=all.reduce((a,r)=>a+(+r.kg||0),0);$('miniTxt').textContent=`Hoy: ${all.length} registros · ${tj} jabas · ${Math.round(tk).toLocaleString('en-US')} kg`}
     const ks=[...new Set([...Object.keys(g),...Object.keys(gj)])].sort();
     $('sum').innerHTML=ks.length?`<table class="cmp"><tr><th>Grupo</th><th>Guías</th><th>Recibido</th><th>Kg</th><th></th></tr>${ks.map(k=>{const a=Math.round(gj[k]||0),r=(g[k]||{}).j||0,d=r-a;return`<tr><td><b>${esc(k)}</b></td><td>${a}</td><td>${r}</td><td>${((g[k]||{}).kg||0).toFixed(1)}</td><td class="${d<0?'f':d>0?'x':'o'}">${d<0?'faltan '+(-d):d>0?'+'+d+' sin guía':'✔'}</td></tr>`}).join('')}</table>`:(gu===undefined?'<small>Cargando guías…</small>':'');
-    $('list').innerHTML=all.length?all.slice().reverse().slice(0,40).map(r=>`<div class="reg"><div class="g">${esc(r.grupo)}</div><div>${esc(r.jabas)} jabas${r.modulo?' · '+esc(r.modulo):''}${r.variedad?' · '+esc(r.variedad):''}<small>Descarte${r.p?' · <span class="pend">enviando…</span>':''}</small></div><div class="kg">${Number(r.kg).toFixed(2)}<small> kg</small>${r.id&&r.t&&Date.now()-r.t<5.5*3600e3?`<br><button type="button" class="del" data-del="${esc(r.id)}">Deshacer</button>`:''}</div></div>`).join(''):'<div class="empty">Aún no hay descarte este día.</div>';
+    $('list').innerHTML=all.length?all.slice().reverse().slice(0,40).map(r=>`<div class="reg"><div class="g">${esc(r.grupo)}</div><div>${esc(r.jabas)} jabas${r.modulo?' · '+esc(r.modulo):''}${r.variedad?' · '+esc(r.variedad):''}<small>Descarte${r.p?' · <span class="pend">enviando…</span>':''}</small></div><div class="kg">${Number(r.kg).toFixed(2)}<small> kg</small>${r.id?`<br><button type="button" class="del" data-del="${esc(r.id)}">🗑 Eliminar</button>`:''}</div></div>`).join(''):'<div class="empty">Aún no hay descarte este día.</div>';
     return;
   }
   const f=(TABA==='resumen'?$('fechaR').value:$('fecha').value)||today();
@@ -380,7 +380,7 @@ function renderList(){
   const g={};all.forEach(r=>{const t=r.tipo in JARRAS?r.tipo:'Normal';const e=esperado(+r.cantidad,t);if(!(e>0))return;(g[r.grupo]=g[r.grupo]||{n:0,kg:0,e:0});g[r.grupo].n++;g[r.grupo].kg+=+r.kg;g[r.grupo].e+=e});
   $('sum').innerHTML=Object.keys(g).sort().map(k=>{const p=g[k].kg/g[k].e*100;return`<div class="${nivel(p)}"><small>Grupo ${esc(k)} · ${g[k].n}</small><b>${p.toFixed(1)}%</b></div>`}).join('');
   $('list').innerHTML=all.length?all.slice().reverse().slice(0,40).map(r=>{const t=r.tipo in JARRAS?r.tipo:'Normal';const p=+r.kg/esperado(+r.cantidad,t)*100;
-    return`<div class="reg"><div class="g">${esc(r.grupo)}</div><div>${esc(r.modulo)} · ${esc(r.variedad)}<small>${esc(String(r.acopio).replace('VALLE AZUL','VA'))} · ${esc(r.tipo)} · ${esc(r.cantidad)} band. · <span style="color:var(--${nivel(p)==='ok'?'leaf':nivel(p)==='hi'?'warn':'red'})">${isFinite(p)?p.toFixed(1)+'%':''}</span>${r.p?' · <span class="pend">enviando…</span>':''}</small></div><div class="kg">${Number(r.kg).toFixed(3)}<small> kg</small>${r.id&&r.t&&Date.now()-r.t<5.5*3600e3?`<br><button type="button" class="del" data-del="${esc(r.id)}">Deshacer</button>`:''}</div></div>`}).join(''):'<div class="empty">Aún no hay registros este día.</div>';
+    return`<div class="reg"><div class="g">${esc(r.grupo)}</div><div>${esc(r.modulo)} · ${esc(r.variedad)}<small>${esc(String(r.acopio).replace('VALLE AZUL','VA'))} · ${esc(r.tipo)} · ${esc(r.cantidad)} band. · <span style="color:var(--${nivel(p)==='ok'?'leaf':nivel(p)==='hi'?'warn':'red'})">${isFinite(p)?p.toFixed(1)+'%':''}</span>${r.p?' · <span class="pend">enviando…</span>':''}</small></div><div class="kg">${Number(r.kg).toFixed(3)}<small> kg</small>${r.id?`<br><button type="button" class="del" data-del="${esc(r.id)}">🗑 Eliminar</button>`:''}</div></div>`}).join(''):'<div class="empty">Aún no hay registros este día.</div>';
 }
 $('fecha').onchange=renderList;
 /* ---------- deshacer ---------- */
@@ -400,7 +400,7 @@ async function deshacer(id){
   }catch(e){toast('Sin señal: no se pudo borrar. Inténtalo de nuevo.')}
 }
 $('list').onclick=e=>{const b=e.target.closest('[data-del]');if(!b)return;
-  if(!b.classList.contains('sure')){b.classList.add('sure');b.textContent='¿Borrar?';setTimeout(()=>{b.classList.remove('sure');b.textContent='Deshacer'},3000);return}
+  if(!b.classList.contains('sure')){b.classList.add('sure');b.textContent='¿Seguro? Toca otra vez';setTimeout(()=>{b.classList.remove('sure');b.textContent='🗑 Eliminar'},4000);return}
   deshacer(b.dataset.del)};
 
 async function load(){
