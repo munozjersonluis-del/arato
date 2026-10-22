@@ -44,7 +44,8 @@ tr.t td{font-weight:800;background:#E7EEF5}
  </div>
 </main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script>
+<script>const CYC=(rec,ini,fu,a)=>{if(rec==null)return null;if(!a)return ini!=null&&ini<1e9?rec-ini:null;const rf=a.rec!=null&&a.rec<=780&&rec>780;if(fu!==a.fu){return ini!=null&&ini<1e9?rec-ini:null}if(rf)return ini!=null&&ini<1e9&&ini>a.rec?rec-ini:rec-780;return a.rec!=null?rec-a.rec:null};
+
 const API_PESOS='https://script.google.com/macros/s/AKfycbwhK53Cj21HYT7irdMvqonPvhEjAzo2ab-cJ4wytAtoUnIV0dpA8LHrt6GBrOcXWFx8/exec';
 const TARIFA={'TCI-843':230,'TAU-800':215,'TCX-842':220,'TCA-816':215,'TEY-880':215,'THF-949':215,'BTL-775':215,'T9N-825':300,'TEB-876':300,'H2X-887':220};
 const TARA=0.292,JPB={NORMAL:2.5,HUMEDA:1.5};
@@ -98,7 +99,7 @@ function calc(){
  const VIA=[],IND=[];
  Object.entries(P).sort().forEach(([k,L])=>{const[f,pl]=k.split('|');L.sort((a,b)=>(a.rec??0)-(b.rec??0));const T=[];
   L.forEach(r=>{const t=T[T.length-1];if(t&&r.rec!=null&&r.rec-t.rec<=2){t.g.push(r);t.ult=r.rec}else T.push({rec:r.rec,ult:r.rec,g:[r]})});
-  T.forEach((t,i)=>{const ant=T[i-1];VIA.push({fecha:f,placa:pl,grupo:t.g[0].grupo,n:i+1,sx:t.g.every(x=>!/^EXPORT/i.test(x.calidad||'')),ini:Math.min(...t.g.map(x=>x.ini??1e9)),fin:Math.max(...t.g.map(x=>x.fin??0)),rec:t.rec,guias:t.g.length,jarras:t.g.reduce((a,x)=>a+x.jarras,0),kg:t.g.reduce((a,x)=>a+x.kg,0),ciclo:ant&&t.rec!=null&&ant.rec!=null?t.rec-ant.rec:null,fundo:[...new Set(t.g.map(x=>x.fundo))].join(', ')})});
+  T.forEach((t,i)=>{const ant=T[i-1];VIA.push({fecha:f,placa:pl,grupo:t.g[0].grupo,n:i+1,sx:t.g.every(x=>!/^EXPORT/i.test(x.calidad||'')),ini:Math.min(...t.g.map(x=>x.ini??1e9)),fin:Math.max(...t.g.map(x=>x.fin??0)),rec:t.rec,guias:t.g.length,jarras:t.g.reduce((a,x)=>a+x.jarras,0),kg:t.g.reduce((a,x)=>a+x.kg,0),ciclo:CYC(t.rec,Math.min(...t.g.map(x=>x.ini??1e9)),[...new Set(t.g.map(x=>x.fundo))].join(', '),ant&&{rec:ant.rec,fu:[...new Set(ant.g.map(x=>x.fundo))].join(', ')}),fundo:[...new Set(t.g.map(x=>x.fundo))].join(', ')})});
   const V=VIA.filter(v=>v.fecha===f&&v.placa===pl),cy=V.map(v=>v.ciclo).filter(x=>x!=null),ini=Math.min(...L.map(x=>x.ini??1e9)),ult=Math.max(...L.map(x=>x.rec??0));
   const hrs=ini<1e9&&ult>ini?(ult-ini)/60:0,kg=V.reduce((a,v)=>a+v.kg,0),tar=TARIFA[pl]||null;
   IND.push({fecha:f,placa:pl,grupo:L[0].grupo,viajes:V.length,jarras:V.reduce((a,v)=>a+v.jarras,0),kg,ini,ult,hrs,ciclo:cy.length?cy.reduce((a,b)=>a+b,0)/cy.length:null,kgh:hrs?kg/hrs:null,cos:L.map(x=>x.cos).filter(x=>x!=null).reduce((a,b,_,A)=>a+b/A.length,0),tar,cxt:tar&&kg?tar/(kg/1000):null,pj:L[0].pj,pjsrc:L[0].pjsrc})});
