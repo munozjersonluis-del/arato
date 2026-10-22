@@ -27,7 +27,8 @@
 <select id="fu"><option value="">Todos los fundos</option></select><input type="date" id="dia"><button id="act">↻ Actualizar</button><button id="xl" style="background:#1D6F42">📥 Excel</button></div></div>
 <div class="w"><div class="ley">🟥 error seguro · 🟨 dudoso · Refrigerio 12:00–13:00 o 12:30–13:30 · Toca el grupo para ver todas sus guías en orden; las que tienen error salen en rojo con la explicación. Inicio → Fin = llenado de la guía.</div><div id="out"><div class="e">Cargando…</div></div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
-<script>
+<script>const CYC=(rec,ini,fu,a)=>{if(rec==null)return null;if(!a)return ini!=null&&ini<1e9?rec-ini:null;const rf=a.rec!=null&&a.rec<=780&&rec>780;if(fu!==a.fu){return ini!=null&&ini<1e9?rec-ini:null}if(rf)return ini!=null&&ini<1e9&&ini>a.rec?rec-ini:rec-780;return a.rec!=null?rec-a.rec:null};
+
 const SB='https://rqvcvffyynpnighzwxju.supabase.co',SBK='sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn',H={apikey:SBK,Authorization:'Bearer '+SBK};
 const $=i=>document.getElementById(i),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const mins=v=>{const m=String(v||'').match(/(\d{1,2}):(\d{2})/);return m?+m[1]*60+ +m[2]:null},hm=m=>m==null?'—':Math.floor(m/60)+':'+String(m%60).padStart(2,'0');
@@ -48,7 +49,7 @@ function pintar(){const F=$('fu').value,P={};
  let h='',tot=0,nv=0;DATA=[];
  Object.keys(P).sort((a,b)=>P[a][0].g.localeCompare(P[b][0].g)).forEach(p=>{const L=P[p].sort((a,b)=>(a.rec??0)-(b.rec??0)),T=[];
   L.forEach(r=>{const t=T[T.length-1];if(t&&r.rec!=null&&r.rec-t.rec<=2){t.gs.push(r);t.u=r.rec}else T.push({rec:r.rec,u:r.rec,gs:[r]})});
-  const V=T.map((t,i)=>({n:i+1,gs:t.gs,sx:t.gs.every(x=>!/^EXPORT/i.test(x.cal||'')),ini:Math.min(...t.gs.map(x=>x.ini??1e9)),fin:Math.max(...t.gs.map(x=>x.fin??-1)),rec:t.rec,fu:[...new Set(t.gs.map(x=>x.fu))].join(', '),ciclo:i&&t.rec!=null&&T[i-1].rec!=null?t.rec-T[i-1].rec:null}));
+  const V=T.map((t,i)=>({n:i+1,gs:t.gs,sx:t.gs.every(x=>!/^EXPORT/i.test(x.cal||'')),ini:Math.min(...t.gs.map(x=>x.ini??1e9)),fin:Math.max(...t.gs.map(x=>x.fin??-1)),rec:t.rec,fu:[...new Set(t.gs.map(x=>x.fu))].join(', '),ciclo:CYC(t.rec,Math.min(...t.gs.map(x=>x.ini??1e9)),[...new Set(t.gs.map(x=>x.fu))].join(', '),i&&{rec:T[i-1].rec,fu:[...new Set(T[i-1].gs.map(x=>x.fu))].join(', ')})}));
   V.forEach(v=>{if(v.ini>=1e9)v.ini=null;if(v.fin<0)v.fin=null});revisar(V);
   const M=V.filter(v=>v.o.length);DATA.push({p,g:L[0].g,V,M});nv+=V.length;tot+=M.length;
   h+=`<details class="c"><summary><h2>🚚 ${esc(p)} · GRUPO ${esc(L[0].g)} · ${V.length} viajes${M.length?` · <span style="background:#D2412C;padding:2px 8px;border-radius:6px">${M.length} por corregir</span>`:' · ✅ todo bien'} <span class="ab">▼</span></h2></summary>`
