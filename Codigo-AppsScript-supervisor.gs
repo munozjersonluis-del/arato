@@ -39,9 +39,34 @@ function leer_(sh) {
     .filter(r => r.grupo);
 }
 
+// ===== SALIDA DE COSECHA (pestaña SALIDAS, filas 5 a 21) =====
+const S0 = 5, SN = 17;
+const FL_ = f => ({ 'DUNA': 'DUNA AZUL', 'VALLE 1': 'VALLE AZUL 1', 'VALLE 2': 'VALLE AZUL 2', 'VALLE 3': 'VALLE AZUL 3', 'VALLE 4': 'VALLE AZUL 4' })[String(f).toUpperCase()] || f;
+function salHoja_(ss) {
+  const sh = ss.getSheetByName('SALIDAS');
+  const p = PropertiesService.getScriptProperties(), d = hoy_(), ant = p.getProperty('dia_SALIDAS');
+  if (ant && ant !== d) sh.getRange(S0, 2, SN, 4).clearContent();
+  if (ant !== d) p.setProperty('dia_SALIDAS', d);
+  return sh;
+}
+function leerSal_(ss) {
+  const sh = salHoja_(ss);
+  return sh.getRange(S0, 2, SN, 4).getDisplayValues().filter(r => r[0]).map(r => ({ grupo: r[0], co: r[1], fundo: r[2], hora: r[3] }));
+}
+function histSal_(ss) {
+  let h = ss.getSheetByName('HISTORIAL SALIDAS');
+  if (!h) {
+    h = ss.insertSheet('HISTORIAL SALIDAS');
+    h.appendRow(['FECHA', 'SUPERVISOR', 'GRUPO', 'COMEDOR', 'FUNDO', 'HORA', 'REGISTRADO', 'ESTADO']);
+    h.getRange(1, 1, 1, 8).setFontWeight('bold').setBackground('#123A5C').setFontColor('#fff');
+    h.setFrozenRows(1);
+  }
+  return h;
+}
+
 function doGet(e) {
   const ss = SpreadsheetApp.getActive(), sup = String((e && e.parameter.sup) || '').toUpperCase();
-  const out = { ok: true, supervisores: SUP, comedores: bd_(ss), movs: [] };
+  const out = { ok: true, supervisores: SUP, comedores: bd_(ss), movs: [], salidas: leerSal_(ss) };
   if (SUP.includes(sup)) { const sh = ss.getSheetByName(sup); if (sh) out.movs = leer_(sh); }
   return json_(out);
 }
@@ -54,6 +79,26 @@ function doPost(e) {
     if (!SUP.includes(sup)) return json_({ ok: false, error: 'Supervisor no válido' });
     const sh = ss.getSheetByName(sup); if (!sh) return json_({ ok: false, error: 'No existe la pestaña ' + sup });
     limpiaDia_(sh);
+
+    if (b.accion === 'salida' || b.accion === 'borrarSalida') {
+      const S = salHoja_(ss), HS = histSal_(ss), g = String(b.grupo || '').trim();
+      const v = S.getRange(S0, 2, SN, 1).getValues();
+      let i = v.findIndex(r => String(r[0]).trim().toUpperCase() === g.toUpperCase());
+      const ahora = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm');
+      if (b.accion === 'borrarSalida') {
+        if (i >= 0) S.getRange(S0 + i, 2, 1, 4).clearContent();
+        HS.appendRow([hoy_(), sup, g, '', '', '', ahora, 'ANULADO']);
+        return json_({ ok: true, salidas: leerSal_(ss) });
+      }
+      if (!g || !b.co || !b.hora) return json_({ ok: false, error: 'Faltan datos de la salida' });
+      if (i < 0) i = v.findIndex(r => r[0] === '' || r[0] == null);
+      if (i < 0) return json_({ ok: false, error: 'SALIDAS está llena' });
+      const co = /^\d+$/.test(String(b.co)) ? Number(b.co) : String(b.co);
+      S.getRange(S0 + i, 2, 1, 4).setValues([[g, co, FL_(b.fundo), String(b.hora)]]);
+      HS.appendRow([hoy_(), sup, g, co, FL_(b.fundo), String(b.hora), ahora, 'OK']);
+      return json_({ ok: true, salidas: leerSal_(ss) });
+    }
+
     const H = hist_(ss);
 
     if (b.accion === 'borrar') {
