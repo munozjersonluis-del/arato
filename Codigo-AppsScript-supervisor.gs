@@ -67,6 +67,26 @@ function doPost(e) {
       return json_({ ok: true, movs: leer_(sh) });
     }
 
+    if (b.accion === 'editar') {
+      const v = sh.getRange(F0, 12, NF, 1).getValues();
+      const i = v.findIndex(r => String(r[0]) === String(b.id));
+      if (i < 0) return json_({ ok: false, error: 'No se encontró el movimiento' });
+      const f = F0 + i, num = x => (/^\d+$/.test(x) ? Number(x) : x);
+      sh.getRange(f, 2).setValue(String(b.grupo || '').toUpperCase());
+      sh.getRange(f, 3).setValue(Number(b.personas) || '');
+      sh.getRange(f, 5).setValue(num(String(b.co)));
+      sh.getRange(f, 8).setValue(num(String(b.cd)));
+      sh.getRange(f, 9).setValue(String(b.hora));
+      const ids = H.getRange(2, 11, Math.max(1, H.getLastRow() - 1), 1).getValues();
+      const j = ids.findIndex(r => String(r[0]) === String(b.id));
+      if (j >= 0) {
+        const B = bd_(ss), fu = c => (B.find(x => x.c === c) || {}).f || '';
+        H.getRange(j + 2, 3, 1, 7).setValues([[String(b.grupo).toUpperCase(), Number(b.personas) || '', fu(String(b.co)), num(String(b.co)), fu(String(b.cd)), num(String(b.cd)), String(b.hora)]]);
+        H.getRange(j + 2, 12).setValue('EDITADO');
+      }
+      return json_({ ok: true, movs: leer_(sh) });
+    }
+
     // agregar
     const g = String(b.grupo || '').toUpperCase(), co = String(b.co || ''), cd = String(b.cd || ''), hora = String(b.hora || '');
     if (!g || !co || !cd || !hora) return json_({ ok: false, error: 'Faltan datos' });
