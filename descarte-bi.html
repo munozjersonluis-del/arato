@@ -113,12 +113,12 @@ const KEY=(g,m,v)=>FX.dim==='mv'?(m||'SIN MÓD.')+' · '+(v||'SIN VAR.'):g;
 const okF=(g,m,v,f)=>FX.grp.has(g)&&(!FX.fu||f===FX.fu)&&(!FX.mod||m===FX.mod)&&(!FX.vr||v===FX.vr);
 function build(){const GD=new Set(RG.map(r=>r.fecha)),M={},FM={},FG={};RG.forEach(r=>{const f=up(r.fundo);FM[r.fecha+'|'+gr(r.grupo)+'|'+up(r.modulo)]=f;(FG[r.fecha+'|'+gr(r.grupo)]=FG[r.fecha+'|'+gr(r.grupo)]||new Set()).add(f)});const fuA=a=>FM[a.d+'|'+a.g+'|'+a.m]||((FG[a.d+'|'+a.g]||new Set()).size===1?[...FG[a.d+'|'+a.g]][0]:'SIN FUNDO');const o=(d,k)=>{const kk=d+'|'+k;return M[kk]=M[kk]||{d,g:k,jc:0,ja:0,kg:0,jd:0,jt:0}};
  RG.forEach(r=>{const g=gr(r.grupo),m=up(r.modulo),v=up(r.variedad);if(!okF(g,m,v,up(r.fundo)))return;const x=o(r.fecha,KEY(g,m,v)),jr=Number(r.jarras)||0;x.jt+=jr;if(up(r.calidad)==='DESCARTE'){x.jd+=jr;x.jc+=up(r.envase)==='JABA'?(Number(r.n_envases)||0):jr/JPJ}});
- (AC||[]).filter(a=>GD.has(a.d)&&okF(a.g,a.m,a.v,fuA(a))).forEach(a=>{const x=o(a.d,KEY(a.g,a.m,a.v));x.ja+=a.j;x.kg+=a.kg});
+ (AC||[]).filter(a=>GD.has(a.d)&&fuA(a)!=='SIN FUNDO'&&okF(a.g,a.m,a.v,fuA(a))).forEach(a=>{const x=o(a.d,KEY(a.g,a.m,a.v));x.ja+=a.j;x.kg+=a.kg});
  DAYS=Object.values(M).map(x=>({...x,fa:Math.max(0,x.jc-x.ja),sg:Math.max(0,x.ja-x.jc)}));
  const R={};DAYS.forEach(x=>{const r=R[x.g]=R[x.g]||{g:x.g,jc:0,ja:0,kg:0,jd:0,jt:0,fa:0,sg:0};['jc','ja','kg','jd','jt','fa','sg'].forEach(k=>r[k]+=x[k])});
  ROWS=Object.values(R).filter(r=>r.jc||r.ja).sort((a,b)=>FX.dim==='g'?a.g.localeCompare(b.g):(b.jc+b.ja)-(a.jc+a.ja));
  const MS=uniq([...RG.map(r=>up(r.modulo)),...(AC||[]).filter(a=>GD.has(a.d)).map(a=>a.m)]),VS=uniq([...RG.map(r=>up(r.variedad)),...(AC||[]).filter(a=>GD.has(a.d)).map(a=>a.v)]);
- sbHTML({dim:1,fu:uniq([...RG.map(r=>up(r.fundo)),...(AC||[]).filter(a=>GD.has(a.d)).map(fuA)]),mod:MS,vr:VS});pintar()}
+ sbHTML({dim:1,fu:uniq([...RG.map(r=>up(r.fundo)),...(AC||[]).filter(a=>GD.has(a.d)).map(fuA).filter(f=>f!=='SIN FUNDO')]),mod:MS,vr:VS});pintar()}
 const sum=L=>L.reduce((a,x)=>{['jc','ja','kg','jd','jt','fa','sg'].forEach(k=>a[k]+=x[k]);return a},{jc:0,ja:0,kg:0,jd:0,jt:0,fa:0,sg:0});
 const pd=x=>x.jt?Math.round(x.jd/x.jt*100):null,kj=x=>x.ja?x.kg/x.ja:null,f1=v=>(Math.round(v*10)/10).toFixed(1);
 function combo(L){const W=MW(ESS()?.6:1),H=MH(330),n=L.length||1,gw=(W-40)/n,bw=Math.min(54,gw*.3),mx=Math.max(1,...L.map(x=>Math.max(x.jc,x.ja)))*1.45,Y=v=>H-70-(H-150)*v/mx;
