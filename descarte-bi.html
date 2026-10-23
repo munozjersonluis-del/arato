@@ -86,7 +86,7 @@ function sbHTML(o){const ws=[...new Set(FECHAS.map(lunes))].sort(),ms=[...new Se
  if(FX.vista==='d')h+=`<div><label>Fecha</label><input type="date" data-s="dia" value="${FX.dia}"></div>`;
  if(FX.vista==='s')h+=`<div><label>Semana</label><div class="ch">${ws.map(l=>chip('sem',l,nsem(l),FX.sem.has(l))).join('')}</div></div>`;
  if(FX.vista==='m')h+=`<div><label>Mes</label><div class="ch">${ms.map(m=>chip('mes',m,MESN[+m.slice(5,7)-1].slice(0,3),FX.mes===m)).join('')}</div></div>`;
- if(o.fu)if(o.dim)h+=`<div><label>Ver por</label><div class="ch">${[['g','Grupo'],['mv','Módulo y variedad']].map(([v,l])=>chip('dim',v,l,FX.dim===v)).join('')}</div></div>`;if(o.fu)h+=sel('fu','Fundo',o.fu,FX.fu);if(o.mod)h+=sel('mod','Módulo',o.mod,FX.mod);if(o.vr)h+=sel('vr','Variedad',o.vr,FX.vr);
+ if(o.dim)h+=`<div><label>Ver por</label><div class="ch">${[['g','Grupo'],['mv','Módulo y variedad']].map(([v,l])=>chip('dim',v,l,FX.dim===v)).join('')}</div></div>`;if(o.fu)h+=sel('fu','Fundo',o.fu,FX.fu);if(o.mod)h+=sel('mod','Módulo',o.mod,FX.mod);if(o.vr)h+=sel('vr','Variedad',o.vr,FX.vr);
  h+=`<div><label>Grupo</label><div class="ch">${['A','B','C','D','E','F'].map(g=>chip('grp',g,g,FX.grp.has(g))).join('')}</div></div>`;
  if(o.pl)h+=sel('pl','Kia / Placa',o.pl,FX.pl);
  if(o.cal)h+=`<div><label>Calidad</label><div class="ch">${[['EXPORTABLE','Exportable'],['DESCARTE','Descarte'],['NACIONAL','Nacional']].map(([v,l])=>chip('cal',v,l,FX.cal.has(v))).join('')}</div></div>`;
@@ -106,19 +106,19 @@ const up2=s=>String(s??'').trim().toUpperCase(),gr2=s=>up2(s).charAt(0),uniq=a=>
 const API_P='https://script.google.com/macros/s/AKfycbwhK53Cj21HYT7irdMvqonPvhEjAzo2ab-cJ4wytAtoUnIV0dpA8LHrt6GBrOcXWFx8/exec';
 let AC=null,RG=[];const JPJ=20;
 async function cargar(){const DS=DIAS();$('out').innerHTML='<div class="e">Cargando…</div>';
- try{const [p,g]=await Promise.all([fetch(API_P,{cache:'no-store'}).then(r=>r.json()),fetch(`${SB}/rest/v1/guias_campo?fecha=gte.${DS[0]}&fecha=lte.${DS[DS.length-1]}&select=fecha,grupo,modulo,variedad,calidad,envase,n_envases,jarras&limit=50000`,{headers:H}).then(r=>r.json())]);
+ try{const [p,g]=await Promise.all([fetch(API_P,{cache:'no-store'}).then(r=>r.json()),fetch(`${SB}/rest/v1/guias_campo?fecha=gte.${DS[0]}&fecha=lte.${DS[DS.length-1]}&select=fecha,grupo,fundo,modulo,variedad,calidad,envase,n_envases,jarras&limit=50000`,{headers:H}).then(r=>r.json())]);
   AC=(p.descartes||[]).map(x=>({d:String(x.fecha).slice(0,10),g:gr(x.grupo),m:up(x.modulo),v:up(x.variedad),j:Number(x.jabas)||0,kg:Number(x.kg)||0}));
   const S=new Set(DS);RG=(Array.isArray(g)?g:[]).filter(r=>S.has(r.fecha));build()}catch(e){$('out').innerHTML='<div class="e">No se pudo cargar: '+e+'</div>'}}
 const KEY=(g,m,v)=>FX.dim==='mv'?(m||'SIN MÓD.')+' · '+(v||'SIN VAR.'):g;
-const okF=(g,m,v)=>FX.grp.has(g)&&(!FX.mod||m===FX.mod)&&(!FX.vr||v===FX.vr);
-function build(){const GD=new Set(RG.map(r=>r.fecha)),M={};const o=(d,k)=>{const kk=d+'|'+k;return M[kk]=M[kk]||{d,g:k,jc:0,ja:0,kg:0,jd:0,jt:0}};
- RG.forEach(r=>{const g=gr(r.grupo),m=up(r.modulo),v=up(r.variedad);if(!okF(g,m,v))return;const x=o(r.fecha,KEY(g,m,v)),jr=Number(r.jarras)||0;x.jt+=jr;if(up(r.calidad)==='DESCARTE'){x.jd+=jr;x.jc+=up(r.envase)==='JABA'?(Number(r.n_envases)||0):jr/JPJ}});
- (AC||[]).filter(a=>GD.has(a.d)&&okF(a.g,a.m,a.v)).forEach(a=>{const x=o(a.d,KEY(a.g,a.m,a.v));x.ja+=a.j;x.kg+=a.kg});
+const okF=(g,m,v,f)=>FX.grp.has(g)&&(!FX.fu||f===FX.fu)&&(!FX.mod||m===FX.mod)&&(!FX.vr||v===FX.vr);
+function build(){const GD=new Set(RG.map(r=>r.fecha)),M={},FM={},FG={};RG.forEach(r=>{const f=up(r.fundo);FM[r.fecha+'|'+gr(r.grupo)+'|'+up(r.modulo)]=f;(FG[r.fecha+'|'+gr(r.grupo)]=FG[r.fecha+'|'+gr(r.grupo)]||new Set()).add(f)});const fuA=a=>FM[a.d+'|'+a.g+'|'+a.m]||((FG[a.d+'|'+a.g]||new Set()).size===1?[...FG[a.d+'|'+a.g]][0]:'SIN FUNDO');const o=(d,k)=>{const kk=d+'|'+k;return M[kk]=M[kk]||{d,g:k,jc:0,ja:0,kg:0,jd:0,jt:0}};
+ RG.forEach(r=>{const g=gr(r.grupo),m=up(r.modulo),v=up(r.variedad);if(!okF(g,m,v,up(r.fundo)))return;const x=o(r.fecha,KEY(g,m,v)),jr=Number(r.jarras)||0;x.jt+=jr;if(up(r.calidad)==='DESCARTE'){x.jd+=jr;x.jc+=up(r.envase)==='JABA'?(Number(r.n_envases)||0):jr/JPJ}});
+ (AC||[]).filter(a=>GD.has(a.d)&&okF(a.g,a.m,a.v,fuA(a))).forEach(a=>{const x=o(a.d,KEY(a.g,a.m,a.v));x.ja+=a.j;x.kg+=a.kg});
  DAYS=Object.values(M).map(x=>({...x,fa:Math.max(0,x.jc-x.ja),sg:Math.max(0,x.ja-x.jc)}));
  const R={};DAYS.forEach(x=>{const r=R[x.g]=R[x.g]||{g:x.g,jc:0,ja:0,kg:0,jd:0,jt:0,fa:0,sg:0};['jc','ja','kg','jd','jt','fa','sg'].forEach(k=>r[k]+=x[k])});
  ROWS=Object.values(R).filter(r=>r.jc||r.ja).sort((a,b)=>FX.dim==='g'?a.g.localeCompare(b.g):(b.jc+b.ja)-(a.jc+a.ja));
  const MS=uniq([...RG.map(r=>up(r.modulo)),...(AC||[]).filter(a=>GD.has(a.d)).map(a=>a.m)]),VS=uniq([...RG.map(r=>up(r.variedad)),...(AC||[]).filter(a=>GD.has(a.d)).map(a=>a.v)]);
- sbHTML({dim:1,mod:MS,vr:VS});pintar()}
+ sbHTML({dim:1,fu:uniq([...RG.map(r=>up(r.fundo)),...(AC||[]).filter(a=>GD.has(a.d)).map(fuA)]),mod:MS,vr:VS});pintar()}
 const sum=L=>L.reduce((a,x)=>{['jc','ja','kg','jd','jt','fa','sg'].forEach(k=>a[k]+=x[k]);return a},{jc:0,ja:0,kg:0,jd:0,jt:0,fa:0,sg:0});
 const pd=x=>x.jt?Math.round(x.jd/x.jt*100):null,kj=x=>x.ja?x.kg/x.ja:null,f1=v=>(Math.round(v*10)/10).toFixed(1);
 function combo(L){const W=MW(ESS()?.6:1),H=MH(330),n=L.length||1,gw=(W-40)/n,bw=Math.min(54,gw*.3),mx=Math.max(1,...L.map(x=>Math.max(x.jc,x.ja)))*1.45,Y=v=>H-70-(H-150)*v/mx;
@@ -151,7 +151,7 @@ const DIMN=()=>FX.dim==='mv'?'MÓDULO Y VARIEDAD':'GRUPO';
 function pintar(){const L=ROWS.slice(0,FX.dim==='g'?9:10);
  if(!L.length){$('out').innerHTML='<div class="e">No hay guías ni pesos de descarte para '+PER()+'.</div>';return}
  const T=sum(L),P=pd(T),d=T.jc-T.ja;
- let h=`<div class="kp"><div><b>${f(T.jc)}</b><small>Jabas de descarte en guías</small></div><div style="border-color:${GR}"><b>${f(T.ja)}</b><small>Jabas recibidas en acopio</small></div><div style="border-color:${d>0?RO:'#F3B23E'}"><b style="color:${d>0?RO:'#B26A00'}">${d>0?f(d):'+'+f(-d)}</b><small>${d>0?'Jabas que faltan en acopio':'Jabas recibidas sin guía'}</small></div><div style="border-color:${GR}"><b>${f(T.kg)} kg</b><small>Kg de descarte (acopio)</small></div><div style="border-color:${OR}"><b style="color:${OR}">${P==null?'—':P+' %'}</b><small>% de descarte (jarras)</small></div></div>`;
+ let h=`<div class="kp"><div><b>${f(T.jc)}</b><small>Jabas de descarte en guías</small></div><div style="border-color:${GR}"><b>${f(T.ja)}</b><small>Jabas recibidas en acopio</small></div><div style="border-color:${d>0?RO:d<0?'#F3B23E':VE}"><b style="color:${d>0?RO:d<0?'#B26A00':VE}">${d>0?f(d):d<0?'+'+f(-d):'✔ 0'}</b><small>${d>0?'Jabas que faltan en acopio':d<0?'Jabas recibidas sin guía':'Campo y acopio cuadran'}</small></div><div style="border-color:${GR}"><b>${f(T.kg)} kg</b><small>Kg de descarte (acopio)</small></div><div style="border-color:${OR}"><b style="color:${OR}">${P==null?'—':P+' %'}</b><small>% de descarte (jarras)</small></div></div>`;
  h+=`<div class="p"><h2>DESCARTE: CAMPO vs ACOPIO POR ${DIMN()} · ${PER()}</h2><div class="b"><div class="ley"><span class="dot" style="background:${AZ}"></span>Jabas en guías (campo) &nbsp; <span class="dot" style="background:${GR}"></span>Jabas recibidas (acopio)</div><div class="sx">${FX.dim==='g'?combo(L):comboH(L)}</div></div></div>`;
  if(ESS()){const DD=[...new Set(DAYS.map(x=>x.d))].sort().map(d=>({d,...sum(DAYS.filter(x=>x.d===d))}));
   h+=`<div class="p" style="margin-top:12px"><h2>TENDENCIA POR DÍA</h2><div class="b sx">${trend(DD,x=>x.ja,x=>pd(x),v=>f(v),v=>v+' %',GR,OR,null,'Jabas recibidas','% de descarte')}</div></div>`}
