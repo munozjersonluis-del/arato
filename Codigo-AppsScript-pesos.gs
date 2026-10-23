@@ -16,7 +16,7 @@ const ENTRADAS = ['fecha', 'acopio', 'modulo', 'variedad', 'grupo', 'tipo', 'can
 const FILA_INICIO = 186; // el formulario empieza a escribir desde esta fila
 
 function norm_(s) {
-  return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim();
+  return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
 }
 
 // Ubicación de la tabla (se guarda 6 horas en caché para no buscarla cada vez)
