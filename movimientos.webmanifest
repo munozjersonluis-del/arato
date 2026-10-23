@@ -1,0 +1,27 @@
+{
+ "name": "Movimientos de grupos · Blueberries",
+ "short_name": "Movimientos",
+ "description": "Registro de movimientos de grupos de cosecha por supervisor.",
+ "id": "movimientos",
+ "start_url": "movimientos.html",
+ "scope": "movimientos.html",
+ "display": "standalone",
+ "orientation": "portrait",
+ "background_color": "#EEF2F6",
+ "theme_color": "#123A5C",
+ "lang": "es-PE",
+ "icons": [
+  {
+   "src": "movimientos-icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "movimientos-icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any maskable"
+  }
+ ]
+}
