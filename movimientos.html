@@ -51,7 +51,7 @@ select.in{font-size:18px;appearance:auto}select.in:disabled{opacity:.5}
    <div class="ch gr" id="grp"></div>
    <div class="lb">Origen</div><div class="r2"><select class="in" id="oF"></select><select class="in" id="oC"></select></div>
    <div class="lb">Destino</div><div class="r2"><select class="in" id="dF"></select><select class="in" id="dC"></select></div>
-   <div class="r2" style="margin-top:10px"><div><div class="lb" style="margin:0 0 4px">Personas</div><input class="in" id="per" type="text" inputmode="numeric" placeholder="0" autocomplete="off"></div><div><div class="lb" style="margin:0 0 4px">Hora</div><input class="in" id="hora" type="time"></div></div>
+   <div class="r2" style="margin-top:10px"><div id="perM" class="hide" style="grid-column:1/-1;order:-1"></div><div><div class="lb" style="margin:0 0 4px">Personas</div><input class="in" id="per" type="text" inputmode="numeric" placeholder="0" autocomplete="off"></div><div><div class="lb" style="margin:0 0 4px">Hora</div><input class="in" id="hora" type="time"></div></div>
    <p class="err" id="err"></p></div>
   </div>
  <div id="sal" class="hide">
@@ -84,13 +84,16 @@ $('tabs').onclick=e=>{const b=e.target.closest('[data-m]');if(!b)return;MODO=b.d
 function sups(L){$('sups').innerHTML=L.map(s=>`<button data-s="${esc(s)}">${esc(s)}</button>`).join('')}
 $('sups').onclick=e=>{const b=e.target.closest('[data-s]');if(!b)return;SUP=b.dataset.s;ls('sup',SUP);vista();cargar()};
 $('grp').innerHTML=['A','B','C','D','E','F'].map(g=>`<button data-v="${g}">${g}</button>`).join('');
-$('grp').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;G=b.dataset.v;[...$('grp').children].forEach(x=>x.classList.toggle('on',x===b));chk()};
+let GS=new Set();const gMarca=()=>{[...$('grp').children].forEach(x=>x.classList.toggle('on',GS.has(x.dataset.v)));G=[...GS][0]||'';const m=GS.size>1;$('per').parentElement.classList.toggle('hide',m);$('perM').classList.toggle('hide',!m);
+ if(m){const old={};$('perM').querySelectorAll('input').forEach(i=>old[i.dataset.g]=i.value);$('perM').innerHTML='<div class="lb" style="margin:0 0 4px">Personas por grupo</div><div style="display:grid;grid-template-columns:repeat('+Math.min(GS.size,3)+',1fr);gap:6px">'+[...GS].sort().map(g=>`<label style="font-weight:900;color:${COL[g]}">${g}<input class="in" data-g="${g}" type="text" inputmode="numeric" placeholder="0" value="${old[g]||''}" style="margin-top:2px"></label>`).join('')+'</div>'}
+ if(!EDIT)$('save').textContent=m?'GUARDAR ('+GS.size+' grupos)':'GUARDAR';chk()};
+$('grp').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;const v=b.dataset.v;if(EDIT){GS=new Set([v])}else{GS.has(v)?GS.delete(v):GS.add(v)}gMarca()};
 const O={f:'',c:''},D={f:'',c:''};const FUS=()=>{const o=['DUNA','VALLE 1','VALLE 2','VALLE 3','VALLE 4'];const u=[...new Set(COM.map(x=>x.f))];return[...o.filter(x=>u.includes(x)),...u.filter(x=>!o.includes(x))]};
 function selPinta(st,fb,cb){$(fb).innerHTML='<option value="">Fundo</option>'+FUS().map(f=>`<option${st.f===f?' selected':''}>${esc(f)}</option>`).join('');$(cb).innerHTML='<option value="">Comedor</option>'+(st.f?COM.filter(x=>x.f===st.f).map(x=>`<option${st.c===x.c?' selected':''}>${esc(x.c)}</option>`).join(''):'');$(cb).disabled=!st.f}
 function selInit(st,fb,cb){$(fb).onchange=()=>{st.f=$(fb).value;st.c='';selPinta(st,fb,cb);chk()};$(cb).onchange=()=>{st.c=$(cb).value;chk()}}
 selInit(O,'oF','oC');selInit(D,'dF','dC');const selTodo=()=>{selPinta(O,'oF','oC');selPinta(D,'dF','dC')};
 ['per','hora'].forEach(i=>$(i).addEventListener('input',chk));
-function chk(){const c=O.c,d=D.c;$('chk').textContent=G&&c&&d?`Grupo ${G}${$('per').value?' · '+$('per').value+' pers.':''} · ${O.f} ${c} ➜ ${D.f} ${d} · ${$('hora').value}`:'';$('err').textContent=''}
+function chk(){const c=O.c,d=D.c;$('chk').textContent=G&&c&&d?`Grupo ${[...GS].sort().join(', ')}${$('per').value?' · '+$('per').value+' pers.':''} · ${O.f} ${c} ➜ ${D.f} ${d} · ${$('hora').value}`:'';$('err').textContent=''}
 async function cargar(){if(!API||!SUP)return;try{const j=await (await fetch(API+'?sup='+encodeURIComponent(SUP),{cache:'no-store'})).json();if(!j.ok)throw j.error;
  COM=j.comedores||[];ls('com',JSON.stringify(COM));selTodo();sSel();if(j.supervisores)sups(j.supervisores);MOVS=j.movs||[];ls('movs',JSON.stringify(MOVS));ls('movsDia',hoy());if(j.salidas){SAL=j.salidas;ls('sal',JSON.stringify(SAL));ls('salDia',hoy())}on(true)}catch(e){on(false)}pinta();sPinta()}
 async function inicio(){if(!API){vista();return}try{const j=await (await fetch(API,{cache:'no-store'})).json();sups(j.supervisores||[]);COM=j.comedores||COM;ls('com',JSON.stringify(COM));selTodo();sSel()}catch(e){sups(['TOMAS','ELIAS','LESLIE','JHASTYN'])}vista();cargar()}
@@ -115,10 +118,10 @@ function foto(L){
 function compartir(L){if(!L.length){$('err').textContent='No hay movimientos para enviar.';return}const fl=foto(L);
  if(navigator.canShare&&navigator.canShare({files:[fl]}))navigator.share({files:[fl]}).catch(()=>{});else{const a=document.createElement('a');a.href=URL.createObjectURL(fl);a.download=fl.name;a.click()}}
 $('wsp').onclick=()=>compartir([...MOVS].sort((a,b)=>String(a.hora).localeCompare(String(b.hora))));
-let ULT=null;$('envUlt').onclick=()=>{if(ULT)compartir([ULT]);$('envUlt').classList.add('hide')};
-let EDIT='';function editar(id){const m=MOVS.find(x=>x.id===id);if(!m)return;EDIT=id;G=m.grupo;[...$('grp').children].forEach(x=>x.classList.toggle('on',x.dataset.v===G));
+let ULT=null;$('envUlt').onclick=()=>{if(ULT)compartir(ULT);$('envUlt').classList.add('hide')};
+let EDIT='';function editar(id){const m=MOVS.find(x=>x.id===id);if(!m)return;EDIT=id;GS=new Set([m.grupo]);gMarca();
  O.f=m.fo;O.c=String(m.co);D.f=m.fd;D.c=String(m.cd);selTodo();$('per').value=m.personas||'';$('hora').value=String(m.hora).padStart(5,'0');$('save').textContent='ACTUALIZAR';$('cancel').classList.remove('hide');$('envUlt').classList.add('hide');scrollTo(0,0);chk()}
-function salirEdit(){EDIT='';$('save').textContent='GUARDAR';$('cancel').classList.add('hide');$('per').value='';O.f=O.c=D.f=D.c='';G='';[...$('grp').children].forEach(x=>x.classList.remove('on'));selTodo();$('hora').value=ahora();chk()}
+function salirEdit(){EDIT='';$('save').textContent='GUARDAR';$('cancel').classList.add('hide');$('per').value='';O.f=O.c=D.f=D.c='';GS=new Set();gMarca();selTodo();$('hora').value=ahora();chk()}
 $('cancel').onclick=salirEdit;
 $('list').addEventListener('click',e=>{const b=e.target.closest('[data-ed]');if(b)editar(b.dataset.ed)});
 $('list').onclick=e=>{const b=e.target.closest('[data-id]');if(!b)return;if(!b.classList.contains('sure')){b.classList.add('sure');b.textContent='¿Borrar?';setTimeout(()=>{b.classList.remove('sure');b.textContent='🗑'},3500);return}
@@ -126,9 +129,10 @@ $('list').onclick=e=>{const b=e.target.closest('[data-id]');if(!b)return;if(!b.c
  COLA.push({accion:'borrar',sup:SUP,id:b.dataset.id,dia:hoy()});ls('cola',JSON.stringify(COLA));MOVS=MOVS.filter(m=>m.id!==b.dataset.id);pinta();enviar()};
 $('save').onclick=()=>{const c=O.c,d=D.c,h=$('hora').value,p=$('per').value.trim();
  if(!G)return $('err').textContent='Elige el grupo.';if(!c)return $('err').textContent='Elige fundo y comedor de origen.';if(!d)return $('err').textContent='Elige fundo y comedor de destino.';if(c===d)return $('err').textContent='Origen y destino son iguales.';if(!h)return $('err').textContent='Pon la hora.';if(p&&!/^\d+$/.test(p))return $('err').textContent='Personas: solo números.';
- if(EDIT){const x={accion:'editar',sup:SUP,grupo:G,personas:p,co:c,cd:d,hora:h,id:EDIT,dia:hoy()};COLA.push(x);ls('cola',JSON.stringify(COLA));MOVS=MOVS.map(m=>m.id===EDIT?{...m,grupo:G,personas:p,fo:O.f,co:c,fd:D.f,cd:d,hora:h}:m);ULT={grupo:G,personas:p,fo:O.f,co:c,fd:D.f,cd:d,hora:h};salirEdit();$('envUlt').textContent='📲 Enviar corrección al grupo';$('envUlt').classList.remove('hide');pinta();enviar();return}
- $('envUlt').textContent='📲 Enviar este movimiento al grupo';const nv={accion:'agregar',sup:SUP,grupo:G,personas:p,co:c,cd:d,hora:h,id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),dia:hoy()};COLA.push(nv);ULT={grupo:G,personas:p,fo:O.f,co:c,fd:D.f,cd:d,hora:h};$('envUlt').classList.remove('hide');clearTimeout(window._eu);window._eu=setTimeout(()=>$('envUlt').classList.add('hide'),60000);ls('cola',JSON.stringify(COLA));
- $('per').value='';O.f=O.c=D.f=D.c='';selTodo();G='';[...$('grp').children].forEach(x=>x.classList.remove('on'));$('hora').value=ahora();chk();document.activeElement&&document.activeElement.blur();if(navigator.vibrate)navigator.vibrate(30);pinta();enviar()};
+ if(EDIT){const x={accion:'editar',sup:SUP,grupo:G,personas:p,co:c,cd:d,hora:h,id:EDIT,dia:hoy()};COLA.push(x);ls('cola',JSON.stringify(COLA));MOVS=MOVS.map(m=>m.id===EDIT?{...m,grupo:G,personas:p,fo:O.f,co:c,fd:D.f,cd:d,hora:h}:m);ULT=[{grupo:G,personas:p,fo:O.f,co:c,fd:D.f,cd:d,hora:h}];salirEdit();$('envUlt').textContent='📲 Enviar corrección al grupo';$('envUlt').classList.remove('hide');pinta();enviar();return}
+ const gs=[...GS].sort(),pm={};$('perM').querySelectorAll('input').forEach(i=>pm[i.dataset.g]=i.value.trim());if(gs.length>1&&Object.values(pm).some(v=>v&&!/^\d+$/.test(v)))return $('err').textContent='Personas: solo números.';
+ $('envUlt').textContent=gs.length>1?'📲 Enviar estos movimientos al grupo':'📲 Enviar este movimiento al grupo';ULT=[];gs.forEach((g,k)=>{const pp=gs.length>1?(pm[g]||''):p;COLA.push({accion:'agregar',sup:SUP,grupo:g,personas:pp,co:c,cd:d,hora:h,id:Date.now().toString(36)+Math.random().toString(36).slice(2,5)+k,dia:hoy()});ULT.push({grupo:g,personas:pp,fo:O.f,co:c,fd:D.f,cd:d,hora:h})});$('envUlt').classList.remove('hide');clearTimeout(window._eu);window._eu=setTimeout(()=>$('envUlt').classList.add('hide'),60000);ls('cola',JSON.stringify(COLA));
+ $('per').value='';O.f=O.c=D.f=D.c='';selTodo();GS=new Set();gMarca();$('hora').value=ahora();chk();document.activeElement&&document.activeElement.blur();if(navigator.vibrate)navigator.vibrate(30);pinta();enviar()};
 
 /* ===== SALIDA DE COSECHA ===== */
 let SAL=lj('sal',[]),SG=new Set(),SED='';const SS={f:'',c:''};const FL=f=>({'DUNA':'DUNA AZUL','VALLE 1':'VALLE AZUL 1','VALLE 2':'VALLE AZUL 2','VALLE 3':'VALLE AZUL 3','VALLE 4':'VALLE AZUL 4'})[f]||f;
