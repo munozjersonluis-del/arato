@@ -52,7 +52,7 @@ select.in{font-size:18px;appearance:auto}select.in:disabled{opacity:.5}
   <div class="c"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><p class="l" style="margin:0">📋 Reporte de hoy <span id="cnt"></span></p><button id="wsp" class="ws">📲 Enviar</button></div><div id="list"><div class="e">Cargando…</div></div></div>
  </div>
 </div>
-<div class="bar hide" id="bar"><div class="chk" id="chk"></div><button id="save">GUARDAR</button></div>
+<div class="bar hide" id="bar"><div class="chk" id="chk"></div><button id="envUlt" class="hide" style="background:#25D366;margin-bottom:8px">📲 Enviar este movimiento al grupo</button><button id="save">GUARDAR</button></div>
 <script>
 const $=i=>document.getElementById(i),ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem('mv_'+k);if(v===null)localStorage.removeItem('mv_'+k);else localStorage.setItem('mv_'+k,v)}catch(e){return null}};
 const lj=(k,d)=>{try{return JSON.parse(ls(k))??d}catch(e){return d}},esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
@@ -84,7 +84,7 @@ function pinta(){if(ls('movsDia')!==hoy())MOVS=[];const P=COLA.filter(x=>x.sup==
  const per=L.reduce((a,m)=>a+(+m.personas||0),0),gs=new Set(L.map(m=>m.grupo));
  $('list').innerHTML=L.length?`<div style="overflow-x:auto"><table class="rp"><tr><th rowspan="2">N°</th><th rowspan="2">Grupo</th><th rowspan="2">Pers.</th><th colspan="2" class="o">ORIGEN</th><th colspan="2" class="d">DESTINO</th><th rowspan="2" class="h">Hora</th><th rowspan="2"></th></tr><tr><th class="o">Fundo</th><th class="o">Com.</th><th class="d">Fundo</th><th class="d">Com.</th></tr>`+
  L.slice().sort((a,b)=>String(a.hora).localeCompare(String(b.hora))).map((m,k)=>`<tr><td>${k+1}</td><td><span class="gc" style="background:${COL[m.grupo]||'#123A5C'}">${esc(m.grupo)}</span></td><td>${esc(m.personas)||'—'}</td><td>${esc(m.fo)}</td><td><b>${esc(m.co)}</b></td><td>${esc(m.fd)}</td><td><b>${esc(m.cd)}</b></td><td><b>${esc(m.hora)}</b>${m.p?'<br><span class="pend">enviando</span>':''}</td><td>${m.id?`<button class="del" data-id="${esc(m.id)}">🗑</button>`:''}</td></tr>`).join('')+'</table></div>':'<div class="e">Sin movimientos hoy.</div>'}
-$('wsp').onclick=async()=>{const L=[...MOVS].sort((a,b)=>String(a.hora).localeCompare(String(b.hora)));if(!L.length){$('err').textContent='No hay movimientos para enviar.';return}
+function foto(L){
  const d=new Date(),f=String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
  const W=1080,RH=86,H=250+RH*L.length+20,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
  x.fillStyle='#fff';x.fillRect(0,0,W,H);x.fillStyle='#123A5C';x.fillRect(0,0,W,170);x.fillStyle='#fff';x.font='900 46px Arial';x.fillText('MOVIMIENTOS DE GRUPOS',40,72);x.font='700 32px Arial';x.fillText('Supervisor: '+SUP,40,125);x.textAlign='right';x.fillText(f,W-40,125);x.textAlign='left';
@@ -94,14 +94,18 @@ $('wsp').onclick=async()=>{const L=[...MOVS].sort((a,b)=>String(a.hora).localeCo
  L.forEach((m,k)=>{xx=40;if(k%2){x.fillStyle='#F2F5F8';x.fillRect(40,y,W-80,RH)}const v=[k+1,m.grupo,m.personas||'—',m.fo,m.co,m.fd,m.cd,m.hora];
   C.forEach(([t,w],q)=>{const cx=xx+w/2,cy=y+RH/2+11;if(q===1){x.fillStyle=COL[m.grupo]||'#123A5C';x.beginPath();x.roundRect(cx-30,y+16,60,RH-32,12);x.fill();x.fillStyle=m.grupo==='C'||m.grupo==='D'?'#000':'#fff';x.font='900 36px Arial'}else{x.fillStyle='#0F1B2A';x.font=(q===4||q===6||q===7?'900 ':'700 ')+(String(v[q]).length>8?'24px':'30px')+' Arial'}x.fillText(String(v[q]),cx,cy);xx+=w});
   x.strokeStyle='#DDE5EE';x.beginPath();x.moveTo(40,y+RH);x.lineTo(W-40,y+RH);x.stroke();y+=RH});
- const bl=await new Promise(r=>c.toBlob(r,'image/png'));const fl=new File([bl],'Movimientos_'+SUP+'_'+f.replace(/\//g,'-')+'.png',{type:'image/png'});
- try{if(navigator.canShare&&navigator.canShare({files:[fl]}))await navigator.share({files:[fl]});else{const a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download=fl.name;a.click()}}catch(e){}};
+ const u=c.toDataURL('image/png'),bs=atob(u.split(',')[1]),ar=new Uint8Array(bs.length);for(let q=0;q<bs.length;q++)ar[q]=bs.charCodeAt(q);
+ return new File([ar],'Movimientos_'+SUP+'_'+f.replace(/\//g,'-')+'.png',{type:'image/png'})}
+function compartir(L){if(!L.length){$('err').textContent='No hay movimientos para enviar.';return}const fl=foto(L);
+ if(navigator.canShare&&navigator.canShare({files:[fl]}))navigator.share({files:[fl]}).catch(()=>{});else{const a=document.createElement('a');a.href=URL.createObjectURL(fl);a.download=fl.name;a.click()}}
+$('wsp').onclick=()=>compartir([...MOVS].sort((a,b)=>String(a.hora).localeCompare(String(b.hora))));
+let ULT=null;$('envUlt').onclick=()=>{if(ULT)compartir([ULT]);$('envUlt').classList.add('hide')};
 $('list').onclick=e=>{const b=e.target.closest('[data-id]');if(!b)return;if(!b.classList.contains('sure')){b.classList.add('sure');b.textContent='¿Borrar?';setTimeout(()=>{b.classList.remove('sure');b.textContent='🗑'},3500);return}
  const qi=COLA.findIndex(x=>x.id===b.dataset.id&&x.accion==='agregar');if(qi>=0){COLA.splice(qi,1);ls('cola',JSON.stringify(COLA));pinta();return}
  COLA.push({accion:'borrar',sup:SUP,id:b.dataset.id,dia:hoy()});ls('cola',JSON.stringify(COLA));MOVS=MOVS.filter(m=>m.id!==b.dataset.id);pinta();enviar()};
 $('save').onclick=()=>{const c=O.c,d=D.c,h=$('hora').value,p=$('per').value.trim();
  if(!G)return $('err').textContent='Elige el grupo.';if(!c)return $('err').textContent='Elige fundo y comedor de origen.';if(!d)return $('err').textContent='Elige fundo y comedor de destino.';if(c===d)return $('err').textContent='Origen y destino son iguales.';if(!h)return $('err').textContent='Pon la hora.';if(p&&!/^\d+$/.test(p))return $('err').textContent='Personas: solo números.';
- COLA.push({accion:'agregar',sup:SUP,grupo:G,personas:p,co:c,cd:d,hora:h,id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),dia:hoy()});ls('cola',JSON.stringify(COLA));
+ const nv={accion:'agregar',sup:SUP,grupo:G,personas:p,co:c,cd:d,hora:h,id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),dia:hoy()};COLA.push(nv);ULT={grupo:G,personas:p,fo:O.f,co:c,fd:D.f,cd:d,hora:h};$('envUlt').classList.remove('hide');clearTimeout(window._eu);window._eu=setTimeout(()=>$('envUlt').classList.add('hide'),60000);ls('cola',JSON.stringify(COLA));
  $('per').value='';O.f=O.c=D.f=D.c='';selTodo();G='';[...$('grp').children].forEach(x=>x.classList.remove('on'));$('hora').value=ahora();chk();document.activeElement&&document.activeElement.blur();if(navigator.vibrate)navigator.vibrate(30);pinta();enviar()};
 let env=false;async function enviar(){if(env||!COLA.length||!API)return;env=true;on(true);
  while(COLA.length){const x=COLA[0];if(x.dia!==hoy()){COLA.shift();continue}try{const j=await (await fetch(API,{method:'POST',body:JSON.stringify(x)})).json();if(!j.ok){$('err').textContent=j.error||'Error';COLA.shift()}else{COLA.shift();if(x.sup===SUP){MOVS=j.movs||MOVS;ls('movs',JSON.stringify(MOVS));ls('movsDia',hoy())}}ls('cola',JSON.stringify(COLA));pinta()}catch(e){on(false);break}}
