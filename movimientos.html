@@ -55,7 +55,7 @@ select.in{font-size:18px;appearance:auto}select.in:disabled{opacity:.5}
    <p class="err" id="err"></p></div>
   </div>
  <div id="sal" class="hide">
-  <div class="c f"><p class="l">Salida de cosecha (recojo del grupo)</p>
+  <div class="c f"><p class="l">Salida de cosecha · puedes marcar varios grupos</p>
    <div class="ch gr" id="sGrp"></div><div class="ch gr2" id="sGrp2" style="margin-top:8px"></div>
    <div class="lb">Lugar de recojo</div><div class="r2"><select class="in" id="sF"></select><select class="in" id="sC"></select></div>
    <div class="lb">Hora de salida</div><input class="in" id="sHora" type="time">
@@ -131,23 +131,23 @@ $('save').onclick=()=>{const c=O.c,d=D.c,h=$('hora').value,p=$('per').value.trim
  $('per').value='';O.f=O.c=D.f=D.c='';selTodo();G='';[...$('grp').children].forEach(x=>x.classList.remove('on'));$('hora').value=ahora();chk();document.activeElement&&document.activeElement.blur();if(navigator.vibrate)navigator.vibrate(30);pinta();enviar()};
 
 /* ===== SALIDA DE COSECHA ===== */
-let SAL=lj('sal',[]),SG='',SED='';const SS={f:'',c:''};const FL=f=>({'DUNA':'DUNA AZUL','VALLE 1':'VALLE AZUL 1','VALLE 2':'VALLE AZUL 2','VALLE 3':'VALLE AZUL 3','VALLE 4':'VALLE AZUL 4'})[f]||f;
+let SAL=lj('sal',[]),SG=new Set(),SED='';const SS={f:'',c:''};const FL=f=>({'DUNA':'DUNA AZUL','VALLE 1':'VALLE AZUL 1','VALLE 2':'VALLE AZUL 2','VALLE 3':'VALLE AZUL 3','VALLE 4':'VALLE AZUL 4'})[f]||f;
 $('sGrp').innerHTML=['A','B','C','D','E','F'].map(g=>`<button data-v="${g}">${g}</button>`).join('');
 $('sGrp2').innerHTML=['ACOPIO','LAVADERO','Combi auxiliares'].map(g=>`<button data-v="${g}">${g}</button>`).join('');
-const sMarca=()=>[...$('sGrp').children,...$('sGrp2').children].forEach(x=>x.classList.toggle('on',x.dataset.v===SG));
-['sGrp','sGrp2'].forEach(i=>$(i).onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;SG=b.dataset.v;sMarca();$('sErr').textContent=''});
+const sMarca=()=>[...$('sGrp').children,...$('sGrp2').children].forEach(x=>x.classList.toggle('on',SG.has(x.dataset.v)));
+['sGrp','sGrp2'].forEach(i=>$(i).onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;const v=b.dataset.v;if(SED){SG=new Set([v])}else{SG.has(v)?SG.delete(v):SG.add(v)}sMarca();$('sErr').textContent='';$('sSave').textContent=SED?'ACTUALIZAR SALIDA':SG.size>1?'GUARDAR SALIDA ('+SG.size+' grupos)':'GUARDAR SALIDA'});
 selInit(SS,'sF','sC');const sSel=()=>selPinta(SS,'sF','sC');
 function sPinta(){if(ls('salDia')!==hoy())SAL=[];const P=COLA.filter(x=>x.accion==='salida'&&x.dia===hoy());const L=[...SAL.filter(s=>!P.some(p=>p.grupo===s.grupo)),...P.map(p=>({grupo:p.grupo,co:p.co,fundo:FL(p.fundo),hora:p.hora,p:1}))];
  $('sList').innerHTML=L.length?`<table class="rp"><tr><th>N°</th><th>Grupo</th><th class="o">Comedor</th><th class="d">Fundo</th><th class="h">Hora</th><th></th></tr>`+L.slice().sort((a,b)=>String(a.hora).localeCompare(String(b.hora))||String(a.grupo).localeCompare(String(b.grupo))).map((m,k)=>`<tr><td>${k+1}</td><td><span class="gc" style="background:${COL[m.grupo]||'#123A5C'};${m.grupo.length>1?'font-size:11px':''}">${esc(m.grupo)}</span></td><td><b>${esc(m.co)}</b></td><td>${esc(m.fundo)}</td><td><b>${esc(m.hora)}</b>${m.p?'<br><span class="pend">enviando</span>':''}</td><td>${m.p?'':`<button class="del" data-sed="${esc(m.grupo)}">✏️</button> <button class="del" data-sdel="${esc(m.grupo)}">🗑</button>`}</td></tr>`).join('')+'</table>':'<div class="e">Sin salidas registradas hoy.</div>'}
-function sLimpia(){SED='';SG='';SS.f=SS.c='';sMarca();sSel();$('sHora').value=ahora();$('sSave').textContent='GUARDAR SALIDA';$('sCancel').classList.add('hide')}
+function sLimpia(){SED='';SG=new Set();SS.f=SS.c='';sMarca();sSel();$('sHora').value=ahora();$('sSave').textContent='GUARDAR SALIDA';$('sCancel').classList.add('hide')}
 $('sCancel').onclick=sLimpia;
-$('sList').onclick=e=>{const ed=e.target.closest('[data-sed]');if(ed){const m=SAL.find(x=>x.grupo===ed.dataset.sed);if(!m)return;SED=SG=m.grupo;sMarca();const cf=COM.find(x=>String(x.c)===String(m.co).split('/')[0]);SS.f=cf?cf.f:'';SS.c=cf?String(m.co):'';sSel();$('sHora').value=String(m.hora).padStart(5,'0');$('sSave').textContent='ACTUALIZAR SALIDA';$('sCancel').classList.remove('hide');scrollTo(0,0);return}
+$('sList').onclick=e=>{const ed=e.target.closest('[data-sed]');if(ed){const m=SAL.find(x=>x.grupo===ed.dataset.sed);if(!m)return;SED=m.grupo;SG=new Set([m.grupo]);sMarca();const cf=COM.find(x=>String(x.c)===String(m.co).split('/')[0]);SS.f=cf?cf.f:'';SS.c=cf?String(m.co):'';sSel();$('sHora').value=String(m.hora).padStart(5,'0');$('sSave').textContent='ACTUALIZAR SALIDA';$('sCancel').classList.remove('hide');scrollTo(0,0);return}
  const b=e.target.closest('[data-sdel]');if(!b)return;if(!b.classList.contains('sure')){b.classList.add('sure');b.textContent='¿Borrar?';setTimeout(()=>{b.classList.remove('sure');b.textContent='🗑'},3500);return}
  COLA.push({accion:'borrarSalida',sup:SUP,grupo:b.dataset.sdel,dia:hoy()});ls('cola',JSON.stringify(COLA));SAL=SAL.filter(x=>x.grupo!==b.dataset.sdel);sPinta();enviar()};
-$('sSave').onclick=()=>{if(!SG)return $('sErr').textContent='Elige el grupo.';if(!SS.c)return $('sErr').textContent='Elige fundo y comedor.';const h=$('sHora').value;if(!h)return $('sErr').textContent='Pon la hora.';
- if(SED&&SED!==SG){COLA.push({accion:'borrarSalida',sup:SUP,grupo:SED,dia:hoy()});SAL=SAL.filter(x=>x.grupo!==SED)}
- COLA.push({accion:'salida',sup:SUP,grupo:SG,co:SS.c,fundo:SS.f,hora:h,dia:hoy(),id:Date.now().toString(36)});ls('cola',JSON.stringify(COLA));SAL=SAL.filter(x=>x.grupo!==SG);
- const g=SG;sLimpia();if(navigator.vibrate)navigator.vibrate(30);sPinta();enviar();$('sErr').textContent='';ULTS=g};
+$('sSave').onclick=()=>{if(!SG.size)return $('sErr').textContent='Elige uno o varios grupos.';if(!SS.c)return $('sErr').textContent='Elige fundo y comedor.';const h=$('sHora').value;if(!h)return $('sErr').textContent='Pon la hora.';
+ const gs=[...SG];if(SED&&!SG.has(SED)){COLA.push({accion:'borrarSalida',sup:SUP,grupo:SED,dia:hoy()});SAL=SAL.filter(x=>x.grupo!==SED)}
+ gs.forEach((g,k)=>COLA.push({accion:'salida',sup:SUP,grupo:g,co:SS.c,fundo:SS.f,hora:h,dia:hoy(),id:Date.now().toString(36)+k}));ls('cola',JSON.stringify(COLA));SAL=SAL.filter(x=>!SG.has(x.grupo));
+ const g=gs.join(',');sLimpia();if(navigator.vibrate)navigator.vibrate(30);sPinta();enviar();$('sErr').textContent='';ULTS=g};
 let ULTS='';
 function fotoSal(L){const d=new Date(),f=String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
  const W=1080,RH=86,H=250+RH*L.length+20,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
