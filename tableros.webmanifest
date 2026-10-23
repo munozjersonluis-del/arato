@@ -4,7 +4,7 @@
  "description": "Resúmenes de Kias, camiones, bandejas, descarte y guías.",
  "id": "tableros",
  "start_url": "tableros.html",
- "scope": "./",
+ "scope": "tableros.html",
  "display": "standalone",
  "orientation": "any",
  "background_color": "#EEF2F6",
