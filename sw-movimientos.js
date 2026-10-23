@@ -1,5 +1,5 @@
 // App "Movimientos": la página abre aunque no haya señal; los datos siempre van en línea.
-const CACHE = 'movimientos-v2';
+const CACHE = 'movimientos-v3';
 const PAGE = 'movimientos.html';
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll([PAGE, 'movimientos.webmanifest', 'movimientos-icon-192.png', 'movimientos-icon-512.png'])).then(() => self.skipWaiting()));
