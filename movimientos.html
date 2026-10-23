@@ -57,7 +57,7 @@ select.in{font-size:18px;appearance:auto}select.in:disabled{opacity:.5}
 const $=i=>document.getElementById(i),ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem('mv_'+k);if(v===null)localStorage.removeItem('mv_'+k);else localStorage.setItem('mv_'+k,v)}catch(e){return null}};
 const lj=(k,d)=>{try{return JSON.parse(ls(k))??d}catch(e){return d}},esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
 const COL={A:'#9B59B6',B:'#00B0F0',C:'#E6C700',D:'#999',E:'#E02020',F:'#FF9900'};
-const API_DEF='';
+const API_DEF='https://script.google.com/macros/s/AKfycbz_o9HiYl475MZ1R6joL-DOMdocwAJsx3Z2I6SgHWrqkBJAnJPl7jnqpCwrsyNne_Y/exec';
 let API=new URLSearchParams(location.search).get('api')||ls('api')||API_DEF,SUP=ls('sup')||'',COM=lj('com',[]),MOVS=lj('movs',[]),COLA=lj('cola',[]),G='';
 const hoy=()=>{const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
 const ahora=()=>{const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
