@@ -63,7 +63,7 @@ select.in{font-size:18px;appearance:auto}select.in:disabled{opacity:.5}
   <div class="c"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><p class="l" style="margin:0">🚌 Salidas de hoy</p><button id="sWsp" class="ws">📲 Enviar</button></div><div id="sList"><div class="e">Cargando…</div></div></div>
  </div>
  <div id="movList">
-  <div class="c"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><p class="l" style="margin:0">📋 Movimientos nuevos <span id="cnt"></span></p><button id="wsp" class="ws">📲 Enviar</button></div><div id="list"><div class="e">Cargando…</div></div></div>
+  <div class="c"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><p class="l" style="margin:0">📋 Movimientos nuevos <span id="cnt"></span></p><div style="display:flex;gap:6px"><button id="limpiar" class="ws" style="background:#8A96A3">🧹 Limpiar</button><button id="wsp" class="ws">📲 Enviar</button></div></div><div id="list"><div class="e">Cargando…</div></div></div>
  </div>
 </div>
 <div class="bar hide" id="bar"><div class="chk" id="chk"></div><button id="envUlt" class="hide" style="background:#25D366;margin-bottom:8px">📲 Enviar este movimiento al grupo</button><button id="save">GUARDAR</button><button id="cancel" class="hide" style="background:#8A96A3;margin-top:8px;padding:9px;font-size:15px">Cancelar edición</button></div>
@@ -119,6 +119,7 @@ function foto(L){
 function compartir(L){if(!L.length){$('err').textContent='No hay movimientos nuevos para enviar.';return}const fl=foto(L);marcaEnv(L);VERT=false;setTimeout(pinta,800);
  if(navigator.canShare&&navigator.canShare({files:[fl]}))navigator.share({files:[fl]}).catch(()=>{});else{const a=document.createElement('a');a.href=URL.createObjectURL(fl);a.download=fl.name;a.click()}}
 $('wsp').onclick=()=>{const EK=new Set(ENV());compartir([...MOVS].filter(m=>!EK.has(KEY(m))).sort((a,b)=>String(a.hora).localeCompare(String(b.hora))))};
+$('limpiar').onclick=()=>{const b=$('limpiar');if(!b.dataset.s){b.dataset.s=1;b.textContent='¿Limpiar?';setTimeout(()=>{delete b.dataset.s;b.textContent='🧹 Limpiar'},3500);return}delete b.dataset.s;b.textContent='🧹 Limpiar';marcaEnv(MOVS);VERT=false;pinta()};
 document.addEventListener('click',e=>{if(e.target.id==='verEnv'){e.preventDefault();VERT=!VERT;pinta()}});
 let ULT=null;$('envUlt').onclick=()=>{if(ULT)compartir(ULT);$('envUlt').classList.add('hide')};
 let EDIT='';function editar(id){const m=MOVS.find(x=>x.id===id);if(!m)return;EDIT=id;GS=new Set([m.grupo]);gMarca();
