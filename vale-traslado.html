@@ -1078,7 +1078,7 @@ function docHTML(v){
     else if(i===1&&v.modalidad==='A DISTANCIA')box=`<em>${v.conformidad?'Conforme vía '+esc(v.conformidad.via):'Conformidad pendiente'}</em>`;
     return`<div class="ofs"><div class="ofi">${box}</div><div class="ofl"></div><b>${t}</b><span>${f.nombre?esc(f.nombre)+(f.dni?' · DNI '+esc(f.dni):''):'&nbsp;'}</span></div>`};
   const filas=[...v.items];while(filas.length<10)filas.push(null);
-  const tb=filas.map(r=>r?`<tr><td>${esc(r.cod||'')}</td><td class="l">${esc(r.desc)}</td><td>${r.cant}</td><td>${esc(r.um)}</td></tr>`:'<tr><td></td><td></td><td></td><td></td></tr>').join('');
+  const tb=filas.map(r=>r?`<tr><td>${esc(r.cod||'')}</td><td>${esc(r.desc)}</td><td>${r.cant}</td><td>${esc(r.um)}</td></tr>`:'<tr><td></td><td></td><td></td><td></td></tr>').join('');
   return`<div class="doc of">
   <table class="ofh"><tr><td class="a"><small>FORMATO:</small><h1>VALE TRASLADO DE MATERIALES ENTRE FUNDOS</h1></td><td class="b"><small>Fecha de aprobación:</small><div>${esc(FORMATO.aprobacion)}</div></td><td class="c" rowspan="3"><img src="${LOGO_BB}" alt="blueberries"></td></tr>
    <tr><td class="a">CÓDIGO:&nbsp;&nbsp; ${esc(FORMATO.codigo)}</td><td class="b">N° versión:&nbsp;&nbsp;&nbsp; ${esc(FORMATO.version)}</td></tr>
