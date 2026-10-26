@@ -1,6 +1,6 @@
 // Service worker de "Bandejas por punto": permite instalarla como app y abrirla sin señal.
 // Solo atiende su propia página; los envíos a la hoja (script.google.com) nunca se guardan en caché.
-const CACHE = 'material-v4';
+const CACHE = 'material-v5';
 const PAGINA = 'material-solicitado.html';
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll([PAGINA, 'material-icon-192.png', 'material-icon-512.png', 'material.webmanifest'])).catch(() => {}));
