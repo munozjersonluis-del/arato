@@ -92,6 +92,7 @@ h3{font:600 19px "Barlow Semi Condensed",sans-serif;margin:18px 2px 8px}
 .toast button{border:0;background:#fff;color:var(--ink);border-radius:8px;min-height:38px;padding:0 12px;font-weight:700}
 .who{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#E4F3EA;border-radius:12px;padding:8px 12px;margin:-4px 0 12px;font-weight:700;font-size:14px;color:#14532D}.who button{border:1.5px solid #7CC39C;background:#fff;border-radius:10px;min-height:36px;padding:0 12px;font-weight:700}
 .ap{display:flex;align-items:center;gap:8px;padding:8px 2px;border-bottom:1px solid var(--line);font-size:14.5px}.ap b{min-width:46px}.ap span{flex:1;color:var(--ink2)}.ap button{border:1.5px solid var(--line);background:#fff;border-radius:10px;min-width:42px;min-height:40px}.ap button.sure{background:#FDECEA;border-color:#C0331F;color:#C0331F;font-weight:700;font-size:12px}
+.tabs2{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#E3E7F2;border-radius:14px;padding:5px;margin-bottom:12px}.tabs2 button{border:0;background:transparent;border-radius:10px;min-height:46px;font-weight:700;font-size:15.5px;color:var(--ink2)}.tabs2 button.on{background:#fff;color:var(--navy);box-shadow:0 1px 3px #0002}
 </style>
 </head>
 <body>
@@ -117,6 +118,8 @@ h3{font:600 19px "Barlow Semi Condensed",sans-serif;margin:18px 2px 8px}
     <div class="who"><span id="whoTxt">👷 ¿Quiénes van en la unidad?</span><button type="button" id="whoBtn">Elegir</button></div>
     <div class="card hidden" id="vNom"><h2>¿Quiénes van en esta unidad?</h2><p class="sub">Marca tu nombre y el de tu compañero. Queda guardado.</p><div class="chips" id="nomL"><span class="sub">Cargando nombres…</span></div><button class="btn az" id="nomOk" type="button" style="margin-top:12px">Listo</button></div>
 
+    <div class="tabs2" id="tabs2"><button type="button" data-t="ban" class="on">🧺 Bandejas</button><button type="button" data-t="apo">🤝 Otros apoyos</button></div>
+    <div id="tBan">
     <!-- 2) Empezar grupo -->
     <div class="card">
       <h2>Dejar bandejas</h2>
@@ -127,21 +130,23 @@ h3{font:600 19px "Barlow Semi Condensed",sans-serif;margin:18px 2px 8px}
       <button class="btn az" id="fOk" type="button">Siguiente: anotar punto</button>
     </div>
 
+    <!-- 3) Control del día -->
+    <h3>Mis grupos de hoy</h3>
+    <div id="lista"></div>
+    </div>
     <!-- Otros apoyos (retén) -->
-    <div class="card">
+    <div class="card hidden" id="tApo">
       <h2>Otros apoyos</h2>
       <p class="sub">Puntos de caseta, materiales, traslados… Anota cada apoyo que das a un grupo.</p>
       <span class="lbl">Tipo de apoyo</span><div class="chips" id="aTipo"></div>
       <span class="lbl">Grupo</span><div class="chips" id="aGrupo"></div>
-      <span class="lbl">Cantidad (opcional)</span><input class="in" id="aCant" type="text" inputmode="numeric" placeholder="Ej. 2 casetas, 300 bandejas">
+      <span class="lbl">Cantidad (opcional)</span><input class="in" id="aCant" type="text" inputmode="numeric" placeholder="Ej. 2 casetas, 5 cajas">
       <p class="err" id="aErr"></p>
       <button class="btn az" id="aOk" type="button">Registrar apoyo</button>
       <div id="aList" style="margin-top:10px"></div>
     </div>
 
-    <!-- 3) Control del día -->
-    <h3>Mis grupos de hoy</h3>
-    <div id="lista"></div>
+
   </section>
 </main>
 
@@ -458,6 +463,8 @@ $('aOk').onclick=()=>{if(!AP.tipo)return $('aErr').textContent='Elige el tipo de
  S.set('apoyos',APS);$('aCant').value='';AP.grupo='';chips('aGrupo',LIST.grupos,'',v=>{AP.grupo=v});pintaAp();subirAp();if(navigator.vibrate)navigator.vibrate(30)};
 $('aList').onclick=e=>{const b=e.target.closest('[data-ad]');if(!b)return;if(!b.classList.contains('sure')){b.classList.add('sure');b.textContent='¿Borrar?';setTimeout(()=>{b.classList.remove('sure');b.textContent='🗑'},3500);return}
  const a=APS.l.find(x=>x.id===b.dataset.ad);if(a){a.anulado=true;a.ok=0;S.set('apoyos',APS);pintaAp();subirAp()}};
+const tab=t=>{S.set('tab',t);$('tBan').classList.toggle('hidden',t!=='ban');$('tApo').classList.toggle('hidden',t!=='apo');$('tabs2').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.t===t))};
+$('tabs2').onclick=e=>{const b=e.target.closest('[data-t]');if(b)tab(b.dataset.t)};tab('ban');
 chips('aTipo',TIPOS,'',v=>{AP.tipo=v});chips('aGrupo',LIST.grupos,'',v=>{AP.grupo=v});pintaWho();pintaAp();subirAp();setInterval(subirAp,30000);
 </script>
 </body>
