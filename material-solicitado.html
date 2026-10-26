@@ -90,6 +90,8 @@ h3{font:600 19px "Barlow Semi Condensed",sans-serif;margin:18px 2px 8px}
 .hist .r b{font:700 18px "Barlow Semi Condensed",sans-serif;min-width:48px}.hist .r span{flex:1;color:var(--ink2)}.hist .r em{font-style:normal;font-weight:700}
 .toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 14px 12px 18px;border-radius:12px;font-weight:600;display:flex;align-items:center;gap:14px;max-width:94vw;z-index:40}
 .toast button{border:0;background:#fff;color:var(--ink);border-radius:8px;min-height:38px;padding:0 12px;font-weight:700}
+.who{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#E4F3EA;border-radius:12px;padding:8px 12px;margin:-4px 0 12px;font-weight:700;font-size:14px;color:#14532D}.who button{border:1.5px solid #7CC39C;background:#fff;border-radius:10px;min-height:36px;padding:0 12px;font-weight:700}
+.ap{display:flex;align-items:center;gap:8px;padding:8px 2px;border-bottom:1px solid var(--line);font-size:14.5px}.ap b{min-width:46px}.ap span{flex:1;color:var(--ink2)}.ap button{border:1.5px solid var(--line);background:#fff;border-radius:10px;min-width:42px;min-height:40px}.ap button.sure{background:#FDECEA;border-color:#C0331F;color:#C0331F;font-weight:700;font-size:12px}
 </style>
 </head>
 <body>
@@ -112,6 +114,8 @@ h3{font:600 19px "Barlow Semi Condensed",sans-serif;margin:18px 2px 8px}
 
   <section class="hidden" id="vMain">
     <div class="unit"><span><b id="uPlaca"></b><span id="uInfo"></span></span><button type="button" id="uCh">Cambiar</button></div>
+    <div class="who"><span id="whoTxt">👷 ¿Quiénes van en la unidad?</span><button type="button" id="whoBtn">Elegir</button></div>
+    <div class="card hidden" id="vNom"><h2>¿Quiénes van en esta unidad?</h2><p class="sub">Marca tu nombre y el de tu compañero. Queda guardado.</p><div class="chips" id="nomL"><span class="sub">Cargando nombres…</span></div><button class="btn az" id="nomOk" type="button" style="margin-top:12px">Listo</button></div>
 
     <!-- 2) Empezar grupo -->
     <div class="card">
@@ -121,6 +125,18 @@ h3{font:600 19px "Barlow Semi Condensed",sans-serif;margin:18px 2px 8px}
       <span class="lbl">Grupo</span><div class="chips" id="fGrupo"></div>
       <p class="err" id="fErr"></p>
       <button class="btn az" id="fOk" type="button">Siguiente: anotar punto</button>
+    </div>
+
+    <!-- Otros apoyos (retén) -->
+    <div class="card">
+      <h2>Otros apoyos</h2>
+      <p class="sub">Puntos de caseta, materiales, traslados… Anota cada apoyo que das a un grupo.</p>
+      <span class="lbl">Tipo de apoyo</span><div class="chips" id="aTipo"></div>
+      <span class="lbl">Grupo</span><div class="chips" id="aGrupo"></div>
+      <span class="lbl">Cantidad (opcional)</span><input class="in" id="aCant" type="text" inputmode="numeric" placeholder="Ej. 2 casetas, 300 bandejas">
+      <p class="err" id="aErr"></p>
+      <button class="btn az" id="aOk" type="button">Registrar apoyo</button>
+      <div id="aList" style="margin-top:10px"></div>
     </div>
 
     <!-- 3) Control del día -->
@@ -420,6 +436,29 @@ let instEv=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();instEv=e;$('inst').classList.remove('hidden')});
 $('inst').onclick=async()=>{if(!instEv)return;instEv.prompt();await instEv.userChoice.catch(()=>{});instEv=null;$('inst').classList.add('hidden')};
 window.addEventListener('appinstalled',()=>{$('inst').classList.add('hidden');aviso('App instalada: búscala como "Bandejas" en tu pantalla')});
+
+/* ===== Quiénes van + Otros apoyos (Supabase) ===== */
+const SBU='https://rqvcvffyynpnighzwxju.supabase.co/rest/v1/apoyos_reten',SBK='sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn',SBH={apikey:SBK,Authorization:'Bearer '+SBK,'Content-Type':'application/json'};
+const TALLAS='https://script.google.com/macros/s/AKfycbzYyTdMBlcvEv5vmCrFnSHD3lTeYAvG-PSnywvp_ZVlc65_orCpd6P1FniMeSfwW6skkQ/exec';
+const TIPOS=['⛺ PUNTO DE CASETA','📦 MATERIALES','🚚 TRASLADO','🤝 OTRO'];
+let NOM=S.get('estibas',[]),PERS=S.get('personas',[]),AP={tipo:'',grupo:''},APS=S.get('apoyos',{f:'',l:[]});
+const iso=()=>{const d=new Date();return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())};
+function pintaWho(){$('whoTxt').textContent=NOM.length?'👷 '+NOM.join(' · '):'👷 ¿Quiénes van en la unidad?';$('whoBtn').textContent=NOM.length?'Cambiar':'Elegir'}
+function pintaNom(){const L=PERS.length?PERS:NOM;$('nomL').innerHTML=L.length?L.map(n=>`<button type="button" class="chip" aria-pressed="${NOM.includes(n)}" data-n="${esc(n)}">${esc(n)}</button>`).join(''):'<span class="sub">Sin señal para cargar nombres.</span>'}
+$('nomL').onclick=e=>{const b=e.target.closest('[data-n]');if(!b)return;const n=b.dataset.n;NOM=NOM.includes(n)?NOM.filter(x=>x!==n):[...NOM,n].slice(-3);pintaNom()};
+$('whoBtn').onclick=()=>{$('vNom').classList.toggle('hidden');pintaNom();fetch(TALLAS,{cache:'no-store'}).then(r=>r.json()).then(j=>{if(j&&j.ok){PERS=(j.personas||[]).map(p=>p.n).sort();S.set('personas',PERS);pintaNom()}}).catch(()=>{})};
+$('nomOk').onclick=()=>{S.set('estibas',NOM);$('vNom').classList.add('hidden');pintaWho()};
+function pintaAp(){if(APS.f!==iso())APS={f:iso(),l:[]};const L=APS.l.filter(a=>!a.anulado);
+ $('aList').innerHTML=L.length?'<span class="lbl">Mis apoyos de hoy ('+L.length+')</span>'+L.slice().reverse().map(a=>`<div class="ap"><b>${esc(a.hora)}</b><span>${esc(a.tipo)} · Grupo ${esc(a.grupo)}${a.cantidad?' · '+esc(a.cantidad):''}${a.ok?'':' · ⏳'}</span><button type="button" data-ad="${esc(a.id)}">🗑</button></div>`).join(''):''}
+function subirAp(){APS.l.filter(a=>!a.ok).forEach(a=>{const b={id:a.id,fecha:APS.f,hora:a.hora,placa:a.placa,estibas:a.estibas,tipo:a.tipo,grupo:a.grupo,fundo:a.fundo,cantidad:a.num,nota:a.cantidad,anulado:!!a.anulado};
+ fetch(SBU,{method:'POST',headers:{...SBH,Prefer:'resolution=merge-duplicates'},body:JSON.stringify(b)}).then(r=>{if(r.ok){a.ok=1;S.set('apoyos',APS);pintaAp()}}).catch(()=>{})})}
+$('aOk').onclick=()=>{if(!AP.tipo)return $('aErr').textContent='Elige el tipo de apoyo.';if(!AP.grupo)return $('aErr').textContent='Elige el grupo.';if(!NOM.length)return $('aErr').textContent='Primero elige quiénes van en la unidad (arriba).';
+ $('aErr').textContent='';const d=new Date(),c=$('aCant').value.trim();if(APS.f!==iso())APS={f:iso(),l:[]};
+ APS.l.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),hora:p2(d.getHours())+':'+p2(d.getMinutes()),placa:U?U.placa:'',estibas:NOM.join(' · '),tipo:AP.tipo.replace(/^\S+\s/,''),grupo:AP.grupo,fundo:F.fundo||'',cantidad:c,num:parseFloat(c.replace(',','.'))||null});
+ S.set('apoyos',APS);$('aCant').value='';AP.grupo='';chips('aGrupo',LIST.grupos,'',v=>{AP.grupo=v});pintaAp();subirAp();if(navigator.vibrate)navigator.vibrate(30)};
+$('aList').onclick=e=>{const b=e.target.closest('[data-ad]');if(!b)return;if(!b.classList.contains('sure')){b.classList.add('sure');b.textContent='¿Borrar?';setTimeout(()=>{b.classList.remove('sure');b.textContent='🗑'},3500);return}
+ const a=APS.l.find(x=>x.id===b.dataset.ad);if(a){a.anulado=true;a.ok=0;S.set('apoyos',APS);pintaAp();subirAp()}};
+chips('aTipo',TIPOS,'',v=>{AP.tipo=v});chips('aGrupo',LIST.grupos,'',v=>{AP.grupo=v});pintaWho();pintaAp();subirAp();setInterval(subirAp,30000);
 </script>
 </body>
 </html>
