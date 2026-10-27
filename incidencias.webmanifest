@@ -1,0 +1,27 @@
+{
+ "name": "Incidencias de cosechador · Blueberries",
+ "short_name": "Incidencias",
+ "description": "Registro de incidencias de grupos de cosecha por supervisor.",
+ "id": "incidencias",
+ "start_url": "incidencias.html",
+ "scope": "incidencias.html",
+ "display": "standalone",
+ "orientation": "portrait",
+ "background_color": "#EEF2F6",
+ "theme_color": "#123A5C",
+ "lang": "es-PE",
+ "icons": [
+  {
+   "src": "incidencias-icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "incidencias-icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any maskable"
+  }
+ ]
+}
