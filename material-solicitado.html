@@ -137,7 +137,7 @@ h3{font:600 19px "Barlow Semi Condensed",sans-serif;margin:18px 2px 8px}
     <!-- Otros apoyos (retén) -->
     <div class="card hidden" id="tApo">
       <h2>Otros apoyos</h2>
-      <p class="sub">Recojo de fruta, puntos de caseta, materiales… Anota cada apoyo que das a un grupo.</p>
+      <p class="sub">Recojo de fruta, puntos de caseta, materiales, comedores… Anota cada apoyo que das a un grupo.</p>
       <span class="lbl">Tipo de apoyo</span><div class="chips" id="aTipo"></div>
       <span class="lbl">Grupo</span><div class="chips" id="aGrupo"></div>
       <span class="lbl">Cantidad (opcional)</span><input class="in" id="aCant" type="text" inputmode="numeric" placeholder="Ej. 2 casetas, 5 cajas">
@@ -445,7 +445,7 @@ window.addEventListener('appinstalled',()=>{$('inst').classList.add('hidden');av
 /* ===== Quiénes van + Otros apoyos (Supabase) ===== */
 const SBU='https://rqvcvffyynpnighzwxju.supabase.co/rest/v1/apoyos_reten',SBK='sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn',SBH={apikey:SBK,Authorization:'Bearer '+SBK,'Content-Type':'application/json'};
 const TALLAS='https://script.google.com/macros/s/AKfycbzYyTdMBlcvEv5vmCrFnSHD3lTeYAvG-PSnywvp_ZVlc65_orCpd6P1FniMeSfwW6skkQ/exec';
-const TIPOS=['🫐 RECOJO DE FRUTA','⛺ PUNTO DE CASETA','📦 MATERIALES','🤝 OTRO'];
+const TIPOS=['🫐 RECOJO DE FRUTA','⛺ PUNTO DE CASETA','📦 MATERIALES','🍽️ ABASTECIMIENTO DE COMEDORES','🤝 OTRO'];
 let NOM=S.get('estibas',[]),PERS=S.get('personas',[]),AP={tipo:'',grupo:''},APS=S.get('apoyos',{f:'',l:[]});
 const iso=()=>{const d=new Date();return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())};
 function pintaWho(){$('whoTxt').textContent=NOM.length?'👷 '+NOM.join(' · '):'👷 ¿Quiénes van en la unidad?';$('whoBtn').textContent=NOM.length?'Cambiar':'Elegir'}
