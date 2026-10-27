@@ -31,7 +31,7 @@
  <div id="res" class="hide">
   <div class="c"><div class="r2x"><div><p class="lb">Incidencia</p><select class="in sm" id="fM"></select></div><div><p class="lb">Grupo</p><select class="in sm" id="fG"><option value="">Todos</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option></select></div></div>
    <p class="lb" style="margin-top:10px">Fecha</p><div class="r2x"><input class="in sm" type="date" id="fD"><button type="button" class="mini" id="fTodo">Todo el historial</button></div></div>
-  <div class="c"><p class="lb">🏆 Más incidencias → menos <span id="rTot" style="color:#5A6B7B"></span></p><div id="rank"><p class="e2">Cargando…</p></div></div>
+  <div class="c"><p class="lb">⚠️ Más incidencias → menos <span id="rTot" style="color:#5A6B7B"></span></p><div id="rank"><p class="e2">Cargando…</p></div></div>
   <div class="c"><p class="lb">🔎 Historial de una persona</p><input class="in sm" id="bq" placeholder="DNI o nombre" autocomplete="off"><div id="hist"></div></div>
  </div>
  <div id="app" class="hide">
@@ -98,7 +98,7 @@ async function cargarRes(){$('fM').innerHTML='<option value="">Todas</option>'+M
 function pintaRes(){const m=$('fM').value,g=$('fG').value,d=$('fD').value;const L=RES.filter(x=>(!m||x.incidencia===m)&&(!g||x.grupo===g)&&(!d||x.fecha===d));
  const by={};L.forEach(x=>{const o=by[x.dni]||(by[x.dni]={dni:x.dni,n:x.nombre,c:0,t:{}});o.c++;o.t[x.incidencia]=(o.t[x.incidencia]||0)+1});
  const R=Object.values(by).sort((a,b)=>b.c-a.c);$('rTot').textContent=L.length?'· '+L.length+' incidencias':'';
- $('rank').innerHTML=R.length?R.slice(0,100).map((o,i)=>`<div class="rk" data-d="${esc(o.dni)}"><span class="p">${i<3?['🥇','🥈','🥉'][i]:i+1}</span><span class="n">${esc(o.n||'(sin nombre)')}<small>DNI ${esc(o.dni)} · ${Object.entries(o.t).map(([k,v])=>esc(k.toLowerCase())+' '+v).join(', ')}</small></span><span class="c2">${o.c}</span></div>`).join(''):'<p class="e2">Sin incidencias con ese filtro.</p>'}
+ $('rank').innerHTML=R.length?R.slice(0,100).map((o,i)=>`<div class="rk" data-d="${esc(o.dni)}"><span class="p">${i+1}</span><span class="n">${esc(o.n||'(sin nombre)')}<small>DNI ${esc(o.dni)} · ${Object.entries(o.t).map(([k,v])=>esc(k.toLowerCase())+' '+v).join(', ')}</small></span><span class="c2">${o.c}</span></div>`).join(''):'<p class="e2">Sin incidencias con ese filtro.</p>'}
 ['fM','fG','fD'].forEach(i=>$(i).onchange=pintaRes);$('fTodo').onclick=()=>{$('fD').value='';pintaRes()};
 $('rank').onclick=e=>{const r=e.target.closest('[data-d]');if(!r)return;$('bq').value=r.dataset.d;hist();$('bq').scrollIntoView({behavior:'smooth',block:'center'})};
 function hist(){const q=$('bq').value.trim().toUpperCase();if(q.length<3){$('hist').innerHTML='';return}const L=RES.filter(x=>String(x.dni).includes(q)||String(x.nombre||'').includes(q));

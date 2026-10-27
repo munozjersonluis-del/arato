@@ -1,5 +1,5 @@
 // App "Incidencias": la página abre aunque no haya señal; los datos siempre van en línea.
-const CACHE = 'incidencias-v9';
+const CACHE = 'incidencias-v10';
 const PAGE = 'incidencias.html';
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll([PAGE, 'incidencias.webmanifest', 'incidencias-icon-192.png', 'incidencias-icon-512.png'])).then(() => self.skipWaiting()));
