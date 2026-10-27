@@ -7,6 +7,15 @@ const CAB = ['Fecha', 'DNI', 'Nombres', 'Incidencia', 'Grupo', 'Auxiliar', 'Hora
 
 function json_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
 function dni_(v) { const s = String(v || '').replace(/\D/g, ''); return s ? ('00000000' + s).slice(-8) : ''; }
+const SB_URL = 'https://rqvcvffyynpnighzwxju.supabase.co/rest/v1/rpc/inc_token_ok';
+const SB_KEY = 'sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn';
+// Solo acepta registros de un usuario con sesión válida en la app
+function tokenOk_(t) {
+  if (!t) return false;
+  const r = UrlFetchApp.fetch(SB_URL, { method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+    headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY }, payload: JSON.stringify({ p_token: String(t) }) });
+  return r.getContentText().trim() === 'true';
+}
 function hoja_(n) { return SpreadsheetApp.openById(HOJA_ID).getSheetByName(n); }
 
 function doGet() {
@@ -30,11 +39,7 @@ function doPost(e) {
     sh.getRange(1, 1, 1, CAB.length).setValues([CAB]).setFontWeight('bold');
     const n = sh.getLastRow();
     const ids = n > 1 ? sh.getRange(2, 8, n - 1, 1).getValues().map(r => String(r[0])) : [];
-    if (b.accion === 'borrar') {
-      const i = ids.indexOf(String(b.borrar));
-      if (i >= 0) sh.deleteRow(i + 2);
-      return json_({ ok: true });
-    }
+    if (!tokenOk_(b.tok)) return json_({ ok: false, error: 'Sin permiso' });
     if (b.id && ids.indexOf(String(b.id)) >= 0) return json_({ ok: true, dup: true });
     const d = dni_(b.dni);
     if (!d || !b.incidencia) return json_({ ok: false, error: 'Faltan datos' });
