@@ -88,14 +88,14 @@ let GR=ls('grupo')||'';const GC={A:'#9B59B6',B:'#00B0F0',C:'#E6C700',D:'#999',E:
 let PER=new Map(lj('per',[])),MOT=lj('mot',MOT_DEF),COLA=lj('cola',[]),HOY=lj('hoy',{d:'',l:[]}),SEL={dni:'',nom:'',mot:''};
 const dia=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')},hm=()=>{const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
 const d8=s=>{const m=String(s||'').replace(/\D/g,'');return m?('00000000'+m).slice(-8):''};
-let TABA='menu';const TIT={reg:'📷 Registrar',res:'📊 Resumen',adm:'👥 Usuarios',gru:'🔄 Cambiar grupo'};function vista(){const ok=!!(API&&TOK&&POR&&!CPIN);$('setup').classList.toggle('hide',!!API);$('quien').classList.toggle('hide',!API||!!(TOK&&POR));document.querySelector('.hd').classList.toggle('hide',!(TOK&&POR));$('cpin').classList.toggle('hide',!(TOK&&CPIN));
+let TABA=ls('tab')||'menu';if(TABA==='gru')TABA='menu';const TIT={reg:'📷 Registrar',res:'📊 Resumen',adm:'👥 Usuarios',gru:'🔄 Cambiar grupo'};function vista(){const ok=!!(API&&TOK&&POR&&!CPIN);$('setup').classList.toggle('hide',!!API);$('quien').classList.toggle('hide',!API||!!(TOK&&POR));document.querySelector('.hd').classList.toggle('hide',!(TOK&&POR));$('cpin').classList.toggle('hide',!(TOK&&CPIN));
  if(ROL!=='admin'&&TABA==='adm')TABA='menu';['menu','app','res','adm','gru'].forEach(k=>$(k).classList.toggle('hide',!ok||(k==='app'?TABA!=='reg':TABA!==k)));$('bar').classList.toggle('hide',!ok||TABA==='menu');$('barT').textContent=TIT[TABA]||'';$('tAdm').classList.toggle('hide',ROL!=='admin');
  const nm=POR?POR.split(' ').slice(0,2).join(' '):'';$('mNom').textContent=nm;$('mGr').textContent='Grupo '+GR;$('mRes').textContent=ROL==='admin'?'Todos los grupos':'Lo de hoy · Grupo '+GR;$('who').textContent=nm?nm+' · Grupo '+GR:'';window.scrollTo(0,0)}
-function ir(t){TABA=t;vista();if(t==='res')cargarRes();if(t==='adm')admListar();if(t==='gru')$('gp2').innerHTML=opG('gp2',GR,'— Elige —')}
+function ir(t){TABA=t;ls('tab',t);vista();if(t==='res')cargarRes();if(t==='adm')admListar();if(t==='gru')$('gp2').innerHTML=opG('gp2',GR,'— Elige —')}
 $('apiOk').onclick=()=>{const v=$('apiIn').value.trim();if(!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec/.test(v))return $('apiErr').textContent='Pega el enlace que termina en /exec';API=v;ls('api',v);vista();cargar()};
 const RPC=n=>'https://rqvcvffyynpnighzwxju.supabase.co/rest/v1/rpc/'+n,RH={apikey:'sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn',Authorization:'Bearer sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn','Content-Type':'application/json'};
 async function rpc(n,b){const r=await fetch(RPC(n),{method:'POST',headers:RH,body:JSON.stringify(b)});const j=await r.json().catch(()=>({}));if(!r.ok){const m=String(j.message||'');throw new Error(/SESION/.test(m)?'SESION':(m||'Error'))}return j}
-function salir(msg){if(TOK)rpc('inc_salir',{p_token:TOK}).catch(()=>{});TOK='';POR='';ROL='';CPIN=false;['tok','por','rol','pordni'].forEach(k=>ls(k,null));vista();if(msg)$('qErr').textContent=msg}
+function salir(msg){TABA='menu';ls('tab',null);if(TOK)rpc('inc_salir',{p_token:TOK}).catch(()=>{});TOK='';POR='';ROL='';CPIN=false;['tok','por','rol','pordni'].forEach(k=>ls(k,null));vista();if(msg)$('qErr').textContent=msg}
 $('qVer').onclick=()=>{const i=$('qPin');i.type=i.type==='password'?'text':'password'};
 $('quienOk').onclick=async()=>{const d=$('qDni').value.replace(/\D/g,''),pin=$('qPin').value.trim();if(d.length!==8)return $('qErr').textContent='Pon tu DNI (8 dígitos).';if(!pin)return $('qErr').textContent='Pon tu PIN.';if(!GR)return $('qErr').textContent='Elige el grupo.';
  $('quienOk').disabled=true;$('qErr').textContent='Ingresando…';try{const j=await rpc('inc_ingresar',{p_dni:d,p_pin:pin});
@@ -192,7 +192,7 @@ async function abrir(){if($('scan').disabled)return;try{STREAM=await navigator.m
   const m=String(t).match(/\d{8}/);if(m){cerrar();$('dni').value=m[0];buscar();return}if(t){cerrar();$('err').textContent='El código no tiene DNI. Escríbelo.';return}requestAnimationFrame(paso)};paso()}
 function cerrar(){RUN=false;$('cam').classList.add('hide');if(STREAM){STREAM.getTracks().forEach(t=>t.stop());STREAM=null}}
 $('scan').onclick=abrir;$('camX').onclick=cerrar;
-pintaGr();pintaMot();pinta();vista();cargar();verSesion().then(enviar);if(TABA==='res')cargarRes();
+pintaGr();pintaMot();pinta();vista();cargar();verSesion().then(()=>{enviar();if(TABA==='res')cargarRes();if(TABA==='adm'&&ROL==='admin')admListar()});
 let DP=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();DP=e;$('inst').classList.remove('hide')});$('inst').onclick=async()=>{if(!DP)return;DP.prompt();await DP.userChoice;DP=null;$('inst').classList.add('hide')};addEventListener('appinstalled',()=>$('inst').classList.add('hide'));
 const SOLO=matchMedia('(display-mode: standalone)').matches||navigator.standalone;if(!SOLO&&/iphone|ipad/i.test(navigator.userAgent))$('ios').classList.remove('hide');
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw-incidencias.js').catch(()=>{});
