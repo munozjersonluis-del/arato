@@ -39,7 +39,7 @@ select.in{font-size:18px;appearance:auto}select.in:disabled{opacity:.5}
 .sv{font:inherit;font-weight:900;font-size:18px;border:0;border-radius:12px;padding:13px;background:#1E9E5A;color:#fff;width:100%;margin-top:12px}
 .gr2 button{flex:none;padding:9px 10px;font-size:14px;border-width:2px}
 .hide{display:none!important}
-#envUlt{display:none!important}.st{display:flex;align-items:center;gap:8px;font-weight:900;font-size:15px;margin:14px 0 6px;color:#123A5C}.st:first-child{margin-top:0}.st b{width:24px;height:24px;border-radius:50%;background:#123A5C;color:#fff;display:grid;place-items:center;font-size:13px}
+#envUlt{display:none!important}.stp{font-weight:900;font-size:14px;margin:10px 0 5px;color:#123A5C}.stp:first-child{margin-top:0}.stpb{width:24px;height:24px;border-radius:50%;background:#123A5C;color:#fff;display:grid;place-items:center;font-size:13px}
 .ft{display:flex;gap:4px;margin-bottom:6px;overflow-x:auto}.ft button{flex:1;border:0;background:#EEF2F6;border-radius:8px;padding:7px 4px;font:inherit;font-weight:800;font-size:13px;color:#5A6B7B;white-space:nowrap}.ft button.on{background:#123A5C;color:#fff}.fz{margin-bottom:6px}.fz small{display:block;font-size:11.5px;font-weight:800;color:#5A6B7B;margin:2px 0 4px}.fz.mf small{color:#1E9E5A}.cm{display:flex;flex-wrap:wrap;gap:6px}.cm button{min-width:52px;border:2px solid #D5DCE6;background:#fff;border-radius:10px;padding:9px 10px;font:inherit;font-weight:900;font-size:16px;color:#123A5C}.cm button.on{background:#123A5C;border-color:#123A5C;color:#fff}.fz.mf .cm button{border-color:#9ED3B3}
 .og{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#EEF6F1;border:2px solid #9ED3B3;border-radius:12px;padding:10px 12px;font-weight:900;font-size:16px}.og small{display:block;font-size:11.5px;color:#1E9E5A;font-weight:800}.og button{border:1.5px solid #9ED3B3;background:#fff;border-radius:9px;padding:7px 10px;font:inherit;font-weight:800;font-size:13px;color:#123A5C}
 </style></head><body>
@@ -51,10 +51,10 @@ select.in{font-size:18px;appearance:auto}select.in:disabled{opacity:.5}
  <div class="c hide" id="pick"><p class="l">¿Quién eres?</p><div class="sup" id="sups"></div></div>
  <div id="app" class="hide">
   <div class="c f">
-   <div class="st"><b>1</b> Grupo</div><div class="ch gr" id="grp"></div>
-   <div class="st"><b>2</b> ¿De dónde sale?</div><div id="oP"></div><div class="r2 hide"><select class="in" id="oF"></select><select class="in" id="oC"></select></div>
-   <div class="st"><b>3</b> ¿A dónde va?</div><div id="dP"></div><div class="r2 hide"><select class="in" id="dF"></select><select class="in" id="dC"></select></div>
-   <div class="st"><b>4</b> Personas y hora</div>
+   <div class="stp">Grupo</div><div class="ch gr" id="grp"></div>
+   <div class="stp">Sale de</div><div id="oP" class="hide"></div><div class="r2"><select class="in" id="oF"></select><select class="in" id="oC"></select></div>
+   <div class="stp">Va a</div><div id="dP" class="hide"></div><div class="r2"><select class="in" id="dF"></select><select class="in" id="dC"></select></div>
+   <div class="stp">Personas · Hora</div>
    <div class="r2"><div id="perM" class="hide" style="grid-column:1/-1;order:-1"></div><div><input class="in" id="per" type="text" inputmode="numeric" placeholder="0" autocomplete="off"></div><div><input class="in" id="hora" type="time"></div></div>
    <p class="err" id="err"></p></div>
   </div>
@@ -94,7 +94,7 @@ let GS=new Set();const gMarca=()=>{[...$('grp').children].forEach(x=>x.classList
 $('grp').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;const v=b.dataset.v;if(EDIT){GS=new Set([v])}else{GS.has(v)?GS.delete(v):GS.add(v)}gMarca();autoGrupo();chk()};
 const O={f:'',c:''},D={f:'',c:''};const FUS=()=>{const o=['DUNA','VALLE 1','VALLE 2','VALLE 3','VALLE 4'];const u=[...new Set(COM.map(x=>x.f))];return[...o.filter(x=>u.includes(x)),...u.filter(x=>!o.includes(x))]};
 function selPinta(st,fb,cb){$(fb).innerHTML='<option value="">Fundo</option>'+FUS().map(f=>`<option${st.f===f?' selected':''}>${esc(f)}</option>`).join('');$(cb).innerHTML='<option value="">Comedor</option>'+(st.f?COM.filter(x=>x.f===st.f).map(x=>`<option${st.c===x.c?' selected':''}>${esc(x.c)}</option>`).join(''):'');$(cb).disabled=!st.f}
-function selInit(st,fb,cb){$(fb).onchange=()=>{st.f=$(fb).value;st.c='';selPinta(st,fb,cb);chk()};$(cb).onchange=()=>{st.c=$(cb).value;chk()}}
+function selInit(st,fb,cb){$(fb).onchange=()=>{st.f=$(fb).value;st.c='';selPinta(st,fb,cb);if(st===O&&!D.c){D.f=st.f;selPinta(D,'dF','dC')}chk()};$(cb).onchange=()=>{st.c=$(cb).value;chk()}}
 selInit(O,'oF','oC');selInit(D,'dF','dC');
 let OAUTO=false;
 const TAB={oP:'',dP:''};
@@ -105,7 +105,7 @@ const pintaD=()=>chips(D,'dP',O.f||'');
 $('oP').onclick=e=>{const tb=e.target.closest('[data-t]');if(tb){TAB.oP=tb.dataset.t;pintaO();return}const b=e.target.closest('[data-c]');if(!b)return;O.f=b.dataset.f;O.c=b.dataset.c;OAUTO=false;TAB.dP='';pintaO();pintaD();chk()};
 $('dP').onclick=e=>{const tb=e.target.closest('[data-t]');if(tb){TAB.dP=tb.dataset.t;pintaD();return}const b=e.target.closest('[data-c]');if(!b)return;D.f=b.dataset.f;D.c=b.dataset.c;pintaD();chk()};
 function ultimo(g){const L=[...MOVS,...COLA.filter(x=>x.accion==='agregar'&&x.sup===SUP&&x.dia===hoy()).map(x=>({...x,fd:fundo(x.cd)}))].filter(m=>m.grupo===g&&m.cd);return L.sort((a,b)=>String(a.hora).padStart(5,'0').localeCompare(String(b.hora).padStart(5,'0'))).pop()}
-function autoGrupo(){TAB.dP='';TAB.oP='';if(EDIT||GS.size!==1)return;const m=ultimo(G);if(m){O.f=m.fd||fundo(m.cd);O.c=String(m.cd);OAUTO=true;if(!$('per').value&&m.personas)$('per').value=m.personas}else{OAUTO=false}D.f=D.c='';selTodo()}
+function autoGrupo(){TAB.dP='';TAB.oP='';if(EDIT||GS.size!==1)return;const m=ultimo(G);if(m){O.f=m.fd||fundo(m.cd);O.c=String(m.cd);OAUTO=true;if(!$('per').value&&m.personas)$('per').value=m.personas}else{OAUTO=false}D.f=O.f||'';D.c='';selTodo()}
 const selTodo=()=>{selPinta(O,'oF','oC');selPinta(D,'dF','dC');pintaO();pintaD()};
 ['per','hora'].forEach(i=>$(i).addEventListener('input',chk));
 function chk(){const c=O.c,d=D.c,ok=G&&c&&d;$('chk').textContent='';if(!EDIT)$('save').textContent=ok?`GUARDAR · ${[...GS].sort().join(', ')}: ${O.f} (${c}) ➜ ${D.f} (${d})`:(GS.size>1?'GUARDAR ('+GS.size+' grupos)':'GUARDAR');$('err').textContent=''}
@@ -150,8 +150,9 @@ $('save').onclick=()=>{const c=O.c,d=D.c,h=$('hora').value,p=$('per').value.trim
  if(EDIT){const x={accion:'editar',sup:SUP,grupo:G,personas:p,co:c,cd:d,hora:h,id:EDIT,dia:hoy()};COLA.push(x);ls('cola',JSON.stringify(COLA));MOVS=MOVS.map(m=>m.id===EDIT?{...m,grupo:G,personas:p,fo:O.f,co:c,fd:D.f,cd:d,hora:h}:m);ULT=[{grupo:G,personas:p,fo:O.f,co:c,fd:D.f,cd:d,hora:h}];salirEdit();$('envUlt').textContent='📲 Enviar corrección al grupo';$('envUlt').classList.remove('hide');pinta();enviar();return}
  const gs=[...GS].sort(),pm={};$('perM').querySelectorAll('input').forEach(i=>pm[i.dataset.g]=i.value.trim());if(gs.length>1&&Object.values(pm).some(v=>v&&!/^\d+$/.test(v)))return $('err').textContent='Personas: solo números.';
  $('envUlt').textContent=gs.length>1?'📲 Enviar estos movimientos al grupo':'📲 Enviar este movimiento al grupo';ULT=[];gs.forEach((g,k)=>{const pp=gs.length>1?(pm[g]||''):p;COLA.push({accion:'agregar',sup:SUP,grupo:g,personas:pp,co:c,cd:d,hora:h,id:Date.now().toString(36)+Math.random().toString(36).slice(2,5)+k,dia:hoy()});ULT.push({grupo:g,personas:pp,fo:O.f,co:c,fd:D.f,cd:d,hora:h})});$('envUlt').classList.remove('hide');clearTimeout(window._eu);window._eu=setTimeout(()=>$('envUlt').classList.add('hide'),60000);ls('cola',JSON.stringify(COLA));
- $('per').value='';O.f=O.c=D.f=D.c='';OAUTO=false;selTodo();GS=new Set();gMarca();$('hora').value=ahora();chk();document.activeElement&&document.activeElement.blur();if(navigator.vibrate)navigator.vibrate(30);pinta();enviar()};
+ $('per').value='';O.f=O.c=D.f=D.c='';OAUTO=false;selTodo();GS=new Set();gMarca();$('hora').value=ahora();chk();document.activeElement&&document.activeElement.blur();if(navigator.vibrate)navigator.vibrate(30);toastOk('✓ Guardado');pinta();enviar()};
 
+function toastOk(t){let e=document.getElementById('tok');if(!e){e=document.createElement('div');e.id='tok';e.style.cssText='position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);background:#1E9E5A;color:#fff;font-weight:900;font-size:22px;padding:16px 26px;border-radius:16px;box-shadow:0 8px 24px #0004;z-index:99;transition:opacity .3s';document.body.appendChild(e)}e.textContent=t;e.style.opacity=1;clearTimeout(e._t);e._t=setTimeout(()=>e.style.opacity=0,1200)}
 /* ===== SALIDA DE COSECHA ===== */
 let SAL=lj('sal',[]),SG=new Set(),SED='';const SS={f:'',c:''};const FL=f=>({'DUNA':'DUNA AZUL','VALLE 1':'VALLE AZUL 1','VALLE 2':'VALLE AZUL 2','VALLE 3':'VALLE AZUL 3','VALLE 4':'VALLE AZUL 4'})[f]||f;
 $('sGrp').innerHTML=['A','B','C','D','E','F'].map(g=>`<button data-v="${g}">${g}</button>`).join('');
