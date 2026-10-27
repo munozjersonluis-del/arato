@@ -22,7 +22,7 @@
  <div class="c hide" id="quien"><p class="lb">¿Quién registra? (tu nombre)</p><input class="in" id="quienIn" placeholder="Ej. JERSON MONCADA"><button class="sv" id="quienOk">Continuar</button></div>
  <div id="app" class="hide">
   <div class="c"><p class="lb">1 · Cosechador</p><button class="scan" id="scan">📷 Escanear fotocheck</button><div class="or">o escribe el DNI</div>
-   <input class="in" id="dni" inputmode="numeric" maxlength="8" placeholder="DNI (8 dígitos)" autocomplete="off"><div id="pr"></div></div>
+   <input class="in" id="dni" inputmode="numeric" maxlength="8" placeholder="DNI (8 dígitos)" autocomplete="off"><div id="pr"></div><button type="button" id="camb" class="hide" style="width:100%;margin-top:8px;border:2px solid #D5DCE6;background:#fff;border-radius:12px;padding:11px;font:inherit;font-weight:900;font-size:15px;color:#123A5C">↺ Cambiar persona</button></div>
   <div class="c"><p class="lb">2 · Incidencia</p><div class="mt" id="mt"></div><p class="err" id="err"></p><button class="sv" id="save" disabled>GUARDAR</button></div>
   <div class="c"><p class="lb">📋 Hoy <span id="cnt"></span></p><div id="list"></div></div>
  </div>
@@ -47,14 +47,15 @@ async function cargar(){if(!API)return;try{const j=await (await fetch(API,{cache
 function pintaMot(){$('mt').innerHTML=MOT.map(m=>`<button type="button" data-m="${esc(m)}" class="${m===SEL.mot?'on':''}">${esc(m)}</button>`).join('')}
 $('mt').onclick=e=>{const b=e.target.closest('[data-m]');if(!b)return;SEL.mot=b.dataset.m;pintaMot();ok()};
 function buscar(){const v=$('dni').value.replace(/\D/g,'');$('dni').value=v;SEL.dni='';SEL.nom='';if(v.length<7){$('pr').innerHTML='';ok();return}const d=d8(v),n=PER.get(d);SEL.dni=d;SEL.nom=n||'';
- if(n&&n!==ULTN&&v.length===8){ULTN=n;bip(988);setTimeout(()=>decir(cap(n.split(' ').slice(0,4).join(' '))),120)}if(!n)ULTN='';
+ if(v.length===8&&d!==ULTN){ULTN=d;scanSnd()}if(v.length<8)ULTN='';bloquear(v.length===8);
  $('pr').innerHTML=n?`<div class="pr"><small>DNI ${d}</small>${esc(n)}</div>`:(v.length===8?`<div class="pr no"><small>DNI ${d}</small>No está en la lista · se guarda solo con DNI</div>`:'');ok()}
 $('dni').oninput=buscar;
+$('camb').onclick=()=>{$('dni').value='';ULTN='';SEL.dni='';SEL.nom='';$('pr').innerHTML='';bloquear(false);ok();$('dni').focus()};
 function ok(){$('save').disabled=!(SEL.dni&&SEL.dni.length===8&&SEL.mot);$('save').textContent=SEL.nom&&SEL.mot?'GUARDAR · '+SEL.nom.split(' ').slice(0,2).join(' ')+' · '+SEL.mot:'GUARDAR';$('err').textContent=''}
 function tok(t){const e=$('tok');e.textContent=t;e.style.opacity=1;clearTimeout(e._t);e._t=setTimeout(()=>e.style.opacity=0,1200)}
 $('save').onclick=()=>{if($('save').disabled)return;const r={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),dni:SEL.dni,nombre:SEL.nom,incidencia:SEL.mot,por:POR,hora:hm()};
  COLA.push(r);ls('cola',JSON.stringify(COLA));if(HOY.d!==dia())HOY={d:dia(),l:[]};HOY.l.push(r);ls('hoy',JSON.stringify(HOY));
- $('dni').value='';SEL={dni:'',nom:'',mot:''};$('pr').innerHTML='';pintaMot();ok();pinta();tok('✓ Guardado');if(navigator.vibrate)navigator.vibrate(40);bip(660,.07);setTimeout(()=>bip(990,.1),90);decir('Registrado');ULTN='';enviar()};
+ $('dni').value='';SEL={dni:'',nom:'',mot:''};$('pr').innerHTML='';pintaMot();ok();pinta();tok('✓ Guardado');if(navigator.vibrate)navigator.vibrate(40);bip(660,.07);setTimeout(()=>bip(990,.1),90);ULTN='';bloquear(false);enviar()};
 function pinta(){if(HOY.d!==dia())HOY={d:dia(),l:[]};const L=HOY.l.slice().reverse();$('cnt').textContent=L.length?'· '+L.length:'';
  $('list').innerHTML=L.length?L.map(r=>`<div class="r"><b>${esc(r.hora)}</b><span>${esc(r.nombre||'(sin nombre)')}<small>DNI ${esc(r.dni)}</small></span><em>${esc(r.incidencia)}</em><button data-x="${esc(r.id)}">🗑</button></div>`).join(''):'<p style="color:#8A96A3;font-weight:700;margin:4px 0">Sin incidencias hoy.</p>'}
 $('list').onclick=e=>{const b=e.target.closest('[data-x]');if(!b)return;if(!b.classList.contains('sure')){b.classList.add('sure');b.textContent='¿Borrar?';setTimeout(()=>{b.classList.remove('sure');b.textContent='🗑'},3500);return}
@@ -71,14 +72,16 @@ function bip(f=880,d=.09){if(!AC||!VOZ)return;try{AC.resume();const o=AC.createO
 const cap=t=>String(t).toLowerCase().replace(/(^|\s)\S/g,m=>m.toUpperCase());
 function decir(t){if(!VOZ||!('speechSynthesis' in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);if(VS){u.voice=VS;u.lang=VS.lang}else u.lang='es-PE';u.rate=1.02;u.pitch=1.05;u.volume=1;speechSynthesis.speak(u)}
 function pintaVoz(){$('voz').textContent=VOZ?'🔊':'🔇'}pintaVoz();
-$('voz').onclick=()=>{VOZ=!VOZ;ls('voz',VOZ?'1':'0');pintaVoz();if(VOZ){bip();decir('Voz activada')}};
+$('voz').onclick=()=>{VOZ=!VOZ;ls('voz',VOZ?'1':'0');pintaVoz();if(VOZ)scanSnd()};
 let ULTN='';
+function scanSnd(){if(!AC||!VOZ)return;try{AC.resume();const t=AC.currentTime;[[2900,0,.07],[2900,.1,.07]].forEach(([f,s0,d])=>{const o=AC.createOscillator(),g=AC.createGain();o.type='square';o.frequency.value=f;g.gain.setValueAtTime(.0001,t+s0);g.gain.exponentialRampToValueAtTime(.18,t+s0+.005);g.gain.setValueAtTime(.18,t+s0+d-.01);g.gain.exponentialRampToValueAtTime(.0001,t+s0+d);o.connect(g).connect(AC.destination);o.start(t+s0);o.stop(t+s0+d+.01)})}catch(e){}if(navigator.vibrate)navigator.vibrate(60)}
+function bloquear(on){$('scan').disabled=on;$('dni').readOnly=on;$('scan').style.opacity=on?.45:1;$('camb').classList.toggle('hide',!on)}
 /* ===== escáner QR ===== */
 let STREAM=null,RUN=false;const BD='BarcodeDetector' in window?new BarcodeDetector({formats:['qr_code']}):null;
-async function abrir(){try{STREAM=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});}catch(e){return $('err').textContent='No se pudo abrir la cámara. Escribe el DNI.'}
+async function abrir(){if($('scan').disabled)return;try{STREAM=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});}catch(e){return $('err').textContent='No se pudo abrir la cámara. Escribe el DNI.'}
  $('cam').classList.remove('hide');const v=$('vid');v.srcObject=STREAM;await v.play();RUN=true;const cv=document.createElement('canvas'),cx=cv.getContext('2d',{willReadFrequently:true});
  const paso=async()=>{if(!RUN)return;let t='';try{if(BD){const r=await BD.detect(v);if(r[0])t=r[0].rawValue}else if(window.jsQR&&v.videoWidth){cv.width=v.videoWidth;cv.height=v.videoHeight;cx.drawImage(v,0,0);const r=jsQR(cx.getImageData(0,0,cv.width,cv.height).data,cv.width,cv.height);if(r)t=r.data}}catch(e){}
-  const m=String(t).match(/\d{8}/);if(m){cerrar();$('dni').value=m[0];buscar();if(navigator.vibrate)navigator.vibrate(60);return}if(t){cerrar();$('err').textContent='El código no tiene DNI. Escríbelo.';return}requestAnimationFrame(paso)};paso()}
+  const m=String(t).match(/\d{8}/);if(m){cerrar();$('dni').value=m[0];buscar();return}if(t){cerrar();$('err').textContent='El código no tiene DNI. Escríbelo.';return}requestAnimationFrame(paso)};paso()}
 function cerrar(){RUN=false;$('cam').classList.add('hide');if(STREAM){STREAM.getTracks().forEach(t=>t.stop());STREAM=null}}
 $('scan').onclick=abrir;$('camX').onclick=cerrar;
 pintaMot();pinta();vista();cargar();enviar();
