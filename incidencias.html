@@ -53,8 +53,8 @@
   <button class="mi big" data-t="reg"><i>📷</i><span>Registrar incidencia<small>Escanea el fotocheck y elige la falta</small></span></button>
   <button class="mi" data-t="res"><i>📊</i><span>Resumen<small id="mRes">Incidencias por tipo y cosechador</small></span></button>
   <button class="mi hide" data-t="adm" id="tAdm"><i>👥</i><span>Usuarios<small>Crear auxiliares y enviar acceso</small></span></button>
-  <button class="mi" data-t="gru"><i>🔄</i><span>Cambiar grupo<small id="mGr2"></small></span></button>
-  <button class="mi out" id="mSal"><i>🚪</i><span>Cerrar sesión</span></button></div>
+
+  <button class="mi out" id="mSal"><i>🚪</i><span>Cerrar sesión<small>Para trabajar con otro grupo, cierra sesión y vuelve a ingresar</small></span></button></div>
  <div id="bar" class="hide"><button id="back">← Menú</button><b id="barT"></b></div>
  <div class="c hide" id="gru"><p class="lb" style="font-size:18px">¿Con qué grupo trabajas hoy?</p><select class="gsel" id="gp2"></select><button class="sv" id="gruOk">LISTO</button></div>
  <div id="res" class="hide">
@@ -90,7 +90,7 @@ const dia=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()
 const d8=s=>{const m=String(s||'').replace(/\D/g,'');return m?('00000000'+m).slice(-8):''};
 let TABA='menu';const TIT={reg:'📷 Registrar',res:'📊 Resumen',adm:'👥 Usuarios',gru:'🔄 Cambiar grupo'};function vista(){const ok=!!(API&&TOK&&POR&&!CPIN);$('setup').classList.toggle('hide',!!API);$('quien').classList.toggle('hide',!API||!!(TOK&&POR));document.querySelector('.hd').classList.toggle('hide',!(TOK&&POR));$('cpin').classList.toggle('hide',!(TOK&&CPIN));
  if(ROL!=='admin'&&TABA==='adm')TABA='menu';['menu','app','res','adm','gru'].forEach(k=>$(k).classList.toggle('hide',!ok||(k==='app'?TABA!=='reg':TABA!==k)));$('bar').classList.toggle('hide',!ok||TABA==='menu');$('barT').textContent=TIT[TABA]||'';$('tAdm').classList.toggle('hide',ROL!=='admin');
- const nm=POR?POR.split(' ').slice(0,2).join(' '):'';$('mNom').textContent=nm;$('mGr').textContent='Grupo '+GR;$('mGr2').textContent='Hoy: Grupo '+GR;$('mRes').textContent=ROL==='admin'?'Todos los grupos':'Lo de hoy · Grupo '+GR;$('who').textContent=nm?nm+' · Grupo '+GR:'';window.scrollTo(0,0)}
+ const nm=POR?POR.split(' ').slice(0,2).join(' '):'';$('mNom').textContent=nm;$('mGr').textContent='Grupo '+GR;$('mRes').textContent=ROL==='admin'?'Todos los grupos':'Lo de hoy · Grupo '+GR;$('who').textContent=nm?nm+' · Grupo '+GR:'';window.scrollTo(0,0)}
 function ir(t){TABA=t;vista();if(t==='res')cargarRes();if(t==='adm')admListar();if(t==='gru')$('gp2').innerHTML=opG('gp2',GR,'— Elige —')}
 $('apiOk').onclick=()=>{const v=$('apiIn').value.trim();if(!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec/.test(v))return $('apiErr').textContent='Pega el enlace que termina en /exec';API=v;ls('api',v);vista();cargar()};
 const RPC=n=>'https://rqvcvffyynpnighzwxju.supabase.co/rest/v1/rpc/'+n,RH={apikey:'sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn',Authorization:'Bearer sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn','Content-Type':'application/json'};
@@ -146,7 +146,7 @@ setInterval(enviar,20000);addEventListener('online',enviar);
 
 /* ===== RESUMEN ===== */
 let RES=[];
-$('menu').onclick=e=>{const b=e.target.closest('[data-t]');if(b)ir(b.dataset.t)};$('back').onclick=()=>ir('menu');$('mSal').onclick=()=>{if(confirm('¿Cerrar sesión?'))salir()};
+$('menu').onclick=e=>{const b=e.target.closest('[data-t]');if(b)ir(b.dataset.t)};$('back').onclick=()=>ir('menu');$('mSal').onclick=()=>{if(confirm('¿Cerrar sesión del Grupo '+GR+'?')){GR='';ls('grupo',null);pintaGr();salir()}};
 
 $('gruOk').onclick=()=>{const v=$('gp2').value;if(v){GR=v;ls('grupo',GR);pintaGr()}ir('menu')};
 function fmtD(d){return d?d.slice(8,10)+'/'+d.slice(5,7):''}
