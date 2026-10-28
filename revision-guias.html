@@ -58,7 +58,7 @@ function pintar(){const F=$('fu').value,P={};
     return`<div class="v${bad?' bad':''}"><div class="fila"><span class="n">${bad?'⚠':'✅'} V${v.n}</span><span${s('ini')} class="h">${hm(v.ini)}</span><span class="a">→</span><span${s('fin')} class="h">${hm(v.fin)}</span><span class="rl">recojo</span><span${s('rec')} class="h">${hm(v.rec)}</span><span class="fu">${esc(v.fu)}</span></div><div>${cg}</div>${bad?`<div class="o">${v.o.map(x=>'• '+x).join('<br>')}</div>`:''}</div>`}).join('')+'</details>'});
  $('out').innerHTML=(nv?`<div class="sum" style="${tot?'background:#FDECEA;color:#B3261E;border:2px solid #D2412C':'background:#E8F6EE;color:#1E7A46;border:2px solid #1E9E5A'}">${tot?`⚠ ${tot} de ${nv} viajes con horas para corregir`:'✅ Todas las horas están bien'}</div>`:'')+(h||'<div class="e">No hay guías subidas para este día.</div>')}
 async function cargar(){const d=$('dia').value;$('out').innerHTML='<div class="e">Cargando…</div>';
- try{const L=await (await fetch(`${SB}/rest/v1/guias_campo?fecha=eq.${d}&select=codigo,grupo,fundo,placa,calidad,inicio,fin,recojo&limit=5000`,{headers:H})).json();
+ try{const L=await (await fetch(`${SB}/rest/v1/guias_campo?fundo=neq.TERRANOVA&fecha=eq.${d}&select=codigo,grupo,fundo,placa,calidad,inicio,fin,recojo&limit=5000`,{headers:H})).json();
   ALL=Array.isArray(L)?L:[];const fs=[...new Set(ALL.map(r=>r.fundo).filter(Boolean))].sort(),cur=$('fu').value;
   $('fu').innerHTML='<option value="">Todos los fundos</option>'+fs.map(x=>`<option${x===cur?' selected':''}>${esc(x)}</option>`).join('');pintar()}
  catch(e){$('out').innerHTML='<div class="e">Sin conexión.</div>'}}
