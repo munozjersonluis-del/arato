@@ -56,6 +56,7 @@
 
  <div id="menu" class="hide"><div class="hi"><small>Hola 👋</small><b id="mNom"></b><span id="mGr"></span></div>
   <button class="mi big" data-t="reg"><i>📷</i><span>Registrar incidencia<small>Escanea el fotocheck y elige la falta</small></span></button>
+  <button class="mi" data-t="his"><i>🔎</i><span>Historial de cosechador<small>Escanea el fotocheck y ve todas sus incidencias</small></span></button>
   <button class="mi" data-t="res"><i>📊</i><span>Resumen<small id="mRes">Incidencias por tipo y cosechador</small></span></button>
   <button class="mi hide" data-t="adm" id="tAdm"><i>👥</i><span>Usuarios<small>Crear auxiliares y enviar acceso</small></span></button>
 
@@ -63,7 +64,7 @@
  <div id="bar" class="hide"><button id="back">← Menú</button><b id="barT"></b></div>
  <div class="c hide" id="gru"><p class="lb" style="font-size:18px">¿Con qué grupo trabajas hoy?</p><select class="gsel" id="gp2"></select><button class="sv" id="gruOk">LISTO</button></div>
  <div id="res" class="hide">
-  <div class="pc" id="fP"><button data-p="hoy" class="on">Hoy</button><button data-p="sem">7 días</button><button data-p="todo">Todo</button></div>
+  <div class="pc hide" id="fP"><button data-p="hoy" class="on">Hoy</button><button data-p="sem">7 días</button><button data-p="todo">Todo</button></div>
   <select class="gsel hide" id="fGc"></select>
   <div class="kp"><div><b id="kT">0</b><span>incidencias</span></div><div><b id="kP">0</b><span>cosechadores</span></div></div>
   <div id="fAct" class="fa"></div>
@@ -72,9 +73,10 @@
    <div data-sec="gr"><div id="pGr"></div></div>
    <div data-sec="au"><div id="pAux"></div></div>
    <div data-sec="ti"><div id="tipos"></div><small class="hint" id="fMx"></small></div>
-   <div data-sec="co"><input class="in sm" id="bq" placeholder="🔎 Buscar DNI o nombre" autocomplete="off" style="margin-bottom:6px"><div id="hist"></div><div id="rank"><p class="e2">Cargando…</p></div></div>
+   <div data-sec="co"><input class="hide" id="bq"><div id="hist" class="hide"></div><p class="hint" style="margin:0 0 6px">Toca un nombre para ver su historial completo</p><div id="rank"><p class="e2">Cargando…</p></div></div>
   </div>
  </div>
+ <div id="his" class="hide"><div class="c"><button class="scan" id="hScan">📷 Escanear fotocheck</button><div class="or">o escribe el DNI</div><input class="in" id="hq" inputmode="numeric" maxlength="8" placeholder="DNI (8 dígitos)" autocomplete="off"></div><div id="hOut"></div></div>
  <div class="c hide" id="adm"><p class="lb" style="font-size:18px">👥 Usuarios auxiliares</p>
   <p class="lb">Nuevo usuario</p><input class="in sm" id="aDni" inputmode="numeric" maxlength="8" placeholder="DNI"><div id="aNom"></div><input class="in sm" id="aNomIn" placeholder="Nombre completo" style="margin-top:6px">
   <input class="in sm" id="aPin" inputmode="numeric" maxlength="6" placeholder="PIN temporal" style="margin-top:6px" readonly><p style="margin:4px 0 0;font-size:12.5px;font-weight:700;color:#5A6B7B">🔑 PIN temporal automático · al entrar lo cambiará por uno suyo</p><p class="err" id="aErr"></p><button class="sv" id="aOk" style="margin-top:6px">CREAR USUARIO</button><button class="wa hide" id="aWa">📲 Enviar acceso por WhatsApp</button>
@@ -98,10 +100,10 @@ let GR=(ROL==='admin'?ls('grupoAdm'):ls('grupo'))||'';const GC={A:'#9B59B6',B:'#
 let PER=new Map(lj('per',[])),MOT=lj('mot',MOT_DEF),COLA=lj('cola',[]),HOY=lj('hoy',{d:'',l:[]}),SEL={dni:'',nom:'',mot:''};
 const dia=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')},hm=()=>{const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
 const d8=s=>{const m=String(s||'').replace(/\D/g,'');return m?('00000000'+m).slice(-8):''};
-let TABA=ls('tab')||'menu';if(TABA==='gru')TABA='menu';const TIT={reg:'📷 Registrar',res:'📊 Resumen',adm:'👥 Usuarios',gru:'🔄 Cambiar grupo'};function vista(){const ok=!!(API&&TOK&&POR&&!CPIN);$('setup').classList.toggle('hide',!!API);$('quien').classList.toggle('hide',!API||!!(TOK&&POR));document.querySelector('.hd').classList.toggle('hide',!(TOK&&POR));$('cpin').classList.toggle('hide',!(TOK&&CPIN));
- if(ROL!=='admin'&&TABA==='adm')TABA='menu';['menu','app','res','adm','gru'].forEach(k=>$(k).classList.toggle('hide',!ok||(k==='app'?TABA!=='reg':TABA!==k)));$('bar').classList.toggle('hide',!ok||TABA==='menu');$('barT').textContent=TIT[TABA]||'';$('tAdm').classList.toggle('hide',ROL!=='admin');
- const nm=POR?POR.split(' ').slice(0,2).join(' '):'';$('mNom').textContent=nm;$('mSalT').classList.toggle('hide',ROL==='admin');$('mGr').textContent=ROL==='admin'?'Administrador':'Grupo '+GR;$('rGrC').classList.toggle('hide',ROL!=='admin');if(ROL==='admin'&&!$('rGr').options.length)$('rGr').innerHTML=opG('rGr',GR,'— Elige el grupo —');$('mRes').textContent=ROL==='admin'?'Todos los grupos':'Lo de hoy · Grupo '+GR;$('who').textContent=nm?nm+(ROL==='admin'?' · Admin':' · Grupo '+GR):'';window.scrollTo(0,0)}
-function ir(t){TABA=t;ls('tab',t);vista();if(t==='res')cargarRes();if(t==='adm')admListar();if(t==='gru')$('gp2').innerHTML=opG('gp2',GR,'— Elige —')}
+let TABA=ls('tab')||'menu';if(TABA==='gru')TABA='menu';const TIT={his:'🔎 Historial',reg:'📷 Registrar',res:'📊 Resumen',adm:'👥 Usuarios',gru:'🔄 Cambiar grupo'};function vista(){const ok=!!(API&&TOK&&POR&&!CPIN);$('setup').classList.toggle('hide',!!API);$('quien').classList.toggle('hide',!API||!!(TOK&&POR));document.querySelector('.hd').classList.toggle('hide',!(TOK&&POR));$('cpin').classList.toggle('hide',!(TOK&&CPIN));
+ if(ROL!=='admin'&&TABA==='adm')TABA='menu';['menu','app','res','adm','gru','his'].forEach(k=>$(k).classList.toggle('hide',!ok||(k==='app'?TABA!=='reg':TABA!==k)));$('bar').classList.toggle('hide',!ok||TABA==='menu');$('barT').textContent=TIT[TABA]||'';$('tAdm').classList.toggle('hide',ROL!=='admin');
+ const nm=POR?POR.split(' ').slice(0,2).join(' '):'';$('mNom').textContent=nm;$('mSalT').classList.toggle('hide',ROL==='admin');$('mGr').textContent=ROL==='admin'?'Administrador':'Grupo '+GR;$('rGrC').classList.toggle('hide',ROL!=='admin');if(ROL==='admin'&&!$('rGr').options.length)$('rGr').innerHTML=opG('rGr',GR,'— Elige el grupo —');$('mRes').textContent=ROL==='admin'?'Hoy · todos los grupos':'Hoy · Grupo '+GR;$('who').textContent=nm?nm+(ROL==='admin'?' · Admin':' · Grupo '+GR):'';window.scrollTo(0,0)}
+function ir(t){if(TABA==='his'&&t!=='his'){$('hq').value='';$('hOut').innerHTML=''}TABA=t;ls('tab',t);vista();if(t==='res')cargarRes();if(t==='adm')admListar();if(t==='gru')$('gp2').innerHTML=opG('gp2',GR,'— Elige —')}
 $('apiOk').onclick=()=>{const v=$('apiIn').value.trim();if(!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec/.test(v))return $('apiErr').textContent='Pega el enlace que termina en /exec';API=v;ls('api',v);vista();cargar()};
 const RPC=n=>'https://rqvcvffyynpnighzwxju.supabase.co/rest/v1/rpc/'+n,RH={apikey:'sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn',Authorization:'Bearer sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn','Content-Type':'application/json'};
 async function rpc(n,b){const r=await fetch(RPC(n),{method:'POST',headers:RH,body:JSON.stringify(b)});const j=await r.json().catch(()=>({}));if(!r.ok){const m=String(j.message||'');throw new Error(/SESION/.test(m)?'SESION':(m||'Error'))}return j}
@@ -164,7 +166,7 @@ $('menu').onclick=e=>{const b=e.target.closest('[data-t]');if(b)ir(b.dataset.t)}
 $('gruOk').onclick=()=>{const v=$('gp2').value;if(v){GR=v;ls('grupo',GR);pintaGr()}ir('menu')};
 function fmtD(d){return d?d.slice(8,10)+'/'+d.slice(5,7):''}
 async function cargarRes(){
- const adm=ROL==='admin';$('fP').classList.toggle('hide',!adm);if(!adm)FP='hoy';try{RES=await rpc('inc_listar',{p_token:TOK,p_grupo:GR});if(!Array.isArray(RES))RES=[]}catch(e){if(e.message==='SESION')salir('Tu sesión venció.')}pintaRes()}
+ const adm=ROL==='admin';FP='hoy';try{RES=await rpc('inc_listar',{p_token:TOK,p_grupo:GR});if(!Array.isArray(RES))RES=[]}catch(e){if(e.message==='SESION')salir('Tu sesión venció.')}pintaRes()}
 let FP='hoy',FG='',FM='',FA='',SEC='',VM={};
 const hoyISO=()=>new Date(Date.now()-5*36e5).toISOString().slice(0,10);
 function pintaRes(){const h=hoyISO(),d7=new Date(Date.now()-5*36e5-6*864e5).toISOString().slice(0,10);
@@ -192,10 +194,20 @@ function pintaSec(){const adm=ROL==='admin';if(!SEC||(!adm&&(SEC==='gr'||SEC==='
 $('sg').onclick=e=>{const b=e.target.closest('[data-s]');if(!b)return;SEC=b.dataset.s;pintaSec()};
 $('fAct').onclick=e=>{const b=e.target.closest('[data-fx]');if(!b)return;const k=b.dataset.fx;if(k==='g'){FG='';$('fGc').value=''}if(k==='a')FA='';if(k==='m')FM='';pintaRes()};
 document.querySelector('.sb').addEventListener('click',e=>{const b=e.target.closest('[data-vm]');if(!b)return;VM[b.dataset.vm]=!VM[b.dataset.vm];pintaRes()});
+async function verHis(){const v=$('hq').value.replace(/\D/g,'');$('hq').value=v;if(v.length<8){$('hOut').innerHTML='';return}const d=d8(v),nom=PER.get(d)||'';
+ $('hOut').innerHTML='<div class="c"><p class="e2">Buscando…</p></div>';let L=[];try{L=await rpc('inc_historial',{p_token:TOK,p_dni:d});if(!Array.isArray(L))L=[]}catch(e){if(e.message==='SESION')return salir('Tu sesión venció.');$('hOut').innerHTML='<div class="c"><p class="err">Sin conexión. Intenta de nuevo.</p></div>';return}
+ if($('hq').value!==v)return;const n=(L[0]&&L[0].nombre)||nom||'(sin nombre)',d7=new Date(Date.now()-5*36e5-6*864e5).toISOString().slice(0,10),h=hoyISO(),sem=L.filter(x=>x.fecha>=d7).length,hoy=L.filter(x=>x.fecha===h).length;
+ const T={};L.forEach(x=>T[x.incidencia]=(T[x.incidencia]||0)+1);const D={};L.forEach(x=>(D[x.fecha]=D[x.fecha]||[]).push(x));
+ $('hOut').innerHTML=`<div class="c"><div style="font-weight:900;font-size:19px">${esc(n)}</div><div class="hint">DNI ${esc(d)}</div>
+  <div class="kp" style="margin:10px 0 6px;grid-template-columns:1fr 1fr 1fr"><div><b>${hoy}</b><span>hoy</span></div><div><b style="color:${sem>=3?'#C0331F':'#123A5C'}">${sem}</b><span>7 días</span></div><div><b style="color:#123A5C">${L.length}</b><span>total</span></div></div>
+  ${sem>=3?'<div class="alr" style="animation:none">⚠️ Reincidente: '+sem+' incidencias en los últimos 7 días</div>':''}
+  ${L.length?'<div class="fa" style="margin-top:8px">'+Object.entries(T).sort((a,b)=>b[1]-a[1]).map(([k,c])=>`<button style="background:#FDECEA;color:#C0331F">${esc(k.charAt(0)+k.slice(1).toLowerCase())} ×${c}</button>`).join('')+'</div>':'<p class="e2" style="margin-top:8px">✅ Sin incidencias registradas.</p>'}</div>`+
+  (L.length?'<div class="c">'+Object.entries(D).map(([f,a])=>`<div class="hd2">${fmtD(f)} · ${a.length} incidencia${a.length>1?'s':''}</div>`+a.map(x=>`<div class="r"><b>${esc(x.hora||'')}</b><span>${esc(x.incidencia)}<small>Grupo ${esc(x.grupo||'')} · ${esc(x.auxiliar||'')}</small></span></div>`).join('')).join('')+'</div>':'')}
+$('hq').oninput=()=>{if($('hq').value.replace(/\D/g,'').length===8)verHis();else if(!$('hq').value)$('hOut').innerHTML=''};
 $('pGr').onclick=e=>{const b=e.target.closest('[data-pg]');if(!b)return;FG=FG===b.dataset.pg?'':b.dataset.pg;$('fGc').value=FG;pintaRes()};
 $('pAux').onclick=e=>{const b=e.target.closest('[data-pa]');if(!b)return;FA=FA===b.dataset.pa?'':b.dataset.pa;pintaRes()};
 $('tipos').onclick=e=>{const b=e.target.closest('[data-m]');if(!b)return;FM=FM===b.dataset.m?'':b.dataset.m;pintaRes()};
-$('rank').onclick=e=>{const r=e.target.closest('[data-d]');if(!r)return;$('bq').value=r.dataset.d;hist();$('bq').scrollIntoView({behavior:'smooth',block:'center'})};
+$('rank').onclick=e=>{const r=e.target.closest('[data-d]');if(!r)return;ir('his');$('hq').value=r.dataset.d;verHis()};
 function hist(){const q=$('bq').value.trim().toUpperCase();if(q.length<3){$('hist').innerHTML='';return}const L=RES.filter(x=>String(x.dni).includes(q)||String(x.nombre||'').includes(q));
  if(!L.length){$('hist').innerHTML='<p class="e2">Sin registros.</p>';return}const per={};L.forEach(x=>(per[x.dni]||(per[x.dni]={n:x.nombre,l:[]})).l.push(x));
  $('hist').innerHTML=Object.entries(per).slice(0,5).map(([dn,o])=>`<div class="hd2">${esc(o.n||'')} · DNI ${esc(dn)} · <span style="color:#D2412C">${o.l.length} incidencia(s)</span></div>`+o.l.map(x=>`<div class="r"><b>${fmtD(x.fecha)}</b><span>${esc(x.incidencia)}<small>Grupo ${esc(x.grupo||'')} · ${esc(x.auxiliar||'')} · ${esc(x.hora||'')}</small></span></div>`).join('')).join('')}
@@ -218,9 +230,9 @@ let STREAM=null,RUN=false;const BD='BarcodeDetector' in window?new BarcodeDetect
 async function abrir(){if($('scan').disabled)return;try{STREAM=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});}catch(e){return $('err').textContent='No se pudo abrir la cámara. Escribe el DNI.'}
  $('cam').classList.remove('hide');const v=$('vid');v.srcObject=STREAM;await v.play();RUN=true;const cv=document.createElement('canvas'),cx=cv.getContext('2d',{willReadFrequently:true});
  const paso=async()=>{if(!RUN)return;let t='';try{if(BD){const r=await BD.detect(v);if(r[0])t=r[0].rawValue}else if(window.jsQR&&v.videoWidth){cv.width=v.videoWidth;cv.height=v.videoHeight;cx.drawImage(v,0,0);const r=jsQR(cx.getImageData(0,0,cv.width,cv.height).data,cv.width,cv.height);if(r)t=r.data}}catch(e){}
-  const m=String(t).match(/\d{8}/);if(m){cerrar();$('dni').value=m[0];buscar();return}if(t){cerrar();$('err').textContent='El código no tiene DNI. Escríbelo.';return}requestAnimationFrame(paso)};paso()}
+  const m=String(t).match(/\d{8}/);if(m){cerrar();if(CAMT==='his'){$('hq').value=m[0];scanSnd();verHis()}else{$('dni').value=m[0];buscar()}return}if(t){cerrar();$('err').textContent='El código no tiene DNI. Escríbelo.';return}requestAnimationFrame(paso)};paso()}
 function cerrar(){RUN=false;$('cam').classList.add('hide');if(STREAM){STREAM.getTracks().forEach(t=>t.stop());STREAM=null}}
-$('scan').onclick=abrir;$('camX').onclick=cerrar;
+let CAMT='reg';$('scan').onclick=()=>{CAMT='reg';abrir()};$('hScan').onclick=()=>{CAMT='his';abrir()};$('camX').onclick=cerrar;
 pintaGr();pintaMot();pinta();vista();cargar();verSesion().then(()=>{enviar();if(TABA==='res')cargarRes();if(TABA==='adm'&&ROL==='admin')admListar()});
 let DP=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();DP=e;$('inst').classList.remove('hide')});$('inst').onclick=async()=>{if(!DP)return;DP.prompt();await DP.userChoice;DP=null;$('inst').classList.add('hide')};addEventListener('appinstalled',()=>$('inst').classList.add('hide'));
 const SOLO=matchMedia('(display-mode: standalone)').matches||navigator.standalone;if(!SOLO&&/iphone|ipad/i.test(navigator.userAgent))$('ios').classList.remove('hide');
