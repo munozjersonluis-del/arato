@@ -68,9 +68,10 @@ $('f').onchange=async e=>{const file=e.target.files[0];if(!file)return;const inf
   const falta=Object.entries(c).filter(([k,v])=>v<0&&['fecha','guia','placa','calidad','jarras','rec'].includes(k)).map(([k])=>k);
   if(falta.length)throw new Error('No encuentro las columnas: '+falta.join(', '));
   const F=A.slice(1).filter(r=>r[c.placa]&&r[c.guia]).map(r=>({codigo:String(r[c.guia]).trim(),fecha:fecha(r[c.fecha]),grupo:String(r[c.grupo]).replace(/0+$/,'').toUpperCase(),fundo:String(r[c.fundo]),modulo:String(r[c.modulo]),variedad:String(r[c.variedad]),placa:String(r[c.placa]).toUpperCase().replace(/\s/g,''),calidad:norm(r[c.calidad]),envase:String(r[c.tenv]),n_envases:Number(r[c.nenv])||0,jarras:Number(String(r[c.jarras]).replace(',',''))||0,inicio:hm(mins(r[c.ini])),fin:hm(mins(r[c.fin])),recojo:hm(mins(r[c.rec]))}));
-  if(!F.length)throw new Error('El archivo no tiene guías.');
+  const nT=F.length;for(let i=F.length-1;i>=0;i--)if(/TERRANOVA/i.test(F[i].fundo))F.splice(i,1);const sT=nT-F.length;
+  if(!F.length)throw new Error(sT?'Todas las guías son de Terranova: no se guardan.':'El archivo no tiene guías.');
   const dias=[...new Set(F.map(x=>x.fecha))].sort(),d0=dias[dias.length-1];
-  info.textContent=`✔ ${F.length} guías en el archivo. Guardando…`;
+  info.textContent=`✔ ${F.length} guías en el archivo${sT?' (se omitieron '+sT+' de Terranova)':''}. Guardando…`;
   const t=new Date(Date.now()-5*3600e3).toISOString().slice(11,19).replace(/:/g,''),ruta=`${d0}/${t}_${file.name.replace(/[^\w.\-]+/g,'_')}`;
   let rutaOk=ruta;try{const up=await fetch(`${SB}/storage/v1/object/guias-excel/${ruta}`,{method:'POST',headers:{...H,'Content-Type':file.type||'application/octet-stream','x-upsert':'false'},body:buf});if(!up.ok)rutaOk=''}catch(x){rutaOk=''}
   const r=await fetch(`${SB}/rest/v1/rpc/guias_subir`,{method:'POST',headers:{...H,'Content-Type':'application/json'},body:JSON.stringify({p_filas:F,p_archivo:file.name,p_ruta:rutaOk,p_fecha:d0})});
@@ -80,7 +81,7 @@ $('f').onchange=async e=>{const file=e.target.files[0];if(!file)return;const inf
   $('dia').value=d0;e.target.value='';await verDia(d0,true);
  }catch(err){info.textContent='No pude subir el archivo: '+err.message}};
 async function verDia(d,keepMsg){
- try{const r=await fetch(`${SB}/rest/v1/guias_campo?fecha=eq.${d}&select=*&limit=5000`,{headers:H});const L=await r.json();
+ try{const r=await fetch(`${SB}/rest/v1/guias_campo?fundo=neq.TERRANOVA&fecha=eq.${d}&select=*&limit=5000`,{headers:H});const L=await r.json();
   RAW=(Array.isArray(L)?L:[]).map(x=>({fecha:x.fecha,guia:x.codigo,grupo:x.grupo,fundo:x.fundo,modulo:x.modulo,variedad:x.variedad,placa:x.placa,calidad:x.calidad,tenv:x.envase,nenv:Number(x.n_envases)||0,jarras:Number(x.jarras)||0,ini:mins(x.inicio),fin:mins(x.fin),rec:mins(x.recojo)}));
   const a=await (await fetch(`${SB}/rest/v1/guias_archivos?fecha=eq.${d}&select=*&order=subido.asc`,{headers:H})).json();
   $('arch').innerHTML=Array.isArray(a)&&a.length?'<b>Excel subidos este día (evidencia):</b><br>'+a.map(x=>{const hr=new Date(x.subido).toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit',timeZone:'America/Lima'});return `• ${hr} · ${esc(x.nombre)} · ${x.filas} guías (${x.nuevas} nuevas) ${x.ruta?`<a href="${SB}/storage/v1/object/public/guias-excel/${x.ruta}" target="_blank">⬇️ descargar</a>`:''}`}).join('<br>'):'Todavía no se subió ningún Excel este día.';
