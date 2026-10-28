@@ -62,7 +62,7 @@
   <div class="pc" id="fP"><button data-p="hoy" class="on">Hoy</button><button data-p="sem">Últimos 7 días</button><button data-p="todo">Todo</button></div>
   <select class="gsel" id="fGc" style="margin-bottom:10px"></select>
   <div class="kp"><div><b id="kT">0</b><span>incidencias</span></div><div><b id="kP">0</b><span>cosechadores</span></div></div>
-  <div class="c"><p class="lb">Por tipo de incidencia <small class="hint" id="fMx"></small></p><div id="tipos"></div></div>
+  <div id="admRes"><div class="c"><p class="lb">Por grupo <small class="hint">· toca uno para filtrar</small></p><div id="pGr"></div></div><div class="c"><p class="lb">Por auxiliar <small class="hint">· quién registró · toca para filtrar</small></p><div id="pAux"></div></div></div><div class="c"><p class="lb">Por tipo de incidencia <small class="hint" id="fMx"></small></p><div id="tipos"></div></div>
   <div class="c"><p class="lb">Cosechadores con más incidencias</p><p class="hint" style="margin:-2px 0 6px">Toca un nombre para ver su detalle</p><div id="rank"><p class="e2">Cargando…</p></div></div>
   <div class="c"><p class="lb">🔎 Buscar cosechador</p><input class="in sm" id="bq" placeholder="DNI o nombre" autocomplete="off"><div id="hist"></div></div>
  </div>
@@ -156,10 +156,16 @@ $('gruOk').onclick=()=>{const v=$('gp2').value;if(v){GR=v;ls('grupo',GR);pintaGr
 function fmtD(d){return d?d.slice(8,10)+'/'+d.slice(5,7):''}
 async function cargarRes(){
  const adm=ROL==='admin';$('fGc').classList.toggle('hide',!adm);$('fP').classList.toggle('hide',!adm);if(!adm)FP='hoy';try{RES=await rpc('inc_listar',{p_token:TOK,p_grupo:GR});if(!Array.isArray(RES))RES=[]}catch(e){if(e.message==='SESION')salir('Tu sesión venció.')}pintaRes()}
-let FP='hoy',FG='',FM='';
+let FP='hoy',FG='',FM='',FA='';
 const hoyISO=()=>new Date(Date.now()-5*36e5).toISOString().slice(0,10);
 function pintaRes(){const h=hoyISO(),d7=new Date(Date.now()-5*36e5-6*864e5).toISOString().slice(0,10);
- const B=RES.filter(x=>(FP==='todo'||(FP==='hoy'?x.fecha===h:x.fecha>=d7))&&(!FG||x.grupo===FG));
+ const P0=RES.filter(x=>FP==='todo'||(FP==='hoy'?x.fecha===h:x.fecha>=d7));
+ const B=P0.filter(x=>(!FG||x.grupo===FG)&&(!FA||x.auxiliar===FA));const adm=ROL==='admin';$('admRes').classList.toggle('hide',!adm);
+ if(adm){const cg={};P0.filter(x=>!FA||x.auxiliar===FA).forEach(x=>cg[x.grupo||'-']=(cg[x.grupo||'-']||0)+1);const GG=Object.entries(cg).sort((a,b)=>a[0].localeCompare(b[0])),mg=Math.max(1,...GG.map(z=>z[1]));
+  $('pGr').innerHTML=GG.length?GG.map(([k,v])=>`<button class="tp ${FG===k?'on':FG?'off':''}" data-pg="${esc(k)}"><span class="nm">Grupo ${esc(k)}</span><span class="br"><i style="width:${v/mg*100}%;background:#1B4F7A"></i></span><b>${v}</b></button>`).join(''):'<p class="e2">Sin registros.</p>';
+  const ca={};P0.filter(x=>!FG||x.grupo===FG).forEach(x=>{const k=x.auxiliar||'(sin nombre)';const o=ca[k]||(ca[k]={c:0,g:new Set(),u:''});o.c++;o.g.add(x.grupo);const t=x.fecha+' '+x.hora;if(t>o.u)o.u=t});
+  const AA=Object.entries(ca).sort((a,b)=>b[1].c-a[1].c);
+  $('pAux').innerHTML=(FA?`<button class="mini" data-pa="" style="padding:6px 10px;margin-bottom:6px">✕ Quitar filtro: ${esc(FA)}</button>`:'')+(AA.length?AA.map(([k,o])=>`<div class="rk" data-pa="${esc(k)}" style="${FA&&FA!==k?'opacity:.35':''}"><span class="p">👤</span><span class="n">${esc(k)}<small>Grupo ${[...o.g].sort().join(', ')} · último ${esc(fmtD(o.u.slice(0,10)))} ${esc(o.u.slice(11))}</small></span><span class="c2" style="background:#1B4F7A">${o.c}</span></div>`).join(''):'<p class="e2">Nadie registró en este periodo.</p>')}
  const L=B.filter(x=>!FM||x.incidencia===FM);
  const by={};L.forEach(x=>{const o=by[x.dni]||(by[x.dni]={dni:x.dni,n:x.nombre,g:x.grupo,c:0,t:{}});o.c++;o.t[x.incidencia]=(o.t[x.incidencia]||0)+1});
  const R=Object.values(by).sort((a,b)=>b.c-a.c);$('kT').textContent=L.length;$('kP').textContent=R.length;
@@ -169,6 +175,8 @@ function pintaRes(){const h=hoyISO(),d7=new Date(Date.now()-5*36e5-6*864e5).toIS
  $('rank').innerHTML=R.length?R.slice(0,100).map((o,i)=>`<div class="rk" data-d="${esc(o.dni)}"><span class="p">${i+1}</span><span class="n">${esc(o.n||'(sin nombre)')}<small>${ROL==='admin'?'Grupo '+esc(o.g||'-')+' · ':''}${Object.entries(o.t).map(([k,v])=>esc(k.charAt(0)+k.slice(1).toLowerCase())+(v>1?' ×'+v:'')).join(', ')}</small></span><span class="c2">${o.c}</span></div>`).join(''):'<p class="e2">Nadie con incidencias aquí.</p>'}
 $('fP').onclick=e=>{const b=e.target.closest('[data-p]');if(!b)return;FP=b.dataset.p;$('fP').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));pintaRes()};
 $('fGc').innerHTML=opG('fGc','','Todos los grupos');$('fGc').onchange=()=>{FG=$('fGc').value;pintaRes()};
+$('pGr').onclick=e=>{const b=e.target.closest('[data-pg]');if(!b)return;FG=FG===b.dataset.pg?'':b.dataset.pg;$('fGc').value=FG;pintaRes()};
+$('pAux').onclick=e=>{const b=e.target.closest('[data-pa]');if(!b)return;FA=FA===b.dataset.pa?'':b.dataset.pa;pintaRes()};
 $('tipos').onclick=e=>{const b=e.target.closest('[data-m]');if(!b)return;FM=FM===b.dataset.m?'':b.dataset.m;pintaRes()};
 $('rank').onclick=e=>{const r=e.target.closest('[data-d]');if(!r)return;$('bq').value=r.dataset.d;hist();$('bq').scrollIntoView({behavior:'smooth',block:'center'})};
 function hist(){const q=$('bq').value.trim().toUpperCase();if(q.length<3){$('hist').innerHTML='';return}const L=RES.filter(x=>String(x.dni).includes(q)||String(x.nombre||'').includes(q));
