@@ -16,6 +16,23 @@ function tokenOk_(t) {
     headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY }, payload: JSON.stringify({ p_token: String(t) }) });
   return r.getContentText().trim() === 'true';
 }
+const SYNC_URL = 'https://rqvcvffyynpnighzwxju.supabase.co/rest/v1/rpc/inc_sync';
+const SYNC_KEY = 'd897bf4579a1eb8b1744dd6f444cd91631f9';
+// La app queda igual que la hoja: lo que borras aquí se anula en la app
+function sincronizar() {
+  const sh = hoja_('Incidencias'), n = sh.getLastRow();
+  const ids = n > 1 ? sh.getRange(2, 8, n - 1, 1).getValues().map(r => String(r[0]).trim()).filter(String) : [];
+  const r = UrlFetchApp.fetch(SYNC_URL, { method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+    headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY }, payload: JSON.stringify({ p_key: SYNC_KEY, p_ids: ids }) });
+  Logger.log(r.getContentText());
+}
+// Ejecutar UNA vez: sincroniza al borrar filas y cada 5 minutos
+function instalarSync() {
+  ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'sincronizar').forEach(t => ScriptApp.deleteTrigger(t));
+  ScriptApp.newTrigger('sincronizar').forSpreadsheet(HOJA_ID).onChange().create();
+  ScriptApp.newTrigger('sincronizar').timeBased().everyMinutes(5).create();
+  sincronizar();
+}
 function hoja_(n) { return SpreadsheetApp.openById(HOJA_ID).getSheetByName(n); }
 
 function doGet() {
