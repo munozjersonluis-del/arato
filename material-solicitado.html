@@ -140,7 +140,8 @@ h3{font:600 19px "Barlow Semi Condensed",sans-serif;margin:18px 2px 8px}
       <p class="sub">Elige qué hiciste y completa lo que te pide.</p>
       <span class="lbl">¿Qué hiciste?</span><div class="chips" id="aTipo"></div>
       <div id="fGr" class="hidden"><span class="lbl">Grupo</span><div class="chips" id="aGrupo"></div></div>
-      <div id="fFu" class="hidden"><span class="lbl">Fundo</span><div class="chips" id="aFundo"></div></div>
+      <div id="fDe" class="hidden"><span class="lbl">Desde</span><div class="chips" id="aDe"></div></div>
+      <div id="fFu" class="hidden"><span class="lbl" id="lFu">Fundo</span><div class="chips" id="aFundo"></div></div>
       <div id="fCa" class="hidden"><span class="lbl" id="lCa">Cantidad</span><div style="display:flex;gap:8px;align-items:center"><button type="button" class="btn" id="cMenos" style="width:56px;flex:none">−</button><input class="in" id="aCant" type="text" inputmode="numeric" style="text-align:center;font-size:22px;font-weight:900"><button type="button" class="btn" id="cMas" style="width:56px;flex:none">+</button></div></div>
       <div id="fTx" class="hidden"><span class="lbl" id="lTx">Detalle</span><input class="in" id="aTxt" type="text" autocomplete="off"></div>
       <p class="err" id="aErr"></p>
@@ -447,10 +448,10 @@ window.addEventListener('appinstalled',()=>{$('inst').classList.add('hidden');av
 /* ===== Quiénes van + Otros apoyos (Supabase) ===== */
 const SBU='https://rqvcvffyynpnighzwxju.supabase.co/rest/v1/apoyos_reten',SBK='sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn',SBH={apikey:SBK,Authorization:'Bearer '+SBK,'Content-Type':'application/json'};
 const TALLAS='https://script.google.com/macros/s/AKfycbzYyTdMBlcvEv5vmCrFnSHD3lTeYAvG-PSnywvp_ZVlc65_orCpd6P1FniMeSfwW6skkQ/exec';
-const TIPOS=['🫐 RECOJO DE FRUTA','⛺ PUNTO DE CASETA','💧 AGUA (BIDONES)','🗑️ BOTAR DESCARTE','🍽️ ABASTECIMIENTO DE COMEDORES','📦 MATERIALES','✍️ OTRA LABOR'];
-const TCFG={'RECOJO DE FRUTA':{g:1},'PUNTO DE CASETA':{g:1,c:'¿Cuántas casetas dejaste?',u:'casetas',rc:1},'AGUA (BIDONES)':{g:1,c:'¿Cuántos bidones de agua?',u:'bidones',rc:1},'BOTAR DESCARTE':{c:'¿Cuántas veces fuiste a botar?',u:'viajes',rc:1},'ABASTECIMIENTO DE COMEDORES':{f:1,t:'¿Qué comedores? (ej. Comedor 1 y 3)',rt:1},'MATERIALES':{g:1,t:'¿Qué material? (opcional)'},'OTRA LABOR':{go:1,t:'Escribe la labor que hiciste',rt:1}};
+const TIPOS=['🫐 RECOJO DE FRUTA','⛺ PUNTO DE CASETA','💧 AGUA (BIDONES)','🗑️ BOTAR DESCARTE','🧊 TRASLADO DE AGUA FRÍA','🍽️ ABASTECIMIENTO DE COMEDORES','📦 MATERIALES','✍️ OTRA LABOR'];
+const TCFG={'RECOJO DE FRUTA':{g:1},'PUNTO DE CASETA':{g:1,c:'¿Cuántas casetas dejaste?',u:'casetas',rc:1},'AGUA (BIDONES)':{g:1,c:'¿Cuántos bidones de agua?',u:'bidones',rc:1},'TRASLADO DE AGUA FRÍA':{de:1,f:1,c:'¿Cuántos bidones llevaste?',u:'bidones',rc:1},'BOTAR DESCARTE':{c:'¿Cuántas veces fuiste a botar?',u:'viajes',rc:1},'ABASTECIMIENTO DE COMEDORES':{f:1,t:'¿Qué comedores? (ej. Comedor 1 y 3)',rt:1},'MATERIALES':{g:1,t:'¿Qué material? (opcional)'},'OTRA LABOR':{go:1,t:'Escribe la labor que hiciste',rt:1}};
 const tk=t=>String(t||'').replace(/^\S+\s/,'');
-function pintaForm(){const c=TCFG[tk(AP.tipo)]||{};$('fGr').classList.toggle('hidden',!(c.g||c.go));$('fFu').classList.toggle('hidden',!c.f);$('fCa').classList.toggle('hidden',!c.c);$('fTx').classList.toggle('hidden',!c.t);
+function pintaForm(){const c=TCFG[tk(AP.tipo)]||{};$('fGr').classList.toggle('hidden',!(c.g||c.go));$('fFu').classList.toggle('hidden',!c.f);$('fDe').classList.toggle('hidden',!c.de);$('lFu').textContent=c.de?'Hacia':'Fundo';if(c.de){if(!AP.de){AP.de='VALLE AZUL 1';chips('aDe',LIST.fundos,AP.de,v=>{AP.de=v})}if(!AP.fundo){AP.fundo='DUNA AZUL';chips('aFundo',LIST.fundos,AP.fundo,v=>{AP.fundo=v})}}$('fCa').classList.toggle('hidden',!c.c);$('fTx').classList.toggle('hidden',!c.t);
  if(c.c)$('lCa').textContent=c.c;if(c.t){$('lTx').textContent=c.t;$('aTxt').placeholder=''}$('aErr').textContent=''}
 let NOM=S.get('estibas',[]),PERS=S.get('personas',[]),AP={tipo:'',grupo:'',fundo:''},APS=S.get('apoyos',{f:'',l:[]});
 const iso=()=>{const d=new Date();return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())};
@@ -464,16 +465,16 @@ function pintaAp(){if(APS.f!==iso())APS={f:iso(),l:[]};const L=APS.l.filter(a=>!
 function subirAp(){APS.l.filter(a=>!a.ok).forEach(a=>{const b={id:a.id,fecha:APS.f,hora:a.hora,placa:a.placa,estibas:a.estibas,tipo:a.tipo,grupo:a.grupo,fundo:a.fundo,cantidad:a.num,nota:a.cantidad,anulado:!!a.anulado};
  fetch(SBU,{method:'POST',headers:{...SBH,Prefer:'resolution=merge-duplicates'},body:JSON.stringify(b)}).then(r=>{if(r.ok){a.ok=1;S.set('apoyos',APS);pintaAp()}}).catch(()=>{})})}
 $('cMas').onclick=()=>{$('aCant').value=(parseInt($('aCant').value)||0)+1};$('cMenos').onclick=()=>{$('aCant').value=Math.max(0,(parseInt($('aCant').value)||0)-1)||''};
-$('aOk').onclick=()=>{if(!AP.tipo)return $('aErr').textContent='Elige qué hiciste.';const cf=TCFG[tk(AP.tipo)]||{};if(cf.g&&!AP.grupo)return $('aErr').textContent='Elige el grupo.';if(cf.f&&!AP.fundo)return $('aErr').textContent='Elige el fundo.';
+$('aOk').onclick=()=>{if(!AP.tipo)return $('aErr').textContent='Elige qué hiciste.';const cf=TCFG[tk(AP.tipo)]||{};if(cf.g&&!AP.grupo)return $('aErr').textContent='Elige el grupo.';if(cf.f&&!AP.fundo)return $('aErr').textContent='Elige el fundo.';if(cf.de&&!AP.de)return $('aErr').textContent='Elige de qué fundo sale.';
  const nn=parseInt($('aCant').value)||0,tx=$('aTxt').value.trim();if(cf.rc&&!nn)return $('aErr').textContent=cf.c;if(cf.rt&&tx.length<2)return $('aErr').textContent=cf.t.replace(' (opcional)','');if(!NOM.length)return $('aErr').textContent='Primero elige quiénes van en la unidad (arriba).';
- $('aErr').textContent='';const d=new Date(),c=[nn&&cf.u?nn+' '+cf.u:'',tx].filter(Boolean).join(' · ');if(APS.f!==iso())APS={f:iso(),l:[]};
+ $('aErr').textContent='';const d=new Date(),c=[cf.de?AP.de.replace('VALLE AZUL','Valle').replace('DUNA AZUL','Duna')+' → '+AP.fundo.replace('VALLE AZUL','Valle').replace('DUNA AZUL','Duna'):'',nn&&cf.u?nn+' '+cf.u:'',tx].filter(Boolean).join(' · ');if(APS.f!==iso())APS={f:iso(),l:[]};
  APS.l.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),hora:p2(d.getHours())+':'+p2(d.getMinutes()),placa:U?U.placa:'',estibas:NOM.join(' · '),tipo:AP.tipo.replace(/^\S+\s/,''),grupo:AP.grupo||'',fundo:cf.f?AP.fundo:(F.fundo||''),cantidad:c,num:nn||null});
- S.set('apoyos',APS);$('aCant').value='';$('aTxt').value='';AP.grupo='';AP.fundo='';chips('aGrupo',LIST.grupos,'',v=>{AP.grupo=v});chips('aFundo',LIST.fundos,'',v=>{AP.fundo=v});aviso('✓ Apoyo registrado');pintaAp();subirAp();if(navigator.vibrate)navigator.vibrate(30)};
+ S.set('apoyos',APS);$('aCant').value='';$('aTxt').value='';AP.grupo='';AP.fundo='';AP.de='';chips('aDe',LIST.fundos,'',v=>{AP.de=v});chips('aGrupo',LIST.grupos,'',v=>{AP.grupo=v});chips('aFundo',LIST.fundos,'',v=>{AP.fundo=v});aviso('✓ Apoyo registrado');pintaAp();subirAp();if(navigator.vibrate)navigator.vibrate(30)};
 $('aList').onclick=e=>{const b=e.target.closest('[data-ad]');if(!b)return;if(!b.classList.contains('sure')){b.classList.add('sure');b.textContent='¿Borrar?';setTimeout(()=>{b.classList.remove('sure');b.textContent='🗑'},3500);return}
  const a=APS.l.find(x=>x.id===b.dataset.ad);if(a){a.anulado=true;a.ok=0;S.set('apoyos',APS);pintaAp();subirAp()}};
 const tab=t=>{S.set('tab',t);$('tBan').classList.toggle('hidden',t!=='ban');$('tApo').classList.toggle('hidden',t!=='apo');$('tabs2').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.t===t))};
 $('tabs2').onclick=e=>{const b=e.target.closest('[data-t]');if(b)tab(b.dataset.t)};tab('ban');
-chips('aTipo',TIPOS,'',v=>{AP.tipo=v;pintaForm()});chips('aGrupo',LIST.grupos,'',v=>{AP.grupo=v});chips('aFundo',LIST.fundos,'',v=>{AP.fundo=v});pintaWho();pintaAp();subirAp();setInterval(subirAp,30000);
+chips('aTipo',TIPOS,'',v=>{AP.tipo=v;pintaForm()});chips('aGrupo',LIST.grupos,'',v=>{AP.grupo=v});chips('aFundo',LIST.fundos,'',v=>{AP.fundo=v});chips('aDe',LIST.fundos,'',v=>{AP.de=v});pintaWho();pintaAp();subirAp();setInterval(subirAp,30000);
 </script>
 </body>
 </html>
