@@ -27,7 +27,7 @@
 .lg-in{display:flex;align-items:center;gap:8px;border:2px solid #D5DCE6;border-radius:14px;padding:4px 10px;background:#F6F8FB}.lg-in:focus-within{border-color:#1B4F7A;background:#fff}.lg-in input{flex:1;border:0;background:transparent;font:inherit;font-size:20px;font-weight:800;padding:10px 0;color:#123A5C;outline:0;min-width:0}.lg-eye{border:0;background:none;font-size:18px}
 .lg-f{text-align:center;color:#5A6B7B;font-weight:700;font-size:13px;margin:12px 0 0}.lg-v{text-align:center;color:#8A96A3;font-size:12px;font-weight:700;margin-top:16px}
 .wa{width:100%;border:0;border-radius:14px;background:#25D366;color:#fff;font:inherit;font-weight:900;font-size:17px;padding:14px;margin-top:8px}
-.pc{display:flex;gap:6px;margin-bottom:8px;overflow-x:auto}.pc button{flex:1;border:2px solid #D5DCE6;background:#fff;border-radius:22px;padding:9px 10px;font:inherit;font-weight:900;font-size:14px;color:#123A5C;white-space:nowrap}.pc button.on{background:#123A5C;border-color:#123A5C;color:#fff}
+.pc{display:flex;gap:6px;margin-bottom:8px;overflow-x:auto}.pc button{flex:1;border:2px solid #D5DCE6;background:#fff;border-radius:22px;padding:9px 10px;font:inherit;font-weight:900;font-size:14px;color:#123A5C;white-space:nowrap}.fdt{position:relative;flex:1.2;border:2px solid #D5DCE6;background:#fff;border-radius:22px;padding:9px 10px;font-weight:900;font-size:14px;color:#123A5C;white-space:nowrap;text-align:center}.fdt.on{background:#123A5C;border-color:#123A5C;color:#fff}.fdt input{position:absolute;inset:0;opacity:0;width:100%}.pc button.on{background:#123A5C;border-color:#123A5C;color:#fff}
 .kp{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}.kp div{background:#fff;border-radius:16px;padding:12px;text-align:center;box-shadow:0 1px 3px #0002}.kp b{display:block;font-size:32px;color:#D2412C;line-height:1.1}.kp span{font-weight:800;color:#5A6B7B;font-size:13px}
 .tp{display:flex;align-items:center;gap:8px;padding:7px 0;border:0;background:none;width:100%;font:inherit;text-align:left;color:#123A5C}.tp .nm{width:42%;font-weight:800;font-size:13.5px}.tp .br{flex:1;height:14px;background:#EEF2F6;border-radius:8px;overflow:hidden}.tp .br i{display:block;height:100%;background:#D2412C;border-radius:8px}.tp b{width:30px;text-align:right}.tp.on .nm{text-decoration:underline}.tp.off{opacity:.35}
 .hint{color:#8A96A3;font-weight:700;font-size:12.5px}
@@ -66,7 +66,7 @@
  <div id="bar" class="hide"><button id="back">← Menú</button><b id="barT"></b></div>
  <div class="c hide" id="gru"><p class="lb" style="font-size:18px">¿Con qué grupo trabajas hoy?</p><select class="gsel" id="gp2"></select><button class="sv" id="gruOk">LISTO</button></div>
  <div id="res" class="hide">
-  <div class="pc hide" id="fP"><button data-p="hoy" class="on">Hoy</button><button data-p="sem">7 días</button><button data-p="todo">Todo</button></div>
+  <div class="pc hide" id="fP"><button data-p="hoy" class="on">Hoy</button><button data-p="ayer">Ayer</button><button data-p="sem">7 días</button><label class="fdt" id="fDl">📅 <span id="fDt">Fecha</span><input type="date" id="fD"></label></div>
   <select class="gsel hide" id="fGc"></select>
   <div class="kp"><div><b id="kT">0</b><span>incidencias</span></div><div><b id="kP">0</b><span>cosechadores</span></div></div>
   <div id="fAct" class="fa"></div>
@@ -168,11 +168,11 @@ $('menu').onclick=e=>{const b=e.target.closest('[data-t]');if(b)ir(b.dataset.t)}
 $('gruOk').onclick=()=>{const v=$('gp2').value;if(v){GR=v;ls('grupo',GR);pintaGr()}ir('menu')};
 function fmtD(d){return d?d.slice(8,10)+'/'+d.slice(5,7):''}
 async function cargarRes(){
- const adm=ROL==='admin';FP='hoy';try{RES=await rpc('inc_listar',{p_token:TOK,p_grupo:GR});if(!Array.isArray(RES))RES=[]}catch(e){if(e.message==='SESION')salir('Tu sesión venció.')}pintaRes()}
+ const adm=ROL==='admin';FP='hoy';$('fP').classList.toggle('hide',!adm);marcaP();try{RES=await rpc('inc_listar',{p_token:TOK,p_grupo:GR});if(!Array.isArray(RES))RES=[]}catch(e){if(e.message==='SESION')salir('Tu sesión venció.')}pintaRes()}
 let FP='hoy',FG='',FM='',FA='',SEC='',VM={};
 const hoyISO=()=>new Date(Date.now()-5*36e5).toISOString().slice(0,10);
 function pintaRes(){const h=hoyISO(),d7=new Date(Date.now()-5*36e5-6*864e5).toISOString().slice(0,10);
- const P0=RES.filter(x=>FP==='todo'||(FP==='hoy'?x.fecha===h:x.fecha>=d7));
+ const ay=new Date(Date.now()-5*36e5-864e5).toISOString().slice(0,10);const P0=RES.filter(x=>FP==='todo'||(FP==='hoy'?x.fecha===h:FP==='ayer'?x.fecha===ay:FP==='dia'?x.fecha===FD:x.fecha>=d7));
  const B=P0.filter(x=>(!FG||x.grupo===FG)&&(!FA||x.auxiliar===FA));const adm=ROL==='admin';
  if(adm){const cg={};P0.filter(x=>!FA||x.auxiliar===FA).forEach(x=>cg[x.grupo||'-']=(cg[x.grupo||'-']||0)+1);const GG=Object.entries(cg).sort((a,b)=>a[0].localeCompare(b[0])),mg=Math.max(1,...GG.map(z=>z[1]));
   $('pGr').innerHTML=GG.length?GG.map(([k,v])=>`<button class="tp ${FG===k?'on':FG?'off':''}" data-pg="${esc(k)}"><span class="nm">Grupo ${esc(k)}</span><span class="br"><i style="width:${v/mg*100}%;background:#1B4F7A"></i></span><b>${v}</b></button>`).join(''):'<p class="e2">Sin registros.</p>';
@@ -186,7 +186,9 @@ function pintaRes(){const h=hoyISO(),d7=new Date(Date.now()-5*36e5-6*864e5).toIS
  $('fMx').textContent=TT.length?'Toca uno para filtrar':'';
  $('tipos').innerHTML=TT.length?TT.map(([k,v])=>`<button class="tp ${FM===k?'on':FM?'off':''}" data-m="${esc(k)}"><span class="nm">${esc(k)}</span><span class="br"><i style="width:${v/mx*100}%"></i></span><b>${v}</b></button>`).join(''):'<p class="e2">Sin incidencias en este periodo. 👍</p>';
  $('rank').innerHTML=(R.length?R.slice(0,VM.co?100:5).map((o,i)=>`<div class="rk" data-d="${esc(o.dni)}"><span class="p">${i+1}</span><span class="n">${esc(o.n||'(sin nombre)')}<small>${ROL==='admin'?'Grupo '+esc(o.g||'-')+' · ':''}${Object.entries(o.t).map(([k,v])=>esc(k.charAt(0)+k.slice(1).toLowerCase())+(v>1?' ×'+v:'')).join(', ')}</small></span><span class="c2">${o.c}</span></div>`).join(''):'<p class="e2">Nadie con incidencias aquí.</p>')+(R.length>5?`<button class="vm" data-vm="co">${VM.co?'Ver menos':'Ver todos ('+R.length+')'}</button>`:'');pintaSec()}
-$('fP').onclick=e=>{const b=e.target.closest('[data-p]');if(!b)return;FP=b.dataset.p;$('fP').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));pintaRes()};
+let FD='';function marcaP(){$('fP').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.p===FP));$('fDl').classList.toggle('on',FP==='dia');$('fDt').textContent=FP==='dia'&&FD?fmtD(FD):'Fecha'}
+$('fP').onclick=e=>{const b=e.target.closest('[data-p]');if(!b)return;FP=b.dataset.p;marcaP();pintaRes()};
+$('fD').onchange=()=>{FD=$('fD').value;if(FD){FP='dia';marcaP();pintaRes()}};
 $('fGc').innerHTML=opG('fGc','','Todos los grupos');$('fGc').onchange=()=>{FG=$('fGc').value;pintaRes()};
 function pintaSec(){const adm=ROL==='admin';if(!SEC||(!adm&&(SEC==='gr'||SEC==='au')))SEC=adm?'gr':'ti';
  $('sg').querySelectorAll('button').forEach(b=>{b.classList.toggle('hide',b.classList.contains('adm')&&!adm);b.classList.toggle('on',b.dataset.s===SEC)});
