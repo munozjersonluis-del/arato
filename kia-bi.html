@@ -122,7 +122,7 @@ function PER(){if(FX.vista==='d')return dmy(FX.dia);if(FX.vista==='m')return MES
 function sbHTML(o){const ws=[...new Set(FECHAS.map(lunes))].sort(),ms=[...new Set(FECHAS.map(x=>x.slice(0,7)))].sort();
  const chip=(k,v,lab,on)=>`<button data-k="${k}" data-v="${v}" class="${on?'on':''}">${lab}</button>`,sel=(k,lab,arr,cur)=>`<div><label>${lab}</label><select data-s="${k}"><option value="">Todos</option>${arr.map(x=>`<option${x===cur?' selected':''}>${x}</option>`).join('')}</select></div>`;
  let h=`<button class="lp cx" style="display:none" data-x="1">✕ Cerrar filtros</button><div><label>Vista</label><div class="ch">${[['d','Día'],['s','Semana'],['m','Mes']].map(([v,l])=>chip('vista',v,l,FX.vista===v)).join('')}</div></div>`;
- if(FX.vista==='d')h+=`<div><label>Fecha</label><input type="date" data-s="dia" value="${FX.dia}"></div>`;
+ if(FX.vista==='d')h+=`<div><label>Fecha</label><input type="date" data-s="dia" value="${FX.dia}"></div><div><label>Ver</label><div class="ch">${chip('dv','k','🚚 Por Kia',FX.dv!=='m')}${chip('dv','m','📍 Por módulo',FX.dv==='m')}</div></div>`;
  if(FX.vista==='s')h+=`<div><label>Semana</label><div class="ch">${ws.map(l=>chip('sem',l,nsem(l),FX.sem.has(l))).join('')}</div></div>`;
  if(FX.vista==='m')h+=`<div><label>Mes</label><div class="ch">${ms.map(m=>chip('mes',m,MESN[+m.slice(5,7)-1].slice(0,3),FX.mes===m)).join('')}</div></div>`;
  h+=sel('fu','Fundo',o.fu,FX.fu)+(o.mod?sel('mod','Módulo',o.mod,FX.mod)+sel('vr','Variedad',o.vr,FX.vr):'');
@@ -135,7 +135,7 @@ function sbInit(onLoad,onFilter){const sb=$('sb');
   if(b.dataset.x){sb.classList.remove('op');return}if(b.dataset.w){compartir(b);return}if(b.dataset.a){onLoad();return}
   if(b.dataset.r){FX.fu=FX.mod=FX.vr=FX.pl='';FX.grp=new Set(['A','B','C','D','E','F']);FX.cal=new Set(['EXPORTABLE','DESCARTE','NACIONAL']);onFilter();return}
   const k=b.dataset.k,v=b.dataset.v;if(!k)return;
-  if(k==='vista'){FX.vista=v;onLoad();return}if(k==='mes'){FX.mes=v;onLoad();return}
+  if(k==='vista'){FX.vista=v;onLoad();return}if(k==='dv'){FX.dv=v;onFilter();return}if(k==='mes'){FX.mes=v;onLoad();return}
   if(k==='sem'){FX.sem=new Set([v]);onLoad();return}const S=FX[k];if(S.has(v)){if(S.size>1)S.delete(v)}else S.add(v);onFilter()};
  sb.onchange=e=>{const k=e.target.dataset.s;if(!k)return;FX[k]=e.target.value;if(k==='dia')onLoad();else onFilter()};
  $('sbt').onclick=()=>sb.classList.add('op')}
@@ -273,7 +273,10 @@ function pintar(){if(FX.vista==='s')return pintarSem();const L=IND.slice();if(!L
  <div class="p"><h2>DETALLE POR KIA</h2><div class="b dt"><table><tr><th class="t">Kia</th><th>Grupo</th><th class="t">Fundo</th><th>Viajes</th><th>Kg export.</th><th>Tiempo prom.</th><th>En meta</th><th>Kg/hora</th>${ESS()?'':'<th>Últ. recojo</th>'}</tr>`+
  L.map(x=>{const e=enm(x),fu=[...new Set(FIL.filter(r=>r.placa===x.p).map(r=>String(r.fundo).toUpperCase().replace('VALLE AZUL ','VA').replace('DUNA AZUL','DUNA')))].join(' / ');return`<tr><td class="t"><b style="color:${COL[x.g]||'#000'}">${x.p}</b></td><td>${x.g}</td><td class="t" style="font-size:11px">${fu}</td><td>${x.v}</td><td>${f(x.kg)}</td><td><span class="dot" style="background:${sc(x.cyp,META_CICLO,40,1)}"></span>${du(x.cyp)}</td><td>${e==null?'—':e+' %'}</td><td>${x.kgh?f(x.kgh):'—'}</td>${ESS()?'':`<td>${hm(x.ult)||'—'}</td>`}</tr>`}).join('')+
  `<tr class="tot"><td class="t">TOTAL</td><td></td><td></td><td>${vi}</td><td>${f(kg)}</td><td>${du(cyp)}</td><td>${em==null?'—':em+' %'}</td><td>${kgh?f(kgh):'—'}</td>${ESS()?'':'<td></td>'}</tr></table></div></div></div>`;
- $('out').innerHTML=h;fit();$('hr').textContent='Actualizado '+new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'});if(document.body.classList.contains('snap'))$('hr').textContent=PER()+' · '+(FX.fu||'Todos los fundos')+' · Grupos '+[...FX.grp].sort().join(' ')+(FX.pl?' · '+FX.pl:'')}
+ window._MOD='';if(!ESS()){const MO={};IND.forEach(x=>(x.T.ci||[]).forEach(i=>{const t=x.T[i];if(i>0&&x.T[i-1].mo!==t.mo)return;const k=String(t.fu||'').toUpperCase().replace('VALLE AZUL ','Valle ').replace('DUNA AZUL','Duna')+' · '+(t.mo||'—')+' · '+(t.va||'—');(MO[k]=MO[k]||[]).push(t.cv)}));
+  const ML=Object.entries(MO).map(([k,c])=>{const n=c.length,ok=c.filter(v=>v<=META_CICLO).length;return{k,n,em:n?Math.round(ok/n*100):0,pr:n?c.reduce((a,b)=>a+b,0)/n:0}}).filter(o=>o.n>=3).sort((a,b)=>b.pr-a.pr);
+  if(ML.length)window._MOD=`<div class="p"><h2 class="xh">📍 TIEMPO DE RECOJO POR MÓDULO · ${PER()}<span class="xpill r">Meta: 30 min</span></h2><div class="xsub">Tiempo promedio por viaje en cada fundo · módulo · variedad del día (de mayor a menor). Solo módulos con 3 viajes o más.</div><div class="b">${chM(ML)}<div class="xl"><span><i style="background:#1B4F7A"></i>25 min o menos</span><span><i style="background:#F0A73A"></i>de 25 a 30 min</span><span><i style="background:#E5483A"></i>más de 30 min</span></div></div></div>`}
+ if(FX.vista==='d'&&FX.dv==='m'){$('out').innerHTML='<div style="grid-column:1/-1;grid-row:1/-1;overflow:auto">'+(window._MOD||'<div class="e">No hay módulos con 3 viajes o más en este día.</div>')+'</div>';$('out').classList.remove('tr')}else{$('out').innerHTML=h;fit()}$('hr').textContent='Actualizado '+new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'});if(document.body.classList.contains('snap'))$('hr').textContent=PER()+' · '+(FX.fu||'Todos los fundos')+' · Grupos '+[...FX.grp].sort().join(' ')+(FX.pl?' · '+FX.pl:'')}
 {const q=new URLSearchParams(location.search).get('fecha');if(q){FX.vista='d';FX.dia=q}}
 async function compartir(b){const t0=b.textContent;
  if(b._fl){try{if(navigator.canShare&&navigator.canShare({files:[b._fl]}))await navigator.share({files:[b._fl],title:document.title});else{const a=document.createElement('a');a.href=URL.createObjectURL(b._fl);a.download=b._fl.name;a.click()}}catch(e){}b._fl=null;b.textContent='📲 Compartir WhatsApp';return}
