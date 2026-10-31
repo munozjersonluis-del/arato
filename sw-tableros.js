@@ -1,5 +1,5 @@
 // App "Tableros": la página abre aunque no haya señal; los datos siempre van en línea.
-const CACHE = 'tableros-v33';
+const CACHE = 'tableros-v34';
 const PAGE = 'tableros.html';
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll([PAGE, 'tableros.webmanifest', 'tableros-icon-192.png', 'tableros-icon-512.png'])).then(() => self.skipWaiting()));
