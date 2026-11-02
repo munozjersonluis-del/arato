@@ -161,7 +161,7 @@ $('d1').onchange=$('d2').onchange=()=>{$('sem').value='';cargar()};pon(W[0]);
 
 $('rep').onclick=()=>{const R1=window._R1||[],R2=window._R2||[],R3=window._R3||[],SIN=window._SIN||[],ND=window._ND||1;if(!R1.length){alert('Espera a que cargue el ranking.');return}
  const a=$('d1').value,b=$('d2').value,sn=$('sem').selectedOptions[0]?.text.split('·')[0].trim()||'',tc=z=>String(z||'').toLowerCase().replace(/(^|[\s·])(\S)/g,(m,x,y)=>x+y.toUpperCase());
- const C=p=>p>=85?'#1E9E5A':p>=75?'#E08A00':'#E5483A',M=['🥇','🥈','🥉','4°','5°','6°'];
+ const C=p=>'#1B4F7A',M=['🥇','🥈','🥉','4°','5°','6°'];
  const best=R1[0],bad=R1.slice().sort((x,y)=>x.p-y.p)[0],ok80=R1.filter(x=>x.p>=80).length,B1=R2[0],B2=R2[1],T3=R3[0];
  const fd=d=>dmy(d).slice(0,5),sinT=SIN.length?SIN.map(k=>{const [d,g]=k.split('|');return fd(d)+' '+g}).join(' · '):'';
  const kr=R1.map((x,i)=>`<div class="kr"><span class="m">${M[i]||i+1}</span><div class="kn"><b>Grupo ${x.gr}</b><small>${esc(tc(KIA[x.gr]||''))}</small></div><div class="kb"><i style="width:${x.p}%;background:${C(x.p)}"></i><s></s></div><b class="kp" style="color:${C(x.p)}">${x.p}%</b><span class="km">${x.c} min</span><span class="kt">${x.n-x.ok} tarde</span></div>`).join('');
