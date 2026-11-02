@@ -30,7 +30,7 @@
 <script>const CYC=(rec,ini,fu,a)=>{if(rec==null)return null;if(!a)return ini!=null&&ini<1e9?rec-ini:null;const rf=a.rec!=null&&a.rec<=780&&rec>780;if(fu!==a.fu){return ini!=null&&ini<1e9?rec-ini:null}if(rf)return ini!=null&&ini<1e9&&ini>a.rec?rec-ini:rec-780;return a.rec!=null?rec-a.rec:null};
 
 const SB='https://rqvcvffyynpnighzwxju.supabase.co',SBK='sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn',H={apikey:SBK,Authorization:'Bearer '+SBK};
-async function sbAll(u,h){let o=[],i=0;for(;;){const r=await fetch(u,{headers:{...h,'Range-Unit':'items',Range:`${i}-${i+999}`}});const j=await r.json();if(!Array.isArray(j))return o.length?o:j;o=o.concat(j);if(j.length<1000)return o;i+=1000}}
+async function sbAll(u,h){u=u.replace(/&limit=\d+/,'');let o=[],i=0;for(;;){const r=await fetch(u+(u.includes('guias_campo')?'&order=fecha,codigo':'&order=id')+'&limit=1000&offset='+i,{headers:h});const j=await r.json();if(!Array.isArray(j))return o.length?o:j;o=o.concat(j);if(j.length<1000)return o;i+=1000}}
 const $=i=>document.getElementById(i),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const mins=v=>{const m=String(v||'').match(/(\d{1,2}):(\d{2})/);return m?+m[1]*60+ +m[2]:null},hm=m=>m==null?'—':Math.floor(m/60)+':'+String(m%60).padStart(2,'0');
 const hoy=()=>{const d=new Date(Date.now()-5*3600e3);return d.toISOString().slice(0,10)};
