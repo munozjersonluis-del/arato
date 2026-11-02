@@ -30,6 +30,7 @@
 <script>const CYC=(rec,ini,fu,a)=>{if(rec==null)return null;if(!a)return ini!=null&&ini<1e9?rec-ini:null;const rf=a.rec!=null&&a.rec<=780&&rec>780;if(fu!==a.fu){return ini!=null&&ini<1e9?rec-ini:null}if(rf)return ini!=null&&ini<1e9&&ini>a.rec?rec-ini:rec-780;return a.rec!=null?rec-a.rec:null};
 
 const SB='https://rqvcvffyynpnighzwxju.supabase.co',SBK='sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn',H={apikey:SBK,Authorization:'Bearer '+SBK};
+async function sbAll(u,h){let o=[],i=0;for(;;){const r=await fetch(u,{headers:{...h,'Range-Unit':'items',Range:`${i}-${i+999}`}});const j=await r.json();if(!Array.isArray(j))return o.length?o:j;o=o.concat(j);if(j.length<1000)return o;i+=1000}}
 const $=i=>document.getElementById(i),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const mins=v=>{const m=String(v||'').match(/(\d{1,2}):(\d{2})/);return m?+m[1]*60+ +m[2]:null},hm=m=>m==null?'—':Math.floor(m/60)+':'+String(m%60).padStart(2,'0');
 const hoy=()=>{const d=new Date(Date.now()-5*3600e3);return d.toISOString().slice(0,10)};
@@ -58,7 +59,7 @@ function pintar(){const F=$('fu').value,P={};
     return`<div class="v${bad?' bad':''}"><div class="fila"><span class="n">${bad?'⚠':'✅'} V${v.n}</span><span${s('ini')} class="h">${hm(v.ini)}</span><span class="a">→</span><span${s('fin')} class="h">${hm(v.fin)}</span><span class="rl">recojo</span><span${s('rec')} class="h">${hm(v.rec)}</span><span class="fu">${esc(v.fu)}</span></div><div>${cg}</div>${bad?`<div class="o">${v.o.map(x=>'• '+x).join('<br>')}</div>`:''}</div>`}).join('')+'</details>'});
  $('out').innerHTML=(nv?`<div class="sum" style="${tot?'background:#FDECEA;color:#B3261E;border:2px solid #D2412C':'background:#E8F6EE;color:#1E7A46;border:2px solid #1E9E5A'}">${tot?`⚠ ${tot} de ${nv} viajes con horas para corregir`:'✅ Todas las horas están bien'}</div>`:'')+(h||'<div class="e">No hay guías subidas para este día.</div>')}
 async function cargar(){const d=$('dia').value;$('out').innerHTML='<div class="e">Cargando…</div>';
- try{const L=await (await fetch(`${SB}/rest/v1/guias_campo?fundo=neq.TERRANOVA&fecha=eq.${d}&select=codigo,grupo,fundo,placa,calidad,inicio,fin,recojo&limit=5000`,{headers:H})).json();
+ try{const L=await (await sbAll(`${SB}/rest/v1/guias_campo?fundo=neq.TERRANOVA&fecha=eq.${d}&select=codigo,grupo,fundo,placa,calidad,inicio,fin,recojo&limit=5000`,H));
   ALL=Array.isArray(L)?L:[];const fs=[...new Set(ALL.map(r=>r.fundo).filter(Boolean))].sort(),cur=$('fu').value;
   $('fu').innerHTML='<option value="">Todos los fundos</option>'+fs.map(x=>`<option${x===cur?' selected':''}>${esc(x)}</option>`).join('');pintar()}
  catch(e){$('out').innerHTML='<div class="e">Sin conexión.</div>'}}

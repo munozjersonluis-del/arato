@@ -89,6 +89,7 @@ body.snap .sb{display:none!important}body.snap .hd h1{font-size:20px!important;w
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 const SB='https://rqvcvffyynpnighzwxju.supabase.co',SBK='sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn',H={apikey:SBK,Authorization:'Bearer '+SBK};
+async function sbAll(u,h){let o=[],i=0;for(;;){const r=await fetch(u,{headers:{...h,'Range-Unit':'items',Range:`${i}-${i+999}`}});const j=await r.json();if(!Array.isArray(j))return o.length?o:j;o=o.concat(j);if(j.length<1000)return o;i+=1000}}
 const API_PESOS='https://script.google.com/macros/s/AKfycbwhK53Cj21HYT7irdMvqonPvhEjAzo2ab-cJ4wytAtoUnIV0dpA8LHrt6GBrOcXWFx8/exec';
 const TARIFA={'TCI-843':230,'TAU-800':215,'TCX-842':220,'TCA-816':215,'TEY-880':215,'THF-949':215,'BTL-775':215,'T9N-825':300,'TEB-876':300,'H2X-887':220,'BSB-860':230,'CKD-827':220};
 const META_CICLO=30,META_KGH=200,PJ_DEF=1.25,TARA=0.292,JPB={NORMAL:2.5,HUMEDA:1.5};
@@ -169,7 +170,7 @@ const addD=(x,n)=>new Date(new Date(x+'T12:00:00Z').getTime()+n*864e5).toISOStri
 function PREV(){if(FX.vista!=='s')return[];return semana(addD([...FX.sem].sort()[0],-7))}
 let PALL=[],PFIL=[];
 async function cargar(){const DS=DIAS(),PV=PREV(),D0=PV.length&&PV[0]<DS[0]?PV[0]:DS[0];$('out').innerHTML='<div class="e">Cargando…</div>';
- try{const L=await (await fetch(`${SB}/rest/v1/guias_campo?fundo=neq.TERRANOVA&fecha=gte.${D0}&fecha=lte.${DS[DS.length-1]}&select=*&limit=50000`,{headers:H})).json();const S=new Set(DS),SP=new Set(PV);ALL=(Array.isArray(L)?L:[]).filter(r=>S.has(r.fecha));PALL=(Array.isArray(L)?L:[]).filter(r=>SP.has(r.fecha));
+ try{const L=await (await sbAll(`${SB}/rest/v1/guias_campo?fundo=neq.TERRANOVA&fecha=gte.${D0}&fecha=lte.${DS[DS.length-1]}&select=*&limit=50000`,H));const S=new Set(DS),SP=new Set(PV);ALL=(Array.isArray(L)?L:[]).filter(r=>S.has(r.fecha));PALL=(Array.isArray(L)?L:[]).filter(r=>SP.has(r.fecha));
   build();await pesos();build()}catch(e){$('out').innerHTML='<div class="e">Sin conexión.</div>'}}
 const enm=x=>x.cy.length?Math.round(x.cy.filter(v=>v<=META_CICLO).length/x.cy.length*100):null;
 function vbar(L){const W=MW(ESS()?.6:1),H=MH(320),n=L.length||1,gw=(W-150)/n,bw=Math.min(90,gw*.45),mx=Math.max(META_CICLO*1.25,...L.map(x=>x.cyp||0))*1.15,Y=v=>H-80-(H-130)*v/mx;
