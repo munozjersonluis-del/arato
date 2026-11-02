@@ -54,6 +54,7 @@ body.snap .sb{display:none!important}body.snap .hd h1{font-size:20px!important;w
 <script>
 const API='https://script.google.com/macros/s/AKfycby_Xt-GUVXDEuE9JrqO3H_jy40Hp4VC4Cao6azNIyFMc-aDVFUMSKAIpJbulcTakQI6/exec';
 const SB='https://rqvcvffyynpnighzwxju.supabase.co',SBK='sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn',H={apikey:SBK,Authorization:'Bearer '+SBK};
+async function sbAll(u,h){let o=[],i=0;for(;;){const r=await fetch(u,{headers:{...h,'Range-Unit':'items',Range:`${i}-${i+999}`}});const j=await r.json();if(!Array.isArray(j))return o.length?o:j;o=o.concat(j);if(j.length<1000)return o;i+=1000}}
 const $=i=>document.getElementById(i),f=n=>Math.round(n).toLocaleString('en-US'),up=s=>String(s??'').trim().toUpperCase(),gr=s=>up(s).charAt(0);
 const hoy=()=>new Date(Date.now()-5*3600e3).toISOString().slice(0,10),dmy=d=>d.split('-').reverse().join('/');
 const AZ='#1B4F7A',GR='#8A96A3',OR='#E07B39',VE='#2EAA4A',RO='#E04A2F';
@@ -106,7 +107,7 @@ const up2=s=>String(s??'').trim().toUpperCase(),gr2=s=>up2(s).charAt(0),uniq=a=>
 const MC={};let RE=[],RG=[];
 async function cargar(){const DS=DIAS();$('out').innerHTML='<div class="e">Cargando…</div>';
  try{const falt=DS.filter(d=>!MC[d]||d===hoyX());
-  const [ms,g]=await Promise.all([Promise.all(falt.map(d=>fetch(API+'?fecha='+encodeURIComponent(dmy(d)),{cache:'no-store'}).then(r=>r.json()))),fetch(`${SB}/rest/v1/guias_campo?fecha=gte.${DS[0]}&fecha=lte.${DS[DS.length-1]}&select=fecha,grupo,fundo,modulo,variedad,envase,n_envases&limit=50000`,{headers:H}).then(r=>r.json())]);
+  const [ms,g]=await Promise.all([Promise.all(falt.map(d=>fetch(API+'?fecha='+encodeURIComponent(dmy(d)),{cache:'no-store'}).then(r=>r.json()))),sbAll(`${SB}/rest/v1/guias_campo?fecha=gte.${DS[0]}&fecha=lte.${DS[DS.length-1]}&select=fecha,grupo,fundo,modulo,variedad,envase,n_envases&limit=50000`,H)]);
   ms.forEach((m,i)=>{if(!m.ok)throw m.error;const ids=new Set((m.pedidos||[]).map(p=>p.id));MC[falt[i]]=(m.entregas||[]).filter(e=>ids.has(e.pedido)&&up(e.estado)!=='ANULADO')});
   RE=DS.flatMap(d=>(MC[d]||[]).map(e=>({...e,d})));const S=new Set(DS);RG=(Array.isArray(g)?g:[]).filter(r=>S.has(r.fecha)&&up(r.envase)==='BANDEJA');
   build()}catch(e){$('out').innerHTML='<div class="e">No se pudo cargar: '+e+'</div>'}}
