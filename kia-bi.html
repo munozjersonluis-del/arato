@@ -99,7 +99,7 @@ const $=id=>document.getElementById(id),f=n=>Math.round(n).toLocaleString('en'),
 const norm=s=>String(s??'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().trim();
 const du=m=>{if(m==null)return'—';m=Math.round(m);return m<60?m+' min':Math.floor(m/60)+' h'+(m%60?' '+String(m%60).padStart(2,'0')+' min':'')};
 const mins=v=>{const m=String(v||'').match(/(\d{1,2}):(\d{2})/);return m?+m[1]*60+ +m[2]:null};
-const sc=(v,a,b,inv)=>v==null?'#999':inv?(v<=a?'#1B4F7A':'#D2412C'):(v>=b?'#1B4F7A':'#D2412C');
+const sc=(v,a,b,inv)=>v==null?'#999':inv?(v<=a?'#1E9E5A':v<=b?'#E8A23A':'#D2412C'):(v>=a?'#1E9E5A':v>=b?'#E8A23A':'#D2412C');
 let PESOS=null,IND=[],ALL=[];
 async function pesos(){if(PESOS)return;try{const ac=new AbortController();setTimeout(()=>ac.abort(),8000);const j=await (await fetch(API_PESOS,{signal:ac.signal})).json();PESOS=(j.registros||[]).filter(x=>x.tipoReg!=='descarte')}catch(e){PESOS=[]}}
 function pj(d,g){const L=(PESOS||[]).filter(x=>String(x.fecha).slice(0,10)===d&&+x.cantidad>0&&+x.kg>0),v=x=>(x.kg/x.cantidad-TARA)/(JPB[norm(x.tipo)]||2.5),ok=a=>a.filter(z=>z>0.5&&z<2.5);
@@ -110,7 +110,7 @@ function calc(L,d){const P={};L.forEach(r=>{const g=String(r.grupo||'').trim().t
   const cos=G.filter(r=>r.ini!=null&&r.fin!=null).map(r=>r.fin-r.ini);
   const GC={};G.forEach(r=>GC[r.g]=(GC[r.g]||0)+1);const gM=Object.keys(GC).sort((a,b)=>GC[b]-GC[a])[0];return{p,g:gM,v:T.length,kg,T,cy,cyp:cy.length?cy.reduce((a,b)=>a+b,0)/cy.length:null,kgh:hrs>=1?kg/hrs:null,cos:cos.length?cos.reduce((a,b)=>a+b,0)/cos.length:null,tar:TARIFA[p]||0,ult}})
   .sort((a,b)=>a.g.localeCompare(b.g));IND.forEach(x=>x.cxt=x.tar&&x.kg?x.tar/(x.kg/1000):null)}
-const AZ='#1B4F7A',GR='#8A96A3',OR='#E07B39',VE='#2EAA4A',RO='#E04A2F',AM='#1B4F7A';
+const AZ='#1B4F7A',GR='#8A96A3',OR='#E07B39',VE='#2EAA4A',RO='#E04A2F',AM='#E8A23A';
 const hoyK=()=>new Date(Date.now()-5*3600e3).toISOString().slice(0,10),dmy=d=>d.split('-').reverse().join('/');
 const hoyX=()=>hoyK();
 const semana=d=>{const t=new Date(d+'T12:00:00Z'),w=(t.getUTCDay()+6)%7,a=new Date(t-w*864e5);return[...Array(7)].map((_,i)=>new Date(+a+i*864e5).toISOString().slice(0,10))};
@@ -178,11 +178,11 @@ function vbar(L){const W=MW(ESS()?.6:1),H=MH(320),n=L.length||1,gw=(W-150)/n,bw=
  L.forEach((x,i)=>{const cx=20+gw*i+gw/2,v=x.cyp||0,y=Y(v),c=sc(x.cyp,META_CICLO,40,1);s+=`<rect x="${cx-bw/2}" y="${y}" width="${bw}" height="${H-80-y}" fill="${c}"/><text x="${cx}" y="${Math.abs(y-8-Y(META_CICLO))<16?Y(META_CICLO)-8:y-8}" text-anchor="middle" font-size="16" font-weight="900" stroke="#fff" stroke-width="5" paint-order="stroke">${du(x.cyp)}</text>
  <text x="${cx}" y="${H-56}" text-anchor="middle" font-size="15" font-weight="900" fill="${COL[x.g]||'#000'}">${x.p}</text><text x="${cx}" y="${H-37}" text-anchor="middle" font-size="13" font-weight="800">GRUPO ${x.g}</text><text x="${cx}" y="${H-18}" text-anchor="middle" font-size="${Math.min(13,gw/14).toFixed(1)}" font-weight="800" fill="#444">${x.v} viajes · ${f(x.kg)} kg</text><rect class="hit" data-pl="${x.p||x.placa||''}" x="${cx-gw/2}" y="0" width="${gw}" height="${H}" fill="transparent"/>`});return s+'</svg>'}
 function mcol(L){const n=L.length||1,W=Math.max(360,n*70),H=325,x0=4,yb=H-58,top=66,gw=(W-x0*2)/n,bw=Math.min(40,gw*.6),mx=Math.max(1,...L.map(r=>r.cy.length));
- const B=[["≤20",v=>v<=20,'#1B4F7A'],['21–30',v=>v>20&&v<=META_CICLO,'#6FA3D2'],['31–40',v=>v>META_CICLO&&v<=40,'#E8857A'],['>40',v=>v>40,RO]];
+ const B=[["≤20",v=>v<=20,'#1E7A45'],['21–30',v=>v>20&&v<=META_CICLO,'#7BCB94'],['31–40',v=>v>META_CICLO&&v<=40,'#F0A73A'],['>40',v=>v>40,RO]];
  const SGS=L.map(r=>B.map(b=>({c:r.cy.filter(b[1]).length,f:b[2]})).filter(z=>z.c)),MINH=16,Y0=(yb-top);
  let k=Y0/mx;SGS.forEach(sg=>{const tot=sg.reduce((a,z)=>a+Math.max(MINH,z.c*k),0);if(tot>Y0)k=Math.min(k,(Y0-MINH*sg.length)/Math.max(1,sg.reduce((a,z)=>a+z.c,0)))});
  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" font-family="inherit" text-rendering="geometricPrecision">`;
- s+=`<text x="4" y="13" font-size="11" font-weight="900" fill="#1B4F7A">EN META</text><text x="${W/2+6}" y="13" font-size="11" font-weight="900" fill="${RO}">FUERA DE META</text>`;
+ s+=`<text x="4" y="13" font-size="11" font-weight="900" fill="#1E7A45">EN META</text><text x="${W/2+6}" y="13" font-size="11" font-weight="900" fill="${RO}">FUERA DE META</text>`;
  B.forEach((b,i)=>{const lx=(i<2?4:W/2+6)+(i%2)*78;s+=`<rect x="${lx}" y="20" width="12" height="12" rx="3" fill="${b[2]}"/><text x="${lx+16}" y="30.5" font-size="12" font-weight="800" fill="#123A5C">${b[0]} min</text>`});
  s+=`<line x1="${x0}" x2="${W-x0}" y1="${yb}" y2="${yb}" stroke="#C9D2DC" stroke-width="1.2"/>`;
  L.forEach((r,i)=>{const cx=x0+gw*i+gw/2,n2=r.cy.length,ok=r.cy.filter(v=>v<=META_CICLO).length,pc=n2?Math.round(ok/n2*100):null,cid='mc'+i,SG=SGS[i].map(z=>({...z,h:Math.max(MINH,z.c*k)})),TH=SG.reduce((a,z)=>a+z.h,0);let y=yb;
