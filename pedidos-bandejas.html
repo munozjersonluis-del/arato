@@ -68,7 +68,7 @@ A.innerHTML=`<div class=hd><div><b>📋 Mis pedidos · Grupo ${U.grupo}</b><smal
 <div class=tabs><button class="${FD===HOY?'on':''}" onclick="FD=HOY;ls('pb_dia',FD);SC={};render()">Hoy ${dn(HOY)}</button><button class="${FD===MAN?'on':''}" onclick="FD=MAN;ls('pb_dia',FD);SC={};render()">Mañana ${dn(MAN)}</button></div>
 <button class=big style="background:#1E7FD9;font-size:20px" onclick="nuevo0()">➕ PEDIR BANDEJAS</button>
 ${ks.length?ks.map((k,i)=>{const P=G[k],ns=Object.keys(P).sort((a,b)=>a-b);const pins=ns.map(n=>{const v=vivo(P[n]);const f=P[n][0];return{n,x:f.x,y:f.y,c:v.reduce((s,p)=>s+p.cantidad,0)}}).filter(p=>p.c);const [f,m]=k.split('|');
-return`<div class=c><h3>📍 ${FN(f)} · ${m}<span style="font-size:13px">${vivo(Object.values(P).flat()).reduce((s,p)=>s+p.cantidad,0)} bandejas</span></h3><button class=tg onclick="OPN[${i}]=!OPN[${i}];SC={};render()">${OPN[i]?'▲ Ocultar mapa':'🗺 Ver mapa'}</button>${OPN[i]?mapa(k,pins,'mH'+i):''}
+return`<div class=c><h3>📍 ${FN(f)} · ${m}<span style="font-size:13px">${vivo(Object.values(P).flat()).reduce((s,p)=>s+p.cantidad,0)} bandejas</span></h3><div style="display:flex;gap:6px"><button class=tg style="flex:1" onclick="OPN[${i}]=!OPN[${i}];SC={};render()">${OPN[i]?'▲ Ocultar mapa':'🗺 Ver mapa'}</button><button class=tg style="flex:1;background:#25D366;color:#fff;border-color:#25D366" onclick="compartir('${k}')">📤 Compartir</button></div>${OPN[i]?mapa(k,pins,'mH'+i):''}
 ${ns.map(n=>{const L=P[n],v=vivo(L),e=estado(L);return`<div class="r ${v.length?'':'x'}" onclick="PT={k:'${k}',n:${n}};V='punto';SC={};render()"><div class=n>C${n}</div><div>${L[0].lote||L[0].bloque} · ${v.reduce((s,p)=>s+p.cantidad,0)}<small>pidió ${fh(L[0].creado)}${L.length>1?' · '+L.length+' pedidos':''}</small></div><div class=s><span class="st ${e[1]}">${e[0]}</span></div></div>`}).join('')}</div>`}).join('')
 +`<div class=c style="text-align:center;font-weight:900">Total del día: ${tot} bandejas</div>`:'<div class=e>Aún no hay pedidos para este día</div>'}`;
 ks.forEach((k,i)=>{const P=G[k];if(OPN[i])scrollTo('mH'+i,Object.values(P).map(L=>L[0]))})}
@@ -114,5 +114,22 @@ ${pend.length?`<div class=row><button class=big style="background:#1B4F7A" oncli
 const mp=$("#mP");if(mp){mp.scrollLeft=p0.x*Z-mp.clientWidth/2;mp.scrollTop=p0.y*Z-mp.clientHeight/2}}
 async function anular(id){if(!confirm('¿Anular este pedido?'))return;try{await q('bandejas_pedidos','?id=eq.'+id+'&estado=eq.pendiente',{method:'PATCH',body:JSON.stringify({estado:'anulado',anulado_at:new Date().toISOString()})});toast('Pedido anulado');load()}catch(e){toast('Sin conexión')}}
 async function cambiar(id,c){const n=parseInt(prompt('Nueva cantidad de bandejas',c));if(!(n>0))return;try{await q('bandejas_pedidos','?id=eq.'+id+'&estado=eq.pendiente',{method:'PATCH',body:JSON.stringify({cantidad:n})});toast('Cantidad cambiada');load()}catch(e){toast('Sin conexión')}}
+
+async function compartir(k){const P=puntos(FD)[k]||{},[f,m]=k.split('|'),M=MAPAS[k];const ns=Object.keys(P).sort((a,b)=>a-b).filter(n=>vivo(P[n]).length);if(!ns.length)return toast('No hay puntos');
+toast('Preparando imagen…');const rows=ns.map(n=>{const L=vivo(P[n]);return{n,lote:L[0].lote||L[0].bloque,c:L.reduce((s,p)=>s+p.cantidad,0),x:L[0].x,y:L[0].y}}),tot=rows.reduce((s,r)=>s+r.c,0);
+const txt=`*Pedido de bandejas*\nGrupo ${U.grupo} · ${U.nombre}\n${dn(FD)} · ${FN(f)} · ${m}\n`+rows.map(r=>`Punto ${r.n}: ${r.c} bandejas (${r.lote})`).join('\n')+`\n*Total: ${tot} bandejas*`;
+let blob=null;if(M){try{const img=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=M.img});
+const xs=rows.map(r=>r.x),ys=rows.map(r=>r.y),pad=220,x0=Math.max(0,Math.min(...xs)-pad),x1=Math.min(M.w,Math.max(...xs)+pad),y0=Math.max(0,Math.min(...ys)-pad*0.8),y1=Math.min(760,Math.max(...ys)+pad*0.6);
+const sc=img.naturalWidth/M.w,W=1200,s=W/(x1-x0),mh=Math.round((y1-y0)*s),lh=46,H=110+mh+30+rows.length*lh+70;const c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
+g.fillStyle='#fff';g.fillRect(0,0,W,H);g.fillStyle='#1E7FD9';g.fillRect(0,0,W,96);g.fillStyle='#fff';g.font='bold 38px Arial';g.fillText(`Pedido de bandejas · Grupo ${U.grupo}`,28,46);g.font='26px Arial';g.fillText(`${dn(FD)} · ${FN(f)} · ${m} · ${U.nombre}`,28,82);
+g.drawImage(img,x0*sc,y0*sc,(x1-x0)*sc,(y1-y0)*sc,0,104,W,mh);
+rows.forEach(r=>{const px=(r.x-x0)*s,py=104+(r.y-y0)*s;g.beginPath();g.arc(px,py,22,0,7);g.fillStyle='#FF6D00';g.fill();g.lineWidth=4;g.strokeStyle='#fff';g.stroke();g.fillStyle='#fff';g.font="bold 24px Arial";g.textAlign="center";g.fillText(r.n,px,py+8);g.textAlign='left'});
+let y=104+mh+30;rows.forEach((r,i)=>{if(i%2==0){g.fillStyle='#F2F4F8';g.fillRect(16,y-4,W-32,lh)}g.beginPath();g.arc(48,y+19,16,0,7);g.fillStyle='#FF6D00';g.fill();g.fillStyle='#fff';g.font='bold 18px Arial';g.textAlign='center';g.fillText(r.n,48,y+25);g.textAlign='left';g.fillStyle='#123A5C';g.font='bold 24px Arial';g.fillText(r.lote,80,y+27);g.textAlign='right';g.font='bold 28px Arial';g.fillText(r.c+' bandejas',W-28,y+29);g.textAlign='left';y+=lh});
+g.fillStyle='#141F6B';g.fillRect(16,y+6,W-32,54);g.fillStyle='#fff';g.font='bold 30px Arial';g.fillText(`${rows.length} puntos`,36,y+43);g.textAlign='right';g.fillText(`Total ${tot} bandejas`,W-36,y+43);g.textAlign='left';
+blob=await new Promise(ok=>c.toBlob(ok,'image/jpeg',0.9))}catch(e){blob=null}}
+const file=blob?new File([blob],`pedido_${U.grupo}_${FD}.jpg`,{type:'image/jpeg'}):null;
+try{if(file&&navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],text:txt});return}}catch(e){if(e.name==='AbortError')return}
+if(file){const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=file.name;a.click()}
+location.href='https://wa.me/?text='+encodeURIComponent(txt)}
 setInterval(()=>{if(U&&U.grupo&&V==='home')load()},30000);U&&U.grupo?load():render();
 </script></body></html>
