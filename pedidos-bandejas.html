@@ -23,7 +23,7 @@ input,select{width:100%;font-size:18px;padding:11px;border-radius:10px;border:2p
 .row{display:flex;gap:8px;margin:0 12px}.row .big{margin:0;width:auto;flex:1;font-size:15px;padding:13px}
 .msg{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#123A5C;color:#fff;padding:10px 16px;border-radius:12px;font-weight:800;display:none;z-index:9}
 .soon{font-size:12px;color:#B07800;font-weight:700;margin:4px 14px 0}
-</style></head><body><div id=app></div><div id=msg class=msg></div>
+.tg{width:100%;border:1.5px solid #C9D2DC;background:#F7F9FB;color:#1B4F7A;border-radius:10px;padding:8px;font-weight:800;font-size:14px;margin-bottom:6px}</style></head><body><div id=app></div><div id=msg class=msg></div>
 <script src="bandejas-mapas.js"></script>
 <script>
 const SB='https://rqvcvffyynpnighzwxju.supabase.co',K='sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn',H={apikey:K,Authorization:'Bearer '+K,'Content-Type':'application/json',Prefer:'return=representation'};
@@ -38,7 +38,7 @@ const fh=t=>{if(!t)return'';const d=ymd(new Date(t));return(d===HOY?'':new Date(
 const dn=d=>new Date(d+'T12:00').toLocaleDateString('es-PE',{weekday:'short',day:'numeric',month:'short'});
 function toast(t){const m=$('#msg');m.textContent=t;m.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>m.style.display='none',2300)}
 async function q(t,p,o={}){const r=await fetch(SB+'/rest/v1/'+t+p,{headers:H,...o});if(!r.ok)throw new Error(await r.text());return r.status===204?null:r.json()}
-let U=ls('pb_user'),V='home',FD=ls('pb_dia')||MAN,D=[],N=null,PT=null,ZF=Math.min(1,(Math.min(innerWidth,640)-32)/1680),Z=ZF;
+let U=ls('pb_user'),V='home',FD=ls('pb_dia')||MAN,D=[],N=null,PT=null,OPN={},ZF=Math.min(1,(Math.min(innerWidth,640)-32)/1680),Z=ZF;
 function render(){if(!U||!U.grupo)return login();({home,nuevo,punto}[V]||home)()}
 // LOGIN
 let LG={dni:'',nombre:'',found:null,grupo:null};
@@ -68,10 +68,10 @@ A.innerHTML=`<div class=hd><div><b>📋 Mis pedidos · Grupo ${U.grupo}</b><smal
 <div class=tabs><button class="${FD===HOY?'on':''}" onclick="FD=HOY;ls('pb_dia',FD);SC={};render()">Hoy ${dn(HOY)}</button><button class="${FD===MAN?'on':''}" onclick="FD=MAN;ls('pb_dia',FD);SC={};render()">Mañana ${dn(MAN)}</button></div>
 <button class=big style="background:#1E7FD9;font-size:20px" onclick="nuevo0()">➕ PEDIR BANDEJAS</button>
 ${ks.length?ks.map((k,i)=>{const P=G[k],ns=Object.keys(P).sort((a,b)=>a-b);const pins=ns.map(n=>{const v=vivo(P[n]);const f=P[n][0];return{n,x:f.x,y:f.y,c:v.reduce((s,p)=>s+p.cantidad,0)}}).filter(p=>p.c);const [f,m]=k.split('|');
-return`<div class=c><h3>📍 ${FN(f)} · ${m}<span style="font-size:13px">${vivo(Object.values(P).flat()).reduce((s,p)=>s+p.cantidad,0)} bandejas</span></h3>${mapa(k,pins,'mH'+i)}
+return`<div class=c><h3>📍 ${FN(f)} · ${m}<span style="font-size:13px">${vivo(Object.values(P).flat()).reduce((s,p)=>s+p.cantidad,0)} bandejas</span></h3><button class=tg onclick="OPN[${i}]=!OPN[${i}];SC={};render()">${OPN[i]?'▲ Ocultar mapa':'🗺 Ver mapa'}</button>${OPN[i]?mapa(k,pins,'mH'+i):''}
 ${ns.map(n=>{const L=P[n],v=vivo(L),e=estado(L);return`<div class="r ${v.length?'':'x'}" onclick="PT={k:'${k}',n:${n}};V='punto';SC={};render()"><div class=n>C${n}</div><div>${L[0].lote||L[0].bloque} · ${v.reduce((s,p)=>s+p.cantidad,0)}<small>pidió ${fh(L[0].creado)}${L.length>1?' · '+L.length+' pedidos':''}</small></div><div class=s><span class="st ${e[1]}">${e[0]}</span></div></div>`}).join('')}</div>`}).join('')
 +`<div class=c style="text-align:center;font-weight:900">Total del día: ${tot} bandejas</div>`:'<div class=e>Aún no hay pedidos para este día</div>'}`;
-ks.forEach((k,i)=>{const P=G[k];scrollTo('mH'+i,Object.values(P).map(L=>L[0]))})}
+ks.forEach((k,i)=>{const P=G[k];if(OPN[i])scrollTo('mH'+i,Object.values(P).map(L=>L[0]))})}
 // NUEVO
 function nuevo0(){const last=D.filter(p=>p.fecha===FD).slice(-1)[0];N={f:last?last.fundo:'VALLE 3',m:last?last.modulo:'M17',c:40,b:null,x:null,y:null,mas:null};V='nuevo';SC={};render()}
 function nextN(){const L=D.filter(p=>p.fecha===FD&&p.fundo===N.f&&p.modulo===N.m);return Math.max(0,...L.map(p=>p.punto))+1}
@@ -80,7 +80,7 @@ A.innerHTML=`<div class=hd><div><b>➕ ${N.mas?'Pedir más · C'+n:'Nuevo pedido
 ${N.mas?`<div class=sel>📍 ${FN(N.f)} · ${N.m} · ${N.b.b} · ${N.b.l}</div>`:`<div class=lab>1. Fundo y módulo</div><div style="display:flex;gap:8px;margin:0 12px"><select id=sf>${Object.keys(FUNDOS).map(f=>`<option value="${f}" ${f===N.f?'selected':''}>${FN(f)}</option>`).join('')}</select><select id=sm>${FUNDOS[N.f].map(m=>`<option ${m===N.m?'selected':''}>${m}</option>`).join('')}</select></div>
 ${M?'':'<div class=soon>⚠ Ensayo: por ahora solo hay mapa de Valle 3 · M17</div>'}
 <div class=lab>2. Toca dónde se deja el material → <span style="color:#D2412C">C${n}</span></div><div style="margin:0 12px">${mapa(k,pins,'mN')}</div>
-<div class=sel>${N.b?`📍 ¿Para qué bloques es este punto? <small style="color:#678">(toca 1 o más)</small><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">${(N.nb||[]).map((o,i)=>`<button onclick="tog(${i})" style="border:2px solid #141F6B;border-radius:10px;padding:8px 10px;font-weight:800;font-size:14px;${(N.sel||[]).includes(i)?'background:#141F6B;color:#fff':'background:#fff;color:#141F6B'}">${(N.sel||[]).includes(i)?'✔ ':''}${o.b} · ${o.l}</button>`).join('')}</div><div style="margin-top:6px;font-size:13px;color:#1E7FD9">${(N.sel||[]).length} bloque(s) seleccionado(s)</div>`:'<span style="color:#99A">Toca dónde se deja el material</span>'}</div>`}
+<div class=sel>${N.b?`<div onclick="N.dd=!N.dd;const m=$('#mN');if(m)SC.mN=[m.scrollLeft,m.scrollTop];render()" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer"><span>📍 Bloques de este punto<br><small style="color:#1E7FD9;font-size:14px">${(N.sel||[]).map(x=>N.nb[x].l).join(', ')||'ninguno'}</small></span><b style="font-size:20px">${N.dd?'▲':'▼'}</b></div>${N.dd?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">${(N.nb||[]).map((o,i)=>`<button onclick="tog(${i})" style="border:2px solid #141F6B;border-radius:10px;padding:8px 10px;font-weight:800;font-size:14px;${(N.sel||[]).includes(i)?'background:#141F6B;color:#fff':'background:#fff;color:#141F6B'}">${(N.sel||[]).includes(i)?'✔ ':''}${o.b} · ${o.l}</button>`).join('')}</div><div style="margin-top:6px;font-size:13px;color:#1E7FD9">${(N.sel||[]).length} bloque(s) · toca para marcar o quitar</div>`:''}`:'<span style="color:#99A">Toca dónde se deja el material</span>'}</div>`}
 <div class=lab>${N.mas?'':'3. '}¿Cuántas bandejas?</div><div class=num><button onclick="N.c=Math.max(5,N.c-5);render()">−</button><b>${N.c}</b><button onclick="N.c+=5;render()">+</button></div>
 <div class=qk>${[20,30,40,50,100].map(v=>`<button onclick="N.c=${v};render()">${v}</button>`).join('')}</div>
 <button class=big style="background:${N.b?'#1E9E5A':'#9AA'};font-size:20px" onclick="enviar()">ENVIAR C${n} · ${N.c} bandejas</button>`;
