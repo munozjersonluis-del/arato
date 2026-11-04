@@ -1,0 +1,50 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Bandejas · Supervisor</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:#EEF2F7;color:#123A5C}
+.hd{background:#141F6B;color:#fff;padding:12px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}.hd b{font-size:20px}.hd small{opacity:.85}
+.f{display:flex;gap:8px;flex-wrap:wrap;padding:10px 14px;background:#fff;align-items:end}.f label{font-size:12px;font-weight:800;display:block;color:#567}.f select,.f input{font-size:15px;padding:7px;border-radius:8px;border:1.5px solid #C9D2DC;font-weight:700}
+.f button{background:#1E9E5A;color:#fff;border:0;border-radius:8px;padding:9px 14px;font-weight:800}
+.k{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;padding:12px 14px}.k div{background:#fff;border-radius:12px;padding:10px 12px;border-left:5px solid #1B4F7A}.k b{font-size:26px;display:block}.k small{font-weight:700;color:#567}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px;padding:0 14px 12px}.p{background:#fff;border-radius:12px;overflow:hidden}.p h3{margin:0;background:#1B4F7A;color:#fff;padding:8px 12px;font-size:15px}.p .b{padding:10px 12px}
+.br{display:grid;grid-template-columns:90px 1fr 70px;gap:8px;align-items:center;font-weight:800;font-size:13.5px;padding:4px 0}.br i{height:14px;background:#E3E7EE;border-radius:7px;overflow:hidden;display:block}.br u{display:block;height:100%;background:#1B4F7A}
+table{width:100%;border-collapse:collapse;font-size:13px}th{background:#F3F6FA;text-align:left;padding:7px 6px;position:sticky;top:0}td{padding:6px;border-top:1px solid #EEF1F5;font-weight:600;white-space:nowrap}
+.st{font-size:11.5px;font-weight:800;border-radius:8px;padding:2px 8px}
+.s-pendiente{background:#FFF3C4;color:#7A5A00}.s-aceptado{background:#E3EEF9;color:#1B4F7A}.s-en_camino{background:#DCEBFF;color:#1453A8}.s-parcial{background:#FDEBD8;color:#9A4A00}.s-entregado{background:#E4F3EA;color:#14633A}.s-anulado,.s-rechazado{background:#FDECEA;color:#B0301F}
+.tw{overflow:auto;max-height:60vh}
+.lock{max-width:340px;margin:80px auto;background:#fff;border-radius:16px;padding:20px;text-align:center}.lock input{width:100%;font-size:22px;text-align:center;padding:10px;border-radius:10px;border:2px solid #C9D2DC;margin:10px 0}
+</style></head><body><div id=app></div>
+<script>
+const SB='https://rqvcvffyynpnighzwxju.supabase.co',K='sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn',H={apikey:K,Authorization:'Bearer '+K};
+const $=s=>document.querySelector(s),A=$('#app');
+const ymd=d=>d.toLocaleDateString('en-CA',{timeZone:'America/Lima'});
+const hm=t=>t?new Date(t).toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit',timeZone:'America/Lima'}):'';
+const mn=(a,b)=>a&&b?Math.max(0,Math.round((new Date(b)-new Date(a))/6e4)):null;
+const FN=f=>f==='DUNA'?'Duna':String(f||'').replace('VALLE ','Valle ');
+const EST={pendiente:'Nuevo',aceptado:'Aceptado',en_camino:'En camino',parcial:'Parcial',entregado:'Entregado',anulado:'Anulado',rechazado:'Rechazado'};
+let F={d1:ymd(new Date()),d2:ymd(new Date(Date.now()+864e5)),fu:'',gr:'',pl:'',es:''},D=[];
+const PIN='4321';
+function lock(){A.innerHTML=`<div class=lock><b style="font-size:20px">📊 Bandejas · Supervisor</b><input id=pn type=password inputmode=numeric placeholder="Clave"><button onclick="if($('#pn').value===PIN){sessionStorage.setItem('bs',1);load()}else alert('Clave incorrecta')" style="width:100%;padding:12px;border:0;border-radius:10px;background:#141F6B;color:#fff;font-weight:800;font-size:16px">Entrar</button></div>`}
+async function load(){try{D=await (await fetch(`${SB}/rest/v1/bandejas_pedidos?fecha=gte.${F.d1}&fecha=lte.${F.d2}&order=creado.desc&limit=2000`,{headers:H})).json();if(!Array.isArray(D))D=[]}catch(e){D=[]}render()}
+function render(){const L=D.filter(p=>(!F.fu||p.fundo===F.fu)&&(!F.gr||p.grupo===F.gr)&&(!F.pl||p.placa===F.pl)&&(!F.es||p.estado===F.es));
+const v=L.filter(p=>!['anulado','rechazado'].includes(p.estado)),sol=v.reduce((s,p)=>s+p.cantidad,0),ent=v.reduce((s,p)=>s+(p.entregado||0),0);
+const T=v.filter(p=>p.tipo!=='inicio'&&p.entregado_at).map(p=>mn(p.creado,p.entregado_at)).filter(x=>x!=null),tp=T.length?(T.reduce((a,b)=>a+b,0)/T.length).toFixed(0):'—';
+const cnt=e=>L.filter(p=>p.estado===e).length,uniq=k=>[...new Set(D.map(p=>p[k]).filter(Boolean))].sort();
+const agg=k=>{const o={};v.forEach(p=>{const x=p[k]||'—';o[x]=o[x]||{s:0,e:0};o[x].s+=p.cantidad;o[x].e+=p.entregado||0});return o};
+const bars=(o,lab)=>{const m=Math.max(1,...Object.values(o).map(x=>x.s));return Object.entries(o).sort((a,b)=>b[1].s-a[1].s).map(([k,x])=>`<div class=br><span>${lab(k)}</span><i><u style="width:${100*x.s/m}%"></u></i><span>${x.e}/${x.s}</span></div>`).join('')||'<div style="color:#789">Sin datos</div>'};
+const opt=(arr,cur,f=x=>x)=>'<option value="">Todos</option>'+arr.map(x=>`<option value="${x}" ${x===cur?'selected':''}>${f(x)}</option>`).join('');
+A.innerHTML=`<div class=hd><b>📊 Bandejas · Supervisor</b><small>Solicitudes y entregas · datos del ensayo</small></div>
+<div class=f><div><label>Desde</label><input type=date id=d1 value="${F.d1}"></div><div><label>Hasta</label><input type=date id=d2 value="${F.d2}"></div>
+<div><label>Fundo</label><select id=fu>${opt(uniq('fundo'),F.fu,FN)}</select></div><div><label>Grupo</label><select id=gr>${opt(uniq('grupo'),F.gr)}</select></div>
+<div><label>Estiba</label><select id=pl>${opt(uniq('placa'),F.pl)}</select></div><div><label>Estado</label><select id=es>${opt(Object.keys(EST),F.es,x=>EST[x])}</select></div>
+<button onclick="exp()">⬇ Excel (CSV)</button></div>
+<div class=k><div><b>${L.length}</b><small>Solicitudes</small></div><div style="border-color:#E0A800"><b>${cnt('pendiente')}</b><small>Nuevas sin aceptar</small></div><div style="border-color:#1453A8"><b>${cnt('aceptado')+cnt('en_camino')}</b><small>Aceptadas / en camino</small></div><div style="border-color:#9A4A00"><b>${cnt('parcial')}</b><small>Parciales</small></div><div style="border-color:#1E9E5A"><b>${cnt('entregado')}</b><small>Entregadas</small></div><div style="border-color:#D2412C"><b>${cnt('anulado')+cnt('rechazado')}</b><small>Anuladas / rechazadas</small></div>
+<div><b>${sol}</b><small>Bandejas solicitadas</small></div><div style="border-color:#1E9E5A"><b>${ent}</b><small>Bandejas entregadas</small></div><div style="border-color:#D2412C"><b>${Math.max(sol-ent,0)}</b><small>Bandejas pendientes</small></div><div><b>${tp}${tp!=='—'?' min':''}</b><small>Atención prom. (pedidos del día)</small></div></div>
+<div class=g><div class=p><h3>Por grupo · entregado / solicitado</h3><div class=b>${bars(agg('grupo'),k=>'Grupo '+k)}</div></div><div class=p><h3>Por módulo</h3><div class=b>${bars((()=>{const o={};v.forEach(p=>{const k=FN(p.fundo)+' '+p.modulo;o[k]=o[k]||{s:0,e:0};o[k].s+=p.cantidad;o[k].e+=p.entregado||0});return o})(),k=>k)}</div></div><div class=p><h3>Por estiba</h3><div class=b>${bars(agg('placa'),k=>k)}</div></div></div>
+<div class=g style="grid-template-columns:1fr"><div class=p><h3>Detalle de solicitudes</h3><div class="b tw"><table><tr><th>Fecha</th><th>Grupo</th><th>Auxiliar</th><th>Fundo · Mód.</th><th>Punto</th><th>Bloques</th><th>Pidió</th><th>Hora</th><th>Aceptó</th><th>Salió</th><th>Entregó</th><th>Hora</th><th>Atención</th><th>Estiba</th><th>Estado</th></tr>
+${L.map(p=>`<tr><td>${p.fecha.slice(8)}/${p.fecha.slice(5,7)}</td><td>${p.grupo}</td><td>${p.auxiliar||''}</td><td>${FN(p.fundo)} ${p.modulo}</td><td>C${p.punto}</td><td>${p.lote||p.bloque||''}</td><td><b>${p.cantidad}</b></td><td>${p.tipo==='inicio'?'inicio · ':''}${hm(p.creado)}</td><td>${hm(p.aceptado_at)}</td><td>${hm(p.en_camino_at)}</td><td><b>${p.entregado||''}</b></td><td>${hm(p.entregado_at)}</td><td>${p.tipo!=='inicio'&&mn(p.creado,p.entregado_at)!=null?mn(p.creado,p.entregado_at)+' min':''}</td><td>${p.placa||''}</td><td><span class="st s-${p.estado}">${EST[p.estado]||p.estado}</span>${p.motivo?' '+p.motivo:''}</td></tr>`).join('')||'<tr><td colspan=15 style="text-align:center;color:#789">Sin solicitudes</td></tr>'}</table></div></div></div>`;
+['d1','d2'].forEach(i=>$('#'+i).onchange=e=>{F[i]=e.target.value;load()});['fu','gr','pl','es'].forEach(i=>$('#'+i).onchange=e=>{F[i]=e.target.value;render()});window._L=L}
+function exp(){const L=window._L||[],h=['fecha','grupo','auxiliar','fundo','modulo','punto','bloques','solicitado','hora_pedido','tipo','aceptado','salio','entregado','hora_entrega','estiba','estibador','estado','motivo'];
+const rows=L.map(p=>[p.fecha,p.grupo,p.auxiliar,FN(p.fundo),p.modulo,'C'+p.punto,p.lote||p.bloque,p.cantidad,hm(p.creado),p.tipo,hm(p.aceptado_at),hm(p.en_camino_at),p.entregado||'',hm(p.entregado_at),p.placa||'',p.estibador||'',EST[p.estado]||p.estado,p.motivo||'']);
+const csv='﻿'+[h,...rows].map(r=>r.map(x=>'"'+String(x??'').replace(/"/g,'""')+'"').join(';')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='bandejas_'+F.d1+'_'+F.d2+'.csv';a.click()}
+sessionStorage.getItem('bs')?load():lock();setInterval(()=>{if(sessionStorage.getItem('bs'))load()},30000);
+</script></body></html>
