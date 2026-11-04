@@ -27,7 +27,7 @@ input,select{width:100%;font-size:18px;padding:11px;border-radius:10px;border:2p
 <script src="bandejas-mapas.js"></script>
 <script>
 const SB='https://rqvcvffyynpnighzwxju.supabase.co',K='sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn',H={apikey:K,Authorization:'Bearer '+K,'Content-Type':'application/json',Prefer:'return=representation'};
-const MAPAS=window.MAPAS;
+const MAPAS=window.MAPAS,MG=k=>MAPAS[String(k).split('|')[0]];let ZI='';
 const FUNDOS={'VALLE 1':['M01','M02','M03','M04','M05','M06','M07','M08','M09','M10','M11','M12'],'VALLE 2':['M13','M14','M19'],'VALLE 3':['M15','M16','M17','M18'],'VALLE 4':['M20'],'DUNA':['M01','M02','M03','M04','M05','M06']};
 const FN=f=>f==='DUNA'?'Duna':f.replace('VALLE ','Valle ');
 const $=s=>document.querySelector(s),A=$('#app');
@@ -56,10 +56,11 @@ async function load(){try{D=await q('bandejas_pedidos',`?dni=eq.${U.dni}&fecha=i
 const KEY=p=>p.fundo+'|'+p.modulo;
 function puntos(fecha){const G={};D.filter(p=>p.fecha===fecha).forEach(p=>{const k=KEY(p);(G[k]=G[k]||{}),(G[k][p.punto]=G[k][p.punto]||[]).push(p)});return G}
 const vivo=L=>L.filter(p=>p.estado!=='anulado'&&p.estado!=='rechazado');
-function estado(L){const v=vivo(L);if(!v.length)return[L.some(p=>p.estado==='rechazado')?'rechazado':'anulado','s3'];if(v.every(p=>p.estado==='entregado'))return['✓ entregado','s2'];if(v.some(p=>p.estado==='parcial'))return['parcial','s1'];if(v.some(p=>p.estado==='en_camino'))return['🚚 en camino','s2'];if(v.some(p=>p.estado==='aceptado'))return['✋ aceptado','s2'];return['⏳ esperando','s1']}
+function estado(L){const v=vivo(L);if(!v.length)return[L.some(p=>p.estado==='rechazado')?'rechazado':'anulado','s3'];if(v.every(p=>p.estado==='entregado'))return['✓ abastecido','s2'];if(v.some(p=>p.estado==='parcial'))return['◐ parcial','s1'];if(v.some(p=>p.estado==='en_camino'))return['🚚 en camino','s2'];if(v.some(p=>p.estado==='aceptado'))return['✋ aceptado','s2'];return['⏳ pendiente','s1']}
+function det(L){const v=vivo(L),pid=v.reduce((s,p)=>s+p.cantidad,0),ent=v.reduce((s,p)=>s+(p.entregado||0),0),u=v.filter(p=>p.entregado_at).map(p=>p.entregado_at).sort().pop();return{pid,ent,u}}
 // MAPA
-function mapa(k,pins,id){const M=MAPAS[k];if(!M)return`<div class=e>Mapa de este módulo aún no cargado<br><small>Ensayo: solo Valle 3 · M17</small></div>`;
-return `<div class=mw><div class=zm><button onclick="zoom(1.3,'${id}')">+</button><button onclick="zoom(1/1.3,'${id}')">−</button></div><div class=mp id=${id} style="height:${Math.min(810*Z+6,innerHeight*(id==='mN'?0.5:0.4))}px"><div class=in style="width:${M.w*Z}px"><img src="${M.img}" style="width:${M.w*Z}px" data-k="${k}">${pins.map(p=>`<div class="pin ${p.nw?'nw':''}" style="left:${p.x*Z}px;top:${p.y*Z}px"><b>${p.n}</b></div>`).join('')}</div></div></div>`}
+function mapa(k,pins,id){const M=MG(k);if(M&&ZI!==M.img){ZI=M.img;ZF=Math.min(1,(Math.min(innerWidth,640)-32)/M.w);Z=ZF}if(!M)return`<div class=e>Mapa de este módulo aún no cargado<br><small>Ensayo: solo Valle 3 · M17</small></div>`;
+return `<div class=mw><div class=zm><button onclick="zoom(1.3,'${id}')">+</button><button onclick="zoom(1/1.3,'${id}')">−</button></div><div class=mp id=${id} style="height:${Math.min(M.h*Z+6,innerHeight*(id==='mN'?0.5:0.4))}px"><div class=in style="width:${M.w*Z}px"><img src="${M.img}" style="width:${M.w*Z}px" data-k="${k}">${pins.map(p=>`<div class="pin ${p.nw?'nw':''}" style="left:${p.x*Z}px;top:${p.y*Z}px"><b>${p.n}</b></div>`).join('')}</div></div></div>`}
 let SC={};function zoom(f,id){const m=document.getElementById(id);const cx=(m.scrollLeft+m.clientWidth/2)/Z,cy=(m.scrollTop+m.clientHeight/2)/Z;Z=Math.min(1.5,Math.max(ZF,Z*f));SC[id]=[cx*Z-m.clientWidth/2,cy*Z-m.clientHeight/2];render()}
 function scrollTo(id,pins){const m=document.getElementById(id);if(!m)return;if(SC[id]){m.scrollLeft=SC[id][0];m.scrollTop=SC[id][1];return}const p=pins[pins.length-1]||{x:700,y:420};m.scrollLeft=p.x*Z-m.clientWidth/2;m.scrollTop=p.y*Z-m.clientHeight/2}
 // HOME
@@ -68,15 +69,15 @@ A.innerHTML=`<div class=hd><div><b>📋 Mis pedidos · Grupo ${U.grupo}</b><smal
 <div class=tabs><button class="${FD===HOY?'on':''}" onclick="FD=HOY;ls('pb_dia',FD);SC={};render()">Hoy ${dn(HOY)}</button><button class="${FD===MAN?'on':''}" onclick="FD=MAN;ls('pb_dia',FD);SC={};render()">Mañana ${dn(MAN)}</button></div>
 <button class=big style="background:#1E7FD9;font-size:20px" onclick="nuevo0()">➕ PEDIR BANDEJAS</button>
 ${ks.length?ks.map((k,i)=>{const P=G[k],ns=Object.keys(P).sort((a,b)=>a-b);const pins=ns.map(n=>{const v=vivo(P[n]);const f=P[n][0];return{n,x:f.x,y:f.y,c:v.reduce((s,p)=>s+p.cantidad,0)}}).filter(p=>p.c);const [f,m]=k.split('|');
-return`<div class=c><h3>📍 ${FN(f)} · ${m}<span style="font-size:13px">${vivo(Object.values(P).flat()).reduce((s,p)=>s+p.cantidad,0)} bandejas</span></h3><div style="display:flex;gap:6px"><button class=tg style="flex:1" onclick="OPN[${i}]=!OPN[${i}];SC={};render()">${OPN[i]?'▲ Ocultar mapa':'🗺 Ver mapa'}</button><button class=tg style="flex:1;background:#25D366;color:#fff;border-color:#25D366" onclick="compartir('${k}')">📤 Compartir</button></div>${OPN[i]?mapa(k,pins,'mH'+i):''}
-${ns.map(n=>{const L=P[n],v=vivo(L),e=estado(L);return`<div class="r ${v.length?'':'x'}" onclick="PT={k:'${k}',n:${n}};V='punto';SC={};render()"><div class=n>C${n}</div><div>${L[0].lote||L[0].bloque} · ${v.reduce((s,p)=>s+p.cantidad,0)}<small>pidió ${fh(L[0].creado)}${L.length>1?' · '+L.length+' pedidos':''}</small></div><div class=s><span class="st ${e[1]}">${e[0]}</span></div></div>`}).join('')}</div>`}).join('')
+return`<div class=c>${(()=>{const ab=ns.filter(n=>estado(P[n])[0].includes('abastecido')).length,pe=ns.filter(n=>vivo(P[n]).length&&!estado(P[n])[0].includes('abastecido')).length;return`<div style="display:flex;gap:6px;margin-bottom:8px"><span class="st s2" style="font-size:13px;padding:4px 10px">✓ ${ab} abastecidos</span><span class="st s1" style="font-size:13px;padding:4px 10px">⏳ ${pe} pendientes</span></div>`})()}<h3>📍 ${FN(f)} · ${m}<span style="font-size:13px">${vivo(Object.values(P).flat()).reduce((s,p)=>s+p.cantidad,0)} bandejas</span></h3><div style="display:flex;gap:6px"><button class=tg style="flex:1" onclick="OPN[${i}]=!OPN[${i}];SC={};render()">${OPN[i]?'▲ Ocultar mapa':'🗺 Ver mapa'}</button><button class=tg style="flex:1;background:#25D366;color:#fff;border-color:#25D366" onclick="compartir('${k}')">📤 Compartir</button></div>${OPN[i]?mapa(k,pins,'mH'+i):''}
+${ns.map(n=>{const L=P[n],v=vivo(L),e=estado(L);return`<div class="r ${v.length?'':'x'}" onclick="PT={k:'${k}',n:${n}};V='punto';SC={};render()"><div class=n>C${n}</div><div>${L[0].lote||L[0].bloque} · ${v.reduce((s,p)=>s+p.cantidad,0)}<small>pidió ${fh(L[0].creado)}${L.length>1?' · '+L.length+' pedidos':''}</small></div><div class=s><span class="st ${e[1]}">${e[0]}</span>${(()=>{const d=det(L);return d.ent?`<small style="display:block;margin-top:3px;color:#14633A;font-weight:800">${d.ent}/${d.pid} · ${hm(d.u)}</small>`:''})()}</div></div>`}).join('')}</div>`}).join('')
 +`<div class=c style="text-align:center;font-weight:900">Total del día: ${tot} bandejas</div>`:'<div class=e>Aún no hay pedidos para este día</div>'}`;
 ks.forEach((k,i)=>{const P=G[k];if(OPN[i])scrollTo('mH'+i,Object.values(P).map(L=>L[0]))})}
 // NUEVO
 function nuevo0(){const last=D.filter(p=>p.fecha===FD).slice(-1)[0];N={f:last?last.fundo:'VALLE 3',m:last?last.modulo:'M17',P:[],act:-1,mas:null};V='nuevo';SC={};render()}
 function nextN(){const L=D.filter(p=>p.fecha===FD&&p.fundo===N.f&&p.modulo===N.m);return Math.max(0,...L.map(p=>p.punto))+1}
 function keep(){const m=$('#mN');if(m)SC.mN=[m.scrollLeft,m.scrollTop]}
-function nuevo(){const k=N.f+'|'+N.m,M=MAPAS[k];const G=puntos(FD)[k]||{};const pins=Object.keys(G).map(x=>({n:x,x:G[x][0].x,y:G[x][0].y})).concat(N.mas?[]:N.P.map(p=>({n:p.n,x:p.x,y:p.y,nw:1,c:p.c})));
+function nuevo(){const k=N.f+'|'+N.m,M=MG(k);const G=puntos(FD)[k]||{};const pins=Object.keys(G).map(x=>({n:x,x:G[x][0].x,y:G[x][0].y})).concat(N.mas?[]:N.P.map(p=>({n:p.n,x:p.x,y:p.y,nw:1,c:p.c})));
 const tot=N.P.reduce((s,p)=>s+p.c,0);
 const card=(p,i)=>{const o=N.act===i,bl=p.sel.map(x=>p.nb[x].l).join(', ')||'elige bloque';return`<div style="background:#fff;border-radius:12px;margin:6px 12px;padding:7px 9px">
 <div style="display:flex;align-items:center;gap:7px"><span style="background:#FF6D00;color:#fff;border-radius:50%;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex:none">${p.n}</span>
@@ -86,15 +87,15 @@ ${p.fixed?'':`<button onclick="quitar(${i})" style="border:0;background:none;fon
 ${o&&!p.fixed?`<div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:7px">${p.nb.map((b,j)=>`<button onclick="tog(${i},${j})" style="border:1.5px solid #141F6B;border-radius:8px;padding:5px 7px;font-weight:800;font-size:12.5px;${p.sel.includes(j)?'background:#141F6B;color:#fff':'background:#fff;color:#141F6B'}">${b.l}</button>`).join('')}</div>`:''}</div>`};
 A.innerHTML=`<div class=hd><div><b>➕ ${N.mas?'Pedir más · C'+N.mas:'Nuevo pedido'}</b><small>Para ${dn(FD)} · Grupo ${U.grupo}</small></div><button onclick="V='home';render()">✕</button></div>
 ${N.mas?`<div class=sel>📍 ${FN(N.f)} · ${N.m}</div>`:`<div class=lab>1. Fundo y módulo</div><div style="display:flex;gap:8px;margin:0 12px"><select id=sf>${Object.keys(FUNDOS).map(f=>`<option value="${f}" ${f===N.f?'selected':''}>${FN(f)}</option>`).join('')}</select><select id=sm>${FUNDOS[N.f].map(m=>`<option ${m===N.m?'selected':''}>${m}</option>`).join('')}</select></div>
-${M?'':'<div class=soon>⚠ Ensayo: por ahora solo hay mapa de Valle 3 · M17</div>'}
+
 <div class=lab>2. Toca en el mapa los puntos</div><div style="margin:0 12px">${mapa(k,pins,'mN')}</div>`}
 ${N.P.length?``+N.P.map(card).join(''):(N.mas?'':'<div class=sel style="color:#99A">Aún no marcaste puntos</div>')}
 ${N.P.length>1?`<div class=c style="background:#141F6B;color:#fff;display:flex;justify-content:space-between;font-weight:900;margin:8px 12px"><span>${N.P.length} puntos</span><span>Total ${tot} bandejas</span></div>`:''}
 <button class=big style="background:${N.P.length?'#1E9E5A':'#9AA'};font-size:19px" onclick="enviar()">ENVIAR ${N.P.length>1?N.P.length+' PUNTOS':(N.P[0]?'C'+N.P[0].n:'')} · ${tot} bandejas</button>`;
 if(!N.mas){$('#sf').onchange=e=>{if(N.P.length&&!confirm('Se borrarán los puntos marcados. ¿Cambiar?'))return render();N.f=e.target.value;N.m=FUNDOS[N.f][0];N.P=[];N.act=-1;SC={};render()};$('#sm').onchange=e=>{if(N.P.length&&!confirm('Se borrarán los puntos marcados. ¿Cambiar?'))return render();N.m=e.target.value;N.P=[];N.act=-1;SC={};render()};
 const im=document.querySelector('#mN img');if(im){scrollTo('mN',pins);im.onclick=e=>{const r=im.getBoundingClientRect();let x=Math.round((e.clientX-r.left)/Z),y=Math.round((e.clientY-r.top)/Z);(M.com||[]).forEach(([cx,cy])=>{if(Math.abs(x-cx)<58&&Math.abs(y-cy)<38){x=cx+(x>=cx?62:-62);toast('Punto movido al costado del comedor')}});
-const nb=M.bl.map(o=>({o,d:(o.x-x)**2+(o.y-y)**2})).sort((p,q)=>p.d-q.d);const near=nb.filter(z=>z.d<220*220).slice(0,6).map(z=>z.o);
-N.P.push({n:nextN()+N.P.length,x,y,nb:near.length?near:[nb[0].o],sel:[0],c:40});N.act=-1;keep();render()}}}}
+const nb=M.bl.map(o=>({o,d:(o.x-x)**2+(o.y-y)**2})).sort((p,q)=>p.d-q.d);const near=nb.filter(z=>z.d<260*260).slice(0,6).map(z=>z.o);
+N.P.push({n:nextN()+N.P.length,x,y,nb:near.length?near:[{b:'',l:'bloque sin nombre en mapa'}],sel:[0],c:40});N.act=-1;keep();render()}}}}
 function tog(i,j){const p=N.P[i];p.sel=p.sel.includes(j)?p.sel.filter(x=>x!==j):[...p.sel,j];keep();render()}
 function cc(i,d){N.P[i].c=Math.max(5,N.P[i].c+d);keep();render()}
 function quitar(i){N.P.splice(i,1);const b=nextN();N.P.forEach((p,k)=>p.n=b+k);N.act=-1;keep();render()}
@@ -115,16 +116,16 @@ const mp=$("#mP");if(mp){mp.scrollLeft=p0.x*Z-mp.clientWidth/2;mp.scrollTop=p0.y
 async function anular(id){if(!confirm('¿Anular este pedido?'))return;try{await q('bandejas_pedidos','?id=eq.'+id+'&estado=eq.pendiente',{method:'PATCH',body:JSON.stringify({estado:'anulado',anulado_at:new Date().toISOString()})});toast('Pedido anulado');load()}catch(e){toast('Sin conexión')}}
 async function cambiar(id,c){const n=parseInt(prompt('Nueva cantidad de bandejas',c));if(!(n>0))return;try{await q('bandejas_pedidos','?id=eq.'+id+'&estado=eq.pendiente',{method:'PATCH',body:JSON.stringify({cantidad:n})});toast('Cantidad cambiada');load()}catch(e){toast('Sin conexión')}}
 
-async function compartir(k){const P=puntos(FD)[k]||{},[f,m]=k.split('|'),M=MAPAS[k];const ns=Object.keys(P).sort((a,b)=>a-b).filter(n=>vivo(P[n]).length);if(!ns.length)return toast('No hay puntos');
-toast('Preparando imagen…');const rows=ns.map(n=>{const L=vivo(P[n]);return{n,lote:L[0].lote||L[0].bloque,c:L.reduce((s,p)=>s+p.cantidad,0),x:L[0].x,y:L[0].y}}),tot=rows.reduce((s,r)=>s+r.c,0);
+async function compartir(k){const P=puntos(FD)[k]||{},[f,m]=k.split('|'),M=MG(k);const ns=Object.keys(P).sort((a,b)=>a-b).filter(n=>vivo(P[n]).length);if(!ns.length)return toast('No hay puntos');
+toast('Preparando imagen…');const rows=ns.map(n=>{const L=vivo(P[n]),d=det(P[n]);return{n,lote:L[0].lote||L[0].bloque,c:L.reduce((s,p)=>s+p.cantidad,0),x:L[0].x,y:L[0].y,h:hm(L[0].creado),st:d.ent>=d.pid?'abastecido '+hm(d.u):d.ent?d.ent+' de '+d.pid+' · '+hm(d.u):'pendiente',ok:d.ent>=d.pid}}),tot=rows.reduce((s,r)=>s+r.c,0);
 const txt=`*Pedido de bandejas*\nGrupo ${U.grupo} · ${U.nombre}\n${dn(FD)} · ${FN(f)} · ${m}\n`+rows.map(r=>`Punto ${r.n}: ${r.c} bandejas (${r.lote})`).join('\n')+`\n*Total: ${tot} bandejas*`;
 let blob=null;if(M){try{const img=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=M.img});
-const xs=rows.map(r=>r.x),ys=rows.map(r=>r.y),pad=220,x0=Math.max(0,Math.min(...xs)-pad),x1=Math.min(M.w,Math.max(...xs)+pad),y0=Math.max(0,Math.min(...ys)-pad*0.8),y1=Math.min(760,Math.max(...ys)+pad*0.6);
-const sc=img.naturalWidth/M.w,W=1200,s=W/(x1-x0),mh=Math.round((y1-y0)*s),lh=46,H=110+mh+30+rows.length*lh+70;const c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
+const xs=rows.map(r=>r.x),ys=rows.map(r=>r.y),pad=220,x0=Math.max(0,Math.min(...xs)-pad),x1=Math.min(M.w,Math.max(...xs)+pad),y0=Math.max(0,Math.min(...ys)-pad*0.8),y1=Math.min(M.h,Math.max(...ys)+pad*0.6);
+const sc=img.naturalWidth/M.w,W=1200,s=W/(x1-x0),mh=Math.round((y1-y0)*s),lh=56,H=110+mh+30+rows.length*lh+70;const c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
 g.fillStyle='#fff';g.fillRect(0,0,W,H);g.fillStyle='#1E7FD9';g.fillRect(0,0,W,96);g.fillStyle='#fff';g.font='bold 38px Arial';g.fillText(`Pedido de bandejas · Grupo ${U.grupo}`,28,46);g.font='26px Arial';g.fillText(`${dn(FD)} · ${FN(f)} · ${m} · ${U.nombre}`,28,82);
 g.drawImage(img,x0*sc,y0*sc,(x1-x0)*sc,(y1-y0)*sc,0,104,W,mh);
 rows.forEach(r=>{const px=(r.x-x0)*s,py=104+(r.y-y0)*s;g.beginPath();g.arc(px,py,22,0,7);g.fillStyle='#FF6D00';g.fill();g.lineWidth=4;g.strokeStyle='#fff';g.stroke();g.fillStyle='#fff';g.font="bold 24px Arial";g.textAlign="center";g.fillText(r.n,px,py+8);g.textAlign='left'});
-let y=104+mh+30;rows.forEach((r,i)=>{if(i%2==0){g.fillStyle='#F2F4F8';g.fillRect(16,y-4,W-32,lh)}g.beginPath();g.arc(48,y+19,16,0,7);g.fillStyle='#FF6D00';g.fill();g.fillStyle='#fff';g.font='bold 18px Arial';g.textAlign='center';g.fillText(r.n,48,y+25);g.textAlign='left';g.fillStyle='#123A5C';g.font='bold 24px Arial';g.fillText(r.lote,80,y+27);g.textAlign='right';g.font='bold 28px Arial';g.fillText(r.c+' bandejas',W-28,y+29);g.textAlign='left';y+=lh});
+let y=104+mh+30;rows.forEach((r,i)=>{if(i%2==0){g.fillStyle='#F2F4F8';g.fillRect(16,y-4,W-32,lh)}g.beginPath();g.arc(48,y+19,16,0,7);g.fillStyle='#FF6D00';g.fill();g.fillStyle='#fff';g.font='bold 18px Arial';g.textAlign='center';g.fillText(r.n,48,y+25);g.textAlign='left';g.fillStyle='#123A5C';g.font='bold 24px Arial';g.fillText(r.lote,80,y+22);g.font='18px Arial';g.fillStyle='#567';g.fillText('pidió '+r.h,80,y+42);g.fillStyle=r.ok?'#14633A':'#9A6A00';g.font='bold 18px Arial';g.textAlign='right';g.fillText(r.st,W-28,y+44);g.textAlign='left';g.fillStyle='#123A5C';g.textAlign='right';g.font='bold 28px Arial';g.fillText(r.c+' bandejas',W-28,y+20);g.textAlign='left';y+=lh});
 g.fillStyle='#141F6B';g.fillRect(16,y+6,W-32,54);g.fillStyle='#fff';g.font='bold 30px Arial';g.fillText(`${rows.length} puntos`,36,y+43);g.textAlign='right';g.fillText(`Total ${tot} bandejas`,W-36,y+43);g.textAlign='left';
 blob=await new Promise(ok=>c.toBlob(ok,'image/jpeg',0.9))}catch(e){blob=null}}
 const file=blob?new File([blob],`pedido_${U.grupo}_${FD}.jpg`,{type:'image/jpeg'}):null;
