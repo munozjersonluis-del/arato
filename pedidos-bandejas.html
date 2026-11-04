@@ -128,8 +128,7 @@ let y=104+mh+30;rows.forEach((r,i)=>{if(i%2==0){g.fillStyle='#F2F4F8';g.fillRect
 g.fillStyle='#141F6B';g.fillRect(16,y+6,W-32,54);g.fillStyle='#fff';g.font='bold 30px Arial';g.fillText(`${rows.length} puntos`,36,y+43);g.textAlign='right';g.fillText(`Total ${tot} bandejas`,W-36,y+43);g.textAlign='left';
 blob=await new Promise(ok=>c.toBlob(ok,'image/jpeg',0.9))}catch(e){blob=null}}
 const file=blob?new File([blob],`pedido_${U.grupo}_${FD}.jpg`,{type:'image/jpeg'}):null;
-try{if(file&&navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],text:txt});return}}catch(e){if(e.name==='AbortError')return}
-if(file){const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=file.name;a.click()}
-location.href='https://wa.me/?text='+encodeURIComponent(txt)}
+try{if(file&&navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file]});return}}catch(e){if(e.name==='AbortError')return}
+if(file){const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=file.name;a.click();toast('Imagen guardada: envíala por WhatsApp')}else location.href='https://wa.me/?text='+encodeURIComponent(txt)}
 setInterval(()=>{if(U&&U.grupo&&V==='home')load()},30000);U&&U.grupo?load():render();
 </script></body></html>
