@@ -49,7 +49,7 @@ A.innerHTML=`<div class=hd><div><b>🚚 Entregas · ${U.placa}</b><small>${U.nom
 <div class=tabs><button class="${TAB==='act'?'on':''}" onclick="TAB='act';render()">Por atender<span class=badge>${act.length}</span></button><button class="${TAB==='hec'?'on':''}" onclick="TAB='hec';render()">Mis entregas</button></div>
 ${TAB==='act'?(mine.length?'<div class=lab>🟦 Los que estoy atendiendo</div>'+mine.map(card).join(''):'')+(nuevos.length?'<div class=lab>🟨 Nuevos pedidos</div>'+nuevos.map(card).join(''):'')+(act.length?'':'<div class=e>✔ No hay pedidos por atender</div>')
 :(hec.length?`<div class=c><b>Entregué hoy: ${hec.reduce((s,p)=>s+(p.entregado||0),0)} bandejas</b></div>`+hec.slice().reverse().map(card).join(''):'<div class=e>Aún no tienes entregas</div>')}`}
-function mapa(p){const M=(window.MAPAS||{})[p.fundo+'|'+p.modulo];if(!M||p.x==null)return'<div class=e>Sin mapa para este módulo</div>';
+function mapa(p){const M=(window.MAPAS||{})[p.fundo];if(!M||p.x==null)return'<div class=e>Sin mapa para este módulo</div>';
 return`<div class=mw><div class=zm><button onclick="zoom(1.3)">+</button><button onclick="zoom(1/1.3)">−</button></div><div class=mp id=mp><div class=in style="width:${M.w*Z}px"><img src="${M.img}" style="width:${M.w*Z}px"><div class=pin style="left:${p.x*Z}px;top:${p.y*Z}px"><b>${p.punto}</b></div></div></div></div>`}
 function zoom(f){Z=Math.min(1.5,Math.max(0.3,Z*f));render()}
 function det(){const p=D.find(x=>x.id===ID);if(!p){V='lista';return render()}const falta=p.cantidad-(p.entregado||0),mio=!p.placa||p.placa===U.placa;
