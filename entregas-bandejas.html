@@ -1,0 +1,75 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><title>Entregas de bandejas</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:#F2F4F8;color:#123A5C}
+.hd{padding:12px 14px;color:#fff;background:#14633A;display:flex;align-items:center;gap:8px}.hd b{font-size:18px;display:block}.hd small{font-size:12.5px;opacity:.9}.hd button{margin-left:auto;background:#fff3;border:0;color:#fff;border-radius:8px;padding:7px 10px;font-weight:800}
+.lab{margin:12px 14px 5px;font-weight:800}.fld{margin:0 14px}input,select{width:100%;font-size:18px;padding:11px;border-radius:10px;border:2px solid #C9D2DC;font-weight:700;color:#141F6B;background:#fff}
+.big{display:block;width:calc(100% - 24px);margin:10px 12px;border:0;border-radius:14px;color:#fff;font-weight:900;font-size:19px;padding:16px}
+.tabs{display:flex;gap:6px;margin:10px 12px 0}.tabs button{flex:1;border:2px solid #14633A;background:#fff;color:#14633A;border-radius:10px;padding:9px;font-weight:800}.tabs button.on{background:#14633A;color:#fff}
+.c{background:#fff;border-radius:14px;margin:10px 12px;padding:11px 12px}
+.it{display:flex;gap:10px;align-items:center}.it .n{width:44px;height:44px;border-radius:12px;background:#141F6B;color:#fff;font-weight:900;display:flex;align-items:center;justify-content:center;flex:none}.it b{font-size:16px}.it small{display:block;color:#678;font-weight:600;font-size:12.5px}.it .q{margin-left:auto;text-align:right;font-size:24px;font-weight:900}
+.st{font-size:11.5px;font-weight:800;border-radius:8px;padding:2px 8px;white-space:nowrap;display:inline-block;margin-top:3px}
+.s-pendiente{background:#FFF3C4;color:#7A5A00}.s-aceptado{background:#E3EEF9;color:#1B4F7A}.s-en_camino{background:#DCEBFF;color:#1453A8}.s-parcial{background:#FDEBD8;color:#9A4A00}.s-entregado{background:#E4F3EA;color:#14633A}.s-anulado,.s-rechazado{background:#FDECEA;color:#B0301F}
+.mw{position:relative;margin:10px 12px}.mp{border-radius:12px;overflow:auto;border:2px solid #C9D2DC;background:#fff;height:36vh}.mp .in{position:relative}.mp img{display:block}
+.zm{position:absolute;top:8px;right:8px;display:flex;flex-direction:column;gap:6px;z-index:3}.zm button{width:42px;height:42px;border-radius:10px;border:0;background:#fff;box-shadow:0 1px 5px #0004;font-size:22px;font-weight:900;color:#141F6B}
+.pin{position:absolute;transform:translate(-50%,-50%);background:#D2412C;color:#fff;font-weight:900;font-size:15px;border:3px solid #fff;border-radius:8px;padding:2px 8px;box-shadow:0 2px 8px #0006}
+.hr{display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid #EEF1F5;font-weight:700;font-size:14px}.hr span:first-child{color:#678;font-weight:600}
+.num{display:flex;align-items:center;justify-content:space-between;margin:6px 16px}.num button{width:62px;height:62px;border-radius:50%;border:0;background:#141F6B;color:#fff;font-size:34px;font-weight:900}.num b{font-size:50px}
+.e{text-align:center;color:#789;font-weight:700;padding:26px}
+.msg{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#123A5C;color:#fff;padding:10px 16px;border-radius:12px;font-weight:800;display:none;z-index:9}
+.badge{background:#D2412C;color:#fff;border-radius:10px;padding:0 7px;font-size:13px;margin-left:4px}
+</style></head><body><div id=app></div><div id=msg class=msg></div>
+<script src="bandejas-mapas.js"></script>
+<script>
+const SB='https://rqvcvffyynpnighzwxju.supabase.co',K='sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn',H={apikey:K,Authorization:'Bearer '+K,'Content-Type':'application/json',Prefer:'return=representation'};
+const PLACAS=['TCI-843','TAU-800','TCX-842','TCA-816','TEY-880','THF-949','BSB-860'];
+const $=s=>document.querySelector(s),A=$('#app');
+const ls=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k));localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
+const ymd=d=>d.toLocaleDateString('en-CA',{timeZone:'America/Lima'}),HOY=ymd(new Date()),MAN=ymd(new Date(Date.now()+864e5));
+const hm=t=>t?new Date(t).toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit',timeZone:'America/Lima'}):'—';
+const fh=t=>{if(!t)return'—';return(ymd(new Date(t))===HOY?'':new Date(t).toLocaleDateString('es-PE',{weekday:'short',day:'numeric',timeZone:'America/Lima'})+' · ')+hm(t)};
+const mins=(a,b)=>a&&b?Math.max(0,Math.round((new Date(b)-new Date(a))/6e4))+' min':'';
+const FN=f=>f==='DUNA'?'Duna':String(f||'').replace('VALLE ','Valle ');
+const EST={pendiente:'Nuevo',aceptado:'Aceptado',en_camino:'En camino',parcial:'Entrega parcial',entregado:'Entregado',anulado:'Anulado por auxiliar',rechazado:'Rechazado'};
+function toast(t){const m=$('#msg');m.textContent=t;m.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>m.style.display='none',2300)}
+async function q(p,o={}){const r=await fetch(SB+'/rest/v1/'+p,{headers:H,...o});if(!r.ok)throw new Error(await r.text());return r.status===204?null:r.json()}
+let U=ls('eb_user'),V='lista',TAB='act',D=[],ID=null,CANT=0,Z=0.6,lastN=0;
+function render(){if(!U)return login();V==='det'?det():lista()}
+function login(){A.innerHTML=`<div class=hd><div><b>🚚 Entregas de bandejas</b><small>Estiba</small></div></div>
+<div class=lab>Placa de tu unidad</div><div class=fld><select id=pl>${PLACAS.map(p=>`<option>${p}</option>`).join('')}</select></div>
+<div class=lab>Tu nombre</div><div class=fld><input id=nm placeholder="Ej. Luis"></div>
+<button class=big style="background:#1E9E5A" onclick="entrar()">ENTRAR</button>`}
+function entrar(){const n=$('#nm').value.trim();if(n.length<2)return toast('Escribe tu nombre');U={placa:$('#pl').value,nombre:n};ls('eb_user',U);load()}
+function salir(){if(confirm('¿Cerrar sesión?')){localStorage.removeItem('eb_user');U=null;render()}}
+async function load(){try{D=await q(`bandejas_pedidos?fecha=in.(${HOY},${MAN})&order=creado`)||[];const nv=D.filter(p=>p.estado==='pendiente').length;if(nv>lastN&&lastN!==0&&navigator.vibrate)navigator.vibrate([200,100,200]);lastN=nv}catch(e){toast('Sin conexión')}render()}
+const ACT=['pendiente','aceptado','en_camino','parcial'];
+function card(p){const falta=p.cantidad-(p.entregado||0);return`<div class=c onclick="ID=${p.id};CANT=${falta};V='det';render()"><div class=it><div class=n>C${p.punto}</div><div><b>Grupo ${p.grupo} · ${FN(p.fundo)} ${p.modulo}</b><small>${p.bloque||''} · pidió ${p.tipo==='inicio'?'para iniciar':fh(p.creado)}</small><span class="st s-${p.estado}">${EST[p.estado]||p.estado}${p.estado==='aceptado'||p.estado==='en_camino'?(p.estibador?' · '+p.placa:''):''}</span></div><div class=q>${p.estado==='parcial'?falta+'<small>faltan</small>':p.cantidad}</div></div></div>`}
+function lista(){const act=D.filter(p=>ACT.includes(p.estado)),hec=D.filter(p=>['entregado','rechazado'].includes(p.estado)&&p.placa===U.placa);
+const mine=act.filter(p=>p.placa===U.placa&&p.estado!=='pendiente'),nuevos=act.filter(p=>p.estado==='pendiente');
+A.innerHTML=`<div class=hd><div><b>🚚 Entregas · ${U.placa}</b><small>${U.nombre}</small></div><button onclick="salir()">Salir</button></div>
+<div class=tabs><button class="${TAB==='act'?'on':''}" onclick="TAB='act';render()">Por atender<span class=badge>${act.length}</span></button><button class="${TAB==='hec'?'on':''}" onclick="TAB='hec';render()">Mis entregas</button></div>
+${TAB==='act'?(mine.length?'<div class=lab>🟦 Los que estoy atendiendo</div>'+mine.map(card).join(''):'')+(nuevos.length?'<div class=lab>🟨 Nuevos pedidos</div>'+nuevos.map(card).join(''):'')+(act.length?'':'<div class=e>✔ No hay pedidos por atender</div>')
+:(hec.length?`<div class=c><b>Entregué hoy: ${hec.reduce((s,p)=>s+(p.entregado||0),0)} bandejas</b></div>`+hec.slice().reverse().map(card).join(''):'<div class=e>Aún no tienes entregas</div>')}`}
+function mapa(p){const M=(window.MAPAS||{})[p.fundo+'|'+p.modulo];if(!M||p.x==null)return'<div class=e>Sin mapa para este módulo</div>';
+return`<div class=mw><div class=zm><button onclick="zoom(1.3)">+</button><button onclick="zoom(1/1.3)">−</button></div><div class=mp id=mp><div class=in style="width:${M.w*Z}px"><img src="${M.img}" style="width:${M.w*Z}px"><div class=pin style="left:${p.x*Z}px;top:${p.y*Z}px">C${p.punto}</div></div></div></div>`}
+function zoom(f){Z=Math.min(1.5,Math.max(0.3,Z*f));render()}
+function det(){const p=D.find(x=>x.id===ID);if(!p){V='lista';return render()}const falta=p.cantidad-(p.entregado||0),mio=!p.placa||p.placa===U.placa;
+let acc='';
+if(p.estado==='pendiente')acc=`<button class=big style="background:#1E7FD9" onclick="estado('aceptado')">✋ ACEPTAR PEDIDO</button><button class=big style="background:#fff;color:#B0301F;border:2px solid #B0301F;font-size:16px;padding:12px" onclick="rechazar()">Rechazar</button>`;
+else if(p.estado==='aceptado'&&mio)acc=`<button class=big style="background:#1453A8" onclick="estado('en_camino')">🚚 SALGO AL PUNTO</button>`;
+else if((p.estado==='en_camino'||p.estado==='parcial')&&mio)acc=`<div class=c><b>¿Cuántas bandejas dejaste?</b><div class=num><button onclick="CANT=Math.max(1,CANT-5);render()">−</button><b>${CANT}</b><button onclick="CANT=Math.min(${falta},CANT+5);render()">+</button></div><div style="text-align:center;color:#678;font-weight:700">Faltan ${falta} de ${p.cantidad}</div></div><button class=big style="background:#1E9E5A" onclick="entregar()">✔ DEJÉ ${CANT} BANDEJAS</button>`;
+else if(!mio&&ACT.includes(p.estado))acc=`<div class=c style="background:#FFF3C4;font-weight:800">Lo está atendiendo ${p.placa}${p.estibador?' · '+p.estibador:''}</div>`;
+A.innerHTML=`<div class=hd><div><b>C${p.punto} · Grupo ${p.grupo}</b><small>${FN(p.fundo)} · ${p.modulo} · ${p.auxiliar||''}</small></div><button onclick="V='lista';render()">✕</button></div>
+<div class=c style="text-align:center"><div style="font-size:54px;font-weight:900;color:#141F6B;line-height:1">${p.cantidad}</div><div style="font-weight:800">bandejas</div><span class="st s-${p.estado}">${EST[p.estado]}</span></div>
+${mapa(p)}
+<div class=c><div style="font-weight:800;margin-bottom:4px">📍 Bloques: ${p.lote||p.bloque||'—'}</div>
+<div class=hr><span>Pidió</span><b>${p.tipo==='inicio'?'para iniciar · ':''}${fh(p.creado)}</b></div>
+<div class=hr><span>Aceptado</span><b>${fh(p.aceptado_at)} ${p.aceptado_at&&p.tipo!=='inicio'?'· '+mins(p.creado,p.aceptado_at):''}</b></div>
+<div class=hr><span>Salió</span><b>${fh(p.en_camino_at)}</b></div>
+<div class=hr><span>Entregado</span><b>${p.entregado?p.entregado+' · '+fh(p.entregado_at):'—'}</b></div>${p.motivo?`<div class=hr><span>Motivo</span><b>${p.motivo}</b></div>`:''}</div>
+${acc}`;const m=$('#mp');if(m&&p.x!=null){m.scrollLeft=p.x*Z-m.clientWidth/2;m.scrollTop=p.y*Z-m.clientHeight/2}}
+async function estado(e){const p=D.find(x=>x.id===ID),b={estado:e,placa:U.placa,estibador:U.nombre};if(e==='aceptado')b.aceptado_at=new Date().toISOString();if(e==='en_camino')b.en_camino_at=new Date().toISOString();
+const cond=e==='aceptado'?'&estado=eq.pendiente':'&placa=eq.'+U.placa;try{const r=await q('bandejas_pedidos?id=eq.'+ID+cond,{method:'PATCH',body:JSON.stringify(b)});if(!r||!r.length){toast('Otro estiba ya lo tomó');}else toast(e==='aceptado'?'✔ Aceptado':'🚚 En camino')}catch(x){toast('Sin conexión')}load()}
+async function rechazar(){const m=prompt('Motivo del rechazo (ej. sin bandejas, punto incorrecto, duplicado)');if(!m)return;try{await q('bandejas_pedidos?id=eq.'+ID+'&estado=eq.pendiente',{method:'PATCH',body:JSON.stringify({estado:'rechazado',motivo:m,placa:U.placa,estibador:U.nombre})});toast('Pedido rechazado')}catch(x){toast('Sin conexión')}V='lista';load()}
+async function entregar(){try{const r=await q('rpc/bandejas_entregar',{method:'POST',body:JSON.stringify({pid:ID,cant:CANT,pl:U.placa,est:U.nombre})});if(r&&r.ok){toast(r.falta?`Parcial: faltan ${r.falta}`:'✔ Entregado completo');if(!r.falta)V='lista';CANT=r.falta}else toast(r&&r.msg||'Error')}catch(x){toast('Sin conexión')}load()}
+setInterval(()=>{if(U)load()},20000);U?load():render();
+</script></body></html>
