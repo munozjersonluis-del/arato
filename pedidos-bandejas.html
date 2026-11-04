@@ -92,7 +92,7 @@ ${N.P.length?``+N.P.map(card).join(''):(N.mas?'':'<div class=sel style="color:#9
 ${N.P.length>1?`<div class=c style="background:#141F6B;color:#fff;display:flex;justify-content:space-between;font-weight:900;margin:8px 12px"><span>${N.P.length} puntos</span><span>Total ${tot} bandejas</span></div>`:''}
 <button class=big style="background:${N.P.length?'#1E9E5A':'#9AA'};font-size:19px" onclick="enviar()">ENVIAR ${N.P.length>1?N.P.length+' PUNTOS':(N.P[0]?'C'+N.P[0].n:'')} · ${tot} bandejas</button>`;
 if(!N.mas){$('#sf').onchange=e=>{if(N.P.length&&!confirm('Se borrarán los puntos marcados. ¿Cambiar?'))return render();N.f=e.target.value;N.m=FUNDOS[N.f][0];N.P=[];N.act=-1;SC={};render()};$('#sm').onchange=e=>{if(N.P.length&&!confirm('Se borrarán los puntos marcados. ¿Cambiar?'))return render();N.m=e.target.value;N.P=[];N.act=-1;SC={};render()};
-const im=document.querySelector('#mN img');if(im){scrollTo('mN',pins);im.onclick=e=>{const r=im.getBoundingClientRect();const x=Math.round((e.clientX-r.left)/Z),y=Math.round((e.clientY-r.top)/Z);
+const im=document.querySelector('#mN img');if(im){scrollTo('mN',pins);im.onclick=e=>{const r=im.getBoundingClientRect();let x=Math.round((e.clientX-r.left)/Z),y=Math.round((e.clientY-r.top)/Z);(M.com||[]).forEach(([cx,cy])=>{if(Math.abs(x-cx)<58&&Math.abs(y-cy)<38){x=cx+(x>=cx?62:-62);toast('Punto movido al costado del comedor')}});
 const nb=M.bl.map(o=>({o,d:(o.x-x)**2+(o.y-y)**2})).sort((p,q)=>p.d-q.d);const near=nb.filter(z=>z.d<220*220).slice(0,6).map(z=>z.o);
 N.P.push({n:nextN()+N.P.length,x,y,nb:near.length?near:[nb[0].o],sel:[0],c:40});N.act=-1;keep();render()}}}}
 function tog(i,j){const p=N.P[i];p.sel=p.sel.includes(j)?p.sel.filter(x=>x!==j):[...p.sel,j];keep();render()}
