@@ -99,9 +99,9 @@ N.P.push({n:nextN()+N.P.length,x,y,nb:near.length?near:[{b:'',l:'bloque sin nomb
 function tog(i,j){const p=N.P[i];p.sel=p.sel.includes(j)?p.sel.filter(x=>x!==j):[...p.sel,j];keep();render()}
 function cc(i,d){N.P[i].c=Math.max(5,N.P[i].c+d);keep();render()}
 function quitar(i){N.P.splice(i,1);const b=nextN();N.P.forEach((p,k)=>p.n=b+k);N.act=-1;keep();render()}
-async function enviar(){if(!N.P.length)return toast('Marca al menos un punto en el mapa');const bad=N.P.find(p=>!p.sel.length);if(bad)return toast('C'+bad.n+': elige al menos un bloque');
+let ENV=false;async function enviar(){if(ENV)return;if(!N.P.length)return toast('Marca al menos un punto en el mapa');const bad=N.P.find(p=>!p.sel.length);if(bad)return toast('C'+bad.n+': elige al menos un bloque');
 const rows=N.P.map(p=>({fecha:FD,dni:U.dni,auxiliar:U.nombre,grupo:U.grupo,fundo:N.f,modulo:N.m,punto:p.n,bloque:[...new Set(p.sel.map(j=>p.nb[j].b))].join(', '),lote:p.sel.map(j=>p.nb[j].l).join(', '),x:p.x,y:p.y,cantidad:p.c,tipo:FD===HOY?'dia':'inicio'}));
-try{await q('bandejas_pedidos','',{method:'POST',body:JSON.stringify(rows)});toast('✔ '+(rows.length>1?rows.length+' puntos enviados':'C'+rows[0].punto+' enviado'));V='home';SC={};load()}catch(e){toast('No se pudo enviar, revisa la señal')}}
+ENV=true;const bt=[...document.querySelectorAll('.big')].pop();if(bt){bt.disabled=true;bt.textContent='Enviando…';bt.style.background='#9AA'}try{await q('bandejas_pedidos','',{method:'POST',body:JSON.stringify(rows)});toast('✔ '+(rows.length>1?rows.length+' puntos enviados':'C'+rows[0].punto+' enviado'));V='home';SC={};ENV=false;load()}catch(e){ENV=false;toast('No se pudo enviar, revisa la señal');render()}}
 // PUNTO
 function punto(){const [f,m]=PT.k.split('|'),L=(puntos(FD)[PT.k]||{})[PT.n]||[];if(!L.length){V='home';return render()}const p0=L[0],v=vivo(L),pend=L.filter(p=>p.estado==='pendiente');
 const pid=v.reduce((s,p)=>s+p.cantidad,0),rec=v.reduce((s,p)=>s+(p.entregado||0),0);
