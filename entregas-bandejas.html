@@ -17,7 +17,7 @@
 .e{text-align:center;color:#789;font-weight:700;padding:26px}
 .msg{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#123A5C;color:#fff;padding:10px 16px;border-radius:12px;font-weight:800;display:none;z-index:9}
 .badge{background:#D2412C;color:#fff;border-radius:10px;padding:0 7px;font-size:13px;margin-left:4px}
-</style></head><body><div id=app></div><div id=msg class=msg></div>
+@keyframes bl{50%{opacity:.6}}</style></head><body><div id=app></div><div id=msg class=msg></div>
 <script src="bandejas-mapas.js"></script>
 <script>
 const SB='https://rqvcvffyynpnighzwxju.supabase.co',K='sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn',H={apikey:K,Authorization:'Bearer '+K,'Content-Type':'application/json',Prefer:'return=representation'};
@@ -32,7 +32,7 @@ const FN=f=>f==='DUNA'?'Duna':String(f||'').replace('VALLE ','Valle ');
 const EST={pendiente:'Nuevo',aceptado:'Aceptado',en_camino:'En camino',parcial:'Entrega parcial',entregado:'Entregado',anulado:'Anulado por auxiliar',rechazado:'Rechazado'};
 function toast(t){const m=$('#msg');m.textContent=t;m.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>m.style.display='none',2300)}
 async function q(p,o={}){const r=await fetch(SB+'/rest/v1/'+p,{headers:H,...o});if(!r.ok)throw new Error(await r.text());return r.status===204?null:r.json()}
-let U=ls('eb_user'),V='lista',TAB='act',D=[],ID=null,CANT=0,Z=0.6,lastN=0;
+let U=ls('eb_user'),V='lista',TAB='act',D=[],ID=null,CANT=0,Z=0.6,lastN=0,NUEVOS=0,MF=null,ZM=0.4;
 function render(){if(!U)return login();V==='det'?det():lista()}
 function login(){A.innerHTML=`<div class=hd><div><b>🚚 Entregas de bandejas</b><small>Estiba</small></div></div>
 <div class=lab>Placa de tu unidad</div><div class=fld><select id=pl>${PLACAS.map(p=>`<option>${p}</option>`).join('')}</select></div>
@@ -40,21 +40,38 @@ function login(){A.innerHTML=`<div class=hd><div><b>🚚 Entregas de bandejas</b
 <button class=big style="background:#1E9E5A" onclick="entrar()">ENTRAR</button>`}
 function entrar(){const n=$('#nm').value.trim();if(n.length<2)return toast('Escribe tu nombre');U={placa:$('#pl').value,nombre:n};ls('eb_user',U);load()}
 function salir(){if(confirm('¿Cerrar sesión?')){localStorage.removeItem('eb_user');U=null;render()}}
-async function load(){try{D=await q(`bandejas_pedidos?fecha=in.(${HOY},${MAN})&order=creado`)||[];const nv=D.filter(p=>p.estado==='pendiente').length;if(nv>lastN&&lastN!==0&&navigator.vibrate)navigator.vibrate([200,100,200]);lastN=nv}catch(e){toast('Sin conexión')}render()}
+function beep(){try{const a=new (window.AudioContext||window.webkitAudioContext)();[0,0.25].forEach(t=>{const o=a.createOscillator(),g=a.createGain();o.frequency.value=880;o.connect(g);g.connect(a.destination);g.gain.setValueAtTime(0.35,a.currentTime+t);o.start(a.currentTime+t);o.stop(a.currentTime+t+0.18)})}catch(e){}}
+async function load(){try{D=await q(`bandejas_pedidos?fecha=in.(${HOY},${MAN})&order=creado`)||[];const seen=new Set(ls('eb_seen')||[]),pend=D.filter(p=>p.estado==='pendiente'),nv=pend.filter(p=>!seen.has(p.id));
+if(nv.length&&seen.size){NUEVOS+=nv.length;beep();if(navigator.vibrate)navigator.vibrate([300,120,300,120,300])}ls('eb_seen',[...seen,...nv.map(p=>p.id)].slice(-500))}catch(e){toast('Sin conexión')}render()}
 const ACT=['pendiente','aceptado','en_camino','parcial'];
-function card(p){const falta=p.cantidad-(p.entregado||0);return`<div class=c onclick="ID=${p.id};CANT=${falta};V='det';render()"><div class=it><div class=n>C${p.punto}</div><div><b>Grupo ${p.grupo} · ${FN(p.fundo)} ${p.modulo}</b><small>${p.bloque||''} · pidió ${p.tipo==='inicio'?'para iniciar':fh(p.creado)}</small><span class="st s-${p.estado}">${EST[p.estado]||p.estado}${p.estado==='aceptado'||p.estado==='en_camino'?(p.estibador?' · '+p.placa:''):''}</span></div><div class=q>${p.estado==='parcial'?falta+'<small>faltan</small>':p.cantidad}</div></div></div>`}
+function ruta(L){const last=D.filter(p=>p.placa===U.placa&&p.entregado_at).sort((a,b)=>a.entregado_at<b.entregado_at?1:-1)[0];const by={};L.forEach(p=>(by[p.fundo]=by[p.fundo]||[]).push(p));
+const fs=Object.keys(by).sort((a,b)=>(last&&a===last.fundo?-1:0)-(last&&b===last.fundo?-1:0));const out=[];
+fs.forEach(f=>{let rest=by[f].slice(),cur=last&&last.fundo===f&&last.x!=null?{x:last.x,y:last.y}:null;if(!cur){rest.sort((a,b)=>a.creado<b.creado?-1:1);cur=rest[0]}
+while(rest.length){rest.sort((a,b)=>((a.x??0)-cur.x)**2+((a.y??0)-cur.y)**2-(((b.x??0)-cur.x)**2+((b.y??0)-cur.y)**2));const n=rest.shift();out.push(n);if(n.x!=null)cur=n}});return out}
+function card(p,ix){const falta=p.cantidad-(p.entregado||0);return`<div class=c onclick="ID=${p.id};CANT=${falta};V='det';render()"><div class=it>${ix!=null?`<div style="font-size:13px;font-weight:900;color:#1E9E5A;width:18px">${ix+1}</div>`:''}<div class=n>${p.grupo}${p.punto}</div><div><b>Grupo ${p.grupo} · ${FN(p.fundo)} ${p.modulo}</b><small>${p.bloque||''} · pidió ${p.tipo==='inicio'?'para iniciar':fh(p.creado)}</small><span class="st s-${p.estado}">${EST[p.estado]||p.estado}${p.estado==='aceptado'||p.estado==='en_camino'?(p.estibador?' · '+p.placa:''):''}</span></div><div class=q>${p.estado==='parcial'?falta+'<small>faltan</small>':p.cantidad}</div></div></div>`}
 function lista(){const act=D.filter(p=>ACT.includes(p.estado)),hec=D.filter(p=>['entregado','rechazado'].includes(p.estado)&&p.placa===U.placa);
-const mine=act.filter(p=>p.placa===U.placa&&p.estado!=='pendiente'),nuevos=act.filter(p=>p.estado==='pendiente');
+const mine=ruta(act.filter(p=>p.placa===U.placa&&p.estado!=='pendiente')),nuevos=ruta(act.filter(p=>p.estado==='pendiente'));
 A.innerHTML=`<div class=hd><div><b>🚚 Entregas · ${U.placa}</b><small>${U.nombre}</small></div><button onclick="salir()">Salir</button></div>
-<div class=tabs><button class="${TAB==='act'?'on':''}" onclick="TAB='act';render()">Por atender<span class=badge>${act.length}</span></button><button class="${TAB==='hec'?'on':''}" onclick="TAB='hec';render()">Mis entregas</button></div>
-${TAB==='act'?(mine.length?'<div class=lab>🟦 Los que estoy atendiendo</div>'+mine.map(card).join(''):'')+(nuevos.length?'<div class=lab>🟨 Nuevos pedidos</div>'+nuevos.map(card).join(''):'')+(act.length?'':'<div class=e>✔ No hay pedidos por atender</div>')
-:(hec.length?`<div class=c><b>Entregué hoy: ${hec.reduce((s,p)=>s+(p.entregado||0),0)} bandejas</b></div>`+hec.slice().reverse().map(card).join(''):'<div class=e>Aún no tienes entregas</div>')}`}
+${NUEVOS?`<div onclick="NUEVOS=0;TAB='act';render()" style="background:#D2412C;color:#fff;font-weight:900;font-size:18px;text-align:center;padding:12px;animation:bl 1s infinite">🔔 ${NUEVOS} pedido(s) nuevo(s) · toca para ver</div>`:''}
+<div class=tabs><button class="${TAB==='act'?'on':''}" onclick="TAB='act';render()">Por atender<span class=badge>${act.length}</span></button><button class="${TAB==='map'?'on':''}" onclick="TAB='map';render()">🗺 Mapa</button><button class="${TAB==='hec'?'on':''}" onclick="TAB='hec';render()">Entregué</button></div>
+${TAB==='act'?(mine.length?'<div class=lab>🟦 Mi ruta (ordenada por cercanía)</div>'+mine.map((p,i)=>card(p,i)).join(''):'')+(nuevos.length?`<div class=lab>🟨 Nuevos pedidos · ${nuevos.reduce((s,p)=>s+p.cantidad,0)} bandejas</div>`+nuevos.map(p=>card(p)).join(''):'')+(act.length?'':'<div class=e>✔ No hay pedidos por atender</div>')
+:TAB==='map'?mapaGen(act)
+:(hec.length?`<div class=c><b>Entregué hoy: ${hec.reduce((s,p)=>s+(p.entregado||0),0)} bandejas</b></div>`+hec.slice().reverse().map(p=>card(p)).join(''):'<div class=e>Aún no tienes entregas</div>')}`;
+const mg=$('#mg');if(mg){if(!MGS){const L=act.filter(p=>p.fundo===MF&&p.x!=null);if(L.length){const cx=L.reduce((s,p)=>s+p.x,0)/L.length,cy=L.reduce((s,p)=>s+p.y,0)/L.length;MGS=[cx*ZM-mg.clientWidth/2,cy*ZM-mg.clientHeight/2]}}if(MGS){mg.scrollLeft=MGS[0];mg.scrollTop=MGS[1]}}}
+let MGS=null;
+function mapaGen(act){const fs=[...new Set(act.map(p=>p.fundo))];if(!fs.length)return'<div class=e>✔ No hay pedidos por atender</div>';if(!MF||!fs.includes(MF))MF=fs[0];const M=(window.MAPAS||{})[MF];const L=act.filter(p=>p.fundo===MF&&p.x!=null);
+const col=p=>p.estado==='pendiente'?'#FF6D00':p.estado==='parcial'?'#E0A800':p.placa===U.placa?'#1453A8':'#8A96A3';
+return`<div style="display:flex;gap:6px;margin:10px 12px 0;flex-wrap:wrap">${fs.map(f=>`<button onclick="MF='${f}';MGS=null;render()" style="border:2px solid #14633A;border-radius:10px;padding:7px 10px;font-weight:800;${f===MF?'background:#14633A;color:#fff':'background:#fff;color:#14633A'}">${FN(f)} · ${act.filter(p=>p.fundo===f).length}</button>`).join('')}</div>
+<div style="margin:8px 12px 0;font-size:12.5px;font-weight:700;color:#567">🟠 nuevo · 🔵 mío · 🟡 parcial · ⚪ de otro estiba · toca un punto</div>
+${M?`<div class=mw><div class=zm><button onclick="zm(1.3)">+</button><button onclick="zm(1/1.3)">−</button></div><div class=mp id=mg style="height:58vh"><div class=in style="width:${M.w*ZM}px"><img src="${M.img}" style="width:${M.w*ZM}px">${L.map(p=>`<div onclick="ID=${p.id};CANT=${p.cantidad-(p.entregado||0)};V='det';render()" style="position:absolute;left:${p.x*ZM}px;top:${p.y*ZM}px;transform:translate(-50%,-50%);background:${col(p)};color:#fff;border:2px solid #fff;border-radius:12px;padding:1px 6px;font-weight:900;font-size:12px;box-shadow:0 1px 4px #0007;cursor:pointer;white-space:nowrap">${p.grupo}${p.punto}·${p.cantidad-(p.entregado||0)}</div>`).join('')}</div></div></div>`:'<div class=e>Sin mapa</div>'}`}
+function zm(f){const m=$('#mg');const cx=(m.scrollLeft+m.clientWidth/2)/ZM,cy=(m.scrollTop+m.clientHeight/2)/ZM;ZM=Math.min(1.2,Math.max(0.12,ZM*f));MGS=[cx*ZM-m.clientWidth/2,cy*ZM-m.clientHeight/2];render()}
 function mapa(p){const M=(window.MAPAS||{})[p.fundo];if(!M||p.x==null)return'<div class=e>Sin mapa para este módulo</div>';
 return`<div class=mw><div class=zm><button onclick="zoom(1.3)">+</button><button onclick="zoom(1/1.3)">−</button></div><div class=mp id=mp><div class=in style="width:${M.w*Z}px"><img src="${M.img}" style="width:${M.w*Z}px"><div class=pin style="left:${p.x*Z}px;top:${p.y*Z}px"><b>${p.punto}</b></div></div></div></div>`}
 function zoom(f){Z=Math.min(1.5,Math.max(0.3,Z*f));render()}
 function det(){const p=D.find(x=>x.id===ID);if(!p){V='lista';return render()}const falta=p.cantidad-(p.entregado||0),mio=!p.placa||p.placa===U.placa;
 let acc='';
-if(p.estado==='pendiente')acc=`<button class=big style="background:#1E7FD9" onclick="estado('aceptado')">✋ ACEPTAR PEDIDO</button><button class=big style="background:#fff;color:#B0301F;border:2px solid #B0301F;font-size:16px;padding:12px" onclick="rechazar()">Rechazar</button>`;
+const lote=D.filter(x=>x.estado==='pendiente'&&x.grupo===p.grupo&&x.fundo===p.fundo&&x.modulo===p.modulo);
+if(p.estado==='pendiente')acc=`<button class=big style="background:#1E7FD9" onclick="estado('aceptado')">✋ ACEPTAR ESTE PUNTO</button>${lote.length>1?`<button class=big style="background:#0E4FA8;font-size:16px" onclick="aceptarTodos('${p.grupo}','${p.fundo}','${p.modulo}')">✋✋ Aceptar los ${lote.length} puntos del Grupo ${p.grupo} (${lote.reduce((s,x)=>s+x.cantidad,0)} bandejas)</button>`:''}<button class=big style="background:#fff;color:#B0301F;border:2px solid #B0301F;font-size:16px;padding:12px" onclick="rechazar()">Rechazar</button>`;
 else if(p.estado==='aceptado'&&mio)acc=`<button class=big style="background:#1453A8" onclick="estado('en_camino')">🚚 SALGO AL PUNTO</button>`;
 else if((p.estado==='en_camino'||p.estado==='parcial')&&mio)acc=`<div class=c><b>¿Cuántas bandejas dejaste?</b><div class=num><button onclick="CANT=Math.max(1,CANT-5);render()">−</button><b>${CANT}</b><button onclick="CANT=Math.min(${falta},CANT+5);render()">+</button></div><div style="text-align:center;color:#678;font-weight:700">Faltan ${falta} de ${p.cantidad}</div></div><button class=big style="background:#1E9E5A" onclick="entregar()">✔ DEJÉ ${CANT} BANDEJAS</button>`;
 else if(!mio&&ACT.includes(p.estado))acc=`<div class=c style="background:#FFF3C4;font-weight:800">Lo está atendiendo ${p.placa}${p.estibador?' · '+p.estibador:''}</div>`;
@@ -69,6 +86,7 @@ ${mapa(p)}
 ${acc}`;const m=$('#mp');if(m&&p.x!=null){m.scrollLeft=p.x*Z-m.clientWidth/2;m.scrollTop=p.y*Z-m.clientHeight/2}}
 async function estado(e){const p=D.find(x=>x.id===ID),b={estado:e,placa:U.placa,estibador:U.nombre};if(e==='aceptado')b.aceptado_at=new Date().toISOString();if(e==='en_camino')b.en_camino_at=new Date().toISOString();
 const cond=e==='aceptado'?'&estado=eq.pendiente':'&placa=eq.'+U.placa;try{const r=await q('bandejas_pedidos?id=eq.'+ID+cond,{method:'PATCH',body:JSON.stringify(b)});if(!r||!r.length){toast('Otro estiba ya lo tomó');}else toast(e==='aceptado'?'✔ Aceptado':'🚚 En camino')}catch(x){toast('Sin conexión')}load()}
+async function aceptarTodos(g,f,m){const ids=D.filter(x=>x.estado==='pendiente'&&x.grupo===g&&x.fundo===f&&x.modulo===m).map(x=>x.id);try{const r=await q(`bandejas_pedidos?id=in.(${ids.join(',')})&estado=eq.pendiente`,{method:'PATCH',body:JSON.stringify({estado:'aceptado',aceptado_at:new Date().toISOString(),placa:U.placa,estibador:U.nombre})});toast('✔ Aceptaste '+(r?r.length:0)+' puntos');V='lista';TAB='act'}catch(x){toast('Sin conexión')}load()}
 async function rechazar(){const m=prompt('Motivo del rechazo (ej. sin bandejas, punto incorrecto, duplicado)');if(!m)return;try{await q('bandejas_pedidos?id=eq.'+ID+'&estado=eq.pendiente',{method:'PATCH',body:JSON.stringify({estado:'rechazado',motivo:m,placa:U.placa,estibador:U.nombre})});toast('Pedido rechazado')}catch(x){toast('Sin conexión')}V='lista';load()}
 async function entregar(){try{const r=await q('rpc/bandejas_entregar',{method:'POST',body:JSON.stringify({pid:ID,cant:CANT,pl:U.placa,est:U.nombre})});if(r&&r.ok){toast(r.falta?`Parcial: faltan ${r.falta}`:'✔ Entregado completo');if(!r.falta)V='lista';CANT=r.falta}else toast(r&&r.msg||'Error')}catch(x){toast('Sin conexión')}load()}
 setInterval(()=>{if(U)load()},20000);U?load():render();
