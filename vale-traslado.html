@@ -449,6 +449,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
       <div class="seg" role="group" aria-label="Modalidad"><button type="button" data-mod="PRESENCIAL" aria-pressed="true">Sí, está aquí</button><button type="button" data-mod="A DISTANCIA" aria-pressed="false">No, está en otro fundo</button></div>
       <p class="hint hidden" id="modHint">Llena el vale con los datos que te mandó el conductor. Al guardar, envíaselo por WhatsApp para que responda CONFORME y registra su conformidad.</p>
       <div class="grid">
+        <label class="f">Área<select id="fArea"><option>COSECHA</option><option>SS.AA LABORES</option></select></label>
         <label class="f">Fundo salida<input id="fSal" data-ac="fundos" autocomplete="off"></label>
         <label class="f">Fundo llegada<input id="fLle" data-ac="fundos" autocomplete="off"></label>
         <label class="f">Fecha<input id="fFecha" type="date"></label>
@@ -868,7 +869,7 @@ function resetForm(base){
   $('fFecha').value=today();$('fHora').value=nowTime();
   if(USER){$('sN0').value=USER.nombre;$('sD0').value='DNI '+USER.dni}
   $('items').innerHTML='';
-  if(base){$('fSal').value=base.salida||'';$('fLle').value=base.llegada||'';$('fMarca').value=base.marca||'';$('fPlaca').value=base.placa||'';$('fCond').value=base.conductor||'';$('fLic').value=base.licencia||'';(base.items||[]).forEach(i=>addItem({desc:i.desc,cant:i.cant,um:i.um}))}
+  if(base){$('fArea').value=base.area||'COSECHA';$('fSal').value=base.salida||'';$('fLle').value=base.llegada||'';$('fMarca').value=base.marca||'';$('fPlaca').value=base.placa||'';$('fCond').value=base.conductor||'';$('fLic').value=base.licencia||'';(base.items||[]).forEach(i=>addItem({desc:i.desc,cant:i.cant,um:i.um}))}
   if(!$('items').children.length)addItem();
   sigs.forEach(s=>s.clear());syncCond();clearErr();calc();fotoNueva=null;$('fFotoTxt').textContent='';$('fFotoPrev').innerHTML='';
   $('editBanner').classList.add('hidden');$('motivoCard').classList.add('hidden');
@@ -912,7 +913,7 @@ function startEdit(v){
 }
 function collect(){
   const g=i=>$(i).value.trim().toUpperCase().replace(/\s+/g,' ');
-  return{salida:g('fSal'),llegada:g('fLle'),fecha:$('fFecha').value,hora:$('fHora').value,marca:g('fMarca'),placa:g('fPlaca').replace(/\s/g,''),conductor:g('fCond'),licencia:g('fLic'),precinto:g('fPrec'),obs:$('fObs').value.trim(),items:readItems(),modalidad:modo,celular:$('fCel').value.replace(/\D/g,''),
+  return{area:$('fArea').value||'COSECHA',salida:g('fSal'),llegada:g('fLle'),fecha:$('fFecha').value,hora:$('fHora').value,marca:g('fMarca'),placa:g('fPlaca').replace(/\s/g,''),conductor:g('fCond'),licencia:g('fLic'),precinto:g('fPrec'),obs:$('fObs').value.trim(),items:readItems(),modalidad:modo,celular:$('fCel').value.replace(/\D/g,''),
     firmas:[{nombre:USER.nombre,dni:USER.dni,img:sigs[0].get()},{nombre:g('sN1'),dni:$('sD1').value.trim(),img:modo==='A DISTANCIA'?'':sigs[1].get(),registrada:modo!=='A DISTANCIA'&&sigs[1].isReused()},{nombre:'',dni:'',img:''}],chofer:choferSel()}
 }
 function validate(v){
@@ -1082,7 +1083,7 @@ function docHTML(v){
   return`<div class="doc of">
   <table class="ofh"><tr><td class="a"><small>FORMATO:</small><h1>VALE TRASLADO DE MATERIALES ENTRE FUNDOS</h1></td><td class="b"><small>Fecha de aprobación:</small><div>${esc(FORMATO.aprobacion)}</div></td><td class="c" rowspan="3"><img src="${LOGO_BB}" alt="blueberries"></td></tr>
    <tr><td class="a">CÓDIGO:&nbsp;&nbsp; ${esc(FORMATO.codigo)}</td><td class="b">N° versión:&nbsp;&nbsp;&nbsp; ${esc(FORMATO.version)}</td></tr>
-   <tr><td class="a">AREA:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${esc(FORMATO.area)}</td><td class="b nv">N° ${pad(v.numero)}</td></tr></table>
+   <tr><td class="a">AREA:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${esc(v.area||FORMATO.area)}</td><td class="b nv">N° ${pad(v.numero)}</td></tr></table>
   <div class="off">
    <div class="r"><span class="k">FUNDO SALIDA:</span><span class="v">${esc(v.salida)}</span><span class="k k2">FECHA:</span><span class="v v2">${fmtDate(v.fecha)} ${esc(v.hora||'')}</span></div>
    <div class="r"><span class="k">FUNDO LLEGADA:</span><span class="v">${esc(v.llegada)}</span></div>
