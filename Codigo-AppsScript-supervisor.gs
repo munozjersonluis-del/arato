@@ -1,10 +1,17 @@
 // App "Movimientos de grupos" (supervisores de cosecha)
 // Hoja: SUPERVISOR DE COSECHA. Pegar en Extensiones → Apps Script, Implementar → Aplicación web
 // (Ejecutar como: Yo · Acceso: Cualquier persona) y pasar el enlace /exec.
-const SUP = ['TOMAS', 'ELIAS', 'LESLIE', 'JHASTYN'];
+const SUP = ['TOMAS', 'ELIAS', 'LESLIE', 'JHASTYN', 'SNAYDER', 'JERSON'];
 const F0 = 6, NF = 17; // filas 6 a 22 de cada pestaña
 const TZ = 'America/Lima';
 
+// Si un supervisor nuevo no tiene pestaña, se copia la de TOMAS (formato) y se limpia
+function nuevaPest_(ss, sup) {
+  const base = ss.getSheetByName('TOMAS'); if (!base) return null;
+  const sh = base.copyTo(ss).setName(sup);
+  [2, 3, 5, 8, 9].forEach(c => sh.getRange(F0, c, NF, 1).clearContent());
+  return sh;
+}
 function json_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
 function hoy_() { return Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd'); }
 function bd_(ss) {
@@ -77,7 +84,7 @@ function doPost(e) {
     const b = JSON.parse(e.postData.contents || '{}'), ss = SpreadsheetApp.getActive();
     const sup = String(b.sup || '').toUpperCase();
     if (!SUP.includes(sup)) return json_({ ok: false, error: 'Supervisor no válido' });
-    const sh = ss.getSheetByName(sup); if (!sh) return json_({ ok: false, error: 'No existe la pestaña ' + sup });
+    let sh = ss.getSheetByName(sup); if (!sh) sh = nuevaPest_(ss, sup); if (!sh) return json_({ ok: false, error: 'No existe la pestaña ' + sup });
     limpiaDia_(sh);
 
     if (b.accion === 'salida' || b.accion === 'borrarSalida') {
