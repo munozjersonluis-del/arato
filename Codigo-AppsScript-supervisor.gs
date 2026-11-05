@@ -1,7 +1,7 @@
 // App "Movimientos de grupos" (supervisores de cosecha)
 // Hoja: SUPERVISOR DE COSECHA. Pegar en Extensiones → Apps Script, Implementar → Aplicación web
 // (Ejecutar como: Yo · Acceso: Cualquier persona) y pasar el enlace /exec.
-const SUP = ['TOMAS', 'ELIAS', 'LESLIE', 'JHASTYN', 'SNAYDER'];
+const SUP = ['TOMAS', 'SNAYDER', 'LESLIE', 'JHASTYN'];
 const F0 = 6, NF = 17; // filas 6 a 22 de cada pestaña
 const TZ = 'America/Lima';
 
