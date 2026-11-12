@@ -1,0 +1,98 @@
+<!doctype html><html lang=es><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel=manifest href="horas.webmanifest"><meta name=theme-color content="#123A5C"><link rel=apple-touch-icon href="horas-icon-192.png">
+<title>Horas Estibas</title>
+<style>
+:root{--bg:#F4F6F9;--card:#fff;--tx:#123A5C;--mu:#6B7C8F;--bd:#DCE3EB;--pri:#1B4F7A;--red:#D9454A;--grn:#1E8E52;--yel:#FFF3D1;--yt:#8A6200;--rbg:#FDE8E8}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F1720;--card:#18222E;--tx:#E6EEF6;--mu:#93A3B5;--bd:#2A3846;--pri:#5B9BD5;--yel:#3A3115;--yt:#F2C46B;--rbg:#3A1E20}}
+:root[data-theme="dark"]{--bg:#0F1720;--card:#18222E;--tx:#E6EEF6;--mu:#93A3B5;--bd:#2A3846;--pri:#5B9BD5;--yel:#3A3115;--yt:#F2C46B;--rbg:#3A1E20}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,Segoe UI,Arial;font-size:14px}
+header{background:#123A5C;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:8px}header b{font-size:18px}#st{font-size:12px;opacity:.85}
+.wrap{padding:12px 16px 40px;max-width:1100px;margin:0 auto}
+.bar{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}.bar button{border:2px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;padding:7px 12px;font-weight:800;cursor:pointer}.bar .sem{font-weight:800;font-size:16px}
+.k{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:10px}.k div{background:var(--card);border-radius:12px;padding:10px;text-align:center;font-weight:700;color:var(--mu);font-size:12px}.k b{display:block;font-size:24px;color:var(--tx)}
+.gw{overflow-x:auto;border:1px solid var(--bd);border-radius:12px}
+table{border-collapse:collapse;width:100%;min-width:820px;background:var(--card)}th{background:#123A5C;color:#fff;padding:7px 4px;font-size:12px}th small{display:block;font-weight:600;opacity:.8}
+th button{margin-top:4px;border:0;border-radius:6px;padding:3px 6px;font-size:11px;font-weight:800;cursor:pointer;background:#2E86C1;color:#fff}
+td{border-top:1px solid var(--bd);padding:4px;text-align:center;font-weight:700}td.n{text-align:left;white-space:nowrap;position:sticky;left:0;background:var(--card);padding-left:10px}td.n small{display:block;color:var(--mu);font-weight:600;font-size:11px}
+.c{cursor:pointer;border-radius:8px;padding:7px 2px;min-width:70px}.c:hover{outline:2px solid var(--pri)}.c small{display:block;font-size:10px;color:var(--mu);font-weight:600}.c.v{color:var(--mu);font-weight:500}.c.d{color:var(--mu)}
+td.t{font-size:15px}tr.y td.t{background:var(--yel);color:var(--yt)}tr.r td.t{background:var(--red);color:#fff}td.q{font-size:12px;color:var(--mu)}tr.r td.q{color:var(--red)}
+.tot td{background:var(--bg);font-weight:800}
+dialog{border:0;border-radius:16px;padding:0;width:min(340px,92vw);background:var(--card);color:var(--tx)}dialog::backdrop{background:#0008}
+.dh{background:#123A5C;color:#fff;padding:12px 16px;font-weight:800}.dh small{display:block;font-weight:500;opacity:.8}
+.db{padding:14px 16px;display:grid;gap:10px}.db label{font-weight:700;font-size:13px;display:grid;gap:4px}.db input{padding:10px;border-radius:10px;border:2px solid var(--bd);font-size:17px;font-weight:700;background:var(--bg);color:var(--tx)}
+.ef{text-align:center;font-size:22px;font-weight:900;color:var(--grn)}.btns{display:flex;gap:8px}.btns button{flex:1;padding:11px;border-radius:10px;border:0;font-weight:800;cursor:pointer}
+.ok{background:var(--pri);color:#fff}.ds{background:var(--rbg);color:var(--red)}.cl{background:var(--bg);color:var(--tx)}
+.leg{font-size:12px;color:var(--mu);margin-top:8px}
+</style>
+</head><body><header><div><b>⏱ Horas efectivas · Estibas</b><br><small>Límite 60 h por semana · refrigerio descontado</small></div><span id=st></span></header>
+<div class=wrap>
+<div class=bar><button id=prev>◀</button><span class=sem id=sem></span><button id=next>▶</button><button id=xls style="background:#fff;color:#123A5C">⬇ Excel</button><button id=todo style="margin-left:auto;background:#1E8E52;color:#fff;border-color:#1E8E52">⚡ Misma hora a todos</button></div>
+<dialog id=dt2><div class=dh>⚡ Misma hora a todos<small>Se aplica a los 24 estibas · no toca a los que descansan</small></div><div class=db>
+<div id=dch style="display:flex;flex-wrap:wrap;gap:6px"></div>
+<label>Hora inicio<input type=time id=ti value="06:30"></label><label>Hora fin<input type=time id=tf value="16:00"></label><label>Refrigerio (min)<input type=number id=tr value=60 min=0 step=5></label>
+<div class=ef id=te></div>
+<label style="display:flex;gap:8px;align-items:center"><input type=checkbox id=tow style="width:20px;height:20px"> Reemplazar también los que ya tienen hora</label>
+<div class=btns><button class=ok id=tok>Aplicar</button><button class=cl id=tcl>Cerrar</button></div></div></dialog>
+<div class=k id=kpi></div>
+<div class=gw><table id=tb></table></div>
+<div class=leg>Toca una celda para poner inicio, fin y refrigerio · "Llenar" pone la misma hora a todos los vacíos de ese día · 🟡 ≥ 50 h · 🔴 &gt; 60 h</div>
+</div>
+<dialog id=dlg><div class=dh id=dt></div><div class=db>
+<label>Hora inicio<input type=time id=fi></label><label>Hora fin<input type=time id=ff></label><label>Refrigerio (min)<input type=number id=fr min=0 step=5 inputmode=numeric></label>
+<div class=ef id=fe></div>
+<div class=btns><button class=ok id=bg>Guardar</button></div><div class=btns><button class=ds id=bd>😴 Descansa</button><button class=cl id=bx>Borrar</button><button class=cl id=bc>Cerrar</button></div></div></dialog>
+<script>
+const DIAS=["Lun","Mar","Mié","Jue","Vie","Sáb"];
+const BASE=[["Kia A","HUGO VILLANUEVA"],["Kia A","JORGE LOPEZ"],["Kia B","OWEN NARVAEZ"],["Kia B","VALENTIN TOLEDO"],["Kia C","JOSBER CORDOVA"],["Kia C","DAVID CORONEL"],["Kia D","JHAN CHAMAY"],["Kia D","RONALD HERNANDEZ"],["Kia E","NIKIN ACEBEDO"],["Kia E","HITLER RAMOS"],["Kia F","EYDER PAREDES"],["Kia F","IVAN FLORES"],["Bandejero 1","LENNER MUÑOZ"],["Bandejero 1","LUIS GUSMAN FLORES"],["Bandejero 2","ANGEL ROMAN"],["Bandejero 2","CARLOS BLANCO"],["Lavadero","YOBER CHAMAY"],["Lavadero","JHONATAN SABOGAL"],["Retén 1","MARCELO TAPULLIMA"],["Retén 1","CRISTIANO ALFARO"],["Retén 2","EYLIN CHAUPE"],["Sobrante","LUIS JUAREZ"],["Sobrante","JOSE CRUZ"],["Sobrante","MARIO ZUMARAN"]];
+const LIM=60,AV=50;
+function isoW(d){const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const n=t.getUTCDay()||7;t.setUTCDate(t.getUTCDate()+4-n);const y=new Date(Date.UTC(t.getUTCFullYear(),0,1));return[t.getUTCFullYear(),Math.ceil(((t-y)/864e5+1)/7)]}
+function lunes(y,w){const j=new Date(Date.UTC(y,0,4)),d=j.getUTCDay()||7;j.setUTCDate(j.getUTCDate()-d+1+(w-1)*7);return j}
+let [Y,W]=isoW(new Date()),R={},db=null,ref=null,unsub=null,cur=null,saveT=null;
+const $=i=>document.getElementById(i);
+const m=t=>{if(!t)return null;const[a,b]=t.split(":").map(Number);return a*60+b};
+const ef=r=>{if(!r||r.d)return 0;const a=m(r.ini),b=m(r.fin);if(a==null||b==null)return 0;let x=b-a;if(x<0)x+=1440;return Math.max(0,x-(+r.ref||0))/60};
+const f1=h=>(Math.round(h*10)/10).toFixed(1);
+function key(){return`horas/${Y}-S${String(W).padStart(2,"0")}`}
+function render(){const L=lunes(Y,W);$("sem").textContent=`Semana ${W} · ${L.getUTCDate()}/${L.getUTCMonth()+1} al ${new Date(L.getTime()+5*864e5).getUTCDate()}/${new Date(L.getTime()+5*864e5).getUTCMonth()+1}`;
+ const fechas=DIAS.map((_,i)=>{const d=new Date(L.getTime()+i*864e5);return d.getUTCDate()+"/"+(d.getUTCMonth()+1)});
+ let h=`<tr><th style="text-align:left;padding-left:10px">Estiba</th>${DIAS.map((d,i)=>`<th>${d}<small>${fechas[i]}</small><button data-fill=${i}>Llenar</button></th>`).join("")}<th>Total semana</th><th>Le quedan</th></tr>`;
+ const dayT=DIAS.map(()=>0);let over=0,near=0,tot=0,trab=0;
+ BASE.forEach(([u,n])=>{const rr=R[n]||{};let t=0;const cells=DIAS.map((_,i)=>{const r=rr[i];const e=ef(r);t+=e;dayT[i]+=e;
+   if(r&&r.d)return`<td><div class="c d" data-n="${n}" data-i=${i}>😴</div></td>`;
+   if(!r||!r.ini)return`<td><div class="c v" data-n="${n}" data-i=${i}>—</div></td>`;
+   return`<td><div class=c data-n="${n}" data-i=${i}>${f1(e)} h<small>${r.ini}–${r.fin||"?"}</small></div></td>`}).join("");
+  tot+=t;if(t>0)trab++;const cls=t>LIM?"r":t>=AV?"y":"";if(t>LIM)over++;else if(t>=AV)near++;const q=LIM-t;
+  h+=`<tr class=${cls}><td class=n>${n}<small>${u}</small></td>${cells}<td class=t>${f1(t)} h</td><td class=q>${q>=0?f1(q)+" h":"⚠ +"+f1(-q)+" h"}</td></tr>`});
+ h+=`<tr class=tot><td class=n>Total del día</td>${dayT.map(x=>`<td>${f1(x)} h</td>`).join("")}<td>${f1(tot)} h</td><td></td></tr>`;
+ $("tb").innerHTML=h;
+ $("kpi").innerHTML=`<div><b>${f1(tot)} h</b>horas efectivas semana</div><div><b>${trab?f1(tot/trab):"0.0"} h</b>promedio por estiba</div><div><b style="color:var(--yt)">${near}</b>entre 50 y 60 h</div><div><b style="color:var(--red)">${over}</b>pasan 60 h</div>`}
+function open(n,i){cur=[n,i];const r=(R[n]||{})[i]||{};$("dt").innerHTML=`${n}<small>${DIAS[i]} · semana ${W}</small>`;$("fi").value=r.ini||"";$("ff").value=r.fin||"";$("fr").value=r.ref??60;calcE();$("dlg").showModal()}
+function calcE(){const e=ef({ini:$("fi").value,fin:$("ff").value,ref:$("fr").value});$("fe").textContent=$("fi").value&&$("ff").value?`${f1(e)} h efectivas`:""}
+function put(n,i,v){R[n]=R[n]||{};if(v)R[n][i]=v;else delete R[n][i];render();guardar()}
+function guardar(){try{localStorage.setItem(key(),JSON.stringify(R))}catch(e){}$("st").textContent="✔ Guardado en el celular"}
+["fi","ff","fr"].forEach(i=>$(i).addEventListener("input",calcE));
+$("bg").onclick=()=>{const[n,i]=cur;put(n,i,{ini:$("fi").value,fin:$("ff").value,ref:+$("fr").value||0});$("dlg").close()};
+$("bd").onclick=()=>{const[n,i]=cur;put(n,i,{d:1});$("dlg").close()};
+$("bx").onclick=()=>{const[n,i]=cur;put(n,i,null);$("dlg").close()};
+$("bc").onclick=()=>$("dlg").close();
+let fillI=null;
+document.addEventListener("click",e=>{const c=e.target.closest("[data-n]");if(c){open(c.dataset.n,+c.dataset.i);return}
+ const f=e.target.closest("[data-fill]");if(f){fillI=+f.dataset.fill;cur=null;$("dt").innerHTML=`Llenar ${DIAS[fillI]}<small>a todos los que están vacíos</small>`;$("fi").value="06:30";$("ff").value="16:00";$("fr").value=60;calcE();$("bg").textContent="Llenar vacíos";$("bd").hidden=true;$("bx").hidden=true;$("dlg").showModal()}});
+$("bg").addEventListener("click",()=>{},true);
+$("bg").onclick=()=>{if(fillI!==null){const v={ini:$("fi").value,fin:$("ff").value,ref:+$("fr").value||0};BASE.forEach(([,n])=>{R[n]=R[n]||{};if(!R[n][fillI])R[n][fillI]={...v}});fillI=null;render();guardar()}else{const[n,i]=cur;put(n,i,{ini:$("fi").value,fin:$("ff").value,ref:+$("fr").value||0})}$("dlg").close()};
+$("dlg").addEventListener("close",()=>{fillI=null;$("bg").textContent="Guardar";$("bd").hidden=false;$("bx").hidden=false});
+$("dch").innerHTML=DIAS.map((d,i)=>`<label style="display:flex;gap:4px;align-items:center;background:var(--bg);padding:6px 10px;border-radius:8px"><input type=checkbox data-dx=${i} checked> ${d}</label>`).join("");
+const te=()=>{$("te").textContent=f1(ef({ini:$("ti").value,fin:$("tf").value,ref:$("tr").value}))+" h efectivas por día"};["ti","tf","tr"].forEach(i=>$(i).addEventListener("input",te));
+$("todo").onclick=()=>{te();$("dt2").showModal()};$("tcl").onclick=()=>$("dt2").close();
+$("tok").onclick=()=>{const v={ini:$("ti").value,fin:$("tf").value,ref:+$("tr").value||0},ow=$("tow").checked,ds=[...document.querySelectorAll("[data-dx]:checked")].map(x=>+x.dataset.dx);
+ BASE.forEach(([,n])=>{R[n]=R[n]||{};ds.forEach(i=>{const r=R[n][i];if(r&&r.d)return;if(!r||!r.ini||ow)R[n][i]={...v}})});render();guardar();$("dt2").close()};
+function cambiar(d){W+=d;if(W<1){Y--;W=52}if(W>52){Y++;W=1}cargar()}
+$("prev").onclick=()=>cambiar(-1);$("next").onclick=()=>cambiar(1);
+function cargar(){R={};try{R=JSON.parse(localStorage.getItem(key())||"{}")}catch(e){}render();
+}
+$("xls").onclick=()=>{const L=lunes(Y,W);let csv="\ufeffEstiba;Unidad;"+DIAS.map((d,i)=>{const x=new Date(L.getTime()+i*864e5);return d+" "+x.getUTCDate()+"/"+(x.getUTCMonth()+1)}).join(";")+";Total semana;Le quedan\n";
+ BASE.forEach(([u,n])=>{const rr=R[n]||{};let t=0;const c=DIAS.map((_,i)=>{const r=rr[i];if(r&&r.d)return"DESCANSA";const e=ef(r);t+=e;return r&&r.ini?f1(e).replace(".",","):""});csv+=[n,u,...c,f1(t).replace(".",","),f1(LIM-t).replace(".",",")].join(";")+"\n"});
+ const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download=`Horas_estibas_semana_${W}.csv`;a.click()};
+cargar();
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw-horas.js").catch(()=>{});
+</script></body></html>
