@@ -109,7 +109,11 @@
       "destination": "/mapa-bloques.html"
     },
     {
-      "source": "/((?!api/|fichas|menu|guia|reporte|acopio|cosecha|stock|despacho|maquinaria|tallas|camion|camion-resumen|mapa|satelite|celulares|guias-kia|resumen-kia|revision-guias|avance-personal|bandejas-match|bandejas-bi|kia-bi|descarte-bi|camion-bi|recepcion-descarte|tableros|movimientos).*)",
+      "source": "/horas",
+      "destination": "/horas-estibas.html"
+    },
+    {
+      "source": "/((?!api/|fichas|menu|guia|reporte|acopio|cosecha|stock|despacho|maquinaria|tallas|camion|camion-resumen|mapa|satelite|celulares|guias-kia|resumen-kia|revision-guias|avance-personal|bandejas-match|bandejas-bi|kia-bi|descarte-bi|camion-bi|recepcion-descarte|tableros|movimientos|horas).*)",
       "destination": "/index.html"
     }
   ]
