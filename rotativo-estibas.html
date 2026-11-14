@@ -92,14 +92,14 @@ const BASE0=BASE.map(b=>b[0]);const NAMES0=BASE.map(b=>b[1]),ORD=[...UNIDADES,"S
 function render(){aplicaU();const p=S.plan;$("sem").textContent="Semana "+S.sem+" · Cosecha Blueberries Chao";
  $("tA").classList.toggle("on",vista==="A");$("tR").classList.toggle("on",vista==="R");$("vA").hidden=vista!=="A";$("vR").hidden=vista!=="R";$("vG").hidden=vista!=="G";$("tG").classList.toggle("on",vista==="G");$("vP").hidden=vista!=="P";$("tP").classList.toggle("on",vista==="P");
  const c=calc(dia);
- const OPTS=["Trabaja","DESCANSA",...UNIDADES];
+ const OPTS=["Trabaja","DESCANSA"];
  const LB=u=>{const x=UNI[u];if(!x)return u;return NOM(u)+" · "+PL(u)};
  const al=[];DIAS.forEach((d,i)=>{const k=calc(i),f=UNIDADES.filter(u=>k.cnt[u]<NEED(u));if(f.length)al.push(`${d}: falta en ${f.map(LB).join(", ")}`);if(k.desc!==4)al.push(`${d}: descansan ${k.desc}`)});
  const dob=BASE.filter(([,n])=>p[n].filter(v=>v==="D").length>1).map(b=>b[1]),sin=BASE.filter(([,n])=>!p[n].includes("D")).map(b=>b[1]);
  if(dob.length)al.push("Descansa 2 veces: "+dob.join(", "));if(sin.length)al.push("Falta descansar: "+sin.join(", "));
  $("alerts").innerHTML=al.length?`<div class="al y">⚠ ${al.join("<br>⚠ ")}</div>`:`<div class="al g">✔ Semana OK · 4 descansan cada día · todos tienen su día</div>`;
- const cell=(n,i)=>{const v=p[n][i],t=v==="T"?"Trabaja":v==="D"?"DESCANSA":v;const ya=v!=="D"&&p[n].includes("D");
-  return `<td class="${v==="D"?"cD":v==="T"?"cT":"cU"}"><select data-n="${n}" data-i=${i}>${OPTS.map(o=>`<option value="${o}" ${o===t?"selected":""} ${o==="DESCANSA"&&ya?"disabled":""}>${LB(o)}</option>`).join("")}</select></td>`};
+ const cell=(n,i)=>{const v=p[n][i],t=v==="D"?"DESCANSA":"Trabaja";const ya=v!=="D"&&p[n].includes("D");
+  return `<td class="${v==="D"?"cD":"cT"}"><select data-n="${n}" data-i=${i}>${OPTS.map(o=>`<option value="${o}" ${o===t?"selected":""} ${o==="DESCANSA"&&ya?"disabled":""}>${LB(o)}</option>`).join("")}</select></td>`};
  const tot=DIAS.map((_,i)=>calc(i));
  $("grid").innerHTML=`<table class=gt2><tr><th>Grupo</th><th>Placa</th><th>Estiba ▾</th>${["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"].map(d=>`<th>${d}</th>`).join("")}</tr>`+
   BASE.map(([u,n])=>`<tr><td class=u><select data-u="${n}" style="font-weight:800;color:var(--pri);border:1px solid var(--bd);border-radius:6px;padding:4px;min-width:110px;background:var(--card)">${[...UNIDADES,"Sobrante"].map(o=>`<option value="${o}" ${o===u?"selected":""}>${NOM(o)}</option>`).join("")}</select></td><td>${UNI[u]?`<select data-p="${u}" style="min-width:96px;font-weight:700;border:1px solid var(--bd);border-radius:6px;padding:4px;background:var(--card);color:var(--tx)">${PLACAS.map(x=>`<option ${x===PL(u)?"selected":""}>${x}</option>`).join("")}</select>`:"—"}</td><td class=n><select data-e="${n}" style="font-weight:700;border:1px solid var(--bd);border-radius:6px;padding:4px;background:var(--card);color:var(--tx);min-width:190px">${BASE.map(b=>b[1]).sort().map(x=>`<option ${x===n?"selected":""}>${x}</option>`).join("")}</select></td>${DIAS.map((_,i)=>cell(n,i)).join("")}</tr>`).join("")+
@@ -157,7 +157,7 @@ document.addEventListener("change",e=>{const se=e.target.closest("select[data-e]
  if(old){P[old][i]=bu(old)===g?"D":"T"}
  if(nw){P[nw][i]=bu(nw)===g?"T":g}
  render();guardar();return}
- const spp=e.target.closest("select[data-pp]");if(spp){const i=+spp.dataset.pi;S.pdia=S.pdia||{};S.pdia[i]=S.pdia[i]||{};S.pdia[i][spp.dataset.pp]=spp.value;render();guardar();return}const sp=e.target.closest("select[data-p]");if(sp){S.placa=S.placa||{};S.placa[sp.dataset.p]=sp.value;render();guardar();return}const su=e.target.closest("select[data-u]");if(su){S.unid=S.unid||{};S.unid[su.dataset.u]=su.value;aplicaU();render();guardar();return}const s=e.target.closest("select[data-i]");if(s){const v=s.value;S.plan[s.dataset.n][+s.dataset.i]=v==="Trabaja"?"T":v==="DESCANSA"?"D":v;render();guardar()}});
+ const spp=e.target.closest("select[data-pp]");if(spp){const i=+spp.dataset.pi;S.pdia=S.pdia||{};S.pdia[i]=S.pdia[i]||{};S.pdia[i][spp.dataset.pp]=spp.value;render();guardar();return}const sp=e.target.closest("select[data-p]");if(sp){S.placa=S.placa||{};S.placa[sp.dataset.p]=sp.value;render();guardar();return}const su=e.target.closest("select[data-u]");if(su){S.unid=S.unid||{};S.unid[su.dataset.u]=su.value;aplicaU();render();guardar();return}const s=e.target.closest("select[data-i]");if(s){const v=s.value;{const c=S.plan[s.dataset.n][+s.dataset.i];S.plan[s.dataset.n][+s.dataset.i]=v==="DESCANSA"?"D":(c==="D"?"T":c);}render();guardar()}});
 function confirmNueva(){const b=$("nueva");if(b.dataset.c){const v={};BASE.forEach(([,n])=>v[n]=DIAS.map(()=>"T"));S={sem:S.sem+1,plan:v};delete b.dataset.c;b.textContent="Nueva semana";render();guardar();return true}
  b.dataset.c=1;b.textContent="Toca otra vez para confirmar";setTimeout(()=>{delete b.dataset.c;b.textContent="Nueva semana"},3000);return false}
 try{const l=JSON.parse(localStorage.getItem("rotativo")||"null");if(l&&l.plan)S=l}catch(e){}
