@@ -51,11 +51,11 @@ td.cD select{background:#D9454A;color:#fff}td.cT{color:var(--grn)}td.cU select{b
 .pmeta{display:flex;justify-content:space-between;background:#EAF0F6;padding:8px 14px;font-weight:700;font-size:13px}.pmeta b{margin-left:8px}
 .psec{background:#0E2A40;color:#fff;font-weight:800;padding:6px 12px;font-size:14px;margin-top:6px}
 .ptb{width:100%;border-collapse:collapse;font-size:12px}.ptb th{background:#1B5E7A;color:#fff;padding:6px;font-size:11px}.ptb td{border-bottom:1px solid #D5DEE8;padding:6px;text-align:center;font-weight:600}
-.ptb td small{display:block;color:#2E86C1;font-size:10px;font-weight:800}td.gL{color:#fff;font-weight:900;font-size:18px}td.pr{font-weight:800}</style></head><body>
+.ptb td small{display:block;color:#2E86C1;font-size:10px;font-weight:800}td.gL{color:#fff;font-weight:900;font-size:18px}td.pr{font-weight:800}.lst{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 12px}@media(max-width:700px){.lst{grid-template-columns:1fr}}.lst>div{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:10px}</style></head><body>
 <header><div><b>🔄 Rotativo de descanso</b><br><small id=sem></small></div><span id=st>…</span></header>
 <div class=wrap>
 <div class=tabs><button id=tA class=on>✏️ Armar</button><button id=tP>🚚 Programa</button><button id=tG>👥 Por grupo</button><button id=tR>📋 Por día</button></div>
-<div id=vA><div id=alerts></div><div class=gw id=grid></div></div>
+<div id=vA><div id=alerts></div><div class=lst><div><div class=sec style="margin-top:0">✅ Ya tienen su descanso <span id=nya></span></div><div class=chips id=ya2></div></div><div><div class=sec style="margin-top:0">⏳ Faltan descansar <span id=nfa></span></div><div class=chips id=fa2></div></div></div><div class=gw id=grid></div></div>
 <div id=vP hidden></div><div id=vG hidden></div><div id=vR hidden><div id=res></div>
 <div class=sec>✅ Ya tienen su descanso</div><div class=chips id=ya></div>
 <div class=sec>⏳ Faltan descansar</div><div class=chips id=falta></div>
@@ -133,6 +133,10 @@ function render(){aplicaU();const p=S.plan;$("sem").textContent="Semana "+S.sem+
  $("res").innerHTML=`<table class=tb><tr><th>Unidad</th><th>Descansa</th><th>Lo reemplaza</th></tr>`+DIAS.map((d,i)=>{const k=calc(i);
   const rows=BASE.filter(([,n])=>p[n][i]==="D").map(([u,n])=>`<tr><td>${u}</td><td class=r>${n}</td><td class=g>${k.cubre[n]||(u==="Sobrante"||k.cnt[u]>=NEED(u)?"— (no hace falta)":"⚠ nadie")}</td></tr>`).join("");
   return `<tr class=dh><td colspan=3>${["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"][i]} · ${k.desc} descansan</td></tr>`+(rows||`<tr><td colspan=3>Nadie descansa</td></tr>`)}).join("")+`</table>`;
+ {const ya=BASE.filter(([,n])=>p[n].includes("D")),fa=BASE.filter(([,n])=>!p[n].includes("D"));
+ $("nya").textContent="("+ya.length+")";$("nfa").textContent="("+fa.length+")";
+ $("ya2").innerHTML=ya.map(([u,n])=>`<span>${n} · <b>${DIAS[p[n].indexOf("D")]}</b></span>`).join("")||"<span>Nadie aún</span>";
+ $("fa2").innerHTML=fa.map(([u,n])=>`<span class=x>${n}</span>`).join("")||"<span>✔ Todos tienen su día</span>";}
  $("ya").innerHTML=BASE.filter(([,n])=>p[n].includes("D")).map(([,n])=>`<span>${n} · ${DIAS[p[n].indexOf("D")]}</span>`).join("")||"<span>Nadie aún</span>";
  $("falta").innerHTML=BASE.filter(([,n])=>!p[n].includes("D")).map(([,n])=>`<span class=x>${n}</span>`).join("")||"<span>✔ Todos tienen su día</span>";
 }
