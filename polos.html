@@ -30,7 +30,7 @@ dialog{border:0;border-radius:16px;padding:0;width:min(360px,92vw)}dialog::backd
 <button class=go id=go>ANOTARME</button><div class=msg id=msg></div>
 </div>
 <div class=c><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>📋 Anotados (<span id=n>0</span>)</b><span><button id=adm class=ab>⚙️ Admin</button><button id=xls class=ab hidden>⬇ Excel</button></span></div><div class=k id=k style="margin-top:8px"></div>
-<table><thead><tr><th>#</th><th>Nombre</th><th>Para</th><th>Polo</th><th>Short</th><th>Espalda</th><th>N°</th><th>Cant.</th><th></th></tr></thead><tbody id=tb></tbody></table></div>
+<div style="overflow-x:auto"><table><thead><tr><th>#</th><th>Nombre</th><th>Para</th><th>Polo</th><th>Short</th><th>Espalda</th><th>N°</th><th>Cant.</th><th></th></tr></thead><tbody id=tb></tbody></table></div></div>
 </div>
 <dialog id=dlg><div class=dh id=dt>Editar pedido</div><div class=db>
 <label>Nombre</label><input id=enom maxlength=80><label>Para</label><select id=etip><option>Hombre</option><option>Mujer</option><option>Niño</option></select><label>Talla polo</label><select id=etal></select><label>Talla short</label><select id=esho></select>
@@ -50,7 +50,7 @@ const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&g
 async function cargar(){try{const r=await fetch(SB+"/rest/v1/polo_pedidos?select=*&order=id",{headers:H});const d=await r.json();DATA=d;
  $("n").textContent=d.reduce((a,x)=>a+x.cantidad,0);
  const cnt=f=>d.filter(f).reduce((a,x)=>a+x.cantidad,0);
- $("k").innerHTML=Object.entries(TA).map(([tp,ts])=>{const p=ts.map(t=>[t,cnt(x=>(x.tipo||"Hombre")===tp&&x.talla===t)]).filter(z=>z[1]);return p.length?`<div style="width:100%;font-weight:800;font-size:13px;margin-top:4px">${tp} · polos</div>`+p.map(z=>`<span>${z[0]}: ${z[1]}</span>`).join(""):""}).join("")+(()=>{const sh=TALL.map(t=>[t,cnt(x=>x.short_talla===t)]).filter(z=>z[1]);return sh.length?`<div style="width:100%;font-weight:800;font-size:13px;margin-top:4px">Shorts</div>`+sh.map(z=>`<span>${z[0]}: ${z[1]}</span>`).join(""):""})();
+ $("k").innerHTML=Object.entries(TA).map(([tp,ts])=>{const p=ts.map(t=>[t,cnt(x=>(x.tipo||"Hombre")===tp&&x.talla===t)]).filter(z=>z[1]);return p.length?`<div style="width:100%;font-weight:800;font-size:13px;margin-top:4px">${tp} · polos</div>`+p.map(z=>`<span>${z[0]}: ${z[1]}</span>`).join(""):""}).join("")+(()=>{const sh=TALL.map(t=>[t,cnt(x=>x.short_talla===t)]).filter(z=>z[1]);return `<div style="width:100%;font-weight:800;font-size:13px;margin-top:4px">🩳 Shorts (${sh.reduce((a,z)=>a+z[1],0)})</div>`+(sh.length?sh.map(z=>`<span>${z[0]}: ${z[1]}</span>`).join(""):"<span>Ninguno aún</span>")})();
  $("tb").innerHTML=d.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.nombre)}</td><td>${x.tipo||"Hombre"}</td><td><b>${x.talla}</b></td><td>${x.short_talla||"—"}</td><td>${esc(x.espalda)}</td><td>${esc(x.numero)}</td><td>${x.cantidad}</td><td style="white-space:nowrap">${PIN?`<button class=ed data-ed=${x.id} title="Editar">✏️</button><button class=ed data-del=${x.id} title="Eliminar">🗑️</button>`:""}</td></tr>`).join("")}catch(e){$("msg").textContent="Sin conexión"}}
 $("go").onclick=async()=>{if(env)return;const nombre=$("nom").value.trim();if(nombre.length<2)return $("msg").textContent="⚠ Escribe tu nombre";if(!talla)return $("msg").textContent="⚠ Elige tu talla";
  env=true;$("go").disabled=true;$("msg").textContent="Enviando…";
