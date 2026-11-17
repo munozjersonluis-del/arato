@@ -1,6 +1,6 @@
 <!doctype html><html lang=es><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover">
 <link rel=manifest href="horas.webmanifest"><meta name=theme-color content="#123A5C"><link rel=apple-touch-icon href="horas-icon-192.png">
-<title>Horas Estibas</title>
+<title>Horas Efectivas</title>
 <style>
 :root{--bg:#F4F6F9;--card:#fff;--tx:#123A5C;--mu:#6B7C8F;--bd:#DCE3EB;--pri:#1B4F7A;--red:#D9454A;--grn:#1E8E52;--yel:#FFF3D1;--yt:#8A6200;--rbg:#FDE8E8}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F1720;--card:#18222E;--tx:#E6EEF6;--mu:#93A3B5;--bd:#2A3846;--pri:#5B9BD5;--yel:#3A3115;--yt:#F2C46B;--rbg:#3A1E20}}
@@ -23,9 +23,10 @@ dialog{border:0;border-radius:16px;padding:0;width:min(340px,92vw);background:va
 .ef{text-align:center;font-size:22px;font-weight:900;color:var(--grn)}.btns{display:flex;gap:8px}.btns button{flex:1;padding:11px;border-radius:10px;border:0;font-weight:800;cursor:pointer}
 .ok{background:var(--pri);color:#fff}.ds{background:var(--rbg);color:var(--red)}.cl{background:var(--bg);color:var(--tx)}
 .leg{font-size:12px;color:var(--mu);margin-top:8px}
-</style>
-</head><body><header><div><b>⏱ Horas efectivas · Estibas</b><br><small>Límite 60 h por semana · refrigerio descontado</small></div><span id=st></span></header>
+.gtab{display:flex;gap:8px;margin-bottom:10px}.gtab button{flex:1;padding:12px;border-radius:12px;border:2px solid var(--bd);background:var(--card);color:var(--tx);font-weight:800;font-size:15px;cursor:pointer}.gtab button.on{background:#123A5C;color:#fff;border-color:#123A5C}</style>
+</head><body><header><div><b id=tit>⏱ Horas efectivas · Estibas</b><br><small>Límite 60 h por semana · refrigerio descontado</small></div><span id=st></span></header>
 <div class=wrap>
+<div class=gtab><button id=gE class=on>🚚 Estibas</button><button id=gA>🏭 Acopio</button></div>
 <div class=bar><button id=prev>◀</button><span class=sem id=sem></span><button id=next>▶</button><button id=foto style="background:#25D366;color:#fff;border-color:#25D366">📷 Foto WhatsApp</button><button id=xls style="background:#fff;color:#123A5C">⬇ Excel</button><button id=todo style="margin-left:auto;background:#1E8E52;color:#fff;border-color:#1E8E52">⚡ Misma hora a todos</button></div>
 <dialog id=dt2><div class=dh>⚡ Misma hora a todos<small>Se aplica a los 24 estibas · no toca a los que descansan</small></div><div class=db>
 <div id=dch style="display:flex;flex-wrap:wrap;gap:6px"></div>
@@ -43,7 +44,7 @@ dialog{border:0;border-radius:16px;padding:0;width:min(340px,92vw);background:va
 <div class=btns><button class=ok id=bg>Guardar</button></div><div class=btns><button class=ds id=bd>😴 Descansa</button><button class=cl id=bx>Borrar</button><button class=cl id=bc>Cerrar</button></div></div></dialog>
 <script>
 const DIAS=["Lun","Mar","Mié","Jue","Vie","Sáb"];
-const BASE=[["Kia A","HUGO VILLANUEVA"],["Kia A","JORGE LOPEZ"],["Kia B","OWEN NARVAEZ"],["Kia B","VALENTIN TOLEDO"],["Kia C","JOSBER CORDOVA"],["Kia C","DAVID CORONEL"],["Kia D","JHAN CHAMAY"],["Kia D","RONALD HERNANDEZ"],["Kia E","NIKIN ACEBEDO"],["Kia E","HITLER RAMOS"],["Kia F","EYDER PAREDES"],["Kia F","IVAN FLORES"],["Bandejero 1","LENNER MUÑOZ"],["Bandejero 1","LUIS GUSMAN FLORES"],["Bandejero 2","ANGEL ROMAN"],["Bandejero 2","CARLOS BLANCO"],["Lavadero","YOBER CHAMAY"],["Lavadero","JHONATAN SABOGAL"],["Retén 1","MARCELO TAPULLIMA"],["Retén 1","CRISTIANO ALFARO"],["Retén 2","EYLIN CHAUPE"],["Sobrante","LUIS JUAREZ"],["Sobrante","JOSE CRUZ"],["Sobrante","MARIO ZUMARAN"]];
+const B_EST=[["Kia A","HUGO VILLANUEVA"],["Kia A","JORGE LOPEZ"],["Kia B","OWEN NARVAEZ"],["Kia B","VALENTIN TOLEDO"],["Kia C","JOSBER CORDOVA"],["Kia C","DAVID CORONEL"],["Kia D","JHAN CHAMAY"],["Kia D","RONALD HERNANDEZ"],["Kia E","NIKIN ACEBEDO"],["Kia E","HITLER RAMOS"],["Kia F","EYDER PAREDES"],["Kia F","IVAN FLORES"],["Bandejero 1","LENNER MUÑOZ"],["Bandejero 1","LUIS GUSMAN FLORES"],["Bandejero 2","ANGEL ROMAN"],["Bandejero 2","CARLOS BLANCO"],["Lavadero","YOBER CHAMAY"],["Lavadero","JHONATAN SABOGAL"],["Retén 1","MARCELO TAPULLIMA"],["Retén 1","CRISTIANO ALFARO"],["Retén 2","EYLIN CHAUPE"],["Sobrante","LUIS JUAREZ"],["Sobrante","JOSE CRUZ"],["Sobrante","MARIO ZUMARAN"]];
 const LIM=60,AV=50;
 function isoW(d){const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const n=t.getUTCDay()||7;t.setUTCDate(t.getUTCDate()+4-n);const y=new Date(Date.UTC(t.getUTCFullYear(),0,1));return[t.getUTCFullYear(),Math.ceil(((t-y)/864e5+1)/7)]}
 function lunes(y,w){const j=new Date(Date.UTC(y,0,4)),d=j.getUTCDay()||7;j.setUTCDate(j.getUTCDate()-d+1+(w-1)*7);return j}
@@ -52,7 +53,13 @@ const $=i=>document.getElementById(i);
 const m=t=>{if(!t)return null;const[a,b]=t.split(":").map(Number);return a*60+b};
 const ef=r=>{if(!r||r.d)return 0;const a=m(r.ini),b=m(r.fin);if(a==null||b==null)return 0;let x=b-a;if(x<0)x+=1440;return Math.max(0,x-(+r.ref||0))/60};
 const f1=h=>(Math.round(h*10)/10).toFixed(1);
-function key(){return`horas/${Y}-S${String(W).padStart(2,"0")}`}
+const B_ACO=[["Transporte y estiba","RICARDO DIESTRA BARRETO"],["Transporte y estiba","YONY MOLINA ALVARADO"],["Transporte y estiba","EVER COTRINA RAMIREZ"],["Apoyo aux. serv. agrícolas","WILSON CAMIZAN NAIRA"],["Aux. serv. agrícolas","LANDER IGLESIAS LEON"]];
+let GRP=(()=>{try{return new URLSearchParams(location.search).get("g")==="acopio"?"A":(localStorage.getItem("horas_grp")||"E")}catch(e){return"E"}})();
+let BASE=GRP==="A"?B_ACO:B_EST;
+function setGrp(g){GRP=g;BASE=g==="A"?B_ACO:B_EST;try{localStorage.setItem("horas_grp",g)}catch(e){}
+ document.getElementById("gE").classList.toggle("on",g==="E");document.getElementById("gA").classList.toggle("on",g==="A");
+ document.getElementById("tit").textContent="⏱ Horas efectivas · "+(g==="A"?"Acopio":"Estibas");cargar()}
+function key(){return`${GRP==="A"?"horasacopio":"horas"}/${Y}-S${String(W).padStart(2,"0")}`}
 function render(){const L=lunes(Y,W);$("sem").textContent=`Semana ${W} · ${L.getUTCDate()}/${L.getUTCMonth()+1} al ${new Date(L.getTime()+5*864e5).getUTCDate()}/${new Date(L.getTime()+5*864e5).getUTCMonth()+1}`;
  const fechas=DIAS.map((_,i)=>{const d=new Date(L.getTime()+i*864e5);return d.getUTCDate()+"/"+(d.getUTCMonth()+1)});
  let h=`<tr><th style="text-align:left;padding-left:10px">Estiba</th>${DIAS.map((d,i)=>`<th>${d}<small>${fechas[i]}</small><button data-fill=${i}>Llenar</button></th>`).join("")}<th>Total semana</th><th>Le quedan</th></tr>`;
@@ -92,8 +99,9 @@ function cargar(){R={};try{R=JSON.parse(localStorage.getItem(key())||"{}")}catch
 }
 $("xls").onclick=()=>{const L=lunes(Y,W);let csv="\ufeffEstiba;Unidad;"+DIAS.map((d,i)=>{const x=new Date(L.getTime()+i*864e5);return d+" "+x.getUTCDate()+"/"+(x.getUTCMonth()+1)}).join(";")+";Total semana;Le quedan\n";
  BASE.forEach(([u,n])=>{const rr=R[n]||{};let t=0;const c=DIAS.map((_,i)=>{const r=rr[i];if(r&&r.d)return"DESCANSA";const e=ef(r);t+=e;return r&&r.ini?f1(e).replace(".",","):""});csv+=[n,u,...c,f1(t).replace(".",","),f1(LIM-t).replace(".",",")].join(";")+"\n"});
- const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download=`Horas_estibas_semana_${W}.csv`;a.click()};
+ const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download=`Horas_${GRP==="A"?"acopio":"estibas"}_semana_${W}.csv`;a.click()};
 
+$("gE").onclick=()=>setGrp("E");$("gA").onclick=()=>setGrp("A");
 $("foto").onclick=async()=>{const L=lunes(Y,W),TIT=document.querySelector("header b").textContent;
  const rows=BASE.map(([u,n])=>{const rr=R[n]||{};let t=0;const c=DIAS.map((_,i)=>{const r=rr[i];if(r&&r.d)return"😴";const e=ef(r);t+=e;return r&&r.ini?f1(e):"—"});return{n,u,c,t}});
  const cw=[280,200,...DIAS.map(()=>78),110],rh=34,W2=cw.reduce((a,b)=>a+b,0)+40,H2=150+rh*(rows.length+1)+50;
@@ -109,6 +117,6 @@ $("foto").onclick=async()=>{const L=lunes(Y,W),TIT=document.querySelector("heade
  const blob=await new Promise(r=>cv.toBlob(r,"image/png"));const fn=`${TIT.replace(/[^A-Za-z0-9]+/g,"_")}_S${W}.png`,file=new File([blob],fn,{type:"image/png"});
  if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:TIT});return}catch(e){if(e.name==="AbortError")return}}
  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=fn;a.click()};
-cargar();
+setGrp(GRP);
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw-horas.js").catch(()=>{});
 </script></body></html>
