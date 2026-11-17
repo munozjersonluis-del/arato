@@ -27,9 +27,11 @@ dialog{border:0;border-radius:16px;padding:0;width:min(340px,92vw);background:va
 </head><body><header><div><b id=tit>⏱ Horas efectivas · Estibas</b><br><small>Límite 60 h por semana · refrigerio descontado</small></div><span id=st></span></header>
 <div class=wrap>
 <div class=gtab><button id=gE class=on>🚚 Estibas</button><button id=gA>🏭 Acopio</button></div>
-<div class=bar><button id=prev>◀</button><span class=sem id=sem></span><button id=next>▶</button><button id=foto style="background:#25D366;color:#fff;border-color:#25D366">📷 Foto WhatsApp</button><button id=xls style="background:#fff;color:#123A5C">⬇ Excel</button><button id=todo style="margin-left:auto;background:#1E8E52;color:#fff;border-color:#1E8E52">⚡ Misma hora a todos</button></div>
-<dialog id=dt2><div class=dh>⚡ Misma hora a todos<small>Se aplica a los 24 estibas · no toca a los que descansan</small></div><div class=db>
+<div class=bar><button id=prev>◀</button><span class=sem id=sem></span><button id=next>▶</button><button id=foto style="background:#25D366;color:#fff;border-color:#25D366">📷 Foto WhatsApp</button><button id=xls style="background:#fff;color:#123A5C">⬇ Excel</button><button id=todo style="margin-left:auto;background:#1E8E52;color:#fff;border-color:#1E8E52">⚡ Misma hora a varios</button></div>
+<dialog id=dt2><div class=dh>⚡ Misma hora a varios<small>Marca los días y las personas · no toca a los que descansan</small></div><div class=db>
 <div id=dch style="display:flex;flex-wrap:wrap;gap:6px"></div>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px"><b style="font-size:13px">¿A quiénes? <span id=pcn></span></b><span><button type=button id=pall class=cl style="padding:5px 8px;border-radius:8px;border:0;font-weight:700;cursor:pointer">Todos</button> <button type=button id=pnone class=cl style="padding:5px 8px;border-radius:8px;border:0;font-weight:700;cursor:pointer">Ninguno</button></span></div>
+<div id=pch style="max-height:220px;overflow:auto;border:1px solid var(--bd);border-radius:10px;padding:4px"></div>
 <label>Hora inicio<input type=time id=ti value="06:30"></label><label>Hora fin<input type=time id=tf value="16:00"></label><label>Refrigerio (min)<input type=number id=tr value=60 min=0 step=5></label>
 <div class=ef id=te></div>
 <label style="display:flex;gap:8px;align-items:center"><input type=checkbox id=tow style="width:20px;height:20px"> Reemplazar también los que ya tienen hora</label>
@@ -88,11 +90,14 @@ document.addEventListener("click",e=>{const c=e.target.closest("[data-n]");if(c)
 $("bg").addEventListener("click",()=>{},true);
 $("bg").onclick=()=>{if(fillI!==null){const v={ini:$("fi").value,fin:$("ff").value,ref:+$("fr").value||0};BASE.forEach(([,n])=>{R[n]=R[n]||{};if(!R[n][fillI])R[n][fillI]={...v}});fillI=null;render();guardar()}else{const[n,i]=cur;put(n,i,{ini:$("fi").value,fin:$("ff").value,ref:+$("fr").value||0})}$("dlg").close()};
 $("dlg").addEventListener("close",()=>{fillI=null;$("bg").textContent="Guardar";$("bd").hidden=false;$("bx").hidden=false});
-$("dch").innerHTML=DIAS.map((d,i)=>`<label style="display:flex;gap:4px;align-items:center;background:var(--bg);padding:6px 10px;border-radius:8px"><input type=checkbox data-dx=${i} checked> ${d}</label>`).join("");
+$("dch").innerHTML=DIAS.map((d,i)=>`<label style="display:flex;gap:4px;align-items:center;background:var(--bg);padding:6px 10px;border-radius:8px"><input type=checkbox data-dx=${i}> ${d}</label>`).join("");
 const te=()=>{$("te").textContent=f1(ef({ini:$("ti").value,fin:$("tf").value,ref:$("tr").value}))+" h efectivas por día"};["ti","tf","tr"].forEach(i=>$(i).addEventListener("input",te));
-$("todo").onclick=()=>{te();$("dt2").showModal()};$("tcl").onclick=()=>$("dt2").close();
+const pc=()=>{$("pcn").textContent="("+document.querySelectorAll("[data-px]:checked").length+" de "+BASE.length+")"};
+$("todo").onclick=()=>{te();$("pch").innerHTML=BASE.map(([u,n])=>`<label style="display:flex;gap:8px;align-items:center;padding:6px;font-weight:600;font-size:14px"><input type=checkbox data-px="${n}" style="width:20px;height:20px"> ${n} <small style="color:var(--mu)">${u}</small></label>`).join("");$("tow").checked=true;document.querySelectorAll("[data-dx]").forEach(x=>x.checked=false);pc();$("dt2").showModal()};
+$("pch").addEventListener("change",pc);$("pall").onclick=()=>{document.querySelectorAll("[data-px]").forEach(x=>x.checked=true);pc()};$("pnone").onclick=()=>{document.querySelectorAll("[data-px]").forEach(x=>x.checked=false);pc()};;$("tcl").onclick=()=>$("dt2").close();
 $("tok").onclick=()=>{const v={ini:$("ti").value,fin:$("tf").value,ref:+$("tr").value||0},ow=$("tow").checked,ds=[...document.querySelectorAll("[data-dx]:checked")].map(x=>+x.dataset.dx);
- BASE.forEach(([,n])=>{R[n]=R[n]||{};ds.forEach(i=>{const r=R[n][i];if(r&&r.d)return;if(!r||!r.ini||ow)R[n][i]={...v}})});render();guardar();$("dt2").close()};
+ const sel=new Set([...document.querySelectorAll("[data-px]:checked")].map(x=>x.dataset.px));if(!sel.size){alert("Marca al menos una persona");return}if(!ds.length){alert("Marca el día");return}
+ BASE.filter(([,n])=>sel.has(n)).forEach(([,n])=>{R[n]=R[n]||{};ds.forEach(i=>{const r=R[n][i];if(r&&r.d)return;if(!r||!r.ini||ow)R[n][i]={...v}})});render();guardar();$("dt2").close()};
 function cambiar(d){W+=d;if(W<1){Y--;W=52}if(W>52){Y++;W=1}cargar()}
 $("prev").onclick=()=>cambiar(-1);$("next").onclick=()=>cambiar(1);
 function cargar(){R={};try{R=JSON.parse(localStorage.getItem(key())||"{}")}catch(e){}render();
