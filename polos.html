@@ -51,7 +51,7 @@ async function cargar(){try{const r=await fetch(SB+"/rest/v1/polo_pedidos?select
  $("n").textContent=d.reduce((a,x)=>a+x.cantidad,0);
  const cnt=f=>d.filter(f).reduce((a,x)=>a+x.cantidad,0);
  $("k").innerHTML=Object.entries(TA).map(([tp,ts])=>{const p=ts.map(t=>[t,cnt(x=>(x.tipo||"Hombre")===tp&&x.talla===t)]).filter(z=>z[1]);return p.length?`<div style="width:100%;font-weight:800;font-size:13px;margin-top:4px">${tp} · polos</div>`+p.map(z=>`<span>${z[0]}: ${z[1]}</span>`).join(""):""}).join("")+(()=>{const sh=TALL.map(t=>[t,cnt(x=>x.short_talla===t)]).filter(z=>z[1]);return sh.length?`<div style="width:100%;font-weight:800;font-size:13px;margin-top:4px">Shorts</div>`+sh.map(z=>`<span>${z[0]}: ${z[1]}</span>`).join(""):""})();
- $("tb").innerHTML=d.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.nombre)}</td><td>${x.tipo||"Hombre"}</td><td><b>${x.talla}</b></td><td>${x.short_talla||"—"}</td><td>${esc(x.espalda)}</td><td>${esc(x.numero)}</td><td>${x.cantidad}</td><td>${PIN?`<button class=ed data-ed=${x.id} title="Editar">✏️</button>`:""}</td></tr>`).join("")}catch(e){$("msg").textContent="Sin conexión"}}
+ $("tb").innerHTML=d.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.nombre)}</td><td>${x.tipo||"Hombre"}</td><td><b>${x.talla}</b></td><td>${x.short_talla||"—"}</td><td>${esc(x.espalda)}</td><td>${esc(x.numero)}</td><td>${x.cantidad}</td><td style="white-space:nowrap">${PIN?`<button class=ed data-ed=${x.id} title="Editar">✏️</button><button class=ed data-del=${x.id} title="Eliminar">🗑️</button>`:""}</td></tr>`).join("")}catch(e){$("msg").textContent="Sin conexión"}}
 $("go").onclick=async()=>{if(env)return;const nombre=$("nom").value.trim();if(nombre.length<2)return $("msg").textContent="⚠ Escribe tu nombre";if(!talla)return $("msg").textContent="⚠ Elige tu talla";
  env=true;$("go").disabled=true;$("msg").textContent="Enviando…";
  try{const r=await fetch(SB+"/rest/v1/polo_pedidos",{method:"POST",headers:{...H,Prefer:"return=minimal"},body:JSON.stringify({nombre,talla,tipo,short_talla:sho||null,espalda:$("esp").value.trim().toUpperCase()||null,numero:$("num").value.trim()||null,cantidad:+$("can").value})});
@@ -61,7 +61,9 @@ $("etal").innerHTML=TALL.map(t=>`<option>${t}</option>`).join("");$("esho").inne
 $("adm").onclick=async()=>{if(PIN){PIN="";$("adm").classList.remove("on");$("adm").textContent="⚙️ Admin";$("xls").hidden=true;cargar();return}
  const p=prompt("PIN de administrador:");if(!p)return;const r=await fetch(SB+"/rest/v1/rpc/polo_pin",{method:"POST",headers:H,body:JSON.stringify({p_pin:p})});
  if(await r.json()===true){PIN=p;$("adm").classList.add("on");$("adm").textContent="🔓 Salir admin";$("xls").hidden=false;cargar()}else alert("PIN incorrecto")};
-$("tb").onclick=e=>{const b=e.target.closest("[data-ed]");if(!b||!PIN)return;const x=DATA.find(d=>d.id==b.dataset.ed);EID=x.id;
+$("tb").onclick=async e=>{const dl=e.target.closest("[data-del]");if(dl&&PIN){const x=DATA.find(d=>d.id==dl.dataset.del);if(!confirm("¿Eliminar el pedido de "+x.nombre+"?"))return;
+ const r=await fetch(SB+"/rest/v1/rpc/polo_borrar",{method:"POST",headers:H,body:JSON.stringify({p_id:x.id,p_pin:PIN})});if(await r.json()===true)cargar();else alert("No se pudo eliminar");return}
+ const b=e.target.closest("[data-ed]");if(!b||!PIN)return;const x=DATA.find(d=>d.id==b.dataset.ed);EID=x.id;
  $("enom").value=x.nombre;$("etip").value=x.tipo||"Hombre";$("etal").value=x.talla;$("esho").value=x.short_talla||"";$("eesp").value=x.espalda||"";$("enum").value=x.numero||"";$("ecan").value=x.cantidad;$("dlg").showModal()};
 $("ecl").onclick=()=>$("dlg").close();
 $("eok").onclick=async()=>{const r=await fetch(SB+"/rest/v1/rpc/polo_editar",{method:"POST",headers:H,body:JSON.stringify({p_id:EID,p_pin:PIN,p_nombre:$("enom").value.trim(),p_tipo:$("etip").value,p_talla:$("etal").value,p_short:$("esho").value,p_espalda:$("eesp").value.trim().toUpperCase(),p_numero:$("enum").value.trim(),p_cantidad:+$("ecan").value})});
