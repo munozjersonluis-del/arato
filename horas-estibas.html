@@ -55,7 +55,7 @@ const $=i=>document.getElementById(i);
 const m=t=>{if(!t)return null;const[a,b]=t.split(":").map(Number);return a*60+b};
 const ef=r=>{if(!r||r.d)return 0;const a=m(r.ini),b=m(r.fin);if(a==null||b==null)return 0;let x=b-a;if(x<0)x+=1440;return Math.max(0,x-(+r.ref||0))/60};
 const f1=h=>(Math.round(h*10)/10).toFixed(1);
-const B_ACO=[["Transporte y estiba","RICARDO DIESTRA BARRETO"],["Transporte y estiba","YONY MOLINA ALVARADO"],["Transporte y estiba","EVER COTRINA RAMIREZ"],["Apoyo aux. serv. agrícolas","WILSON CAMIZAN NAIRA"],["Aux. serv. agrícolas","LANDER IGLESIAS LEON"],["Estiba","JEFERSSON ROBLES MELON"]];
+const B_ACO=[["Transporte y estiba","RICARDO DIESTRA BARRETO"],["Transporte y estiba","YONY MOLINA ALVARADO"],["Transporte y estiba","EVER COTRINA RAMIREZ"],["Apoyo aux. serv. agrícolas","WILSON CAMIZAN NAIRA"],["Aux. serv. agrícolas","LANDER IGLESIAS LEON"],["Estiba","JEFERSSON ROBLES MELON"],["Transporte y estiba","WALMAR JHONATAN SABOGAL"],["Transporte y estiba","LUIS ANGEL JUAREZ"]];
 let GRP=(()=>{try{return new URLSearchParams(location.search).get("g")==="acopio"?"A":(localStorage.getItem("horas_grp")||"E")}catch(e){return"E"}})();
 let BASE=GRP==="A"?B_ACO:B_EST;
 function setGrp(g){GRP=g;BASE=g==="A"?B_ACO:B_EST;try{localStorage.setItem("horas_grp",g)}catch(e){}

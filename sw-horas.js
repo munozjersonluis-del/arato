@@ -1,5 +1,5 @@
 // App "Horas estibas": la página abre aunque no haya señal; los datos siempre van en línea.
-const CACHE = 'horas-v5';
+const CACHE = 'horas-v6';
 const PAGE = 'horas-estibas.html';
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll([PAGE, 'horas.webmanifest', 'horas-icon-192.png', 'horas-icon-512.png'])).then(() => self.skipWaiting()));
