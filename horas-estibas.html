@@ -26,7 +26,7 @@ dialog{border:0;border-radius:16px;padding:0;width:min(340px,92vw);background:va
 </style>
 </head><body><header><div><b>⏱ Horas efectivas · Estibas</b><br><small>Límite 60 h por semana · refrigerio descontado</small></div><span id=st></span></header>
 <div class=wrap>
-<div class=bar><button id=prev>◀</button><span class=sem id=sem></span><button id=next>▶</button><button id=xls style="background:#fff;color:#123A5C">⬇ Excel</button><button id=todo style="margin-left:auto;background:#1E8E52;color:#fff;border-color:#1E8E52">⚡ Misma hora a todos</button></div>
+<div class=bar><button id=prev>◀</button><span class=sem id=sem></span><button id=next>▶</button><button id=foto style="background:#25D366;color:#fff;border-color:#25D366">📷 Foto WhatsApp</button><button id=xls style="background:#fff;color:#123A5C">⬇ Excel</button><button id=todo style="margin-left:auto;background:#1E8E52;color:#fff;border-color:#1E8E52">⚡ Misma hora a todos</button></div>
 <dialog id=dt2><div class=dh>⚡ Misma hora a todos<small>Se aplica a los 24 estibas · no toca a los que descansan</small></div><div class=db>
 <div id=dch style="display:flex;flex-wrap:wrap;gap:6px"></div>
 <label>Hora inicio<input type=time id=ti value="06:30"></label><label>Hora fin<input type=time id=tf value="16:00"></label><label>Refrigerio (min)<input type=number id=tr value=60 min=0 step=5></label>
@@ -93,6 +93,22 @@ function cargar(){R={};try{R=JSON.parse(localStorage.getItem(key())||"{}")}catch
 $("xls").onclick=()=>{const L=lunes(Y,W);let csv="\ufeffEstiba;Unidad;"+DIAS.map((d,i)=>{const x=new Date(L.getTime()+i*864e5);return d+" "+x.getUTCDate()+"/"+(x.getUTCMonth()+1)}).join(";")+";Total semana;Le quedan\n";
  BASE.forEach(([u,n])=>{const rr=R[n]||{};let t=0;const c=DIAS.map((_,i)=>{const r=rr[i];if(r&&r.d)return"DESCANSA";const e=ef(r);t+=e;return r&&r.ini?f1(e).replace(".",","):""});csv+=[n,u,...c,f1(t).replace(".",","),f1(LIM-t).replace(".",",")].join(";")+"\n"});
  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download=`Horas_estibas_semana_${W}.csv`;a.click()};
+
+$("foto").onclick=async()=>{const L=lunes(Y,W),TIT=document.querySelector("header b").textContent;
+ const rows=BASE.map(([u,n])=>{const rr=R[n]||{};let t=0;const c=DIAS.map((_,i)=>{const r=rr[i];if(r&&r.d)return"😴";const e=ef(r);t+=e;return r&&r.ini?f1(e):"—"});return{n,u,c,t}});
+ const cw=[280,200,...DIAS.map(()=>78),110],rh=34,W2=cw.reduce((a,b)=>a+b,0)+40,H2=150+rh*(rows.length+1)+50;
+ const cv=document.createElement("canvas");cv.width=W2*2;cv.height=H2*2;const g=cv.getContext("2d");g.scale(2,2);
+ g.fillStyle="#fff";g.fillRect(0,0,W2,H2);g.fillStyle="#123A5C";g.fillRect(0,0,W2,90);
+ g.fillStyle="#fff";g.font="bold 26px system-ui,Arial";g.fillText(TIT,20,40);g.font="16px system-ui,Arial";
+ const fin=new Date(L.getTime()+5*864e5);g.fillText(`Semana ${W} · ${L.getUTCDate()}/${L.getUTCMonth()+1} al ${fin.getUTCDate()}/${fin.getUTCMonth()+1} · límite 60 h · refrigerio descontado`,20,70);
+ let y=110;const hd=["Nombre","Unidad",...DIAS,"Total"];let x=20;g.fillStyle="#1B4F7A";g.fillRect(20,y,W2-40,rh);g.fillStyle="#fff";g.font="bold 14px system-ui,Arial";
+ hd.forEach((h,i)=>{g.fillText(h,x+8,y+22);x+=cw[i]});y+=rh;g.font="14px system-ui,Arial";
+ rows.forEach((r,k)=>{x=20;g.fillStyle=r.t>60?"#FDE2E2":r.t>=50?"#FFF3D1":k%2?"#F4F6F9":"#fff";g.fillRect(20,y,W2-40,rh);
+  const v=[r.n,r.u,...r.c,f1(r.t)+" h"];v.forEach((t,i)=>{g.fillStyle=i===v.length-1?(r.t>60?"#C62828":"#123A5C"):"#123A5C";g.font=(i===0||i===v.length-1?"bold ":"")+"14px system-ui,Arial";g.fillText(String(t).slice(0,30),x+8,y+22);x+=cw[i]});y+=rh});
+ g.fillStyle="#6B7C8F";g.font="12px system-ui,Arial";g.fillText("🟡 50–60 h   🔴 más de 60 h   😴 descanso",20,y+28);
+ const blob=await new Promise(r=>cv.toBlob(r,"image/png"));const fn=`${TIT.replace(/[^A-Za-z0-9]+/g,"_")}_S${W}.png`,file=new File([blob],fn,{type:"image/png"});
+ if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:TIT});return}catch(e){if(e.name==="AbortError")return}}
+ const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=fn;a.click()};
 cargar();
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw-horas.js").catch(()=>{});
 </script></body></html>
