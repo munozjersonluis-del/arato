@@ -1,0 +1,47 @@
+<!doctype html><html lang=es><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
+<title>Pedido Polo Dorado</title><meta name=theme-color content="#7A5C1E">
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,Segoe UI,Arial;background:#F7F2E6;color:#3A2C0F}
+header{background:#7A5C1E;color:#fff;padding:14px 16px;text-align:center}header b{font-size:20px}header small{display:block;opacity:.85}
+.w{max-width:560px;margin:0 auto;padding:14px 16px 40px}img{width:100%;border-radius:14px;display:block}
+.c{background:#fff;border-radius:14px;padding:14px;margin-top:12px;box-shadow:0 2px 8px #0001}
+label{display:block;font-weight:700;font-size:13px;margin:10px 0 4px}input,select{width:100%;padding:11px;border:2px solid #E2D6B8;border-radius:10px;font-size:16px;background:#FFFDF7}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.tl{display:flex;gap:6px}.tl button{flex:1;padding:11px 0;border:2px solid #E2D6B8;background:#FFFDF7;border-radius:10px;font-weight:800;font-size:15px;cursor:pointer;color:#3A2C0F}.tl button.on{background:#7A5C1E;color:#fff;border-color:#7A5C1E}
+.go{width:100%;margin-top:14px;padding:14px;border:0;border-radius:12px;background:#B8892B;color:#fff;font-weight:900;font-size:17px;cursor:pointer}.go:disabled{opacity:.5}
+.msg{margin-top:10px;font-weight:700;text-align:center}
+.k{display:flex;gap:6px;flex-wrap:wrap}.k span{background:#F3E7C9;border-radius:999px;padding:6px 12px;font-weight:800}
+table{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}td,th{padding:7px 5px;border-bottom:1px solid #EFE6CF;text-align:left}th{font-size:12px;color:#8A7444}
+.x{border:0;background:none;color:#B33;cursor:pointer;font-size:16px}
+</style></head><body>
+<header><b>👕 Pedido · Polo Dorado</b><small>Anótate con tu talla, nombre y número</small></header>
+<div class=w>
+<img src="polo-dorado.jpg" alt="Polo dorado">
+<div class=c>
+<label>Tu nombre completo</label><input id=nom maxlength=80 placeholder="Ej. Juan Pérez">
+<label>Talla</label><div class=tl id=tl></div>
+<div class=row><div><label>Nombre en la espalda</label><input id=esp maxlength=20 placeholder="Ej. CHAUPÍ" style="text-transform:uppercase"></div><div><label>Número</label><input id=num maxlength=3 inputmode=numeric placeholder="Ej. 10"></div></div>
+<label>Cantidad</label><select id=can></select>
+<button class=go id=go>ANOTARME</button><div class=msg id=msg></div>
+</div>
+<div class=c><b>📋 Anotados (<span id=n>0</span>)</b><div class=k id=k style="margin-top:8px"></div>
+<table><thead><tr><th>#</th><th>Nombre</th><th>Talla</th><th>Espalda</th><th>N°</th><th>Cant.</th><th></th></tr></thead><tbody id=tb></tbody></table></div>
+</div>
+<script>
+const SB="https://rqvcvffyynpnighzwxju.supabase.co",K="sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn",H={apikey:K,Authorization:"Bearer "+K,"Content-Type":"application/json"};
+const T=["S","M","L","XL","XXL"];let talla="",env=false;const $=i=>document.getElementById(i);
+$("tl").innerHTML=T.map(t=>`<button data-t=${t}>${t}</button>`).join("");$("can").innerHTML=[1,2,3,4,5].map(n=>`<option>${n}</option>`).join("");
+$("tl").onclick=e=>{const b=e.target.closest("[data-t]");if(!b)return;talla=b.dataset.t;[...$("tl").children].forEach(x=>x.classList.toggle("on",x===b))};
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+async function cargar(){try{const r=await fetch(SB+"/rest/v1/polo_pedidos?select=*&order=id",{headers:H});const d=await r.json();
+ $("n").textContent=d.reduce((a,x)=>a+x.cantidad,0);
+ $("k").innerHTML=T.map(t=>`<span>${t}: ${d.filter(x=>x.talla===t).reduce((a,x)=>a+x.cantidad,0)}</span>`).join("");
+ $("tb").innerHTML=d.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.nombre)}</td><td><b>${x.talla}</b></td><td>${esc(x.espalda)}</td><td>${esc(x.numero)}</td><td>${x.cantidad}</td><td><button class=x data-id=${x.id} title="Borrar">✕</button></td></tr>`).join("")}catch(e){$("msg").textContent="Sin conexión"}}
+$("go").onclick=async()=>{if(env)return;const nombre=$("nom").value.trim();if(nombre.length<2)return $("msg").textContent="⚠ Escribe tu nombre";if(!talla)return $("msg").textContent="⚠ Elige tu talla";
+ env=true;$("go").disabled=true;$("msg").textContent="Enviando…";
+ try{const r=await fetch(SB+"/rest/v1/polo_pedidos",{method:"POST",headers:{...H,Prefer:"return=minimal"},body:JSON.stringify({nombre,talla,espalda:$("esp").value.trim().toUpperCase()||null,numero:$("num").value.trim()||null,cantidad:+$("can").value})});
+  if(!r.ok)throw 0;$("msg").textContent="✔ ¡Listo, quedaste anotado!";["nom","esp","num"].forEach(i=>$(i).value="");talla="";[...$("tl").children].forEach(x=>x.classList.remove("on"));cargar()}catch(e){$("msg").textContent="⚠ No se pudo enviar, intenta otra vez"}
+ setTimeout(()=>{env=false;$("go").disabled=false},1500)};
+$("tb").onclick=async e=>{const b=e.target.closest("[data-id]");if(!b)return;const pin=prompt("PIN del encargado para borrar:");if(!pin)return;
+ const r=await fetch(SB+"/rest/v1/rpc/polo_borrar",{method:"POST",headers:H,body:JSON.stringify({p_id:+b.dataset.id,p_pin:pin})});const ok=await r.json();if(ok===true)cargar();else alert("PIN incorrecto")};
+cargar();setInterval(cargar,20000);
+</script></body></html>
