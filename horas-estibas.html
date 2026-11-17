@@ -78,7 +78,14 @@ function render(){const L=lunes(Y,W);$("sem").textContent=`Semana ${W} · ${L.ge
 function open(n,i){cur=[n,i];const r=(R[n]||{})[i]||{};$("dt").innerHTML=`${n}<small>${DIAS[i]} · semana ${W}</small>`;$("fi").value=r.ini||"";$("ff").value=r.fin||"";$("fr").value=r.ref??60;calcE();$("dlg").showModal()}
 function calcE(){const e=ef({ini:$("fi").value,fin:$("ff").value,ref:$("fr").value});$("fe").textContent=$("fi").value&&$("ff").value?`${f1(e)} h efectivas`:""}
 function put(n,i,v){R[n]=R[n]||{};if(v)R[n][i]=v;else delete R[n][i];render();guardar()}
-function guardar(){try{localStorage.setItem(key(),JSON.stringify(R))}catch(e){}$("st").textContent="✔ Guardado en el celular"}
+const SB="https://rqvcvffyynpnighzwxju.supabase.co",SK="sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn",SH={apikey:SK,Authorization:"Bearer "+SK,"Content-Type":"application/json"};
+let pend=null,LKEY="";
+function guardar(){try{localStorage.setItem(key(),JSON.stringify(R))}catch(e){}clearTimeout(pend);$("st").textContent="Guardando…";const k=key(),d=JSON.parse(JSON.stringify(R));
+ pend=setTimeout(async()=>{try{const r=await fetch(SB+"/rest/v1/horas_registros?on_conflict=id",{method:"POST",headers:{...SH,Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({id:k,data:d,actualizado:new Date().toISOString()})});if(!r.ok)throw 0;$("st").textContent="✔ Guardado"}catch(e){$("st").textContent="⚠ Sin señal · guardado en el celular"}},500)}
+async function nube(){const k=key();try{const r=await fetch(SB+"/rest/v1/horas_registros?id=eq."+encodeURIComponent(k)+"&select=data",{headers:SH});const j=await r.json();
+ if(k!==key())return;if(j[0]&&j[0].data){if(document.querySelector("dialog[open]"))return;R=j[0].data;try{localStorage.setItem(k,JSON.stringify(R))}catch(e){}render();$("st").textContent="✔ Sincronizado"}
+ else if(Object.keys(R).length){guardar()}else $("st").textContent="✔ Sincronizado"}catch(e){$("st").textContent="Sin señal · datos del celular"}}
+setInterval(()=>{if(!document.hidden&&!document.querySelector("dialog[open]")&&$("st").textContent!=="Guardando…")nube()},25000);
 ["fi","ff","fr"].forEach(i=>$(i).addEventListener("input",calcE));
 $("bg").onclick=()=>{const[n,i]=cur;put(n,i,{ini:$("fi").value,fin:$("ff").value,ref:+$("fr").value||0});$("dlg").close()};
 $("bd").onclick=()=>{const[n,i]=cur;put(n,i,{d:1});$("dlg").close()};
@@ -100,7 +107,7 @@ $("tok").onclick=()=>{const v={ini:$("ti").value,fin:$("tf").value,ref:+$("tr").
  BASE.filter(([,n])=>sel.has(n)).forEach(([,n])=>{R[n]=R[n]||{};ds.forEach(i=>{const r=R[n][i];if(r&&r.d)return;if(!r||!r.ini||ow)R[n][i]={...v}})});render();guardar();$("dt2").close()};
 function cambiar(d){W+=d;if(W<1){Y--;W=52}if(W>52){Y++;W=1}cargar()}
 $("prev").onclick=()=>cambiar(-1);$("next").onclick=()=>cambiar(1);
-function cargar(){R={};try{R=JSON.parse(localStorage.getItem(key())||"{}")}catch(e){}render();
+function cargar(){R={};try{R=JSON.parse(localStorage.getItem(key())||"{}")}catch(e){}render();nube();
 }
 $("xls").onclick=()=>{const L=lunes(Y,W);let csv="\ufeffEstiba;Unidad;"+DIAS.map((d,i)=>{const x=new Date(L.getTime()+i*864e5);return d+" "+x.getUTCDate()+"/"+(x.getUTCMonth()+1)}).join(";")+";Total semana;Le quedan\n";
  BASE.forEach(([u,n])=>{const rr=R[n]||{};let t=0;const c=DIAS.map((_,i)=>{const r=rr[i];if(r&&r.d)return"DESCANSA";const e=ef(r);t+=e;return r&&r.ini?f1(e).replace(".",","):""});csv+=[n,u,...c,f1(t).replace(".",","),f1(LIM-t).replace(".",",")].join(";")+"\n"});
