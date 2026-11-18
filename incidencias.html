@@ -203,7 +203,7 @@ function pintaRes(){const h=hoyISO(),d7=new Date(Date.now()-5*36e5-6*864e5).toIS
  const mxr=Math.max(1,...R.map(o=>o.c));
  $('rank').innerHTML=(R.length?`<div class="lgx">${Object.keys(TC).filter(k=>L.some(x=>x.incidencia===k)).map(k=>`<span><i style="background:${TC[k]}"></i>${esc(k.charAt(0)+k.slice(1).toLowerCase())}</span>`).join('')}</div>`+R.slice(0,VM.co?100:8).map((o,i)=>`<div class="rk2" data-d="${esc(o.dni)}"><div class="n">${i+1}. ${esc(o.n||'(sin nombre)')}${ROL==='admin'?' <small>· Grupo '+esc(o.g||'-')+'</small>':''}</div><div class="st"><div class="sb2">${Object.entries(o.t).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<i style="width:${v/mxr*100}%;background:${tcol(k)}">${v}</i>`).join('')}</div><b>${o.c}</b></div></div>`).join(''):'<p class="e2">Nadie con incidencias aquí.</p>')+(R.length>8?`<button class="vm" data-vm="co">${VM.co?'Ver menos':'Ver todos ('+R.length+')'}</button>`:'');pintaSec();pintaRep(B)}
 
-function pintaRep(B){const adm=ROL==='admin',d0=new Date(FD+'T12:00:00'),d7=new Date(d0.getTime()-6*864e5).toISOString().slice(0,10);
+function pintaRep(B){const adm=ROL==='admin',d0=new Date(FD+'T12:00:00'),d7=new Date(d0.getTime()-((d0.getDay()+6)%7)*864e5).toISOString().slice(0,10);
  const L=B.slice().sort((a,b)=>(a.hora||'').localeCompare(b.hora||''));const n=L.length,np=new Set(L.map(x=>x.dni)).size;
  const W7={};RES.filter(x=>x.fecha>=d7&&x.fecha<=FD&&(!FG||x.grupo===FG)).forEach(x=>{(W7[x.dni]=W7[x.dni]||[]).push(x.fecha)});
  const T={};L.forEach(x=>T[x.incidencia]=(T[x.incidencia]||0)+1);const TT=Object.entries(T).sort((a,b)=>b[1]-a[1]);
@@ -212,12 +212,12 @@ function pintaRep(B){const adm=ROL==='admin',d0=new Date(FD+'T12:00:00'),d7=new 
  const fh=h=>(h%12||12)+(h<12?' am':' pm');const cap=k=>k.charAt(0)+k.slice(1).toLowerCase();
  const G={};L.forEach(x=>G[x.grupo]=(G[x.grupo]||0)+1);const A={};L.forEach(x=>{const k=x.auxiliar||'(sin nombre)';A[k]=(A[k]||0)+1});
  const rein=[...new Set(L.map(x=>x.dni))].filter(d=>(W7[d]||[]).length>1).map(d=>{const x=L.find(z=>z.dni===d);return{d,n:x.nombre,g:x.grupo,f:W7[d]}}).sort((a,b)=>b.f.length-a.f.length);
- const dias=[...Array(7)].map((_,i)=>new Date(d0.getTime()-(6-i)*864e5).toISOString().slice(0,10)),DL='DLMMJVS';
+ const dias=[...Array(6)].map((_,i)=>new Date(new Date(d7+'T12:00:00').getTime()+i*864e5).toISOString().slice(0,10)),DL='DLMMJVS';
  if(!n){$('rep').innerHTML='<div class="rc"><p class="e2">Sin incidencias este día 👍</p></div>';return}
  $('rep').innerHTML=`<div class="rg2"><div class="rc"><h4>Tipo de incidencia</h4><div class="dn"><div class="dnr" style="background:conic-gradient(${cg})"><div><b>${n}</b><small>incidencias</small></div></div><div class="dnl">${TT.map(([k,v])=>`<div><i style="background:${tcol(k)}"></i>${esc(cap(k))} · <b>${v}</b></div>`).join('')}<div class="mu2">${np} cosechador${np>1?'es':''}</div></div></div></div>
  <div class="rc"><h4>¿A qué hora se registraron?</h4><div class="hb2">${HH.map(([h,v])=>`<div><b>${v}</b><i style="height:${v/mh*90+2}px"></i><span>${fh(h)}</span></div>`).join('')}</div></div></div>
  ${adm&&!FG?`<div class="rc"><h4>Incidencias por grupo</h4><div class="gt2">${'ABCDEF'.split('').map(g=>`<div style="background:${GC[g]};${G[g]?'color:#fff':'opacity:.28;color:#123A5C'}"><b>${G[g]||0}</b><small>Grupo ${g}</small></div>`).join('')}</div></div>`:''}
- ${rein.length?`<div class="rc al2"><h4>⚠ Reincidentes · últimos 7 días</h4>${rein.map(r=>`<div class="ri" data-d="${esc(r.d)}"><b>${esc(r.n||'(sin nombre)')} <small>· Grupo ${esc(r.g)}</small></b><span class="dt2">${dias.map(f=>`<i class="${r.f.includes(f)?'x':''}" title="${f}">${DL[new Date(f+'T12:00:00').getDay()]}</i>`).join('')}</span><span class="cn2">${r.f.length}</span></div>`).join('')}</div>`:''}
+ ${rein.length?`<div class="rc al2"><h4>⚠ Reincidentes · esta semana (lun–sáb)</h4>${rein.map(r=>`<div class="ri" data-d="${esc(r.d)}"><b>${esc(r.n||'(sin nombre)')} <small>· Grupo ${esc(r.g)}</small></b><span class="dt2">${dias.map(f=>`<i class="${r.f.includes(f)?'x':''}" title="${f}">${DL[new Date(f+'T12:00:00').getDay()]}</i>`).join('')}</span><span class="cn2">${r.f.length}</span></div>`).join('')}</div>`:''}
  <div class="rc"><h4>📋 Detalle · cosechadores del día (por hora)</h4>${L.map(x=>{const w=(W7[x.dni]||[]).length;return `<div class="dl" data-d="${esc(x.dni)}"><span class="hh2">${esc((x.hora||'').slice(0,5))}</span><span class="nm2"><b>${esc(x.nombre||'(sin nombre)')}</b><small>Grupo ${esc(x.grupo)} · registró ${esc((x.auxiliar||'').split(' ').slice(0,2).join(' '))}</small></span><span class="tg2" style="background:${tcol(x.incidencia)}">${esc(cap(x.incidencia))}</span>${w>1?`<span class="wk2">⚠ ${w} en la semana</span>`:'<span class="wk3">1ª vez</span>'}</div>`}).join('')}</div>
  <div class="rc"><h4>Quién registró</h4><div class="au2">${Object.entries(A).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div><b>${v}</b>${esc(k.split(' ').slice(0,2).join(' '))}</div>`).join('')}</div></div>`}
 let FD='';function marcaP(){FP='dia';if(!FD)FD=hoyISO();$('fD').value=FD;$('fD').max=hoyISO();$('fNext').disabled=FD>=hoyISO()}
@@ -230,7 +230,7 @@ function pintaSec(){const adm=ROL==='admin';if(!SEC||(!adm&&(SEC==='gr'||SEC==='
  const F=[];if(FG)F.push(['g','Grupo '+FG]);if(FA)F.push(['a',FA.split(' ').slice(0,2).join(' ')]);if(FM)F.push(['m',FM.charAt(0)+FM.slice(1).toLowerCase()]);
  $('fAct').innerHTML=F.map(([k,t])=>`<button data-fx="${k}">${esc(t)} ✕</button>`).join('')}
 $('rFoto').onclick=async()=>{const B=RES.filter(x=>x.fecha===FD&&(!FG||x.grupo===FG)&&(!FA||x.auxiliar===FA)).sort((a,b)=>(a.hora||'').localeCompare(b.hora||''));
- const d7=new Date(new Date(FD+'T12:00:00').getTime()-6*864e5).toISOString().slice(0,10),W7={};RES.filter(x=>x.fecha>=d7&&x.fecha<=FD).forEach(x=>{W7[x.dni]=(W7[x.dni]||0)+1});
+ const _d=new Date(FD+'T12:00:00'),d7=new Date(_d.getTime()-((_d.getDay()+6)%7)*864e5).toISOString().slice(0,10),W7={};RES.filter(x=>x.fecha>=d7&&x.fecha<=FD).forEach(x=>{W7[x.dni]=(W7[x.dni]||0)+1});
  const T={};B.forEach(x=>T[x.incidencia]=(T[x.incidencia]||0)+1);const TT=Object.entries(T).sort((a,b)=>b[1]-a[1]);const cap=k=>k.charAt(0)+k.slice(1).toLowerCase();
  const W=760,H=200+TT.length*34+60+B.length*50+40,cv=document.createElement('canvas');cv.width=W*2;cv.height=H*2;const g=cv.getContext('2d');g.scale(2,2);
  const gr=ROL==='admin'?(FG?'Grupo '+FG:'Todos los grupos'):'Grupo '+GR;g.fillStyle='#EEF2F6';g.fillRect(0,0,W,H);g.fillStyle='#123A5C';g.fillRect(0,0,W,80);
