@@ -18,7 +18,8 @@
 .gp{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}.gp button{height:46px;border-radius:10px;border:3px solid var(--c);background:#fff;color:var(--c);font:inherit;font-weight:900;font-size:20px}.gp button.on{background:var(--c);color:#fff}
 .tb{border:0;background:transparent;border-radius:10px;min-height:44px;font:inherit;font-weight:900;font-size:15px;color:#5A6B7B}.tb.on{background:#fff;color:#123A5C;box-shadow:0 1px 3px #0002}
 .r2x{display:grid;grid-template-columns:1fr 1fr;gap:8px}.in.sm{font-size:15px;padding:10px}.mini{border:2px solid #D5DCE6;background:#fff;border-radius:12px;font:inherit;font-weight:800;font-size:14px;color:#123A5C}
-.rk{display:flex;align-items:center;gap:8px;padding:9px 2px;border-bottom:1px solid #E3E7EE}.rk .p{width:30px;font-weight:900;text-align:center;font-size:16px}.rk .n{flex:1;font-weight:800;font-size:14px}.rk .n small{display:block;color:#5A6B7B;font-weight:700;font-size:12px}.rk .rdt{font-weight:800;font-size:16px;margin:4px 2px 8px;color:#123A5C}.wsp{width:100%;margin:8px 0;padding:12px;border:0;border-radius:12px;background:#25D366;color:#fff;font-weight:800;font-size:15px;cursor:pointer}
+.rk{display:flex;align-items:center;gap:8px;padding:9px 2px;border-bottom:1px solid #E3E7EE}.rk .p{width:30px;font-weight:900;text-align:center;font-size:16px}.rk .n{flex:1;font-weight:800;font-size:14px}.rk .n small{display:block;color:#5A6B7B;font-weight:700;font-size:12px}.rk .cal{display:flex;gap:8px;align-items:center;margin:4px 0 6px}.cal button{width:48px;height:46px;border-radius:12px;border:2px solid #D5DEE8;background:#fff;font-size:18px;font-weight:800;color:#123A5C;cursor:pointer}.cal button:disabled{opacity:.35}.cal label{flex:1;display:flex;align-items:center;gap:6px;background:#fff;border:2px solid #1B4F7A;border-radius:12px;padding:6px 10px;font-weight:800}.cal input{flex:1;border:0;font-size:17px;font-weight:800;color:#123A5C;background:transparent;min-width:0}
+.rdt{font-weight:800;font-size:16px;margin:4px 2px 8px;color:#123A5C}.wsp{width:100%;margin:8px 0;padding:12px;border:0;border-radius:12px;background:#25D366;color:#fff;font-weight:800;font-size:15px;cursor:pointer}
 .lgx{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 8px;font-size:12px;font-weight:700}.lgx i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:4px;vertical-align:-1px}
 .rk2{padding:7px 0;border-bottom:1px solid #E3E7EE;cursor:pointer}.rk2 .n{font-size:13px;font-weight:700;margin-bottom:3px}.rk2 small{color:#789;font-weight:600}.st{display:flex;align-items:center;gap:8px}.sb2{flex:1;display:flex;background:#EEF2F6;border-radius:6px;height:22px;overflow:hidden}.sb2 i{display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;font-style:normal;min-width:18px}.st b{width:30px;text-align:right;font-size:16px}
 .c2{background:#D2412C;color:#fff;border-radius:20px;min-width:34px;text-align:center;font-weight:900;padding:4px 8px}
@@ -69,7 +70,7 @@
  <div id="bar" class="hide"><button id="back">← Menú</button><b id="barT"></b></div>
  <div class="c hide" id="gru"><p class="lb" style="font-size:18px">¿Con qué grupo trabajas hoy?</p><select class="gsel" id="gp2"></select><button class="sv" id="gruOk">LISTO</button></div>
  <div id="res" class="hide">
-  <div class="pc" id="fP"><button data-p="hoy" class="on">Hoy</button><button data-p="ayer">Ayer</button><button data-p="ant">Anteayer</button><button data-p="sem">7 días</button><label class="fdt" id="fDl">📅 <span id="fDt">Fecha</span><input type="date" id="fD"></label></div>
+  <div class="cal" id="fP" style="display:flex"><button id="fPrev">◀</button><label>📅 <input type="date" id="fD"></label><button id="fNext">▶</button></div>
   <select class="gsel hide" id="fGc"></select>
   <div class="rdt" id="rDt"></div><div class="kp"><div><b id="kT">0</b><span>incidencias</span></div><div><b id="kP">0</b><span>cosechadores</span></div></div>
   <div id="fAct" class="fa"></div>
@@ -171,7 +172,7 @@ $('menu').onclick=e=>{const b=e.target.closest('[data-t]');if(b)ir(b.dataset.t)}
 $('gruOk').onclick=()=>{const v=$('gp2').value;if(v){GR=v;ls('grupo',GR);pintaGr()}ir('menu')};
 function fmtD(d){return d?d.slice(8,10)+'/'+d.slice(5,7):''}
 async function cargarRes(){
- const adm=ROL==='admin';FP='hoy';marcaP();try{RES=await rpc('inc_listar',{p_token:TOK,p_grupo:GR});if(!Array.isArray(RES))RES=[]}catch(e){if(e.message==='SESION')salir('Tu sesión venció.')}pintaRes()}
+ const adm=ROL==='admin';FP='dia';FD=hoyISO();marcaP();try{RES=await rpc('inc_listar',{p_token:TOK,p_grupo:GR});if(!Array.isArray(RES))RES=[]}catch(e){if(e.message==='SESION')salir('Tu sesión venció.')}pintaRes()}
 let FP='hoy',FG='',FM='',FA='',SEC='',VM={},RDT='';const TC={'MALA CALIDAD':'#D9454A','LLENADO DE JARRA':'#2E86C1','FRUTA EN PLANTA':'#E8A33D','FRUTA EN SUELO':'#8A8F96'},TX=['#16A085','#8E44AD','#C0392B','#2C3E50'];const tcol=k=>TC[k]||TX[[...k].reduce((a,c)=>a+c.charCodeAt(0),0)%TX.length];
 const hoyISO=()=>new Date(Date.now()-5*36e5).toISOString().slice(0,10);
 function pintaRes(){const h=hoyISO(),d7=new Date(Date.now()-5*36e5-6*864e5).toISOString().slice(0,10);
@@ -191,9 +192,9 @@ function pintaRes(){const h=hoyISO(),d7=new Date(Date.now()-5*36e5-6*864e5).toIS
  $('tipos').innerHTML=TT.length?TT.map(([k,v])=>`<button class="tp ${FM===k?'on':FM?'off':''}" data-m="${esc(k)}"><span class="nm">${esc(k)}</span><span class="br"><i style="width:${v/mx*100}%;background:${tcol(k)}"></i></span><b>${v}</b></button>`).join(''):'<p class="e2">Sin incidencias en este periodo. 👍</p>';
  const mxr=Math.max(1,...R.map(o=>o.c));
  $('rank').innerHTML=(R.length?`<div class="lgx">${Object.keys(TC).filter(k=>L.some(x=>x.incidencia===k)).map(k=>`<span><i style="background:${TC[k]}"></i>${esc(k.charAt(0)+k.slice(1).toLowerCase())}</span>`).join('')}</div>`+R.slice(0,VM.co?100:8).map((o,i)=>`<div class="rk2" data-d="${esc(o.dni)}"><div class="n">${i+1}. ${esc(o.n||'(sin nombre)')}${ROL==='admin'?' <small>· Grupo '+esc(o.g||'-')+'</small>':''}</div><div class="st"><div class="sb2">${Object.entries(o.t).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<i style="width:${v/mxr*100}%;background:${tcol(k)}">${v}</i>`).join('')}</div><b>${o.c}</b></div></div>`).join(''):'<p class="e2">Nadie con incidencias aquí.</p>')+(R.length>8?`<button class="vm" data-vm="co">${VM.co?'Ver menos':'Ver todos ('+R.length+')'}</button>`:'');pintaSec()}
-let FD='';function marcaP(){$('fP').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.p===FP));$('fDl').classList.toggle('on',FP==='dia');$('fDt').textContent=FP==='dia'&&FD?fmtD(FD):'Fecha'}
-$('fP').onclick=e=>{const b=e.target.closest('[data-p]');if(!b)return;FP=b.dataset.p;marcaP();pintaRes()};
-$('fD').onchange=()=>{FD=$('fD').value;if(FD){FP='dia';marcaP();pintaRes()}};
+let FD='';function marcaP(){FP='dia';if(!FD)FD=hoyISO();$('fD').value=FD;$('fD').max=hoyISO();$('fNext').disabled=FD>=hoyISO()}
+$('fD').onchange=()=>{if($('fD').value){FD=$('fD').value;marcaP();pintaRes()}};
+const mvD=n=>{const d=new Date(FD+'T12:00:00');d.setDate(d.getDate()+n);const v=d.toISOString().slice(0,10);if(v>hoyISO())return;FD=v;marcaP();pintaRes()};$('fPrev').onclick=()=>mvD(-1);$('fNext').onclick=()=>mvD(1);
 $('fGc').innerHTML=opG('fGc','','Todos los grupos');$('fGc').onchange=()=>{FG=$('fGc').value;pintaRes()};
 function pintaSec(){const adm=ROL==='admin';if(!SEC||(!adm&&(SEC==='gr'||SEC==='au')))SEC=adm?'gr':'co';
  $('sg').querySelectorAll('button').forEach(b=>{b.classList.toggle('hide',b.classList.contains('adm')&&!adm);b.classList.toggle('on',b.dataset.s===SEC)});
