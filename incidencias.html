@@ -32,6 +32,7 @@
 .vw{display:flex;gap:6px;margin:2px 0 8px}.vw button{flex:1;padding:10px;border-radius:12px;border:2px solid #D5DEE8;background:#fff;font-weight:800;font-size:14px;color:#123A5C;cursor:pointer}.vw button.on{background:#123A5C;color:#fff;border-color:#123A5C}
 .kp4{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}@media(min-width:700px){.kp4{grid-template-columns:repeat(4,1fr)}}.kp4 div{background:#fff;border-radius:12px;padding:10px 12px;border-top:5px solid var(--c);font-weight:700;font-size:12px;color:#3E4F61}.kp4 b{display:block;font-size:24px;color:#123A5C}
 .sbars{display:flex;align-items:flex-end;gap:8px;height:215px}.sbars>div{flex:1;text-align:center;font-weight:800;font-size:12px;color:#123A5C}.sk{display:flex;flex-direction:column-reverse;border-radius:6px 6px 0 0;overflow:hidden;margin:3px 0}.sk i{display:flex;align-items:center;justify-content:center;color:#fff;font-style:normal;font-size:11px;font-weight:800}.sbars span{color:#3E4F61;font-size:11px}
+#fS{flex:1;border:2px solid #1B4F7A;border-radius:12px;padding:10px;font-size:16px;font-weight:800;color:#123A5C;background:#fff;min-width:0}
 .rdt{font-weight:800;font-size:16px;margin:4px 2px 8px;color:#123A5C}.wsp{width:100%;margin:8px 0;padding:12px;border:0;border-radius:12px;background:#25D366;color:#fff;font-weight:800;font-size:15px;cursor:pointer}
 .lgx{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 8px;font-size:12px;font-weight:700}.lgx i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:4px;vertical-align:-1px}
 .rk2{padding:7px 0;border-bottom:1px solid #E3E7EE;cursor:pointer}.rk2 .n{font-size:13px;font-weight:700;margin-bottom:3px}.rk2 small{color:#789;font-weight:600}.st{display:flex;align-items:center;gap:8px}.sb2{flex:1;display:flex;background:#EEF2F6;border-radius:6px;height:22px;overflow:hidden}.sb2 i{display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;font-style:normal;min-width:18px}.st b{width:30px;text-align:right;font-size:16px}
@@ -83,7 +84,7 @@
  <div id="bar" class="hide"><button id="back">← Menú</button><b id="barT"></b></div>
  <div class="c hide" id="gru"><p class="lb" style="font-size:18px">¿Con qué grupo trabajas hoy?</p><select class="gsel" id="gp2"></select><button class="sv" id="gruOk">LISTO</button></div>
  <div id="res" class="hide">
-  <div class="vw" id="vw"><button data-v="d" class="on">📅 Día</button><button data-v="s">📊 Semana</button></div><div class="cal" id="fP" style="display:flex"><button id="fPrev">◀</button><label>📅 <input type="date" id="fD"></label><button id="fNext">▶</button></div>
+  <div class="vw" id="vw"><button data-v="d" class="on">📅 Día</button><button data-v="s">📊 Semana</button></div><div class="cal" id="fP" style="display:flex"><button id="fPrev">◀</button><label id="fDl2">📅 <input type="date" id="fD"></label><select id="fS" class="hide"></select><button id="fNext">▶</button></div>
   <select class="gsel hide" id="fGc"></select>
   <div class="rdt" id="rDt"></div><div id="rep"></div><div class="kp hide"><div><b id="kT">0</b><span>incidencias</span></div><div><b id="kP">0</b><span>cosechadores</span></div></div>
   <div id="fAct" class="fa"></div>
@@ -233,7 +234,7 @@ function datSem(){const D=SEMD();const L=RES.filter(x=>x.fecha>=D[0]&&x.fecha<=D
  const P=Object.values(by).sort((a,b)=>b.c-a.c).slice(0,8);const dl=['Lun','Mar','Mié','Jue','Vie','Sáb'];const mi=tt.indexOf(Math.max(...tt));const dd=tt.filter(v=>v).length||1;
  return{D,L,TT,PD,tt,P,dl,mi,dd}}
 function pintaSem(){const {D,L,TT,PD,tt,P,dl,mi,dd}=datSem(),n=L.length,cap=k=>k.charAt(0)+k.slice(1).toLowerCase();
- $('rDt').textContent='📊 Semana del '+fmtD(D[0])+' al '+fmtD(D[5])+'/'+D[5].slice(0,4)+(GR&&ROL!=='admin'?' · Grupo '+GR:FG?' · Grupo '+FG:'');
+ $('rDt').textContent='📊 Semana '+semN(D[0])+' · del '+fmtD(D[0])+' al '+fmtD(D[5])+'/'+D[5].slice(0,4)+(GR&&ROL!=='admin'?' · Grupo '+GR:FG?' · Grupo '+FG:'');
  if(!n){$('rep').innerHTML='<div class="rc"><p class="e2">Sin incidencias esta semana 👍</p></div>';return}
  const mc=TT.find(z=>z[0]==='MALA CALIDAD');const mx=Math.max(1,...tt);let acc=0;const cg=TT.map(([k,v])=>{const a=acc/n*100;acc+=v;return tcol(k)+' '+a+'% '+acc/n*100+'%'}).join(',');
  const xs=D.map((_,i)=>30+i*92),ys=tt.map(v=>140-v/mx*110);
@@ -246,7 +247,7 @@ function pintaSem(){const {D,L,TT,PD,tt,P,dl,mi,dd}=datSem(),n=L.length,cap=k=>k
 async function fotoSem(){const {D,L,TT,PD,tt,P,dl,mi,dd}=datSem(),n=L.length,cap=k=>k.charAt(0)+k.slice(1).toLowerCase();
  const W=900,H=150+300+266+TT.length*30+60+P.length*46+40,cv=document.createElement('canvas');cv.width=W*2;cv.height=H*2;const g=cv.getContext('2d');g.scale(2,2);
  const rr=(x,y,w,h,r,c)=>{g.fillStyle=c;g.beginPath();g.roundRect(x,y,w,h,r);g.fill()};const gr=ROL==='admin'?(FG?'Grupo '+FG:'Todos los grupos'):'Grupo '+GR;
- g.fillStyle='#EEF2F6';g.fillRect(0,0,W,H);g.fillStyle='#123A5C';g.fillRect(0,0,W,76);g.fillStyle='#fff';g.font='bold 25px system-ui,Arial';g.fillText('📊 Incidencias de cosecha · '+gr,20,36);g.font='16px system-ui,Arial';g.fillText('Semana del '+fmtD(D[0])+' al '+fmtD(D[5])+'/'+D[5].slice(0,4)+' · '+(POR||''),20,62);
+ g.fillStyle='#EEF2F6';g.fillRect(0,0,W,H);g.fillStyle='#123A5C';g.fillRect(0,0,W,76);g.fillStyle='#fff';g.font='bold 25px system-ui,Arial';g.fillText('📊 Incidencias de cosecha · '+gr,20,36);g.font='16px system-ui,Arial';g.fillText('Semana '+semN(D[0])+' · del '+fmtD(D[0])+' al '+fmtD(D[5])+'/'+D[5].slice(0,4)+' · '+(POR||''),20,62);
  const mc=TT.find(z=>z[0]==='MALA CALIDAD');const K=[[n,'incidencias','#123A5C'],[mc?mc[1]:0,'mala calidad','#D9454A'],[dl[mi]+' '+D[mi].slice(8),'día con más ('+tt[mi]+')','#E8A33D'],[(n/dd).toFixed(1),'promedio por día con registro','#1E8E52']];
  K.forEach(([v,t,c],i)=>{const x=16+i*218;rr(x,90,206,70,10,'#fff');g.fillStyle=c;g.fillRect(x,90,206,5);g.fillStyle='#123A5C';g.font='bold 26px system-ui,Arial';g.fillText(v,x+12,128);g.fillStyle='#3E4F61';g.font='bold 13px system-ui,Arial';g.fillText(t,x+12,150)});
  rr(16,174,W-32,290,12,'#fff');g.fillStyle='#123A5C';g.font='bold 16px system-ui,Arial';g.fillText('Incidencias por día y tipo',32,200);
@@ -260,10 +261,15 @@ async function fotoSem(){const {D,L,TT,PD,tt,P,dl,mi,dd}=datSem(),n=L.length,cap
  const blob=await new Promise(r=>cv.toBlob(r,'image/png')),fn='Incidencias_semana_'+D[0]+'_'+gr.replace(/\s+/g,'_')+'.png',file=new File([blob],fn,{type:'image/png'});
  if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file]});return}catch(e){if(e.name==='AbortError')return}}
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fn;a.click()}
-$('vw').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;VW=b.dataset.v;$('vw').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));pintaRes()};
-let FD='';function marcaP(){FP='dia';if(!FD)FD=hoyISO();$('fD').value=FD;$('fD').max=hoyISO();$('fNext').disabled=FD>=hoyISO()}
+$('vw').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;VW=b.dataset.v;pintaSel();$('vw').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));pintaRes()};
+let FD='';function marcaP(){FP='dia';if(!FD)FD=hoyISO();$('fD').value=FD;$('fD').max=hoyISO();$('fNext').disabled=VW==='s'?lunDe(FD)>=lunDe(hoyISO()):FD>=hoyISO();if(typeof pintaSel==='function')pintaSel()}
 $('fD').onchange=()=>{if($('fD').value){FD=$('fD').value;marcaP();pintaRes()}};
-const mvD=n=>{const d=new Date(FD+'T12:00:00');d.setDate(d.getDate()+n);const v=d.toISOString().slice(0,10);if(v>hoyISO())return;FD=v;marcaP();pintaRes()};$('fPrev').onclick=()=>mvD(-1);$('fNext').onclick=()=>mvD(1);
+const mvD=n=>{const d=new Date(FD+'T12:00:00');if(VW==='s'){n*=7;d.setDate(d.getDate()-((d.getDay()+6)%7))}d.setDate(d.getDate()+n);let v=d.toISOString().slice(0,10);if(v>hoyISO()){if(VW!=='s')return;v=hoyISO()}FD=v;marcaP();pintaRes()};
+const semN=f=>{const t=new Date(f+'T12:00:00');t.setDate(t.getDate()+3-((t.getDay()+6)%7));const j=new Date(t.getFullYear(),0,4);return 1+Math.round(((t-j)/864e5-3+((j.getDay()+6)%7))/7)};
+const lunDe=f=>{const d=new Date(f+'T12:00:00');d.setDate(d.getDate()-((d.getDay()+6)%7));return d.toISOString().slice(0,10)};
+function pintaSel(){const L=[];let d=new Date(lunDe(hoyISO())+'T12:00:00');for(let i=0;i<20;i++){const f=d.toISOString().slice(0,10),e=new Date(d.getTime()+5*864e5).toISOString().slice(0,10);L.push(`<option value="${f}">Semana ${semN(f)} · ${fmtD(f)} al ${fmtD(e)}</option>`);d=new Date(d.getTime()-7*864e5)}
+ $('fS').innerHTML=L.join('');$('fS').value=lunDe(FD);$('fS').classList.toggle('hide',VW!=='s');$('fDl2').classList.toggle('hide',VW==='s')}
+$('fS').onchange=()=>{FD=$('fS').value;marcaP();pintaRes()};$('fPrev').onclick=()=>mvD(-1);$('fNext').onclick=()=>mvD(1);
 $('fGc').innerHTML=opG('fGc','','Todos los grupos');$('fGc').onchange=()=>{FG=$('fGc').value;pintaRes()};
 function pintaSec(){const adm=ROL==='admin';if(!SEC||(!adm&&(SEC==='gr'||SEC==='au')))SEC=adm?'gr':'co';
  $('sg').querySelectorAll('button').forEach(b=>{b.classList.toggle('hide',b.classList.contains('adm')&&!adm);b.classList.toggle('on',b.dataset.s===SEC)});
