@@ -29,6 +29,9 @@
 .dl{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #E3E8EE;flex-wrap:wrap;cursor:pointer}.hh2{background:#123A5C;color:#fff;border-radius:7px;padding:5px 7px;font-weight:800;font-size:12.5px}.nm2{flex:1;min-width:150px}.nm2 b{display:block;font-size:13px;color:#123A5C}.nm2 small{color:#3E4F61;font-size:11.5px;font-weight:600}
 .tg2{color:#fff;border-radius:7px;padding:4px 8px;font-size:11.5px;font-weight:800;white-space:nowrap}.wk2{background:#FDE2E2;color:#C62828;border-radius:7px;padding:4px 7px;font-size:11px;font-weight:800;white-space:nowrap}.wk3{color:#3E4F61;font-size:11px;font-weight:700}
 .au2{display:flex;gap:8px;flex-wrap:wrap}.au2 div{flex:1;min-width:120px;background:#F2F5F9;border-radius:10px;padding:8px 10px;font-weight:700;font-size:12.5px;color:#123A5C}.au2 b{display:block;font-size:22px}
+.vw{display:flex;gap:6px;margin:2px 0 8px}.vw button{flex:1;padding:10px;border-radius:12px;border:2px solid #D5DEE8;background:#fff;font-weight:800;font-size:14px;color:#123A5C;cursor:pointer}.vw button.on{background:#123A5C;color:#fff;border-color:#123A5C}
+.kp4{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}@media(min-width:700px){.kp4{grid-template-columns:repeat(4,1fr)}}.kp4 div{background:#fff;border-radius:12px;padding:10px 12px;border-top:5px solid var(--c);font-weight:700;font-size:12px;color:#3E4F61}.kp4 b{display:block;font-size:24px;color:#123A5C}
+.sbars{display:flex;align-items:flex-end;gap:8px;height:215px}.sbars>div{flex:1;text-align:center;font-weight:800;font-size:12px;color:#123A5C}.sk{display:flex;flex-direction:column-reverse;border-radius:6px 6px 0 0;overflow:hidden;margin:3px 0}.sk i{display:flex;align-items:center;justify-content:center;color:#fff;font-style:normal;font-size:11px;font-weight:800}.sbars span{color:#3E4F61;font-size:11px}
 .rdt{font-weight:800;font-size:16px;margin:4px 2px 8px;color:#123A5C}.wsp{width:100%;margin:8px 0;padding:12px;border:0;border-radius:12px;background:#25D366;color:#fff;font-weight:800;font-size:15px;cursor:pointer}
 .lgx{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 8px;font-size:12px;font-weight:700}.lgx i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:4px;vertical-align:-1px}
 .rk2{padding:7px 0;border-bottom:1px solid #E3E7EE;cursor:pointer}.rk2 .n{font-size:13px;font-weight:700;margin-bottom:3px}.rk2 small{color:#789;font-weight:600}.st{display:flex;align-items:center;gap:8px}.sb2{flex:1;display:flex;background:#EEF2F6;border-radius:6px;height:22px;overflow:hidden}.sb2 i{display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;font-style:normal;min-width:18px}.st b{width:30px;text-align:right;font-size:16px}
@@ -80,7 +83,7 @@
  <div id="bar" class="hide"><button id="back">← Menú</button><b id="barT"></b></div>
  <div class="c hide" id="gru"><p class="lb" style="font-size:18px">¿Con qué grupo trabajas hoy?</p><select class="gsel" id="gp2"></select><button class="sv" id="gruOk">LISTO</button></div>
  <div id="res" class="hide">
-  <div class="cal" id="fP" style="display:flex"><button id="fPrev">◀</button><label>📅 <input type="date" id="fD"></label><button id="fNext">▶</button></div>
+  <div class="vw" id="vw"><button data-v="d" class="on">📅 Día</button><button data-v="s">📊 Semana</button></div><div class="cal" id="fP" style="display:flex"><button id="fPrev">◀</button><label>📅 <input type="date" id="fD"></label><button id="fNext">▶</button></div>
   <select class="gsel hide" id="fGc"></select>
   <div class="rdt" id="rDt"></div><div id="rep"></div><div class="kp hide"><div><b id="kT">0</b><span>incidencias</span></div><div><b id="kP">0</b><span>cosechadores</span></div></div>
   <div id="fAct" class="fa"></div>
@@ -203,7 +206,7 @@ function pintaRes(){const h=hoyISO(),d7=new Date(Date.now()-5*36e5-6*864e5).toIS
  const mxr=Math.max(1,...R.map(o=>o.c));
  $('rank').innerHTML=(R.length?`<div class="lgx">${Object.keys(TC).filter(k=>L.some(x=>x.incidencia===k)).map(k=>`<span><i style="background:${TC[k]}"></i>${esc(k.charAt(0)+k.slice(1).toLowerCase())}</span>`).join('')}</div>`+R.slice(0,VM.co?100:8).map((o,i)=>`<div class="rk2" data-d="${esc(o.dni)}"><div class="n">${i+1}. ${esc(o.n||'(sin nombre)')}${ROL==='admin'?' <small>· Grupo '+esc(o.g||'-')+'</small>':''}</div><div class="st"><div class="sb2">${Object.entries(o.t).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<i style="width:${v/mxr*100}%;background:${tcol(k)}">${v}</i>`).join('')}</div><b>${o.c}</b></div></div>`).join(''):'<p class="e2">Nadie con incidencias aquí.</p>')+(R.length>8?`<button class="vm" data-vm="co">${VM.co?'Ver menos':'Ver todos ('+R.length+')'}</button>`:'');pintaSec();pintaRep(B)}
 
-function pintaRep(B){const adm=ROL==='admin',d0=new Date(FD+'T12:00:00'),d7=new Date(d0.getTime()-((d0.getDay()+6)%7)*864e5).toISOString().slice(0,10);
+function pintaRep(B){if(VW==='s'){pintaSem();return}const adm=ROL==='admin',d0=new Date(FD+'T12:00:00'),d7=new Date(d0.getTime()-((d0.getDay()+6)%7)*864e5).toISOString().slice(0,10);
  const L=B.slice().sort((a,b)=>(a.hora||'').localeCompare(b.hora||''));const n=L.length,np=new Set(L.map(x=>x.dni)).size;
  const W7={};RES.filter(x=>x.fecha>=d7&&x.fecha<=FD&&(!FG||x.grupo===FG)).forEach(x=>{(W7[x.dni]=W7[x.dni]||[]).push(x.fecha)});
  const T={};L.forEach(x=>T[x.incidencia]=(T[x.incidencia]||0)+1);const TT=Object.entries(T).sort((a,b)=>b[1]-a[1]);
@@ -220,6 +223,44 @@ function pintaRep(B){const adm=ROL==='admin',d0=new Date(FD+'T12:00:00'),d7=new 
  ${rein.length?`<div class="rc al2"><h4>⚠ Reincidentes · esta semana (lun–sáb)</h4>${rein.map(r=>`<div class="ri" data-d="${esc(r.d)}"><b>${esc(r.n||'(sin nombre)')} <small>· Grupo ${esc(r.g)}</small></b><span class="dt2">${dias.map(f=>`<i class="${r.f.includes(f)?'x':''}" title="${f}">${DL[new Date(f+'T12:00:00').getDay()]}</i>`).join('')}</span><span class="cn2">${r.f.length}</span></div>`).join('')}</div>`:''}
  <div class="rc"><h4>📋 Detalle · cosechadores del día (por hora)</h4>${L.map(x=>{const w=(W7[x.dni]||[]).length;return `<div class="dl" data-d="${esc(x.dni)}"><span class="hh2">${esc((x.hora||'').slice(0,5))}</span><span class="nm2"><b>${esc(x.nombre||'(sin nombre)')}</b><small>Grupo ${esc(x.grupo)} · registró ${esc((x.auxiliar||'').split(' ').slice(0,2).join(' '))}</small></span><span class="tg2" style="background:${tcol(x.incidencia)}">${esc(cap(x.incidencia))}</span>${w>1?`<span class="wk2">⚠ ${w} en la semana</span>`:'<span class="wk3">1ª vez</span>'}</div>`}).join('')}</div>
  <div class="rc"><h4>Quién registró</h4><div class="au2">${Object.entries(A).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div><b>${v}</b>${esc(k.split(' ').slice(0,2).join(' '))}</div>`).join('')}</div></div>`}
+
+let VW='d';
+const SEMD=()=>{const d0=new Date(FD+'T12:00:00'),l=new Date(d0.getTime()-((d0.getDay()+6)%7)*864e5);return [...Array(6)].map((_,i)=>new Date(l.getTime()+i*864e5).toISOString().slice(0,10))};
+function datSem(){const D=SEMD();const L=RES.filter(x=>x.fecha>=D[0]&&x.fecha<=D[5]&&(!FG||x.grupo===FG)&&(!FA||x.auxiliar===FA));
+ const T={};L.forEach(x=>T[x.incidencia]=(T[x.incidencia]||0)+1);const TT=Object.entries(T).sort((a,b)=>b[1]-a[1]);
+ const PD=D.map(f=>{const o={};L.filter(x=>x.fecha===f).forEach(x=>o[x.incidencia]=(o[x.incidencia]||0)+1);return o});
+ const tt=PD.map(o=>Object.values(o).reduce((a,b)=>a+b,0));const by={};L.forEach(x=>{const o=by[x.dni]||(by[x.dni]={n:x.nombre,g:x.grupo,c:0,t:{}});o.c++;o.t[x.incidencia]=(o.t[x.incidencia]||0)+1});
+ const P=Object.values(by).sort((a,b)=>b.c-a.c).slice(0,8);const dl=['Lun','Mar','Mié','Jue','Vie','Sáb'];const mi=tt.indexOf(Math.max(...tt));const dd=tt.filter(v=>v).length||1;
+ return{D,L,TT,PD,tt,P,dl,mi,dd}}
+function pintaSem(){const {D,L,TT,PD,tt,P,dl,mi,dd}=datSem(),n=L.length,cap=k=>k.charAt(0)+k.slice(1).toLowerCase();
+ $('rDt').textContent='📊 Semana del '+fmtD(D[0])+' al '+fmtD(D[5])+'/'+D[5].slice(0,4)+(GR&&ROL!=='admin'?' · Grupo '+GR:FG?' · Grupo '+FG:'');
+ if(!n){$('rep').innerHTML='<div class="rc"><p class="e2">Sin incidencias esta semana 👍</p></div>';return}
+ const mc=TT.find(z=>z[0]==='MALA CALIDAD');const mx=Math.max(1,...tt);let acc=0;const cg=TT.map(([k,v])=>{const a=acc/n*100;acc+=v;return tcol(k)+' '+a+'% '+acc/n*100+'%'}).join(',');
+ const xs=D.map((_,i)=>30+i*92),ys=tt.map(v=>140-v/mx*110);
+ const pm=Math.max(1,...P.map(o=>o.c));
+ $('rep').innerHTML=`<div class="kp4"><div style="--c:#123A5C"><b>${n}</b>incidencias</div><div style="--c:#D9454A"><b>${mc?mc[1]:0}</b>mala calidad${mc?' ('+Math.round(mc[1]/n*100)+'%)':''}</div><div style="--c:#E8A33D"><b>${dl[mi]} ${D[mi].slice(8)}</b>día con más (${tt[mi]})</div><div style="--c:#1E8E52"><b>${(n/dd).toFixed(1)}</b>promedio por día</div></div>
+ <div class="rc"><h4>Incidencias por día y tipo</h4><div class="lgx">${TT.map(([k])=>`<span><i style="background:${tcol(k)}"></i>${esc(cap(k))}</span>`).join('')}</div><div class="sbars">${PD.map((o,i)=>`<div><b>${tt[i]||'–'}</b><div class="sk" style="height:${tt[i]/mx*170}px">${Object.entries(o).map(([k,v])=>`<i style="flex:${v};background:${tcol(k)}">${v/mx*170>14?v:''}</i>`).join('')}</div><span>${dl[i]} ${D[i].slice(8)}</span></div>`).join('')}</div></div>
+ <div class="rg2"><div class="rc"><h4>Distribución por tipo</h4><div class="dn"><div class="dnr" style="background:conic-gradient(${cg})"><div><b>${n}</b><small>total</small></div></div><div class="dnl">${TT.map(([k,v])=>`<div><i style="background:${tcol(k)}"></i>${esc(cap(k))} · <b>${v}</b> <span class="mu2">${Math.round(v/n*100)}%</span></div>`).join('')}</div></div></div>
+ <div class="rc"><h4>Tendencia de la semana</h4><svg viewBox="0 0 520 165" width="100%"><polyline points="${xs.map((x,i)=>x+','+ys[i]).join(' ')}" fill="none" stroke="#2E86C1" stroke-width="4"/>${xs.map((x,i)=>`<circle cx="${x}" cy="${ys[i]}" r="6" fill="#123A5C"/><text x="${x}" y="${ys[i]-11}" text-anchor="middle" font-size="14" font-weight="800" fill="#123A5C">${tt[i]}</text><text x="${x}" y="162" text-anchor="middle" font-size="12" font-weight="700" fill="#3E4F61">${dl[i]}</text>`).join('')}</svg></div></div>
+ <div class="rc"><h4>🔁 Cosechadores con más incidencias en la semana</h4>${P.map((o,i)=>`<div class="rk2"><div class="n">${i+1}. ${esc(o.n||'(sin nombre)')}${ROL==='admin'?' <small>· Grupo '+esc(o.g)+'</small>':''}</div><div class="st"><div class="sb2">${Object.entries(o.t).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<i style="width:${v/pm*100}%;background:${tcol(k)}">${v}</i>`).join('')}</div><b>${o.c}</b></div></div>`).join('')}</div>`}
+async function fotoSem(){const {D,L,TT,PD,tt,P,dl,mi,dd}=datSem(),n=L.length,cap=k=>k.charAt(0)+k.slice(1).toLowerCase();
+ const W=900,H=150+300+40+TT.length*30+60+P.length*46+40,cv=document.createElement('canvas');cv.width=W*2;cv.height=H*2;const g=cv.getContext('2d');g.scale(2,2);
+ const rr=(x,y,w,h,r,c)=>{g.fillStyle=c;g.beginPath();g.roundRect(x,y,w,h,r);g.fill()};const gr=ROL==='admin'?(FG?'Grupo '+FG:'Todos los grupos'):'Grupo '+GR;
+ g.fillStyle='#EEF2F6';g.fillRect(0,0,W,H);g.fillStyle='#123A5C';g.fillRect(0,0,W,76);g.fillStyle='#fff';g.font='bold 25px system-ui,Arial';g.fillText('📊 Incidencias de cosecha · '+gr,20,36);g.font='16px system-ui,Arial';g.fillText('Semana del '+fmtD(D[0])+' al '+fmtD(D[5])+'/'+D[5].slice(0,4)+' · '+(POR||''),20,62);
+ const mc=TT.find(z=>z[0]==='MALA CALIDAD');const K=[[n,'incidencias','#123A5C'],[mc?mc[1]:0,'mala calidad','#D9454A'],[dl[mi]+' '+D[mi].slice(8),'día con más ('+tt[mi]+')','#E8A33D'],[(n/dd).toFixed(1),'promedio por día','#1E8E52']];
+ K.forEach(([v,t,c],i)=>{const x=16+i*218;rr(x,90,206,70,10,'#fff');g.fillStyle=c;g.fillRect(x,90,206,5);g.fillStyle='#123A5C';g.font='bold 26px system-ui,Arial';g.fillText(v,x+12,128);g.fillStyle='#3E4F61';g.font='bold 13px system-ui,Arial';g.fillText(t,x+12,150)});
+ rr(16,174,W-32,290,12,'#fff');g.fillStyle='#123A5C';g.font='bold 16px system-ui,Arial';g.fillText('Incidencias por día y tipo',32,200);
+ let lx=32;TT.forEach(([k])=>{g.fillStyle=tcol(k);g.fillRect(lx,210,12,12);g.fillStyle='#123A5C';g.font='bold 12px system-ui,Arial';const t=cap(k);g.fillText(t,lx+16,221);lx+=g.measureText(t).width+32});
+ const mx=Math.max(1,...tt),bw=110,base=430,hh=170;PD.forEach((o,i)=>{const x=40+i*140;let y=base;Object.entries(o).forEach(([k,v])=>{const h=v/mx*hh;g.fillStyle=tcol(k);g.fillRect(x,y-h,bw,h);if(h>16){g.fillStyle='#fff';g.font='bold 13px system-ui,Arial';g.textAlign='center';g.fillText(v,x+bw/2,y-h/2+5);g.textAlign='left'}y-=h});
+  g.fillStyle='#123A5C';g.font='bold 15px system-ui,Arial';g.textAlign='center';g.fillText(tt[i]||'–',x+bw/2,y-8);g.fillStyle='#3E4F61';g.font='bold 13px system-ui,Arial';g.fillText(dl[i]+' '+D[i].slice(8),x+bw/2,base+20);g.textAlign='left'});
+ let y=480;rr(16,y,W-32,40+TT.length*30,12,'#fff');g.fillStyle='#123A5C';g.font='bold 16px system-ui,Arial';g.fillText('Por tipo',32,y+26);y+=36;const mt=Math.max(1,...TT.map(z=>z[1]));
+ TT.forEach(([k,v])=>{g.fillStyle='#123A5C';g.font='bold 13px system-ui,Arial';g.fillText(cap(k),32,y+16);rr(200,y+2,W-330,20,5,'#E3E8EE');rr(200,y+2,(W-330)*v/mt,20,5,tcol(k));g.fillStyle='#fff';g.fillText(v,208,y+17);g.fillStyle='#123A5C';g.textAlign='right';g.fillText(Math.round(v/n*100)+'%',W-34,y+17);g.textAlign='left';y+=30});
+ y+=24;rr(16,y,W-32,44+P.length*46,12,'#fff');g.fillStyle='#123A5C';g.font='bold 16px system-ui,Arial';g.fillText('🔁 Cosechadores con más incidencias',32,y+26);y+=40;const pm=Math.max(1,...P.map(o=>o.c)),bb=W-120;
+ P.forEach((o,i)=>{g.fillStyle='#123A5C';g.font='bold 13px system-ui,Arial';g.fillText((i+1)+'. '+(o.n||''),32,y+12);let x=32;rr(32,y+18,bb-20,20,5,'#E3E8EE');Object.entries(o.t).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{const w=v/pm*(bb-20);g.fillStyle=tcol(k);g.fillRect(x,y+18,w,20);g.fillStyle='#fff';g.textAlign='center';g.fillText(v,x+w/2,y+33);g.textAlign='left';x+=w});g.fillStyle='#123A5C';g.font='bold 17px system-ui,Arial';g.textAlign='right';g.fillText(o.c,W-34,y+34);g.textAlign='left';y+=46});
+ const blob=await new Promise(r=>cv.toBlob(r,'image/png')),fn='Incidencias_semana_'+D[0]+'_'+gr.replace(/\s+/g,'_')+'.png',file=new File([blob],fn,{type:'image/png'});
+ if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file]});return}catch(e){if(e.name==='AbortError')return}}
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fn;a.click()}
+$('vw').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;VW=b.dataset.v;$('vw').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));pintaRes()};
 let FD='';function marcaP(){FP='dia';if(!FD)FD=hoyISO();$('fD').value=FD;$('fD').max=hoyISO();$('fNext').disabled=FD>=hoyISO()}
 $('fD').onchange=()=>{if($('fD').value){FD=$('fD').value;marcaP();pintaRes()}};
 const mvD=n=>{const d=new Date(FD+'T12:00:00');d.setDate(d.getDate()+n);const v=d.toISOString().slice(0,10);if(v>hoyISO())return;FD=v;marcaP();pintaRes()};$('fPrev').onclick=()=>mvD(-1);$('fNext').onclick=()=>mvD(1);
@@ -229,7 +270,7 @@ function pintaSec(){const adm=ROL==='admin';if(!SEC||(!adm&&(SEC==='gr'||SEC==='
  document.querySelectorAll('[data-sec]').forEach(d=>d.classList.toggle('hide',d.dataset.sec!==SEC));
  const F=[];if(FG)F.push(['g','Grupo '+FG]);if(FA)F.push(['a',FA.split(' ').slice(0,2).join(' ')]);if(FM)F.push(['m',FM.charAt(0)+FM.slice(1).toLowerCase()]);
  $('fAct').innerHTML=F.map(([k,t])=>`<button data-fx="${k}">${esc(t)} ✕</button>`).join('')}
-$('rFoto').onclick=async()=>{const B=RES.filter(x=>x.fecha===FD&&(!FG||x.grupo===FG)&&(!FA||x.auxiliar===FA)).sort((a,b)=>(a.hora||'').localeCompare(b.hora||''));
+$('rFoto').onclick=async()=>{if(VW==='s')return fotoSem();const B=RES.filter(x=>x.fecha===FD&&(!FG||x.grupo===FG)&&(!FA||x.auxiliar===FA)).sort((a,b)=>(a.hora||'').localeCompare(b.hora||''));
  const _d=new Date(FD+'T12:00:00'),d7=new Date(_d.getTime()-((_d.getDay()+6)%7)*864e5).toISOString().slice(0,10),W7={};RES.filter(x=>x.fecha>=d7&&x.fecha<=FD).forEach(x=>{W7[x.dni]=(W7[x.dni]||0)+1});
  const T={};B.forEach(x=>T[x.incidencia]=(T[x.incidencia]||0)+1);const TT=Object.entries(T).sort((a,b)=>b[1]-a[1]);const cap=k=>k.charAt(0)+k.slice(1).toLowerCase();
  const W=760,H=200+TT.length*34+60+B.length*50+40,cv=document.createElement('canvas');cv.width=W*2;cv.height=H*2;const g=cv.getContext('2d');g.scale(2,2);
