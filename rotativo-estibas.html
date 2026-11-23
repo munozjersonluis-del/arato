@@ -55,7 +55,7 @@ td.cD select{background:#D9454A;color:#fff}td.cT{color:var(--grn)}td.cU select{b
 <header><div><b>🔄 Rotativo de descanso</b><br><small id=sem></small></div><span id=st>…</span></header>
 <div class=wrap>
 <div class=tabs><button id=tA class=on>✏️ Armar</button><button id=tP>🚚 Programa</button><button id=tG>👥 Por grupo</button><button id=tR>📋 Por día</button></div>
-<div id=vA><div id=alerts></div><div class=lst><div><div class=sec style="margin-top:0">✅ Ya tienen su descanso <span id=nya></span></div><div class=chips id=ya2></div></div><div><div class=sec style="margin-top:0">⏳ Faltan descansar <span id=nfa></span></div><div class=chips id=fa2></div></div></div><div class=gw id=grid></div></div>
+<div id=vA><div id=alerts></div><div class=lst><div><div class=sec style="margin-top:0">✅ Ya tienen su descanso <span id=nya></span></div><div class=chips id=ya2></div></div><div><div class=sec style="margin-top:0">⏳ Faltan descansar <span id=nfa></span></div><div class=chips id=fa2></div></div></div><div class=gw id=grid></div><div id=per></div></div>
 <div id=vP hidden></div><div id=vG hidden></div><div id=vR hidden><div id=res></div>
 <div class=sec>✅ Ya tienen su descanso</div><div class=chips id=ya></div>
 <div class=sec>⏳ Faltan descansar</div><div class=chips id=falta></div>
@@ -88,7 +88,17 @@ const CHO={"TCI-843":"LEYDER PAREDES","TAU-800":"MILLER RODRÍGUEZ","TCX-842":"D
 const PLD=(u,i)=>(S.pdia&&S.pdia[i]&&S.pdia[i][u])||PL(u);
 const selPl=(u,i)=>`<select data-pp="${u}" data-pi=${i} style="font-weight:800;border:1px solid #BFD0E0;border-radius:6px;padding:4px;background:#fff;color:#123A5C">${PLACAS.map(x=>`<option ${x===PLD(u,i)?"selected":""}>${x}</option>`).join("")}</select>`;
 const PL=u=>(S.placa&&S.placa[u])||(UNI[u]?UNI[u][0]:"—");
-const BASE0=BASE.map(b=>b[0]);const NAMES0=BASE.map(b=>b[1]),ORD=[...UNIDADES,"Sobrante"];function aplicaU(){BASE.forEach(b=>{b[0]=(S.unid&&S.unid[b[1]])||BASE0[NAMES0.indexOf(b[1])]});BASE.sort((p,q)=>ORD.indexOf(p[0])-ORD.indexOf(q[0]))}
+const BASE0=BASE.map(b=>b[0]);const NAMES0=BASE.map(b=>b[1]),ORD=[...UNIDADES,"Sobrante"];const DEFU={};BASE.forEach(b=>DEFU[b[1]]=b[0]);
+function aplicaPer(){S.baja=S.baja||[];S.extra=S.extra||[];S.cel=S.cel||{};
+ for(let i=BASE.length-1;i>=0;i--)if(S.baja.includes(BASE[i][1]))BASE.splice(i,1);
+ S.extra.forEach(([u,n])=>{if(!S.baja.includes(n)&&!BASE.some(b=>b[1]===n)){BASE.push([u,n]);DEFU[n]=u}});
+ BASE.forEach(([u,n])=>{if(!S.plan[n])S.plan[n]=["T","T","T","T","T","T"]});Object.assign(CEL,S.cel)}
+function perHTML(){return `<div class=sec style="margin-top:18px">👥 Personal de estibas (${BASE.length})</div>
+ <div style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 10px">${BASE.map(([u,n])=>`<span style="display:inline-flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--bd);border-radius:20px;padding:4px 6px 4px 12px;font-size:13px;font-weight:600">${n} <small style="opacity:.6">${u}</small><button data-del="${n}" title="Eliminar" style="border:0;background:#FDECEC;color:#C62828;border-radius:50%;width:24px;height:24px;cursor:pointer">🗑</button></span>`).join("")}</div>
+ <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center"><input id=nN placeholder="Nombre y apellido" style="padding:8px;border:1px solid var(--bd);border-radius:8px;min-width:200px;text-transform:uppercase"><select id=nU style="padding:8px;border:1px solid var(--bd);border-radius:8px">${[...UNIDADES,"Sobrante"].map(o=>`<option ${o==="Sobrante"?"selected":""}>${o}</option>`).join("")}</select><input id=nC placeholder="Celular" inputmode=numeric style="padding:8px;border:1px solid var(--bd);border-radius:8px;width:120px"><button id=nAdd style="padding:8px 14px;border:0;border-radius:8px;background:#2E9E4F;color:#fff;font-weight:800;cursor:pointer">➕ Agregar</button></div>`}
+document.addEventListener("click",e=>{const d=e.target.closest("[data-del]");if(d){const n=d.dataset.del;if(!confirm("¿Eliminar a "+n+" del rotativo?"))return;S.baja=S.baja||[];S.baja.push(n);S.extra=(S.extra||[]).filter(x=>x[1]!==n);render();guardar();return}
+ if(e.target.id==="nAdd"){const n=$("nN").value.trim().toUpperCase().replace(/\s+/g," ");if(!n)return;S.baja=(S.baja||[]).filter(x=>x!==n);S.extra=S.extra||[];if(BASE.some(b=>b[1]===n)){alert("Ya está en la lista");return}S.extra.push([$("nU").value,n]);const c=$("nC").value.trim();if(c){S.cel=S.cel||{};S.cel[n]=c}S.plan[n]=["T","T","T","T","T","T"];render();guardar()}});
+function aplicaU(){aplicaPer();BASE.forEach(b=>{b[0]=(S.unid&&S.unid[b[1]])||DEFU[b[1]]});BASE.sort((p,q)=>ORD.indexOf(p[0])-ORD.indexOf(q[0]))}
 function render(){aplicaU();const p=S.plan;$("sem").textContent="Semana "+S.sem+" · Cosecha Blueberries Chao";
  $("tA").classList.toggle("on",vista==="A");$("tR").classList.toggle("on",vista==="R");$("vA").hidden=vista!=="A";$("vR").hidden=vista!=="R";$("vG").hidden=vista!=="G";$("tG").classList.toggle("on",vista==="G");$("vP").hidden=vista!=="P";$("tP").classList.toggle("on",vista==="P");
  const c=calc(dia);
@@ -103,7 +113,7 @@ function render(){aplicaU();const p=S.plan;$("sem").textContent="Semana "+S.sem+
  const tot=DIAS.map((_,i)=>calc(i));
  $("grid").innerHTML=`<table class=gt2><tr><th>Grupo</th><th>Placa</th><th>Estiba ▾</th>${["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"].map(d=>`<th>${d}</th>`).join("")}</tr>`+
   BASE.map(([u,n])=>`<tr><td class=u><select data-u="${n}" style="font-weight:800;color:var(--pri);border:1px solid var(--bd);border-radius:6px;padding:4px;min-width:110px;background:var(--card)">${[...UNIDADES,"Sobrante"].map(o=>`<option value="${o}" ${o===u?"selected":""}>${NOM(o)}</option>`).join("")}</select></td><td>${UNI[u]?`<select data-p="${u}" style="min-width:96px;font-weight:700;border:1px solid var(--bd);border-radius:6px;padding:4px;background:var(--card);color:var(--tx)">${PLACAS.map(x=>`<option ${x===PL(u)?"selected":""}>${x}</option>`).join("")}</select>`:"—"}</td><td class=n><select data-e="${n}" style="font-weight:700;border:1px solid var(--bd);border-radius:6px;padding:4px;background:var(--card);color:var(--tx);min-width:190px">${BASE.map(b=>b[1]).sort().map(x=>`<option ${x===n?"selected":""}>${x}</option>`).join("")}</select></td>${DIAS.map((_,i)=>cell(n,i)).join("")}</tr>`).join("")+
-  `<tr class=tt><td colspan=3>Descansan (meta 4)</td>${tot.map(k=>`<td>${k.desc}</td>`).join("")}</tr><tr class=tt><td colspan=3>Trabajan (meta 20)</td>${tot.map(k=>`<td>${24-k.desc}</td>`).join("")}</tr><tr class=tt><td colspan=3>Alerta</td>${tot.map(k=>{const ok=k.desc===4&&!UNIDADES.some(u=>k.cnt[u]<NEED(u));return `<td class="${ok?"ok":"ko"}">${ok?"✔ OK":"⚠ revisar"}</td>`}).join("")}</tr></table>`;
+  `<tr class=tt><td colspan=3>Descansan (meta 4)</td>${tot.map(k=>`<td>${k.desc}</td>`).join("")}</tr><tr class=tt><td colspan=3>Trabajan</td>${tot.map(k=>`<td>${BASE.length-k.desc}</td>`).join("")}</tr><tr class=tt><td colspan=3>Alerta</td>${tot.map(k=>{const ok=k.desc===4&&!UNIDADES.some(u=>k.cnt[u]<NEED(u));return `<td class="${ok?"ok":"ko"}">${ok?"✔ OK":"⚠ revisar"}</td>`}).join("")}</tr></table>`;
  {const k=calc(pdia),DLn=["LUNES","MARTES","MIÉRCOLES","JUEVES","VIERNES","SÁBADO"];
  const mon=(()=>{const y=2026,j=new Date(Date.UTC(y,0,4)),d=(j.getUTCDay()||7);j.setUTCDate(j.getUTCDate()-d+1+(S.sem-1)*7);return j})();
  const fd=new Date(mon);fd.setUTCDate(fd.getUTCDate()+pdia);const fecha=String(fd.getUTCDate()).padStart(2,"0")+"/"+String(fd.getUTCMonth()+1).padStart(2,"0")+"/"+fd.getUTCFullYear();
@@ -138,7 +148,7 @@ function render(){aplicaU();const p=S.plan;$("sem").textContent="Semana "+S.sem+
  $("ya2").innerHTML=ya.map(([u,n])=>`<span>${n} · <b>${DIAS[p[n].indexOf("D")]}</b></span>`).join("")||"<span>Nadie aún</span>";
  $("fa2").innerHTML=fa.map(([u,n])=>`<span class=x>${n}</span>`).join("")||"<span>✔ Todos tienen su día</span>";}
  $("ya").innerHTML=BASE.filter(([,n])=>p[n].includes("D")).map(([,n])=>`<span>${n} · ${DIAS[p[n].indexOf("D")]}</span>`).join("")||"<span>Nadie aún</span>";
- $("falta").innerHTML=BASE.filter(([,n])=>!p[n].includes("D")).map(([,n])=>`<span class=x>${n}</span>`).join("")||"<span>✔ Todos tienen su día</span>";
+ $("per").innerHTML=perHTML();$("falta").innerHTML=BASE.filter(([,n])=>!p[n].includes("D")).map(([,n])=>`<span class=x>${n}</span>`).join("")||"<span>✔ Todos tienen su día</span>";
 }
 function toggle(n){const p=S.plan;if(p[n][dia]!=="D"&&calc(dia).desc>=4){$("st").textContent="Ya hay 4 este día";return}if(p[n][dia]==="D"){const c=calc(dia),r=c.cubre[n];if(r)p[r][dia]="T";p[n][dia]="T"}else{p[n]=p[n].map((x,k)=>x==="D"&&k!==dia?"T":x);
  const c0=calc(dia);p[n][dia]="D";const u=BASE.find(b=>b[1]===n)[0];if(u!=="Sobrante"){const l=libres(dia,calc(dia));if(l[0])p[l[0]][dia]=u}}render();guardar()}
