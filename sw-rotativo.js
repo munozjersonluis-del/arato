@@ -1,5 +1,5 @@
 // App "Rotativo": la página abre aunque no haya señal; los datos siempre van en línea.
-const CACHE = 'rotativo-v2';
+const CACHE = 'rotativo-v3';
 const PAGE = 'rotativo-estibas.html';
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll([PAGE, 'rotativo.webmanifest', 'rotativo-icon-192.png', 'rotativo-icon-512.png'])).then(() => self.skipWaiting()));
