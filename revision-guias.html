@@ -21,11 +21,15 @@
 .g{display:inline-block;font-size:14px;font-weight:800;background:#123A5C;color:#fff;padding:6px 10px;border-radius:8px;margin:2px 4px 8px 0;word-break:break-all}
 .ok{padding:12px 14px;color:#1E7A46;font-weight:800}
 .e{text-align:center;padding:30px;font-weight:800;color:#555}
+.kp{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px}.k{background:#fff;border-radius:10px;padding:10px 14px;border-left:5px solid #1B4F7A;box-shadow:0 1px 3px #0001}.k span{font-size:12px;font-weight:700;color:#7A8899}.k b{display:block;font-size:22px}
+.tw{overflow-x:auto}table.t{width:100%;border-collapse:collapse;font-size:13.5px;min-width:900px}.t th{background:#1B4F7A;color:#fff;padding:8px 5px;font-size:11.5px;text-align:center}.t th.h{background:#24639A}.t td{padding:7px 5px;border-bottom:1px solid #E6EBF1;text-align:center}.t td.vn{font-weight:900;border-right:1px solid #E6EBF1}.t td.gd{text-align:left;color:#5B6B7C;white-space:nowrap}.t td.gd b{color:#000}.t tr.bad td{background:#FDECEC}.t tr.bad td.vn{border-left:5px solid #D2412C}
+.pl{border-radius:12px;padding:3px 9px;font-size:12px;font-weight:800;color:#fff;white-space:nowrap}.okk{color:#1E9E5A;font-weight:900;font-size:16px}
+.w{max-width:1400px}
 .ley{font-size:14px;font-weight:700;margin:6px 0 14px}
 </style></head><body>
 <div class="top"><h1>🔎 Revisión de horas de guías</h1><div class="r">
 <select id="fu"><option value="">Todos los fundos</option></select><input type="date" id="dia"><button id="act">↻ Actualizar</button><button id="xl" style="background:#1D6F42">📥 Excel</button></div></div>
-<div class="w"><div class="ley">🟥 error seguro · 🟨 dudoso · Refrigerio 12:00–13:00 o 12:30–13:30 · Toca el grupo para ver todas sus guías en orden; las que tienen error salen en rojo con la explicación. Inicio → Fin = llenado de la guía.</div><div id="out"><div class="e">Cargando…</div></div></div>
+<div class="w"><div class="ley">🟥 error seguro · 🟨 dudoso · Refrigerio 12:00–13:00 o 12:30–13:30 · Toca el grupo para ver sus guías · Tiempo = inicio → fin: 🟢 hasta 20 min · 🟠 21 a 30 · 🔴 más de 30</div><div id="out"><div class="e">Cargando…</div></div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <script>const CYC=(rec,ini,fu,a)=>{if(rec==null)return null;if(!a)return ini!=null&&ini<1e9?rec-ini:null;const rf=a.rec!=null&&a.rec<=780&&rec>780;if(fu!==a.fu){return ini!=null&&ini<1e9?rec-ini:null}if(rf)return ini!=null&&ini<1e9&&ini>a.rec?rec-ini:rec-780;return a.rec!=null?rec-a.rec:null};
 
@@ -46,20 +50,21 @@ function revisar(V){V.forEach((v,i)=>{let j=i-1;while(j>=0&&V[j].sx)j--;const pv
  if((ini!=null&&ini<390)||(v.rec!=null&&v.rec>1110)){e.ini=e.ini||Y1;o.push('Hora fuera de la jornada (antes de 6:30 o después de 18:30).')}
  v.e=e;v.o=o})}
 function pintar(){const F=$('fu').value,P={};
- ALL.filter(r=>!F||r.fundo===F).forEach(r=>{(P[r.placa]=P[r.placa]||[]).push({cod:r.codigo,g:String(r.grupo||''),fu:r.fundo,cal:r.calidad,ini:mins(r.inicio),fin:mins(r.fin),rec:mins(r.recojo)})});
+ ALL.filter(r=>!F||r.fundo===F).forEach(r=>{(P[r.placa]=P[r.placa]||[]).push({cod:r.codigo,g:String(r.grupo||''),fu:r.fundo,cal:r.calidad,mo:r.modulo,va:r.variedad,en:r.envase,ne:+r.n_envases||0,ja:+r.jarras||0,ini:mins(r.inicio),fin:mins(r.fin),rec:mins(r.recojo)})});
  let h='',tot=0,nv=0;DATA=[];
  Object.keys(P).sort((a,b)=>P[a][0].g.localeCompare(P[b][0].g)).forEach(p=>{const L=P[p].sort((a,b)=>(a.rec??0)-(b.rec??0)),T=[];
   L.forEach(r=>{const t=T[T.length-1];if(t&&r.rec!=null&&r.rec-t.rec<=2){t.gs.push(r);t.u=r.rec}else T.push({rec:r.rec,u:r.rec,gs:[r]})});
   const V=T.map((t,i)=>({n:i+1,gs:t.gs,sx:t.gs.every(x=>!/^EXPORT/i.test(x.cal||'')),ini:Math.min(...t.gs.map(x=>x.ini??1e9)),fin:Math.max(...t.gs.map(x=>x.fin??-1)),rec:t.rec,fu:[...new Set(t.gs.map(x=>x.fu))].join(', '),ciclo:CYC(t.rec,Math.min(...t.gs.map(x=>x.ini??1e9)),[...new Set(t.gs.map(x=>x.fu))].join(', '),i&&{rec:T[i-1].rec,fu:[...new Set(T[i-1].gs.map(x=>x.fu))].join(', ')})}));
   V.forEach(v=>{if(v.ini>=1e9)v.ini=null;if(v.fin<0)v.fin=null});revisar(V);
   const M=V.filter(v=>v.o.length);DATA.push({p,g:L[0].g,V,M});nv+=V.length;tot+=M.length;
-  h+=`<details class="c"><summary><h2>🚚 ${esc(p)} · GRUPO ${esc(L[0].g)} · ${V.length} viajes${M.length?` · <span style="background:#D2412C;padding:2px 8px;border-radius:6px">${M.length} por corregir</span>`:' · ✅ todo bien'} <span class="ab">▼</span></h2></summary>`
-   +(M.length?`<div class="res"><b>Resumen:</b> ${M.map(v=>`viaje ${v.n}`).join(', ')} ${M.length>1?'tienen':'tiene'} horas para revisar. Los viajes sin color están bien.</div>`:'')
-   +V.map(v=>{const s=k=>v.e[k]&&k!=='x'?` style="background:${v.e[k]}"`:'',bad=v.o.length,cg=v.gs.map(x=>`<span class="g">📄 ${esc(x.cod)}${String(x.cal||'').toUpperCase().startsWith('EXPORT')?'':' · '+esc(x.cal)}</span>`).join('');
-    return`<div class="v${bad?' bad':''}"><div class="fila"><span class="n">${bad?'⚠':'✅'} V${v.n}</span><span${s('ini')} class="h">${hm(v.ini)}</span><span class="a">→</span><span${s('fin')} class="h">${hm(v.fin)}</span><span class="rl">recojo</span><span${s('rec')} class="h">${hm(v.rec)}</span><span class="fu">${esc(v.fu)}</span></div><div>${cg}</div>${bad?`<div class="o">${v.o.map(x=>'• '+x).join('<br>')}</div>`:''}</div>`}).join('')+'</details>'});
- $('out').innerHTML=(nv?`<div class="sum" style="${tot?'background:#FDECEA;color:#B3261E;border:2px solid #D2412C':'background:#E8F6EE;color:#1E7A46;border:2px solid #1E9E5A'}">${tot?`⚠ ${tot} de ${nv} viajes con horas para corregir`:'✅ Todas las horas están bien'}</div>`:'')+(h||'<div class="e">No hay guías subidas para este día.</div>')}
+  const tc=m=>m==null?'—':`<span class=pl style="background:${m<=20?'#1E9E5A':m<=30?'#E8A33D':'#D2412C'}">${m} min</span>`;
+  h+=`<details class="c"><summary><h2>🚚 ${esc(p)} · GRUPO ${esc(L[0].g)} · ${V.length} viajes${M.length?` · <span style="background:#D2412C;padding:2px 8px;border-radius:6px">${M.length} por revisar</span>`:' · ✅ todo bien'} <span class="ab">▼</span></h2></summary><div class=tw><table class=t><tr><th>Viaje</th><th>N° Guía</th><th>Módulo</th><th>Variedad</th><th>Calidad</th><th>Envase</th><th># Env.</th><th># Jarras</th><th>Peso (kg)</th><th class=h>Inicio</th><th class=h>Fin</th><th class=h>Recojo</th><th class=h>Tiempo</th><th>Revisión</th></tr>`
+   +V.map(v=>{const s=k=>v.e[k]&&k!=='x'?` style="background:${v.e[k]}"`:'',bad=v.o.length,n=v.gs.length,rs=n>1?` rowspan=${n}`:'',tm=v.ini!=null&&v.fin!=null?v.fin-v.ini:null;
+    return v.gs.map((x,i)=>`<tr class="${bad?'bad':''}">${i?'':`<td class=vn${rs}>V${v.n}</td>`}<td class=gd>…${esc(String(x.cod).slice(-13,-4))}<b>${esc(String(x.cod).slice(-4))}</b></td><td>${esc(x.mo||'—')}</td><td>${esc(x.va||'—')}</td><td>${esc(String(x.cal||'').replace('EXPORTABLE','EXPORT.'))}</td><td>${esc(x.en||'—')}</td><td>${x.ne||'—'}</td><td>${x.ja||'—'}</td><td>${x.ja?(x.ja*1.25).toFixed(2):'—'}</td>${i?'':`<td${rs}${s('ini')}>${hm(v.ini)}</td><td${rs}${s('fin')}>${hm(v.fin)}</td><td${rs}${s('rec')}>${hm(v.rec)}</td><td${rs}>${tc(tm)}</td><td${rs}>${bad?'<span class=pl style="background:#D2412C">⚠ Revisar</span>':'<span class=okk>✔</span>'}</td>`}</tr>`).join('')}).join('')+'</table></div></details>'});
+ const G=ALL.filter(r=>!F||r.fundo===F),tE=G.reduce((s,r)=>s+(+r.n_envases||0),0),tJ=G.reduce((s,r)=>s+(+r.jarras||0),0);
+ $('out').innerHTML=(nv?`<div class=kp><div class=k><span>Viajes</span><b>${nv}</b></div><div class=k><span>Guías</span><b>${G.length}</b></div><div class=k><span># Envases</span><b>${tE.toLocaleString('en-US')}</b></div><div class=k><span># Jarras</span><b>${tJ.toLocaleString('en-US')}</b></div><div class=k><span>Peso (kg)</span><b>${Math.round(tJ*1.25).toLocaleString('en-US')} kg</b></div><div class=k style="border-color:#D2412C"><span>⚠ Por revisar</span><b>${tot}</b></div></div>`:'')+(nv?`<div class="sum" style="${tot?'background:#FDECEA;color:#B3261E;border:2px solid #D2412C':'background:#E8F6EE;color:#1E7A46;border:2px solid #1E9E5A'}">${tot?`⚠ ${tot} de ${nv} viajes con horas para corregir`:'✅ Todas las horas están bien'}</div>`:'')+(h||'<div class="e">No hay guías subidas para este día.</div>')}
 async function cargar(){const d=$('dia').value;$('out').innerHTML='<div class="e">Cargando…</div>';
- try{const L=await (await sbAll(`${SB}/rest/v1/guias_campo?fundo=neq.TERRANOVA&fecha=eq.${d}&select=codigo,grupo,fundo,placa,calidad,inicio,fin,recojo&limit=5000`,H));
+ try{const L=await (await sbAll(`${SB}/rest/v1/guias_campo?fundo=neq.TERRANOVA&fecha=eq.${d}&select=codigo,grupo,fundo,placa,calidad,inicio,fin,recojo,modulo,variedad,envase,n_envases,jarras&limit=5000`,H));
   ALL=Array.isArray(L)?L:[];const fs=[...new Set(ALL.map(r=>r.fundo).filter(Boolean))].sort(),cur=$('fu').value;
   $('fu').innerHTML='<option value="">Todos los fundos</option>'+fs.map(x=>`<option${x===cur?' selected':''}>${esc(x)}</option>`).join('');pintar()}
  catch(e){$('out').innerHTML='<div class="e">Sin conexión.</div>'}}
