@@ -1,0 +1,54 @@
+<!doctype html><html lang=es><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Apoyo · Botar descarte</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,Arial;background:#EEF2F7;color:#0F2A44}
+.w{max-width:600px;margin:0 auto}
+#cap{background:#EEF2F7;padding-bottom:6px}
+.hd{background:linear-gradient(135deg,#0D2740,#1B4F7A);color:#fff;padding:20px 22px}.hd small{font-weight:800;letter-spacing:2px;opacity:.7;font-size:11px}.hd h1{margin:6px 0 2px;font-size:21px}.hd p{margin:0;opacity:.8;font-weight:600;font-size:14px}
+.pr{display:flex;align-items:center;gap:12px;margin-top:14px}.pb{flex:1;height:8px;background:#ffffff2a;border-radius:4px;overflow:hidden}.pb div{height:100%;background:#4ADE80;border-radius:4px}.pr b{font-size:13.5px;white-space:nowrap}
+.c{margin:16px 14px;background:#fff;border-radius:16px;padding:4px 16px;box-shadow:0 2px 10px #0F2A4412}
+.r{display:flex;align-items:center;gap:12px;padding:13px 0;border-top:1px solid #F0F2F5;flex-wrap:wrap}.r:first-child{border:0}.rd .n{color:#5B6B7C}.rn{background:#FFF8F0;margin:0 -16px;padding:13px 16px;border-top:2px solid #F0892A;border-bottom:2px solid #F0892A}
+.cb{width:26px;height:26px;border-radius:7px;border:2px solid #C9D2DC;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;flex:none;background:#fff}.cb.on{background:#2E9E4F;border-color:#2E9E4F;color:#fff}.cb.nx{border-color:#F0892A;color:#F0892A;font-size:12px}
+.g{width:36px;height:36px;border-radius:10px;color:#fff;font-weight:900;font-size:17px;display:flex;align-items:center;justify-content:center;flex:none}.n{flex:1;font-weight:800;font-size:16px}.f{text-align:right}.f b{display:block;font-size:14px}.f small{color:#7A8899;font-weight:600;font-size:12px}.mu{color:#B5BFCA}
+.tg{border-radius:20px;padding:4px 10px;font-size:10.5px;font-weight:800;letter-spacing:.5px;min-width:74px;text-align:center}
+.fm{display:flex;gap:6px;width:100%;margin-top:10px}.fm input{flex:1;min-width:0;border:1.5px solid #F0892A;border-radius:9px;padding:9px;font-size:15px;font-weight:700;color:#0F2A44;background:#fff}.fm input[type=number]{flex:0 0 90px}
+.fm button,.bt{border:0;border-radius:9px;padding:9px 14px;font-weight:800;font-size:14px;cursor:pointer}.ok{background:#2E9E4F;color:#fff}.sk{background:#fff;color:#C25E10;border:1.5px solid #F0892A!important;margin-top:8px;width:100%}
+.ft{text-align:center;font-size:12px;color:#7A8899;font-weight:600;padding:0 14px 14px}
+.ac{display:flex;gap:8px;margin:0 14px 30px}.ac .bt{flex:1;padding:13px}.wa{background:#25D366;color:#fff}.ud{background:#fff;color:#5B6B7C;border:1.5px solid #D9E0E8!important}
+#st{text-align:center;font-size:12px;color:#7A8899;padding:6px}
+.cap .noimg{display:none!important}
+</style></head><body><div class=w>
+<div id=cap><div class=hd><small>MISSION PRODUCE · BLUEBERRIES CHAO</small><h1>Programa de apoyo · Botar descarte</h1><p id=vt></p><div class=pr><div class=pb><div id=pbar></div></div><b id=ptx></b></div></div>
+<div class=c id=list></div><div class=ft id=ftx></div></div>
+<div class=ac><button class="bt wa" id=wa>📲 Enviar programa por WhatsApp</button><button class="bt ud" id=ud>↶ Deshacer</button></div><div id=st></div>
+</div>
+<script>
+const SB="https://rqvcvffyynpnighzwxju.supabase.co",K="sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn",H={apikey:K,Authorization:"Bearer "+K,"Content-Type":"application/json"};
+const GS="ABCDEF",C={A:'#6B3FA0',B:'#2E86C1',C:'#C9A800',D:'#7F8790',E:'#C0392B',F:'#E67E22'},$=i=>document.getElementById(i);
+const DL=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'],MS=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+let R=[],skip=0;
+const fd=s=>{if(!s)return'—';const d=new Date(s+'T12:00');return DL[d.getDay()]+' '+s.slice(8,10)+'/'+s.slice(5,7)};
+async function load(){try{const r=await fetch(SB+"/rest/v1/apoyo_descarte?select=*&order=id",{headers:H});R=await r.json();$("st").textContent="✔ Sincronizado"}catch(e){$("st").textContent="⚠ Sin conexión"}render()}
+function estado(){const V=R.length?Math.max(...R.map(x=>x.vuelta)):1,cur=R.filter(x=>x.vuelta===V);const done={};cur.forEach(x=>done[x.grupo]=x);
+ let vuelta=V,D=done;if(Object.keys(done).length===6){vuelta=V+1;D={}}
+ const last=R.length?R[R.length-1].grupo:'F';const pend=[];for(let i=1;i<=6;i++){const g=GS[(GS.indexOf(last)+i)%6];if(!D[g])pend.push(g)}
+ return{vuelta,D,pend}}
+function render(){const {vuelta,D,pend}=estado(),nx=pend.length?pend[skip%pend.length]:null,n=Object.keys(D).length;
+ $("vt").textContent="Vuelta "+vuelta+" · "+MS[new Date().getMonth()]+" "+new Date().getFullYear();$("pbar").style.width=(n/6*100)+"%";$("ptx").textContent=n+" de 6 grupos apoyaron";
+ $("list").innerHTML=[...GS].map(g=>{const x=D[g],isN=g===nx;
+  const cb=x?'<span class="cb on">✔</span>':isN?'<span class="cb nx">●</span>':'<span class=cb></span>';
+  const tg=isN?'<span class=tg style="background:#FFF1E2;color:#C25E10">PRÓXIMO</span>':x?'<span class=tg style="background:#E8F5EC;color:#1E7B3C">APOYÓ</span>':'<span class=tg style="background:#F1F3F6;color:#8593A3">PENDIENTE</span>';
+  const f=x?`<span class=f><b>${fd(x.fecha)}</b><small>${x.personas?x.personas+' personas':''}</small></span>`:isN?'':'<span class=f><b class=mu>—</b></span>';
+  const fm=isN?`<div class="fm noimg"><input type=date id=iF><input type=number id=iP min=1 placeholder="Personas" inputmode=numeric><button class=ok id=bOk>✔ Marcar</button></div>${pend.length>1?`<button class="bt sk noimg" id=bSk>↷ Grupo ${g} no puede · pasar al Grupo ${pend[(skip+1)%pend.length]}</button>`:''}`:'';
+  return `<div class="r${isN?' rn':''}${x?' rd':''}">${cb}<span class=g style="background:${C[g]}">${g}</span><span class=n>Grupo ${g}</span>${f}${tg}${fm}</div>`}).join("");
+ $("ftx").textContent=nx?"Próximo apoyo: Grupo "+nx+" · Cuando los 6 grupos tengan ✔ empieza una nueva vuelta":"";
+ if($("bOk"))$("bOk").onclick=async()=>{const f=$("iF").value,p=+$("iP").value||null;if(!f){alert("Pon la fecha");return}
+  $("st").textContent="Guardando…";await fetch(SB+"/rest/v1/apoyo_descarte",{method:"POST",headers:H,body:JSON.stringify({vuelta,grupo:nx,fecha:f,personas:p})});skip=0;load()};
+ if($("bSk"))$("bSk").onclick=()=>{skip++;render()}}
+$("ud").onclick=async()=>{if(!R.length)return;const x=R[R.length-1];if(!confirm("¿Quitar el último registro (Grupo "+x.grupo+" · "+fd(x.fecha)+")?"))return;await fetch(SB+"/rest/v1/apoyo_descarte?id=eq."+x.id,{method:"DELETE",headers:H});load()};
+async function lib(){if(window.html2canvas)return;await new Promise((r,j)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';s.onload=r;s.onerror=j;document.head.appendChild(s)})}
+$("wa").onclick=async()=>{await lib();const el=$("cap");el.classList.add("cap");const cv=await html2canvas(el,{scale:2,backgroundColor:'#EEF2F7'});el.classList.remove("cap");
+ const blob=await new Promise(r=>cv.toBlob(r,'image/png')),file=new File([blob],'Programa_apoyo_descarte.png',{type:'image/png'});
+ if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file]});return}catch(e){if(e.name==='AbortError')return}}
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=file.name;a.click()};
+load();setInterval(()=>{if(!document.hidden&&!document.activeElement.matches('input'))load()},30000);
+</script></body></html>
