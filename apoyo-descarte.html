@@ -9,11 +9,12 @@
 .c{margin:12px 14px 0;background:#fff;border-radius:14px;border:1px solid #E6EBF1;overflow:hidden}table{width:100%;border-collapse:collapse}th{text-align:left;font-size:9.5px;font-weight:700;letter-spacing:.6px;color:#8593A3;padding:10px 8px;background:#F8FAFC;border-bottom:1px solid #E6EBF1}td{padding:10px 8px;border-bottom:1px solid #F0F2F5;font-size:13px;vertical-align:middle}tr:last-child td{border:0}
 .g{width:28px;height:28px;border-radius:8px;color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center}.nm{font-weight:700}.nm em{display:block;font-style:normal;font-size:10.5px;color:#E67E22;font-weight:800}.s{font-size:11px;font-weight:700;border-radius:6px;padding:3px 7px;white-space:nowrap}.f{font-size:12px;color:#5B6B7C}.v{text-align:center;font-weight:800;font-size:15px}tr.hl td{background:#FFFAF3}
 .ft{text-align:center;font-size:11px;color:#8593A3;padding:12px 20px 4px}.ud{display:block;margin:6px auto;background:none;border:0;color:#8593A3;font-size:12px;text-decoration:underline;cursor:pointer}#st{text-align:center;font-size:11.5px;color:#8593A3}
+.sel{display:flex;gap:6px;margin-top:12px;padding-top:12px;border-top:1px solid #F0F2F5}.sel button{flex:1;height:38px;border:0;border-radius:9px;color:#fff;font-weight:800;font-size:15px;opacity:.35;cursor:pointer}.sel button.on{opacity:1;box-shadow:0 0 0 2px #fff,0 0 0 4px #0F2A44}
 #img{position:fixed;left:-2000px;top:0;width:460px;background:#F4F6F9;font-family:Inter,system-ui,Arial;color:#0F2A44;padding-bottom:14px}
 #img .mn{margin:14px 14px 0;background:#fff;border:1px solid #E6EBF1;border-radius:14px;padding:16px;display:flex;align-items:center;gap:16px}#img .mn .g{width:64px;height:64px;font-size:32px;border-radius:16px}#img .mn small{font-size:10.5px;font-weight:700;color:#8593A3;letter-spacing:1px}#img .mn b{display:block;font-size:22px;margin:1px 0 4px}#img .mn div div{font-size:14px;font-weight:600;color:#334}
 </style></head><body><div class=w>
 <div class=hd><small>MISSION PRODUCE · BLUEBERRIES CHAO</small><h1>Apoyo · Botar descarte</h1></div>
-<div class=box><div class=nx><span class=g id=ng></span><div><small>LE TOCA APOYAR</small><b id=nn></b></div></div></div>
+<div class=box><div class=nx><span class=g id=ng></span><div><small id=nl>LE TOCA APOYAR</small><b id=nn></b></div></div><div class=sel id=sel></div></div>
 <div class=box><div class=row><label><span>FECHA</span><input type=date id=iF></label><label style="flex:.5"><span>PERSONAS</span><input type=number id=iP min=1 inputmode=numeric placeholder="0"></label></div><button class=wa id=go>Registrar y enviar al WhatsApp</button></div>
 <div class=c><table><thead><tr><th></th><th>GRUPO</th><th>ESTADO</th><th>ÚLTIMAS 2 FECHAS</th><th style="text-align:center">VECES</th></tr></thead><tbody id=tb></tbody></table></div>
 <div class=ft>Le toca al grupo que menos veces apoyó · si empatan, al que hace más días no apoya</div>
@@ -22,7 +23,7 @@
 <script>
 const SB="https://rqvcvffyynpnighzwxju.supabase.co",KY="sb_publishable_keWbJCavFGWO_B976cjxAA_Gd5JMzFn",H={apikey:KY,Authorization:"Bearer "+KY,"Content-Type":"application/json",Prefer:"return=representation"};
 const GS="ABCDEF",C={A:'#6B3FA0',B:'#2E86C1',C:'#C9A800',D:'#7F8790',E:'#C0392B',F:'#E67E22'},$=i=>document.getElementById(i);
-const DL=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];let R=[];
+const DL=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];let R=[],ch=null;
 const fl=s=>{const d=new Date(s+'T12:00');return DL[d.getDay()]+' '+s.slice(8,10)+'/'+s.slice(5,7)+'/'+s.slice(0,4)},fc=s=>{const d=new Date(s+'T12:00');return DL[d.getDay()].slice(0,3)+' '+s.slice(8,10)+'/'+s.slice(5,7)};
 async function load(){try{const r=await fetch(SB+"/rest/v1/apoyo_descarte?select=*&order=fecha,id",{headers:H});R=await r.json();$("st").textContent="✔ Sincronizado"}catch(e){$("st").textContent="⚠ Sin conexión"}render()}
 function calc(L){const S={};for(const g of GS)S[g]={g,n:0,d:[]};L.forEach(x=>{if(S[x.grupo]){S[x.grupo].n++;if(x.fecha)S[x.grupo].d.push(x.fecha)}});
@@ -30,15 +31,17 @@ function calc(L){const S={};for(const g of GS)S[g]={g,n:0,d:[]};L.forEach(x=>{if
  T.sort((a,b)=>a.n-b.n||((a.d.at(-1)||'')<(b.d.at(-1)||'')?-1:(a.d.at(-1)||'')>(b.d.at(-1)||'')?1:0)||a.g.localeCompare(b.g));
  T.forEach(o=>o.ok=mx>0&&o.n>=mx);return T}
 const rowsHTML=(T,hl)=>T.map(o=>`<tr${o.g===hl?' class=hl':''}><td><span class=g style="background:${C[o.g]}">${o.g}</span></td><td class=nm>Grupo ${o.g}${o.g===hl?'<em>Le toca</em>':''}</td><td>${o.ok?'<span class=s style="color:#1E7B3C;background:#EAF6EE">Apoyó</span>':'<span class=s style="color:#B45309;background:#FEF3E2">Falta apoyar</span>'}</td><td class=f>${o.d.length?o.d.slice(-2).reverse().map(fc).join(' · '):'<span style="color:#B5BFCA">—</span>'}</td><td class=v>${o.n}</td></tr>`).join('');
-function render(){const T=calc(R),nx=T[0].g;$("ng").textContent=nx;$("ng").style.background=C[nx];$("nn").textContent="Grupo "+nx;$("tb").innerHTML=rowsHTML(T,nx)}
+function render(){const T=calc(R),tq=T[0].g,g=ch||tq;$("ng").textContent=g;$("ng").style.background=C[g];$("nn").textContent="Grupo "+g;$("nl").textContent=g===tq?"LE TOCA APOYAR":"ELEGIDO POR TI · le tocaba al Grupo "+tq;
+ $("sel").innerHTML=[...GS].map(x=>`<button data-g=${x} class="${x===g?'on':''}" style="background:${C[x]}">${x}</button>`).join('');$("tb").innerHTML=rowsHTML(T,tq)}
+$("sel").onclick=e=>{const b=e.target.closest('[data-g]');if(!b)return;ch=b.dataset.g;render()};
 async function lib(){if(window.html2canvas)return;await new Promise((r,j)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';s.onload=r;s.onerror=j;document.head.appendChild(s)})}
-$("go").onclick=async()=>{const f=$("iF").value,p=+$("iP").value||null,g=calc(R)[0].g;if(!f){alert("Pon la fecha");$("iF").focus();return}if(!p){alert("Pon cuántas personas");$("iP").focus();return}
+$("go").onclick=async()=>{const f=$("iF").value,p=+$("iP").value||null,g=ch||calc(R)[0].g;if(!f){alert("Pon la fecha");$("iF").focus();return}if(!p){alert("Pon cuántas personas");$("iP").focus();return}
  $("go").disabled=true;$("go").textContent="Guardando…";
  try{const r=await fetch(SB+"/rest/v1/apoyo_descarte",{method:"POST",headers:H,body:JSON.stringify({vuelta:1,grupo:g,fecha:f,personas:p})});if(!r.ok)throw 0;const row=(await r.json())[0];
   const T2=calc([...R,row]);
   $("img").innerHTML=`<div class=hd><small>MISSION PRODUCE · BLUEBERRIES CHAO</small><h1>Apoyo · Botar descarte</h1></div><div class=mn><span class=g style="background:${C[g]}">${g}</span><div><small>APOYA</small><b>Grupo ${g}</b><div>📅 ${fl(f)}</div><div>👥 ${p} personas</div></div></div><div class=c><table><thead><tr><th></th><th>GRUPO</th><th>ESTADO</th><th>ÚLTIMAS 2 FECHAS</th><th style="text-align:center">VECES</th></tr></thead><tbody>${rowsHTML(T2,T2[0].g)}</tbody></table></div>`;
   const txt=`Apoyo botar descarte: Grupo ${g} · ${fl(f).toLowerCase()} · ${p} personas. Siguiente: Grupo ${T2[0].g}`;
-  $("iF").value="";$("iP").value="";await load();$("go").textContent="Preparando imagen…";
+  $("iF").value="";$("iP").value="";ch=null;await load();$("go").textContent="Preparando imagen…";
   let file=null;try{await lib();const cv=await html2canvas($("img"),{scale:2,backgroundColor:'#F4F6F9'});const b=await new Promise(r=>cv.toBlob(r,'image/png'));file=new File([b],'Apoyo_descarte.png',{type:'image/png'})}catch(e){}
   if(file&&navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],text:txt})}catch(e){}}else location.href="https://wa.me/?text="+encodeURIComponent(txt)}
  catch(e){alert("No se pudo guardar. Revisa tu conexión.")}
