@@ -16,7 +16,7 @@
 </style></head><body><div class=w>
 <div class=hd><small>MISSION PRODUCE · BLUEBERRIES CHAO</small><h1>Apoyo · Botar descarte</h1></div>
 <div class=box><div class=nx><span class=g id=ng></span><div><small id=nl>LE TOCA APOYAR</small><b id=nn></b></div></div><div class=sel id=sel></div></div>
-<div class=box><div class=row><label><span>FECHA</span><input type=date id=iF></label><label style="flex:.5"><span>PERSONAS</span><input type=number id=iP min=1 inputmode=numeric placeholder="0"></label></div><button class=wa id=go>Registrar y enviar al WhatsApp</button></div>
+<div class=box><div class=row><label><span>FECHA</span><input type=date id=iF></label><label style="flex:.5"><span>PERSONAS</span><input type=number id=iP min=1 inputmode=numeric placeholder="0"></label></div><button class=wa id=go>Registrar y enviar al WhatsApp</button><button class=wa id=so style="background:#fff;color:#1FA855;border:1.5px solid #1FA855;margin-top:8px">Solo enviar al WhatsApp (sin registrar)</button></div>
 <div class=c><table><thead><tr><th></th><th>GRUPO</th><th>ESTADO</th><th>ÚLTIMAS 2 FECHAS</th><th style="text-align:center">VECES</th></tr></thead><tbody id=tb></tbody></table></div>
 <div class=ft>Le toca al grupo que menos veces apoyó · si empatan, al que hace más días no apoya</div>
 <button class=ud id=ud>↶ Deshacer último registro</button><div id=st></div><button class=ins id=ins style="display:none">⬇ Instalar app en el celular</button></div>
@@ -47,6 +47,11 @@ $("go").onclick=async()=>{const f=$("iF").value,p=+$("iP").value||null,g=ch||cal
   if(file&&navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],text:txt})}catch(e){}}else location.href="https://wa.me/?text="+encodeURIComponent(txt)}
  catch(e){alert("No se pudo guardar. Revisa tu conexión.")}
  $("go").disabled=false;$("go").textContent="Registrar y enviar al WhatsApp"};
+async function share(g,f,p,T,txt){$("img").innerHTML=`<div class=hd><small>MISSION PRODUCE · BLUEBERRIES CHAO</small><h1>Apoyo · Botar descarte</h1></div><div class=mn><span class=g style="background:${C[g]}">${g}</span><div><small>APOYA</small><b>Grupo ${g}</b><div>📅 ${fl(f)}</div><div>👥 ${p} personas</div></div></div><div class=c><table><thead><tr><th></th><th>GRUPO</th><th>ESTADO</th><th>ÚLTIMAS 2 FECHAS</th><th style="text-align:center">VECES</th></tr></thead><tbody>${rowsHTML(T,T[0].g)}</tbody></table></div>`;
+ let file=null;try{await lib();const cv=await html2canvas($("img"),{scale:2,backgroundColor:'#F4F6F9'});const b=await new Promise(r=>cv.toBlob(r,'image/png'));file=new File([b],'Apoyo_descarte.png',{type:'image/png'})}catch(e){}
+ if(file&&navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],text:txt})}catch(e){}}else location.href="https://wa.me/?text="+encodeURIComponent(txt)}
+$("so").onclick=async()=>{const f=$("iF").value,p=+$("iP").value||null,g=ch||calc(R)[0].g;if(!f){alert("Pon la fecha");$("iF").focus();return}if(!p){alert("Pon cuántas personas");$("iP").focus();return}
+ $("so").disabled=true;$("so").textContent="Preparando imagen…";await share(g,f,p,calc(R),`Apoyo botar descarte: Grupo ${g} · ${fl(f).toLowerCase()} · ${p} personas`);$("so").disabled=false;$("so").textContent="Solo enviar al WhatsApp (sin registrar)"};
 $("ud").onclick=async()=>{if(!R.length)return;const x=[...R].sort((a,b)=>a.id-b.id).at(-1);if(!confirm(`¿Quitar el último registro? Grupo ${x.grupo} · ${fc(x.fecha)}`))return;await fetch(SB+"/rest/v1/apoyo_descarte?id=eq."+x.id,{method:"DELETE",headers:H});load()};
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw-apoyo.js").catch(()=>{});let dp;addEventListener("beforeinstallprompt",e=>{e.preventDefault();dp=e;$("ins").style.display=""});$("ins").onclick=async()=>{if(!dp)return;dp.prompt();await dp.userChoice;dp=null;$("ins").style.display="none"};
 load();setInterval(()=>{if(!document.hidden&&!document.activeElement.matches('input'))load()},30000);
