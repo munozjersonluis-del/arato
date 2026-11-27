@@ -1,5 +1,5 @@
 // App "Apoyo": la página abre aunque no haya señal; los datos siempre van en línea.
-const CACHE = 'apoyo-v2';
+const CACHE = 'apoyo-v3';
 const PAGE = 'apoyo-descarte.html';
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll([PAGE, 'apoyo.webmanifest', 'apoyo-icon-192.png', 'apoyo-icon-512.png'])).then(() => self.skipWaiting()));
